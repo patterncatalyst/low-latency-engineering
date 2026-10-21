@@ -112,3 +112,10 @@ Distro packages, resolved on this Fedora 44 host. These float with the distro an
 | tuned | 2.28.0-1.fc44 | dnf and Bodhi | |
 
 PREEMPT_RT: mainline since 6.12, and the 7.2 tree's `kernel/Kconfig.preempt` defines `config PREEMPT_RT` with `depends on EXPERT && ARCH_SUPPORTS_RT && !COMPILE_TEST`; `arch/x86/Kconfig` at v7.2 has `select ARCH_SUPPORTS_RT`. So it is selectable on x86_64 with no out-of-tree patches. However the stock Fedora kernel does not enable it: `/boot/config-7.2.11-200.fc44.x86_64` has `# CONFIG_PREEMPT_RT is not set` (with `CONFIG_PREEMPT_DYNAMIC=y`, `CONFIG_EXPERT=y`, `CONFIG_ARCH_SUPPORTS_RT=y`), Fedora's `kernel-x86_64-fedora.config` on f44 likewise, and `dnf repoquery kernel-rt` returns nothing. The r01 VM lab therefore needs a locally built RT kernel (a Fedora kernel with `CONFIG_PREEMPT_RT=y`) or a third-party build; this is not determined here and is a plan decision.
+
+## Holds
+
+| Component | Held at | Latest stable | Reason | Re-check |
+|---|---|---|---|---|
+| CPython | 3.14.8 | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | No python-build-standalone build of 3.14.9 yet (latest `20261020` ships 3.14.8), so uv cannot provide it; Fedora 44 ships 3.14.8. Promote when a uv-managed 3.14.9 is available; pin it in `examples/.python-version`. | next iteration |
+| uv | 0.13.0 on this host | 0.13.4 | User-local tool, not changed by the build; r01 uses no 0.13.4-only feature. `uv self update` is the user's call. | next iteration |
