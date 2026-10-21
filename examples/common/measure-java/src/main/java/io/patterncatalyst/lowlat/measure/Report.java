@@ -1,5 +1,6 @@
 package io.patterncatalyst.lowlat.measure;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import tools.jackson.databind.JsonNode;
 
@@ -15,7 +16,8 @@ public record Report(
         Percentiles percentiles,
         @JsonProperty("hdr_histogram") String hdrHistogram,
         BuildInfo build,
-        JsonNode profile) {
+        JsonNode profile,
+        @JsonInclude(JsonInclude.Include.NON_NULL) String notes) {
 
     public static final String SCHEMA = "lowlat-report/1";
 }

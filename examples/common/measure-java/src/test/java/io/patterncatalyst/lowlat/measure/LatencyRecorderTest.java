@@ -165,4 +165,20 @@ class LatencyRecorderTest {
         // a second fold must not double count
         assertEquals((long) threads * perThread, rec.report().count());
     }
+
+    @Test
+    void notesAppearOnlyWhenGiven(@org.junit.jupiter.api.io.TempDir Path dir) throws IOException {
+        LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "notes");
+        rec.record(MS);
+        Path plain = dir.resolve("plain.json");
+        Path noted = dir.resolve("noted.json");
+        Path empty = dir.resolve("empty.json");
+        rec.writeReport(plain);
+        rec.writeReport(noted, "reordered=0; rcvbuf_requested=1; rcvbuf_granted=2");
+        rec.writeReport(empty, "");
+        assertFalse(JSON.readTree(plain.toFile()).has("notes"));
+        assertFalse(JSON.readTree(empty.toFile()).has("notes"));
+        assertEquals("reordered=0; rcvbuf_requested=1; rcvbuf_granted=2",
+                JSON.readTree(noted.toFile()).get("notes").asString());
+    }
 }

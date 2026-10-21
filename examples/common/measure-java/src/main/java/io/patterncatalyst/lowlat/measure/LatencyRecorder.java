@@ -110,17 +110,28 @@ public final class LatencyRecorder {
     }
 
     public Report report() {
+        return report(null);
+    }
+
+    /** As {@link #report()}; {@code notes} is written only when non-null and non-empty. */
+    public Report report(String notes) {
         Histogram h = histogram();
         return new Report(Report.SCHEMA, example, "java", variant, "ns",
                 h.getTotalCount(), dropped(),
                 new Percentiles(h.getValueAtPercentile(50), h.getValueAtPercentile(90),
                         h.getValueAtPercentile(99), h.getValueAtPercentile(99.9), h.getMaxValue()),
-                encode(h), BuildInfo.current(), loadProfile());
+                encode(h), BuildInfo.current(), loadProfile(),
+                notes == null || notes.isEmpty() ? null : notes);
     }
 
     /** Write the report as JSON and return it. Fails if {@code LOWLAT_PROFILE} is unset. */
     public Report writeReport(Path path) {
-        Report report = report();
+        return writeReport(path, null);
+    }
+
+    /** As {@link #writeReport(Path)}, with optional free-text {@code notes} (omitted when empty). */
+    public Report writeReport(Path path, String notes) {
+        Report report = report(notes);
         try {
             Path parent = path.toAbsolutePath().getParent();
             if (parent != null) {
