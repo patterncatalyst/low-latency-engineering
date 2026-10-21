@@ -8,7 +8,7 @@ name = "lowlat-examples"
 version = "1.0.0"
 requires-python = ">=3.14"
 # Workspace members are listed here so a plain `uv sync` installs them.
-dependencies = ["lowlat-proto"]
+dependencies = ["lowlat-proto", "lowlat-measure"]
 
 [dependency-groups]
 dev = [
@@ -22,6 +22,7 @@ package = false
 
 [tool.uv.sources]
 lowlat-proto = { workspace = true }
+lowlat-measure = { workspace = true }
 
 [tool.uv.workspace]
 members = ["common/*-py"]
