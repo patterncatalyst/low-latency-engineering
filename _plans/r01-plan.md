@@ -112,3 +112,26 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 - **Q2 means in Little's / Amdahl's laws:** _pending_ — recommended: a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
 - **Q3 RT kernel if Fedora 44 has no package:** _pending_ — recommended: rebuild Fedora's kernel SRPM with a versioned PREEMPT_RT fragment in a `fedora:44` container (alternatives: CentOS Stream 10 guest with `kernel-rt`; defer RT to r05).
 - **Q4 host tuning for Ch1–4 runs:** _pending_ — recommended: run as-is (`balanced`/`powersave`), labelled; tuning is taught in Part 5.
+
+## Revision (planner pass 2, after the Docker decision)
+
+Folded in from the planner's second pass; these refine the steps above.
+
+- **S1** also removes every "Podman" mention from CLAUDE.md, `_parts/00-prerequisites.md`,
+  the outline's Ch0 line and the iteration plan's "host (Podman)" column. Criterion:
+  `grep -rni podman CLAUDE.md _parts _docs _plans` returns only intentional "not used" lines.
+- **S3 host facts already checked:** clocksource `tsc`, governor `powersave`, tuned
+  `balanced`, kernel `PREEMPT_DYNAMIC` (no `CONFIG_PREEMPT_RT`), Fedora `protoc` 3.19.6.
+  Fedora repos carry `rt-tests`, `realtime-setup`, `linuxptp`,
+  `tuned-profiles-cpu-partitioning`; no `kernel-rt`, no `tuned-profiles-realtime`.
+- **S13 (coordinated omission) sharper variants and criteria:** receipt-time vs
+  intended-time vs closed-loop + HdrHistogram correction. At 1 kHz × 10 s with one 200 ms
+  stall: intended-time p99 ≥ 50 ms; receipt-time p99 < 1 ms; corrected closed-loop p99
+  within 2× of intended-time. No-stall control: all three p99 within 2× of each other.
+- **S12 Little's Law:** measured L within 5 % of λ·W̄ (the mean lives in a separate
+  `model` block, per Q2), plus the Amdahl criteria above.
+- **Wire format:** protobuf for the simulator in r01 (SBE contrast comes in Part 6).
+  One protobuf release across C++, Java and Python, because Python rejects generated
+  code newer than its runtime.
+- Lab cloud-init adds `ninja-build`, `maven`, `uv`; `deploy-to-vm.sh` comes from the
+  linux-systems-programming repo.
