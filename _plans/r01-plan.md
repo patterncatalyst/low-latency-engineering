@@ -40,6 +40,7 @@ Planned by Opus on 2026-10-21. Status column is updated as steps land.
 - **Container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs
   (decided by the user 2026-10-21); minikube runs on the docker driver, per the lgtm
   skills. Podman is not used. Ch13's in-guest container numbers use Docker Engine in the guest.
+  CRC uses neither: it runs its default CRI-O runtime with `crun`, left as shipped.
 
 ## Steps
 
@@ -107,7 +108,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 
 ## Decisions
 
-- **Q1 container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs; no Podman (user, 2026-10-21).
+- **Q1 container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs; no Podman; CRC keeps its default CRI-O + `crun` (user, 2026-10-21).
 - **Q2 means in Little's / Amdahl's laws:** _pending_ — recommended: a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
 - **Q3 RT kernel if Fedora 44 has no package:** _pending_ — recommended: rebuild Fedora's kernel SRPM with a versioned PREEMPT_RT fragment in a `fedora:44` container (alternatives: CentOS Stream 10 guest with `kernel-rt`; defer RT to r05).
 - **Q4 host tuning for Ch1–4 runs:** _pending_ — recommended: run as-is (`balanced`/`powersave`), labelled; tuning is taught in Part 5.
