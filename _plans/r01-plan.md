@@ -59,7 +59,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S10 | `scripts/lab/` from lgtm-systems-programming (LAB_PREFIX=lowlat, 4 vCPU, 8 GB; RT/PTP/tuned packages; refuses non-`lowlat-*`) | S0 | sonnet | done |
 | S11 | `scripts/check-prereqs.sh` (PASS/WARN/FAIL; warns on system protoc 3.19) | S0 | sonnet | done |
 | S12 | Provision `lowlat-target`, snapshot `lab-ready` | S10 | MAIN | done (passt networking + ssh over vsock; no host firewall change) |
-| S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | todo |
+| S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | done (install-rt-kernel.sh; PREEMPT_RT running, ptp_kvm + phc2sys locked, Docker up; snapshot lab-ready-rt) |
 | S14 | `examples/00-prerequisites/verify.sh` + README (VM=1 runs lab smoke) | S9,S11 | sonnet | done (VM=1 path not yet run) |
 | S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | done |
 | S16 | `examples/02-littles-amdahl` (in-flight ≈ λ·W; Amdahl with serial lock; Python threads vs multiprocessing; effective GHz) | S9 | sonnet | done |
@@ -80,7 +80,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 - **S8** 1 kHz × 10 s emits 10,000 datagrams; emit-lateness p99 reported.
 - **S9** each consumer at 1 kHz × 10 s: `count=10000`, `gaps=0`, no negative latency.
 - **S11** exits 0 on this host; FAILs with an install hint when a tool is removed from PATH.
-- **S12/S13** guest `/sys/kernel/realtime` = 1 and `PREEMPT_RT` in `uname -v`; `cyclictest -l 10000` exits 0 with output stored, labelled `vm`; `/dev/ptp0` exists; snapshot `lab-ready-rt` listed; `ebpf-*` and `systems-*` domains unchanged.
+- **S12/S13** `PREEMPT_RT` in `uname -v` and `CONFIG_PREEMPT_RT=y` in the running kernel's config (revised: mainline RT has no `/sys/kernel/realtime`); `cyclictest -l 10000` exits 0 with output stored, labelled `vm`; `/dev/ptp0` exists; snapshot `lab-ready-rt` listed; `ebpf-*` and `systems-*` domains unchanged.
 - **S14** verify.sh exits 0; reports for all three languages with profile; cross-decode matches.
 - **S15** throughput equal within 1 %; batched p50 ≥ 10× per-parcel p50; with slow path p99/p50 ≥ 10.
 - **S16** C++ and Java speedup at 4 workers within ±15 % of the Amdahl prediction from the measured serial fraction; Python threads < 1.3×, multiprocessing > 2×; effective GHz printed.
@@ -95,7 +95,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 
 | Risk | Detection |
 |---|---|
-| Fedora 44 has no `kernel-rt` (host repoquery found none) | S13 probe; `/sys/kernel/realtime`; Q3 fallback |
+| Fedora 44 has no `kernel-rt` (host repoquery found none) | S13 probe; `uname -v` + running config; Q3 fallback |
 | Clock-domain mismatch across processes | S9 negative-latency assertion; actual − intended check |
 | Frequency scaling / turbo noise (`powersave` / `balanced`) | profile block; 3× runs; ratio-based criteria; `perf stat` effective GHz |
 | Concurrent load (agents, VM) during host runs | S19 serial on MAIN; profile records loadavg + running domains; verify.sh refuses if a `lowlat-*` VM runs |
@@ -158,3 +158,5 @@ Folded in from the planner's second pass; these refine the steps above.
 | Java kit `Report` has no `model` component; 02's `ModelReport` rewrites the JSON to add it (C++/Python kits take it directly) | S16 | add an optional `model` to the Java kit's `writeReport` for parity |
 | S16 Amdahl: a free-running per-parcel lock beats the formula (lock sections overlap other workers' parallel work); the example uses barriers so the serial part is strictly serial, and keeps `--sync free` as an unasserted observation | S16 | Ch2 prose material; phased N=4 sits 10–12 % under prediction against ±15 %, watch it in S19 |
 | Examples 01 copy the minimal receive loop because the common consumers have no handler hook | S15 | consider a handler hook in the common consumers in a later iteration; the copy is justified in the README |
+| S13 smoke cyclictest (60 s, unpinned vCPUs, untuned): RT guest kernel did not beat stock under hackbench (worst 1277 µs vs 170 µs on one vCPU). Smoke only, not publishable | S13 | RT chapter: measure with libvirt vCPU pinning (<cputune>, domain config, no host change), isolcpus/nohz_full in the guest, and many runs; state that a guest RT kernel cannot remove host-side preemption |
+| Lab two-guest networking: passt guests cannot reach each other | S12 | design when the PTP/network chapters need it (candidate: QEMU UDP-socket link on host loopback, unverified); never a host firewall change |

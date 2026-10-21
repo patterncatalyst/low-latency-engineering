@@ -26,8 +26,12 @@ there is no bridge, no NAT, no forwarding and no firewall rule, and Docker's
 firewall rules cannot interfere. Guests have no host-reachable IP address. ssh
 goes over AF_VSOCK (`--vsock cid.auto=yes`) through libvirt's ssh proxy
 (`/etc/ssh/ssh_config.d/30-libvirt-ssh-proxy.conf`); the guest's systemd starts
-sshd on vsock by itself. The destination is `fedora@qemu:system/<vm>`, with a
-lab-only known_hosts file under `$LAB_CACHE`. No host port is opened.
+sshd on vsock by itself. `lib.sh` writes a lab-only ssh config,
+`$LAB_CACHE/ssh_config`, that gives each `lowlat-*` guest a plain alias (its
+domain name) routed through the proxy, with a lab-only known_hosts file. ssh, scp
+and rsync all use it: `ssh -F ~/.cache/lowlat-lab/ssh_config lowlat-target`, or
+just `lab-ssh.sh`. (The proxy's own names, `qemu:system/<vm>`, contain a colon
+that scp and rsync misparse.) No host port is opened.
 
 The cost: guests cannot reach each other. Every r01 measurement runs inside one
 guest. A two-guest path (PTP, network chapters) needs its own design when it is
@@ -126,4 +130,22 @@ sha256, image, date). The script fails unless the built config contains
 `CONFIG_PREEMPT_RT=y`. Other overrides: `KERNEL_NVR`, `KERNEL_BUILDID`,
 `FEDORA_IMAGE`.
 
-The script never installs the RPMs. Installing them is a guest-only step.
+The build script never installs the RPMs. Installing them is a guest-only step:
+
+```bash
+SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target
+```
+
+It copies the RPMs in over vsock, checks them against `SHA256SUMS`, installs them
+next to the stock kernel of the same version (so stock vs RT runs differ only in
+the preemption model), makes the RT entry the default by its BLS id, reboots, and
+fails unless `uname -v` says `PREEMPT_RT`, the running kernel's config has
+`CONFIG_PREEMPT_RT=y` and the Docker daemon is up. Mainline PREEMPT_RT has no
+`/sys/kernel/realtime`. To boot stock instead, revert to `lab-ready` or set the
+stock entry with `grub2-set-default` (grubby's `--set-default` silently does
+nothing on Fedora Cloud's btrfs `/boot`).
+
+Fedora's realtime config leaves out legacy iptables
+(`CONFIG_NETFILTER_XTABLES_LEGACY`), so the guest uses `iptables-nft`
+(cloud-init installs and selects it); with `iptables-legacy` Docker cannot start
+on the RT kernel.

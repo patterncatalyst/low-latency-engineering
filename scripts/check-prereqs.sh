@@ -321,11 +321,13 @@ run_vm() {
   record PASS "guest ssh" "$LAB_VM reachable"
 
   uv="$(vm uname -v || true)"
-  rt="$(vm cat /sys/kernel/realtime || true)"
-  if [[ "$uv" == *PREEMPT_RT* && "$rt" == 1 ]]; then
-    record PASS "guest RT kernel" "PREEMPT_RT, /sys/kernel/realtime = 1"
+  # Mainline PREEMPT_RT has no /sys/kernel/realtime (that file came from the
+  # out-of-tree RT patch set); the running kernel's own config is the evidence.
+  rt="$(vm 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
+  if [[ "$uv" == *PREEMPT_RT* && "$rt" == CONFIG_PREEMPT_RT=y ]]; then
+    record PASS "guest RT kernel" "PREEMPT_RT in uname -v and the running kernel's config"
   else
-    record FAIL "guest RT kernel" "uname -v: ${uv:-?}; realtime=${rt:-?}" "S13 RT kernel not installed yet"
+    record FAIL "guest RT kernel" "uname -v: ${uv:-?}; config: ${rt:-no CONFIG_PREEMPT_RT=y}" "boot the kernel-rt entry (scripts/lab/README.md), or revert to snapshot lab-ready-rt"
   fi
   vm_need cyclictest realtime-tests
   vm_need ptp4l linuxptp

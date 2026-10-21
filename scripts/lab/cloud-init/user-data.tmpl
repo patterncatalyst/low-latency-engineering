@@ -55,7 +55,10 @@ packages:
   - jq
   - git
   - rsync
-  # Docker Engine
+  # Docker Engine. iptables-nft explicitly: docker-ce accepts "iptables-nft or
+  # iptables", and dnf otherwise resolves iptables-legacy, which needs
+  # CONFIG_NETFILTER_XTABLES_LEGACY; Fedora's realtime kernel config leaves it out.
+  - iptables-nft
   - docker-ce
   - docker-ce-cli
   - containerd.io
@@ -63,10 +66,12 @@ packages:
 
 runcmd:
   - [ bash, -c, "usermod -aG docker fedora" ]
+  - [ bash, -c, "alternatives --set iptables /usr/bin/iptables-nft" ]
   - [ bash, -c, "systemctl enable --now docker" ]
   - [ bash, -c, "systemctl enable --now chronyd" ]
-  # Readiness marker: written last, only once the key tools are present.
-  - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v docker >/dev/null && command -v tuned-adm >/dev/null; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]
+  # Readiness marker: written last, only once the key tools are present and the
+  # Docker daemon actually answers (a binary on PATH is not a running engine).
+  - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v tuned-adm >/dev/null && docker info >/dev/null 2>&1; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]
   - [ bash, -c, "uname -r >> /var/log/lab-ready" ]
   - [ bash, -c, "touch /var/lib/cloud/lab-provisioned" ]
 
