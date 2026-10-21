@@ -11,9 +11,9 @@
 #   scripts/check-prereqs.sh -h
 set -euo pipefail
 
-# Pinned protoc version. Single source of truth for this script; the exact pin
-# and its provenance are recorded in _plans/dependency-pins.md.
-PROTOBUF_VERSION="36.2"
+# Pinned protoc version: read from versions.env (provenance in _plans/dependency-pins.md).
+# shellcheck source=../versions.env
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/versions.env"
 
 LOWLAT_PREFIX="${LOWLAT_PREFIX:-$HOME/.cache/lowlat/prefix}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

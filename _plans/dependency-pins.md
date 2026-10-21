@@ -6,6 +6,8 @@ description: "Every r01 dependency pinned to its latest stable upstream release,
 
 Surveyed 2026-10-21 against upstream sources (GitHub releases API, Maven Central `maven-metadata.xml`, PyPI JSON API, Fedora download tree, Bodhi, Docker Hub). Prereleases (RC, beta, milestone) were excluded; where one exists it is named in Notes. Every pin is exact.
 
+Machine-readable copy: `versions.env` at the repo root (protobuf, abseil, tarball URLs and SHA256), read by `scripts/deps/build-protobuf.sh` and `scripts/check-prereqs.sh`. The CMake (`examples/cmake/deps.cmake`), Maven (`examples/pom.xml`) and uv (`examples/pyproject.toml`) files repeat the pins in their own syntax. S4 also pins the Python build backend `hatchling` 1.32.4 (PyPI latest, 2026-10-21) for `examples/common/proto-py`. Tarball SHA256 values were computed from the downloaded release assets on 2026-10-21.
+
 ## Pins
 
 ### Native (C++)

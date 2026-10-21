@@ -52,7 +52,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S1 | Record decisions (Docker Engine, Q2–Q5) in CLAUDE.md, Part 0 blurb, outline | answers | MAIN | done |
 | S2 | Contracts: `contracts/proto/lowlat/line/v1/{parcel,divert}.proto`, measurement schema, README with design rationale | S0 | sonnet | done |
 | S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | done |
-| S4 | Build scaffolding: CMake + presets, protobuf prefix script, Maven aggregator, uv workspace | S0,S2 | sonnet | todo |
+| S4 | Build scaffolding: CMake + presets, protobuf prefix script, Maven aggregator, uv workspace | S0,S2 | sonnet | done |
 | S5–S7 | Measurement kits C++ / Python (+`lowlat-report`) / Java with correction unit tests | S4 | sonnet ×3 | todo |
 | S8 | Reference line simulator + README | S4 | sonnet | todo |
 | S9a–c | Consumers C++ / Python / Java | S5–S8 | sonnet ×3 | todo |
