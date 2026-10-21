@@ -61,6 +61,11 @@ are REFERENCES only.
 - Command path and data path never share a queue; a data flood must never delay
   a command.
 - Never instrument the hot path synchronously; observability goes off-path.
+- Idiomatic code first, in every language: the standard library, the framework's
+  own facilities and the established libraries before anything hand-rolled
+  (lgtm-idiomatic-review checklists apply while writing, not only at review).
+  Where a latency technique needs a non-idiomatic construct (busy-spin, manual
+  layout, lock-free structure), say why in the prose; keep the rest idiomatic.
 
 ## Design & delivery rules
 - Examine the best contract/API design for EVERY protocol (gRPC, DDS IDL, FIX/SBE,
@@ -110,6 +115,11 @@ talks. Pull and re-point; cross-link; don't rewrite.
   (LAB_PREFIX=lowlat); revert to snapshot between measurement runs.
 - A VM number and a bare-metal number are NOT comparable; label every number.
 - Kernel-bypass examples needing real NIC hardware: mark conceptual vs measured.
+  Ch17 depth (decided): what the VM can measure (AF_XDP on virtio, DPDK in the
+  VM, labelled illustrative); RDMA conceptual only.
+- minikube and CRC are HEADLESS review and testing environments for this book,
+  not chapter subjects. Kubernetes coverage stops at Ch13 and Ch18's rollout
+  gating. One cluster at a time; stop it when idle.
 
 ## Book output, commits, chapter spine
 Future Projects shared standard: _docs/ canonical -> build-manuscript.py ->
@@ -117,6 +127,9 @@ Markua; code included from files; paired SVG+excalidraw; spine hook -> diagram
 -> concept -> how the code works -> measure -> cross-check -> what you learned
 -> verification status; 1,900-2,500 words prose. Conventional Commits, scopes
 §N / demo-NN / rNN.x. Iterations ship as low-latency-engineering_rNN.x.tar.gz.
+Each iteration is its own release/rNN branch and PR, branched from an updated
+main, squash-merged with the branch deleted; tag rNN.x on main after merge.
+Repo is public; the site deploys to GitHub Pages from main.
 
 ## Do not
 - Do not report a number you did not measure, or omit the machine/VM profile.

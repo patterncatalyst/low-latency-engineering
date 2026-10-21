@@ -1,0 +1,28 @@
+{%- comment -%}
+  Multi-language code tabs.
+
+  Emits an empty marker; assets/js/codetabs.js absorbs the next N fenced
+  code blocks (N = number of pipe-separated labels) into an accessible
+  tab group. Because the code blocks stay ordinary Markdown fences, Rouge
+  still highlights them at build time — no plugin required.
+
+  Usage (place the marker, then one fenced block per label, IN THIS ORDER):
+
+      {% raw %}{% include codetabs.html langs="C++|Python|Java" %}{% endraw %}
+
+      ```cpp
+      // C++
+      ```
+      ```python
+      # Python
+      ```
+      ```java
+      // Java
+      ```
+
+  If `langs` is omitted it defaults to "C++|Python|Java" — the three languages
+  every technique is shown in. Pass a subset (langs="C++|Java") where a
+  language has no clean equivalent. Selecting a tab
+  syncs every group on the page and is remembered across pages.
+{%- endcomment -%}
+<div class="codetabs" data-langs="{{ include.langs | default: "C++|Python|Java" }}"></div>
