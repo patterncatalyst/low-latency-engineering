@@ -11,7 +11,7 @@ tagged `rNN.x`.
 
 ## Status
 
-- **r00 (this branch):** repo, CLAUDE.md, site scaffold, Parts, outline, Figure 0.1,
+- **r00 (`release/r00`):** repo, CLAUDE.md, site scaffold, Parts, outline, Figure 0.1,
   this plan. No chapter prose.
 - Everything below is planned, not started.
 
@@ -62,7 +62,7 @@ infrastructure plus the chapters that explain it:
 
 | Iter | Delivers | Notes |
 |---|---|---|
-| r00 | Scaffold, outline, plan, Figure 0.1 | this PR |
+| r00 | Scaffold, outline, plan, Figure 0.1 | `release/r00` |
 | r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0 |
 | r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline |
 | r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language |
@@ -90,13 +90,16 @@ infrastructure plus the chapters that explain it:
 - Every dependency OSS, licence recorded in the example README.
 - `lgtm-idiomatic-review` and `lgtm-professional-voice` pass before merge.
 
-## Open decisions (from PRD §11)
+## Decisions (PRD §11, resolved 2026-10-21)
 
-- **Kernel-bypass depth (Ch17):** proposed default is concepts plus what the VM can
-  measure (AF_XDP on a virtio NIC, DPDK in a VM with a clear "illustrative" label),
-  with RDMA conceptual only. Confirm or choose a hardware-gated optional chapter.
-- **Containers/Kubernetes depth beyond Ch13:** proposed default is none beyond Ch13
-  and Ch18's rollout gating; the minikube and CRC material stays in the deploy
-  appendices the PRD roster mentions.
-- **C++ reference shelf:** any further titles get added to the bibliography and
-  Appendix C.
+- **Chapter numbering:** accepted as above (Ch18 = latency config as code; Ch0–32).
+- **Kernel-bypass depth (Ch17):** concepts plus what the VM can measure (AF_XDP on
+  a virtio NIC, DPDK in the VM, labelled illustrative); RDMA conceptual only.
+- **Containers/Kubernetes depth:** nothing beyond Ch13 and Ch18's rollout gating.
+  minikube and CRC are headless review and testing environments, not chapter
+  subjects.
+- **Code style:** idiomatic in every language; a non-idiomatic latency construct
+  is explained where it appears.
+- **Branching:** one `release/rNN` branch and PR per iteration, deleted on merge.
+- **Still open:** any further titles from the C++ reference shelf, for the
+  bibliography and Appendix C.

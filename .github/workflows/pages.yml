@@ -39,25 +39,27 @@ jobs:
           ruby-version: "4.0"
           bundler-cache: true     # caches Gemfile.lock deps automatically
 
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
       - name: Build with Jekyll
-        # baseurl comes from _config.yml (/low-latency-engineering), which is
-        # the project Pages path. No configure-pages step: it fails on a repo
-        # without Pages enabled, and this repo stays private until the first release.
-        run: bundle exec jekyll build
+        # --baseurl renders absolute URLs under /<repo-name>/ for project Pages.
+        run: |
+          bundle exec jekyll build \
+            --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
-        with:
-          path: _site
+        # actions/configure-pages already points this at _site/.
 
   deploy:
     needs: build
     # Deploy ONLY when this is a push to main — never from PRs or feature
     # branches. Those still run the build job above as a validation check.
-    # Also skipped while the repo is private (Pages is not enabled yet).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.repository.private
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
