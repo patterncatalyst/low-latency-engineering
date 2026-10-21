@@ -87,7 +87,7 @@ build_java() {
 py_sync() {
   [[ ${SKIP_BUILD:-0} == 1 ]] && return 0
   step "syncing the Python workspace"
-  (cd "$LOWLAT_EXAMPLES" && uv sync -q)
+  (cd "$LOWLAT_EXAMPLES" && uv sync -q --all-packages)
 }
 
 # uvrun ARGS...: run inside the examples uv workspace.

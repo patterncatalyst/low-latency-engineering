@@ -48,7 +48,7 @@ mvn -B -f examples/pom.xml verify
 Python (from `examples/`):
 
 ```
-../scripts/gen-python-proto.sh && uv sync && uv run pytest && uv run ruff check
+../scripts/gen-python-proto.sh && uv sync --all-packages && uv run pytest && uv run ruff check
 ```
 
 ## Where versions live
