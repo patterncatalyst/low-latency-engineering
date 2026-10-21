@@ -62,7 +62,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | todo |
 | S14 | `examples/00-prerequisites/verify.sh` + README (VM=1 runs lab smoke) | S9,S11 | sonnet | done (VM=1 path not yet run) |
 | S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | done |
-| S16 | `examples/02-littles-amdahl` (in-flight ≈ λ·W; Amdahl with serial lock; Python threads vs multiprocessing; effective GHz) | S9 | sonnet | todo |
+| S16 | `examples/02-littles-amdahl` (in-flight ≈ λ·W; Amdahl with serial lock; Python threads vs multiprocessing; effective GHz) | S9 | sonnet | done |
 | S17 | `examples/03-coordinated-omission` (A naive / B corrected / C open-loop; 200 ms stall; clock read cost; clocksource) | S9 | sonnet | built; stall criteria pass; control criterion pending user decision |
 | S18 | `examples/04-benchmark-harnesses` (GS1 check digit: Google Benchmark, JMH SampleTime + Blackhole, pyperf) | S5–S7 | sonnet | done |
 | S19 | Measurement runs: each verify.sh 3×, serial, VM down; results committed | S14–S18 | MAIN | todo |
@@ -155,4 +155,6 @@ Folded in from the planner's second pass; these refine the steps above.
 | S15 bimodal criterion "p99 ≥ 20× p50" is fragile: with exactly 1 % slow parcels, p99 sits on the boundary between the slow mode and the parcels queued behind it (margin ~10 % on a busy host) | S15 | decide with S19 quiet-host data: keep, assert on p99.9, or make the slow fraction 2 %; the user approved the criterion, so any change goes back to them |
 | S17 control criterion "all three p99 within 2× with no stall" cannot hold: intended-time includes the simulator's send lateness + loopback (~180–225 µs) that receipt-time and closed-loop cannot see (1–28 µs) | S17 | proposed to the user: control asserts intended-time p99 < 1 ms and closed-loop-corrected within 2× of closed-loop-naive (correction adds nothing when nothing is late) |
 | HdrHistogram ports disagree on percentile rank (Java ceil vs C/Python half-up); one bucket apart in sparse tails | S17 | fixed: `lowlat-report check` recomputes with the writing language's convention; regression fixture `java-sparse-tail.json`; documented in MEASUREMENT.md; Ch3 sidebar material |
+| Java kit `Report` has no `model` component; 02's `ModelReport` rewrites the JSON to add it (C++/Python kits take it directly) | S16 | add an optional `model` to the Java kit's `writeReport` for parity |
+| S16 Amdahl: a free-running per-parcel lock beats the formula (lock sections overlap other workers' parallel work); the example uses barriers so the serial part is strictly serial, and keeps `--sync free` as an unasserted observation | S16 | Ch2 prose material; phased N=4 sits 10–12 % under prediction against ±15 %, watch it in S19 |
 | Examples 01 copy the minimal receive loop because the common consumers have no handler hook | S15 | consider a handler hook in the common consumers in a later iteration; the copy is justified in the README |

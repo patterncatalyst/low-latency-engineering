@@ -1,0 +1,146 @@
+# 02-littles-amdahl: Little's Law and Amdahl's Law on the line
+
+Two laws that predict a latency system before you measure it, each checked against a run.
+Both are modelling tools: a time-average or a time fraction goes in as a labelled input in the
+report's `model` block, and a prediction comes out. A latency is never reported as a mean.
+
+```
+./verify.sh                 # build, run both experiments in three languages, assert, write reports
+ALLOW_BUSY=1 ./verify.sh    # measure although a lab VM is running (noisy; labelled by the profile)
+SKIP_BUILD=1 ./verify.sh    # reuse existing builds
+```
+
+Reports land in `results/latest/` (or `$RESULTS_DIR`), each with the machine profile.
+
+## A. Little's Law on the line: L = lambda x W
+
+`cpp/src/littles.cpp` and `java/.../LittlesConsumer.java` are consumers of the reference
+line-simulator (1 kHz, 10 s). Handling takes a variable service time: exponential, mean 600 us,
+capped at 10x the mean, drawn from a seeded generator and spent busy-waiting on the monotonic
+clock (CPU work whose length varies, not a sleep that would add timer slack).
+
+- **W per parcel** is `done - intended_emit_ns`, recorded with the measurement kit (variant
+  `littles-law`). Its p50/p99/p99.9 are the reported latency.
+- **L by sampling**: every 997 us a sampler thread counts the parcels in the system: due by the
+  belt's schedule (`arrivals_by`) minus parcels done.
+- **`model` block**: `lambda_per_s`, `L_sampled_time_average`, `W_mean_seconds_modelling_input`
+  (the one allowed mean), `predicted_L = lambda x W`, `relative_error`, and the warehouse framing.
+
+Criterion: sampled L within 5 % of lambda x W-bar, in C++ and in Java (the managed runtime obeys
+the same law), with `count = 10000` and `dropped = 0` (a lost parcel would break the law's
+premise).
+
+**Why 997 us, not 1000.** The arrivals are deterministic, one every 1 ms. A sampler on a 1 ms
+tick sees the same phase of the arrival cycle every time, just after an arrival, and over-counts
+by about half a parcel. The first run did exactly that: L = 1.53 against a prediction of 1.03
+(+48 %). A period that is not a divisor of the arrival period lets the phase drift through the
+whole cycle, which is the sampling Little's Law assumes.
+
+**The warehouse framing.** The scan-to-divert budget is 480 ms (1.2 m of belt at 2.5 m/s). The
+parcels in flight between scanner and diverter at 1 kHz are lambda x W = 1000/s x 0.48 s = **480
+parcels**. The same law tells you how many parcels the diverter logic is holding when a slow path
+stretches W. verify.sh prints it from the report.
+
+## B. Amdahl's Law: a sort-plan table behind one lock
+
+A fixed batch of 3,200 parcels is shared among N workers. Each parcel costs CPU work that
+parallelises (`scan_work`), then updates a shared sort-plan table under **one lock** (`update_plan`):
+the serial fraction, sized to about 10 %.
+
+- **Measured, not assumed.** An instrumented N = 1 run times every lock section;
+  `s = time inside the lock / wall time`, as a ratio of sums over 5 runs.
+- **Prediction.** With serial fraction s and parallel fraction p = 1 - s,
+  `S(N) = 1 / ((1 - p) + p / N) = 1 / (s + (1 - s) / N)`; S can never exceed 1 / s.
+- **Measurement.** 30 repetitions per N, each repetition's wall time recorded with the kit (variant
+  `amdahl-n<N>`), repetitions interleaved across N so a change in background load hits all N alike.
+  Measured speedup is the ratio of the p50 wall times (HdrHistogram's p50, not a mean). Every
+  repetition checks that the table equals the one-worker table: the updates are additions, so the
+  result must not depend on N.
+- **Effective GHz**: `perf stat -e cycles:u,task-clock` on the example's own process (no root);
+  user cycles over task-clock, stored in `model.effective_ghz`. If `perf_event_paranoid` or the PMU
+  prevents it, verify.sh records `unavailable (perf_event_paranoid=N)`.
+
+| Language | Workers | Lock | Why |
+|---|---|---|---|
+| C++ | `std::jthread` | `std::mutex` | The standard facilities; one critical section needs nothing else. |
+| Java | platform threads | `synchronized` | The idiomatic critical section for a short non-blocking update; no tryLock, timeout or condition is needed, and since JDK 24 (JEP 491) it no longer pins virtual threads. `ReentrantLock` would add API surface for nothing. Platform threads because the work is CPU-bound: virtual threads exist for blocking I/O. |
+| Python threads | `ThreadPoolExecutor` | `threading.Lock` | Shows the GIL. |
+| Python processes | `ProcessPoolExecutor` | `multiprocessing.Lock`, shared `multiprocessing.Array` | One interpreter per worker; the table is shared memory. |
+
+Criteria: C++ and Java speedup at N = 4 within +-15 % of the prediction; Python threads < 1.3x
+(the GIL serialises the CPU-bound bytecode, however many threads); Python processes > 2x.
+
+### Why waves, and what happens without them
+
+Amdahl's formula assumes the serial part runs alone. A lock does not guarantee that: while one
+worker is in the lock section the others can be in their parallel part, so the two overlap and the
+run beats the formula. The workload therefore runs in **waves**: each worker scans its 160
+parcels, all workers meet at a barrier (`std::barrier`, `CyclicBarrier`, `threading.Barrier` /
+`multiprocessing.Barrier`), then every worker commits its 160 updates under the lock, and they
+meet again. That is the strictly serial structure the formula describes, and it is a fair model of
+a wave-picked sortation plan whose next wave depends on the committed table.
+
+`--sync free` (C++ and Java) removes the barriers. verify.sh runs it as an observation, not a
+criterion: the same work then lands at about 3.5x at N = 4 against a predicted 3.1x, because
+the lock sections overlap the other workers' scanning. The honest bound for a free-running
+lock is not Amdahl's curve but `min(N, 1 / s)`. The lesson for the code: fine-grained locking
+buys back part of what Amdahl charges, and it still cannot pass 1 / s.
+
+Under phased synchronisation the measured speedup sits 10 to 12 % under the prediction at N = 4
+in C++ and Java: contended lock hand-off, cache-line movement of the shared table and the barriers
+are costs the formula does not have. Amdahl is an upper bound that is already generous.
+
+### What the Python pair shows
+
+Threads stay at about 1.0x (the CPU-bound loop holds the GIL, `build.gil_enabled` is `true` in the
+report) and can drop under 1x with more threads, because every barrier and lock hand-off also pays
+GIL hand-off. Processes track the prediction. The prediction for threads covers only the lock; the
+GIL is not in the model, which is the point of the comparison. Free-threaded Python is Appendix E.
+
+## Files
+
+```
+cpp/                  CMake targets littles-consumer, amdahl-cpp, ch02-model-test (auto-discovered)
+  include/lowlat/ch02/model.hpp   amdahl_speedup, arrivals_by, littles_L
+java/                 Maven module littles-amdahl-java (parent: examples/pom.xml)
+  .../ch02/Model.java, LittlesConsumer.java, Amdahl.java, ModelReport.java
+amdahl-py/            uv workspace member lowlat-amdahl (console script amdahl-py)
+verify.sh             the criteria above
+```
+
+`ModelReport` exists because the Java kit's `Report` record has no `model` component: the report
+the kit wrote is read back, the `model` block is added, and the file is rewritten. The C++ and
+Python kits return the report as a JSON object, so the block is added before writing.
+
+Ports: UDP 47220 (C++ consumer) and 47221 (Java consumer).
+
+Run one piece by hand:
+
+```
+scripts/profile.sh --out /tmp/profile.json && export LOWLAT_PROFILE=/tmp/profile.json
+examples/build/release/02-littles-amdahl/cpp/amdahl-cpp --reps 30 --report-dir /tmp/amdahl
+java -cp examples/02-littles-amdahl/java/target/littles-amdahl-java.jar \
+     io.patterncatalyst.lowlat.ch02.Amdahl --sync free --report-dir /tmp/amdahl
+examples/.venv/bin/amdahl-py --modes processes --report-dir /tmp/amdahl
+```
+
+## Verification status
+
+Run on the development host (bare metal, Fedora 44, `powersave` governor, `tuned balanced`, no
+pinning or isolation) on 2026-10-21 with `ALLOW_BUSY=1`. The host was shared with other builds;
+the 1-minute load average was 0.6 at the start of the final run but ranged from 0.6 to above 20
+during development, and the first runs under load are what moved the design (see the 997 us
+sampler and the waves above). **Quiet-host measurement runs are pending (S19): these numbers
+are provisional.**
+
+| Criterion | Result |
+|---|---|
+| A, C++: L within 5 % of lambda x W | PASS: L = 1.021, lambda x W-bar = 1.012 (+0.9 %); count 10,000, dropped 0 |
+| A, Java: L within 5 % of lambda x W | PASS: L = 1.124, lambda x W-bar = 1.097 (+2.4 %); count 10,000, dropped 0 |
+| B, C++ N = 4 within 15 % | PASS: s = 0.095, predicted 3.11x, measured 2.79x (-10.6 %) |
+| B, Java N = 4 within 15 % | PASS: s = 0.099, predicted 3.09x, measured 2.72x (-12.0 %) |
+| B, Python threads < 1.3x | PASS: 1.01x (GIL enabled) |
+| B, Python processes > 2x | PASS: 2.84x (predicted 3.05x) |
+| Effective GHz (user cycles / task-clock) | C++ 4.18, Java 4.17, Python 4.12 (`perf_event_paranoid=2`, user-space events work) |
+
+Status: **unverified for publication** until S19 re-runs this on a quiet host three times.
