@@ -1,0 +1,20 @@
+---
+layout: plan
+title: "Diagrams"
+permalink: /diagrams/
+description: "Every figure on this site. Each one ships as an SVG plus an editable Excalidraw source."
+---
+{%- comment -%}
+  Gallery is driven by _data/diagrams.yml (one entry per figure) so the gallery
+  and the chapters never drift. Specs live in diagrams/<name>.py.
+{%- endcomment -%}
+{% assign figs = site.data.diagrams %}
+{% if figs and figs.size > 0 %}
+{% for d in figs %}
+<h2>{{ d.title }}</h2>
+<p><small>{{ d.section }}</small></p>
+{% include excalidraw.html file=d.name alt=d.alt caption=d.caption %}
+{% endfor %}
+{% else %}
+<p>No figures yet.</p>
+{% endif %}
