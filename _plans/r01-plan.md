@@ -61,7 +61,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S12 | Provision `lowlat-target`, snapshot `lab-ready` | S10 | MAIN | todo |
 | S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | todo |
 | S14 | `examples/00-prerequisites/verify.sh` + README (VM=1 runs lab smoke) | S9,S11 | sonnet | done (VM=1 path not yet run) |
-| S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | todo |
+| S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | done |
 | S16 | `examples/02-littles-amdahl` (in-flight ≈ λ·W; Amdahl with serial lock; Python threads vs multiprocessing; effective GHz) | S9 | sonnet | todo |
 | S17 | `examples/03-coordinated-omission` (A naive / B corrected / C open-loop; 200 ms stall; clock read cost; clocksource) | S9 | sonnet | todo |
 | S18 | `examples/04-benchmark-harnesses` (GS1 check digit: Google Benchmark, JMH SampleTime + Blackhole, pyperf) | S5–S7 | sonnet | done |
@@ -146,3 +146,11 @@ Folded in from the planner's second pass; these refine the steps above.
   code newer than its runtime.
 - Lab cloud-init adds `ninja-build`, `maven`, `uv`; `deploy-to-vm.sh` comes from the
   linux-systems-programming repo.
+
+## Follow-ups (found during execution)
+
+| Item | Found in | Plan |
+|---|---|---|
+| C++ consumer's ready line is block-buffered when stdout is a file, so scripts can't wait on it (S14 polls the socket with `ss` instead) | S14 | flush after the ready line in all consumers; keep the socket poll |
+| S15 bimodal criterion "p99 ≥ 20× p50" is fragile: with exactly 1 % slow parcels, p99 sits on the boundary between the slow mode and the parcels queued behind it (margin ~10 % on a busy host) | S15 | decide with S19 quiet-host data: keep, assert on p99.9, or make the slow fraction 2 %; the user approved the criterion, so any change goes back to them |
+| Examples 01 copy the minimal receive loop because the common consumers have no handler hook | S15 | consider a handler hook in the common consumers in a later iteration; the copy is justified in the README |
