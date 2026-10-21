@@ -24,6 +24,10 @@ Versions come from `versions.env` / `_plans/dependency-pins.md`.
   - Java multi-threaded recording uses `Recorder` / `SingleWriterRecorder` and
     `getIntervalHistogram`; post-hoc correction uses
     `copyCorrectedForCoordinatedOmission`.
+  - Inline and post-hoc correction produce the same total count, but a
+    percentile can differ by one bucket: the post-hoc copy back-fills from
+    bucketed values, not from the original samples. Compare them as
+    "equivalent or adjacent bucket", never as identical.
 
 ## Recorder API (idiomatic per language, same shape)
 
