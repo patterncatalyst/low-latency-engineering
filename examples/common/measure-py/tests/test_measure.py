@@ -92,7 +92,20 @@ def test_cross_language(language: str, golden_report: Path) -> None:
     other = FIXTURES / f"{language}-golden.json"
     if not other.exists():
         pytest.skip(f"{other.name} not present yet")
+    assert main(["check", "--same-dataset", str(golden_report), str(other)]) == 0
+
+
+def test_different_workloads_are_not_cross_compared(
+    golden_report: Path, profile: Path, tmp_path: Path
+) -> None:
+    report = json.loads(golden_report.read_text())
+    rec = Recorder(report["example"], report["variant"])
+    for v in (5_000, 6_000, 7_000):
+        rec.record(v)
+    other = tmp_path / "java-like.json"
+    rec.write_report(other)
     assert main(["check", str(golden_report), str(other)]) == 0
+    assert main(["check", "--same-dataset", str(golden_report), str(other)]) == 1
 
 
 def test_record_cost(profile: Path) -> None:

@@ -77,7 +77,7 @@ at `common/measure-fixtures/profile.json` (a committed sample profile):
 - dataset: values 1,000 ns to 10,000,000 ns, i.e. `i * 1000` for i = 1..10,000,
   recorded plain; variant `"golden"`, example `"measure-fixtures"`.
 
-`lowlat-report check common/measure-fixtures/*-golden.json` decodes every
+`lowlat-report check --same-dataset common/measure-fixtures/*-golden.json` decodes every
 histogram and confirms that all three report the same percentiles, within
 HdrHistogram's equivalent-value range.
 
@@ -96,6 +96,7 @@ Record 1,000 values of 1 ms, then one value of 1 s with an expected interval of
 - `lowlat-report show FILE…`: aligned table (µs, 1 decimal), no mean
 - `lowlat-report check FILE…`: validate, decode `hdr_histogram`, recompute
   p50/p90/p99/p99.9/max, and assert they match the emitted values
-  (`values_are_equivalent`); when given reports from several languages for the
-  same example and variant, also assert they agree with each other. Exit
-  non-zero on any mismatch.
+  (`values_are_equivalent`). With `--same-dataset`, also assert that reports
+  sharing example and variant agree across languages; use it only for reports
+  recorded from one fixed dataset (the goldens), because languages measuring a
+  live workload are expected to differ. Exit non-zero on any mismatch.

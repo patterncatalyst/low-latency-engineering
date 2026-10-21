@@ -105,12 +105,18 @@ def cmd_check(args: argparse.Namespace) -> int:
         if not problems:
             print(f"ok   {r['_path']}")
 
+    # Different languages measuring the same workload are expected to differ;
+    # only reports recorded from one fixed dataset (the shared goldens) must agree.
+    if not args.same_dataset:
+        return 1 if failures else 0
+
     groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
     for r in reports:
         groups[(r["example"], r["variant"])].append(r)
     for (example, variant), group in groups.items():
         if len(group) < 2:
             continue
+        group_ok = True
         ref = group[0]
         ref_hist = decode(ref["hdr_histogram"])
         ref_p = percentiles_of(ref_hist)
@@ -124,8 +130,10 @@ def cmd_check(args: argparse.Namespace) -> int:
             for m in mismatches:
                 print(f"FAIL cross-language {example}/{variant}: {m}", file=sys.stderr)
             failures += bool(mismatches)
-        langs = ", ".join(g["language"] for g in group)
-        print(f"ok   cross-language {example}/{variant}: {langs}")
+            group_ok = group_ok and not mismatches
+        if group_ok:
+            langs = ", ".join(g["language"] for g in group)
+            print(f"ok   cross-language {example}/{variant}: {langs}")
     return 1 if failures else 0
 
 
@@ -135,10 +143,17 @@ def build_parser() -> argparse.ArgumentParser:
     for name, func, text in (
         ("validate", cmd_validate, "schema-validate each report"),
         ("show", cmd_show, "print an aligned percentile table in microseconds"),
-        ("check", cmd_check, "validate, recompute percentiles from the histogram, cross-compare"),
+        ("check", cmd_check, "validate and recompute percentiles from each histogram"),
     ):
         p = sub.add_parser(name, help=text, description=text)
         p.add_argument("files", nargs="+", type=Path, metavar="FILE")
+        if name == "check":
+            p.add_argument(
+                "--same-dataset",
+                action="store_true",
+                help="also require reports sharing example and variant to agree across "
+                "languages (only for reports recorded from one fixed dataset)",
+            )
         p.set_defaults(func=func)
     return parser
 
