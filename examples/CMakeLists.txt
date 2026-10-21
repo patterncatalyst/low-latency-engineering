@@ -28,3 +28,5 @@ target_link_libraries(lowlat_proto PUBLIC protobuf::libprotobuf)
 add_library(lowlat::proto ALIAS lowlat_proto)
 
 add_subdirectory(common/proto-smoke)
+add_subdirectory(common/measure-cpp)
+add_subdirectory(common/line-simulator)

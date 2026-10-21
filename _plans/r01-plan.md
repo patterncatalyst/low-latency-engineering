@@ -53,8 +53,8 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S2 | Contracts: `contracts/proto/lowlat/line/v1/{parcel,divert}.proto`, measurement schema, README with design rationale | S0 | sonnet | done |
 | S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | done |
 | S4 | Build scaffolding: CMake + presets, protobuf prefix script, Maven aggregator, uv workspace | S0,S2 | sonnet | done |
-| S5–S7 | Measurement kits C++ / Python (+`lowlat-report`) / Java with correction unit tests | S4 | sonnet ×3 | S6, S7 done |
-| S8 | Reference line simulator + README | S4 | sonnet | todo |
+| S5–S7 | Measurement kits C++ / Python (+`lowlat-report`) / Java with correction unit tests | S4 | sonnet ×3 | done |
+| S8 | Reference line simulator + README | S4 | sonnet | done |
 | S9a–c | Consumers C++ / Python / Java | S5–S8 | sonnet ×3 | todo |
 | S10 | `scripts/lab/` from lgtm-systems-programming (LAB_PREFIX=lowlat, 4 vCPU, 8 GB; RT/PTP/tuned packages; refuses non-`lowlat-*`) | S0 | sonnet | done |
 | S11 | `scripts/check-prereqs.sh` (PASS/WARN/FAIL; warns on system protoc 3.19) | S0 | sonnet | done |
