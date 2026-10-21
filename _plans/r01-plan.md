@@ -37,9 +37,9 @@ Planned by Opus on 2026-10-21. Status column is updated as steps land.
 - **VM lab in r01:** provision and smoke-test only (PREEMPT_RT kernel, `cyclictest`,
   `ptp_kvm` + `phc2sys`), recorded as readiness, not claims. **All Ch1–4 numbers are host
   bare-metal, labelled.**
-- **Container engine:** Docker Engine + Compose plugin (decided by the user 2026-10-21).
-  Podman is not used anywhere, including the guest; minikube runs on the docker
-  driver, per the lgtm skills.
+- **Container engine:** Docker Engine + Compose plugin on the host (decided by the user
+  2026-10-21); minikube runs on the docker driver, per the lgtm skills. Inside the Fedora
+  lab VMs, Podman is fine (native there), e.g. for Ch13's in-guest container numbers.
 
 ## Steps
 
@@ -107,7 +107,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 
 ## Decisions
 
-- **Q1 container engine:** Docker Engine + Compose plugin (user, 2026-10-21).
+- **Q1 container engine:** Docker Engine + Compose plugin on the host; Podman allowed inside the Fedora lab VMs (user, 2026-10-21).
 - **Q2 means in Little's / Amdahl's laws:** _pending_ — recommended: a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
 - **Q3 RT kernel if Fedora 44 has no package:** _pending_ — recommended: rebuild Fedora's kernel SRPM with a versioned PREEMPT_RT fragment in a `fedora:44` container (alternatives: CentOS Stream 10 guest with `kernel-rt`; defer RT to r05).
 - **Q4 host tuning for Ch1–4 runs:** _pending_ — recommended: run as-is (`balanced`/`powersave`), labelled; tuning is taught in Part 5.
