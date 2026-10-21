@@ -30,3 +30,14 @@ add_library(lowlat::proto ALIAS lowlat_proto)
 add_subdirectory(common/proto-smoke)
 add_subdirectory(common/measure-cpp)
 add_subdirectory(common/line-simulator)
+
+# Chapter examples: every NN-<topic>/cpp directory with a CMakeLists.txt is
+# picked up at configure time (re-run the configure step after adding one).
+file(GLOB _lowlat_example_dirs LIST_DIRECTORIES true RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+     "${CMAKE_CURRENT_SOURCE_DIR}/[0-9][0-9]-*/cpp")
+list(SORT _lowlat_example_dirs)
+foreach(_dir IN LISTS _lowlat_example_dirs)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_dir}/CMakeLists.txt")
+    add_subdirectory("${_dir}")
+  endif()
+endforeach()
