@@ -107,9 +107,10 @@ isolation) with every result.
 
 Fedora 44 ships no `kernel-rt`, and the stock kernel is built without
 `CONFIG_PREEMPT_RT`. `build-rt-kernel.sh` rebuilds Fedora's own kernel SRPM
-(`kernel-7.2.11-200.fc44`, pinned in `_plans/dependency-pins.md`) with the
-versioned fragment `kernel/preempt-rt.config`, merged through the spec's
-`kernel-local` mechanism, under the release suffix `.lowlatrt` so the RPM names
+(`kernel-7.2.11-200.fc44`, pinned in `_plans/dependency-pins.md`) using the SRPM's own
+realtime flavour (`--with realtime --with rtonly`, `kernel-x86_64-rt-fedora.config`)
+plus the one-line fragment `kernel/preempt-rt.config` (DEBUG_PREEMPT off), merged
+through the spec's `kernel-local` mechanism, under the release suffix `.lowlatrt` so the RPM names
 never collide with stock kernels.
 
 ```bash
@@ -119,7 +120,7 @@ scripts/lab/build-rt-kernel.sh     # an hour or more; log: $LOWLAT_KERNEL_OUT/bu
 The build runs entirely in a throwaway `docker run --rm` container from the
 digest-pinned `fedora:44` image. Nothing is installed on the host and no sudo is
 used; the host only receives files. Output goes to `${LOWLAT_KERNEL_OUT:-$HOME/.cache/lowlat/kernel-rt}`:
-`kernel`, `kernel-core`, `kernel-modules`, `kernel-modules-core` (and
+`kernel-rt`, `kernel-rt-core`, `kernel-rt-modules`, `kernel-rt-modules-core` (and
 `-extra` when produced) RPMs, `SHA256SUMS`, and `BUILDINFO` (NVR, fragment
 sha256, image, date). The script fails unless the built config contains
 `CONFIG_PREEMPT_RT=y`. Other overrides: `KERNEL_NVR`, `KERNEL_BUILDID`,
