@@ -38,7 +38,8 @@ Planned by Opus on 2026-10-21. Status column is updated as steps land.
   `ptp_kvm` + `phc2sys`), recorded as readiness, not claims. **All Ch1–4 numbers are host
   bare-metal, labelled.**
 - **Container engine:** Docker Engine + Compose plugin (decided by the user 2026-10-21).
-  Podman appears only inside the guest if Ch13 needs it.
+  Podman is not used anywhere, including the guest; minikube runs on the docker
+  driver, per the lgtm skills.
 
 ## Steps
 
