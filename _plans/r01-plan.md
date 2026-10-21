@@ -48,7 +48,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 
 | id | What | Dep | Exec | Status |
 |---|---|---|---|---|
-| S0 | Survey latest stable + pin + licence for every dependency → `_plans/versions.md`; seed `reconciliation-plan.md` | – | sonnet | todo |
+| S0 | Survey latest stable + pin + licence for every dependency → `_plans/versions.md`; seed `reconciliation-plan.md` | – | sonnet | done |
 | S1 | Record decisions (Docker Engine, Q2–Q5) in CLAUDE.md, Part 0 blurb, outline | answers | MAIN | done |
 | S2 | Contracts: `contracts/proto/lowlat/line/v1/{parcel,divert}.proto`, measurement schema, README with design rationale | S0 | sonnet | todo |
 | S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | done |
