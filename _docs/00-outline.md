@@ -37,7 +37,7 @@ The arc is below. Chapters link as they ship; see the
 [roadmap]({{ '/plans/iteration-plan/' | relative_url }}) for which iteration delivers each.
 
 ## Part 0 — Prerequisites & the Lab
-- Ch0 · Setup: Fedora 44, the three toolchains, Podman, the KVM/libvirt VM lab, a PREEMPT_RT kernel, `linuxptp`, and the line simulator
+- Ch0 · Setup: Fedora 44, the three toolchains, Docker Engine, the KVM/libvirt VM lab, a PREEMPT_RT kernel, `linuxptp`, and the line simulator
 
 ## Part 1 — Understanding & Measuring Latency
 - Ch1 · Latency vs bandwidth; latency as a distribution

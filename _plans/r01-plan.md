@@ -49,7 +49,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | id | What | Dep | Exec | Status |
 |---|---|---|---|---|
 | S0 | Survey latest stable + pin + licence for every dependency → `_plans/versions.md`; seed `reconciliation-plan.md` | – | sonnet | todo |
-| S1 | Record decisions (Docker Engine, Q2–Q4) in CLAUDE.md, Part 0 blurb, outline | answers | MAIN | todo |
+| S1 | Record decisions (Docker Engine, Q2–Q5) in CLAUDE.md, Part 0 blurb, outline | answers | MAIN | done |
 | S2 | Contracts: `contracts/proto/lowlat/line/v1/{parcel,divert}.proto`, measurement schema, README with design rationale | S0 | sonnet | todo |
 | S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | todo |
 | S4 | Build scaffolding: CMake + presets, protobuf prefix script, Maven aggregator, uv workspace | S0,S2 | sonnet | todo |
@@ -73,7 +73,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 
 ## Acceptance criteria
 
-- **S0** every dependency has an exact version, licence, survey date; holds have a reason; no ranges or `LATEST`.
+- **S0** protobuf/protoc pinned to the latest stable upstream release; every dependency has an exact version, licence, survey date; holds have a reason; no ranges or `LATEST`.
 - **S2** both `.proto` compile with the pinned protoc; the schema accepts a sample and rejects one containing `mean`.
 - **S3** `profile.sh | python3 -m json.tool` exits 0; host shows `virt: none`, `clocksource: tsc`, non-empty governor; guest shows `kvm`.
 - **S5–S7** 1,000 × 1 ms + one 1 s value with 1 ms expected interval → corrected count exactly 2,000 and p99 > 1 ms; uncorrected p99 ≈ 1 ms; a Java-encoded `hdr` decoded in Python gives the same p99 to 3 significant digits.
@@ -109,9 +109,13 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 ## Decisions
 
 - **Q1 container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs; no Podman; CRC keeps its default CRI-O + `crun` (user, 2026-10-21).
-- **Q2 means in Little's / Amdahl's laws:** _pending_ — recommended: a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
-- **Q3 RT kernel if Fedora 44 has no package:** _pending_ — recommended: rebuild Fedora's kernel SRPM with a versioned PREEMPT_RT fragment in a `fedora:44` container (alternatives: CentOS Stream 10 guest with `kernel-rt`; defer RT to r05).
-- **Q4 host tuning for Ch1–4 runs:** _pending_ — recommended: run as-is (`balanced`/`powersave`), labelled; tuning is taught in Part 5.
+- **Q2 means in Little's / Amdahl's laws:** decided (default): a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
+- **Q3 RT kernel if Fedora 44 has no package:** decided (default): rebuild Fedora's kernel SRPM with a versioned PREEMPT_RT fragment in a `fedora:44` container (alternatives: CentOS Stream 10 guest with `kernel-rt`; defer RT to r05).
+- **Q4 host tuning for Ch1–4 runs:** decided (default): run as-is (`balanced`/`powersave`), labelled; tuning is taught in Part 5.
+
+- **Q5 wire format:** decided (default): protobuf in r01; SBE contrast in Part 6.
+- **protobuf/protoc version:** latest stable upstream, surveyed in S0, pinned exactly, built from source into `~/.cache/lowlat/prefix`; Fedora's protoc 3.19.6 is never used (user, 2026-10-21).
+- **Plan approved by the user 2026-10-21.**
 
 ## Revision (planner pass 2, after the Docker decision)
 

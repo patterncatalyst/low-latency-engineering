@@ -28,12 +28,12 @@ chapter of its own.
 | Part | Chapters | Lab |
 |---|---|---|
 | 0 Prerequisites & the Lab | 0 | host + VM |
-| 1 Understanding & Measuring Latency | 1–4 | host (Podman) |
+| 1 Understanding & Measuring Latency | 1–4 | host (bare metal) |
 | 2 The Managed-Runtime Question | 5–8 | host |
 | 3 Accelerating Code | 9–10 | host |
 | 4 Threading & I/O Models | 11–13 | host; Ch13 host + VM |
 | 5 The OS, Isolation & the Network Edge | 14–18 | **VM mandatory** |
-| 6 Transports by Latency Budget | 19–25 | host (Podman); DDS/Aeron latency runs in VM |
+| 6 Transports by Latency Budget | 19–25 | host (Docker Engine); DDS/Aeron latency runs in VM |
 | 7 Observing Without Wrecking It | 26–27 | host + LGTM |
 | 8 Failure: Detect, Withstand, Act, Observe | 28–31 | host |
 | 9 Capstone | 32 | VM |
