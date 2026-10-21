@@ -63,7 +63,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S14 | `examples/00-prerequisites/verify.sh` + README (VM=1 runs lab smoke) | S9,S11 | sonnet | done (VM=1 path not yet run) |
 | S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | done |
 | S16 | `examples/02-littles-amdahl` (in-flight ≈ λ·W; Amdahl with serial lock; Python threads vs multiprocessing; effective GHz) | S9 | sonnet | todo |
-| S17 | `examples/03-coordinated-omission` (A naive / B corrected / C open-loop; 200 ms stall; clock read cost; clocksource) | S9 | sonnet | todo |
+| S17 | `examples/03-coordinated-omission` (A naive / B corrected / C open-loop; 200 ms stall; clock read cost; clocksource) | S9 | sonnet | built; stall criteria pass; control criterion pending user decision |
 | S18 | `examples/04-benchmark-harnesses` (GS1 check digit: Google Benchmark, JMH SampleTime + Blackhole, pyperf) | S5–S7 | sonnet | done |
 | S19 | Measurement runs: each verify.sh 3×, serial, VM down; results committed | S14–S18 | MAIN | todo |
 | S20 | ≥2 figures per chapter 0–4, wired into `_data/diagrams.yml` | S14–S18 | sonnet | todo |
@@ -153,4 +153,6 @@ Folded in from the planner's second pass; these refine the steps above.
 |---|---|---|
 | C++ consumer's ready line is block-buffered when stdout is a file, so scripts can't wait on it (S14 polls the socket with `ss` instead) | S14 | flush after the ready line in all consumers; keep the socket poll |
 | S15 bimodal criterion "p99 ≥ 20× p50" is fragile: with exactly 1 % slow parcels, p99 sits on the boundary between the slow mode and the parcels queued behind it (margin ~10 % on a busy host) | S15 | decide with S19 quiet-host data: keep, assert on p99.9, or make the slow fraction 2 %; the user approved the criterion, so any change goes back to them |
+| S17 control criterion "all three p99 within 2× with no stall" cannot hold: intended-time includes the simulator's send lateness + loopback (~180–225 µs) that receipt-time and closed-loop cannot see (1–28 µs) | S17 | proposed to the user: control asserts intended-time p99 < 1 ms and closed-loop-corrected within 2× of closed-loop-naive (correction adds nothing when nothing is late) |
+| HdrHistogram ports disagree on percentile rank (Java ceil vs C/Python half-up); one bucket apart in sparse tails | S17 | fixed: `lowlat-report check` recomputes with the writing language's convention; regression fixture `java-sparse-tail.json`; documented in MEASUREMENT.md; Ch3 sidebar material |
 | Examples 01 copy the minimal receive loop because the common consumers have no handler hook | S15 | consider a handler hook in the common consumers in a later iteration; the copy is justified in the README |

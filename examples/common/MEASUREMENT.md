@@ -51,6 +51,11 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
   correction back-fill), `dropped`
 - `percentiles`: `p50`, `p90`, `p99`, `p99_9` from the library's
   value-at-percentile for 50, 90, 99, 99.9; `max` from the library's max. Integers.
+  The ports define the rank differently: C 0.12.1 and Python 0.10.8 round
+  `p·N/100` half up, Java 2.2.2 rounds it up (`ceil`). Dense data lands in the
+  same bucket either way; a sparse tail can differ by one bucket. Each kit keeps
+  its library's convention, and `lowlat-report check` recomputes a report with
+  the convention of the language that wrote it.
 - `hdr_histogram`: the library's **compressed V2 encoding, base64** (the
   `HISTFAAA…` form). C `hdr_log_encode`; Python `encode()`; Java
   `encodeIntoCompressedByteBuffer` + `Base64`. Each kit must decode the other

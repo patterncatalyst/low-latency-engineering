@@ -116,3 +116,11 @@ def test_record_cost(profile: Path) -> None:
         rec.record(1000 + i)
     per_call = (time.perf_counter_ns() - t0) / n
     print(f"\nRecorder.record cost: {per_call:.0f} ns per call over {n} records")
+
+
+def test_java_rank_convention_sparse_tail() -> None:
+    # Real Java-kit output with a back-filled sparse tail (03-coordinated-omission):
+    # Java rounds the percentile rank up, C and Python round half up, so the half-up
+    # recomputation lands one bucket lower. `check` must use the report's own convention.
+    report = FIXTURES / "java-sparse-tail.json"
+    assert main(["check", str(report)]) == 0

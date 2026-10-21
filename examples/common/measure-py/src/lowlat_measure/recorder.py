@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 from pathlib import Path
@@ -32,9 +33,23 @@ def decode(b64: str) -> HdrHistogram:
     return HdrHistogram.decode(b64)
 
 
-def percentiles_of(hist: HdrHistogram) -> dict[str, int]:
-    """The five report percentiles, taken from the library."""
-    values = {key: int(hist.get_value_at_percentile(p)) for key, p in PERCENTILES.items()}
+def percentiles_of(hist: HdrHistogram, language: str = LANGUAGE) -> dict[str, int]:
+    """The five report percentiles, taken from the library, as `language`'s kit reports them.
+
+    The HdrHistogram ports disagree on the rank behind a percentile: C (0.12.1) and
+    Python (0.10.8) round p*N/100 half up, Java (2.2.2) rounds it up (ceil, after
+    nudging the percentile down by one ulp). With dense data both ranks fall in one
+    bucket; in a sparse tail they can be a bucket apart. For a Java report, ask the
+    library for the percentile whose half-up rank equals Java's ceil rank, so the
+    check reproduces what the Java kit emitted without re-implementing the lookup.
+    """
+    total = hist.get_total_count()
+    values = {}
+    for key, p in PERCENTILES.items():
+        if language == "java" and total:
+            rank = max(math.ceil(math.nextafter(p, -math.inf) * total / 100), 1)
+            p = 100 * rank / total
+        values[key] = int(hist.get_value_at_percentile(p))
     values["max"] = int(hist.get_max_value())
     return values
 

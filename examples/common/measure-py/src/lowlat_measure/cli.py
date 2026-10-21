@@ -87,7 +87,7 @@ def _check_one(report: dict[str, Any]) -> list[str]:
     problems = []
     if hist.get_total_count() != report["count"]:
         problems.append(f"count: emitted {report['count']}, histogram {hist.get_total_count()}")
-    recomputed = percentiles_of(hist)
+    recomputed = percentiles_of(hist, report["language"])
     for key, value in recomputed.items():
         emitted = report["percentiles"][key]
         if not hist.values_are_equivalent(emitted, value):
