@@ -36,7 +36,8 @@ Versions come from `versions.env` / `_plans/dependency-pins.md`.
 - `record(latency_ns)`
 - `record_corrected(latency_ns, expected_interval_ns)`
 - `add_dropped(n)` — parcels that never arrived (sequence gaps)
-- `write_report(path)` — writes one JSON report (below) and returns it
+- `write_report(path, notes=None)` — writes one JSON report (below) and returns it;
+  `notes` is an optional free-text string (run conditions, buffer sizes)
 - `print_summary()` — one aligned table line to stdout: example, language,
   variant, count, dropped, p50, p90, p99, p99.9, max, in microseconds with 1
   decimal. **Never a mean.**

@@ -8,7 +8,7 @@ name = "lowlat-examples"
 version = "1.0.0"
 requires-python = ">=3.14"
 # Workspace members are listed here so a plain `uv sync` installs them.
-dependencies = ["lowlat-proto", "lowlat-measure"]
+dependencies = ["lowlat-proto", "lowlat-measure", "lowlat-line-consumer"]
 
 [dependency-groups]
 dev = [
@@ -23,12 +23,13 @@ package = false
 [tool.uv.sources]
 lowlat-proto = { workspace = true }
 lowlat-measure = { workspace = true }
+lowlat-line-consumer = { workspace = true }
 
 [tool.uv.workspace]
-members = ["common/*-py"]
+members = ["common/*-py", "common/line-simulator/consumers/consumer-py"]
 
 [tool.pytest.ini_options]
-testpaths = ["common"]
+testpaths = ["common", "common/line-simulator/consumers/consumer-py/tests"]
 addopts = "-ra"
 
 [tool.ruff]

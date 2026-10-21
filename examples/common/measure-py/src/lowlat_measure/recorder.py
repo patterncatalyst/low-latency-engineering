@@ -76,8 +76,8 @@ class Recorder:
     def percentiles(self) -> dict[str, int]:
         return percentiles_of(self.histogram)
 
-    def build_report(self) -> dict[str, Any]:
-        return {
+    def build_report(self, notes: str | None = None) -> dict[str, Any]:
+        report: dict[str, Any] = {
             "schema": SCHEMA_ID,
             "example": self.example,
             "language": LANGUAGE,
@@ -90,9 +90,12 @@ class Recorder:
             "build": {"compiler": sys.version, "gil_enabled": sys._is_gil_enabled()},
             "profile": load_profile(),
         }
+        if notes:
+            report["notes"] = notes
+        return report
 
-    def write_report(self, path: str | Path) -> dict[str, Any]:
-        report = self.build_report()
+    def write_report(self, path: str | Path, notes: str | None = None) -> dict[str, Any]:
+        report = self.build_report(notes)
         Path(path).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         return report
 

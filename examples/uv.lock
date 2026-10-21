@@ -5,6 +5,7 @@ requires-python = ">=3.14"
 [manifest]
 members = [
     "lowlat-examples",
+    "lowlat-line-consumer",
     "lowlat-measure",
     "lowlat-proto",
 ]
@@ -85,6 +86,7 @@ name = "lowlat-examples"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "lowlat-line-consumer" },
     { name = "lowlat-measure" },
     { name = "lowlat-proto" },
 ]
@@ -98,6 +100,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "lowlat-line-consumer", editable = "common/line-simulator/consumers/consumer-py" },
     { name = "lowlat-measure", editable = "common/measure-py" },
     { name = "lowlat-proto", editable = "common/proto-py" },
 ]
@@ -107,6 +110,21 @@ dev = [
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "pytest", specifier = "==9.1.1" },
     { name = "ruff", specifier = "==0.17.1" },
+]
+
+[[package]]
+name = "lowlat-line-consumer"
+version = "1.0.0"
+source = { editable = "common/line-simulator/consumers/consumer-py" }
+dependencies = [
+    { name = "lowlat-measure" },
+    { name = "lowlat-proto" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lowlat-measure", editable = "common/measure-py" },
+    { name = "lowlat-proto", editable = "common/proto-py" },
 ]
 
 [[package]]
