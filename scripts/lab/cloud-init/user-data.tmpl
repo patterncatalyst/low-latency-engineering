@@ -1,0 +1,73 @@
+#cloud-config
+# cloud-init user-data template for the lowlat latency-engineering guest.
+# The hostname and ssh-key placeholders below are filled by provision-vm.sh.
+hostname: __HOSTNAME__
+fqdn: __HOSTNAME__.lab
+
+users:
+  - name: fedora
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: [wheel]            # docker group is added in runcmd, after docker-ce creates it
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - __SSH_PUBKEY__
+
+# Grow the root filesystem to fill the overlay disk.
+growpart:
+  mode: auto
+  devices: ['/']
+
+# Docker's official Fedora repository (docker-ce); Docker Engine is the only container runtime.
+yum_repos:
+  docker-ce-stable:
+    name: Docker CE Stable
+    baseurl: https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/fedora/gpg
+
+package_update: true
+
+# --- Toolset -----------------------------------------------------------------
+packages:
+  # real-time + time sync
+  - rt-tests
+  - linuxptp
+  - chrony
+  - tuned
+  - tuned-profiles-cpu-partitioning
+  - realtime-setup
+  # profiling
+  - kernel-tools          # turbostat / cpupower
+  - perf
+  - numactl
+  # toolchains
+  - gcc-c++
+  - clang
+  - cmake
+  - ninja-build
+  - java-25-openjdk-devel
+  - maven
+  - python3
+  - uv
+  # utilities
+  - jq
+  - git
+  - rsync
+  # Docker Engine
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+
+runcmd:
+  - [ bash, -c, "usermod -aG docker fedora" ]
+  - [ bash, -c, "systemctl enable --now docker" ]
+  - [ bash, -c, "systemctl enable --now chronyd" ]
+  # Readiness marker: written last, only once the key tools are present.
+  - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v docker >/dev/null && command -v tuned-adm >/dev/null; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]
+  - [ bash, -c, "uname -r >> /var/log/lab-ready" ]
+  - [ bash, -c, "touch /var/lib/cloud/lab-provisioned" ]
+
+final_message: "lab guest __HOSTNAME__ is up after $UPTIME seconds"

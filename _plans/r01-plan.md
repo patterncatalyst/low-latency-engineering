@@ -56,7 +56,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S5–S7 | Measurement kits C++ / Python (+`lowlat-report`) / Java with correction unit tests | S4 | sonnet ×3 | todo |
 | S8 | Reference line simulator + README | S4 | sonnet | todo |
 | S9a–c | Consumers C++ / Python / Java | S5–S8 | sonnet ×3 | todo |
-| S10 | `scripts/lab/` from lgtm-systems-programming (LAB_PREFIX=lowlat, 4 vCPU, 8 GB; RT/PTP/tuned packages; refuses non-`lowlat-*`) | S0 | sonnet | todo |
+| S10 | `scripts/lab/` from lgtm-systems-programming (LAB_PREFIX=lowlat, 4 vCPU, 8 GB; RT/PTP/tuned packages; refuses non-`lowlat-*`) | S0 | sonnet | done |
 | S11 | `scripts/check-prereqs.sh` (PASS/WARN/FAIL; warns on system protoc 3.19) | S0 | sonnet | todo |
 | S12 | Provision `lowlat-target`, snapshot `lab-ready` | S10 | MAIN | todo |
 | S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | todo |
