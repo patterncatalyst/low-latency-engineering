@@ -1,0 +1,37 @@
+{%- comment -%}
+  Excalidraw diagram include.
+
+  Usage:
+      {% include excalidraw.html
+         file="10-async-lifecycle"
+         alt="Diagram of the 202-accepted, poll, 303-see-other async flow"
+         caption="Figure 10.1 — Async confirmation: 202 → poll → 303" %}
+
+  Expects two files under assets/diagrams/:
+      <file>.excalidraw   ← editable source (Excalidraw v2 JSON)
+      <file>.svg          ← pre-rendered export
+
+  Required: file, alt
+  Optional: caption
+{%- endcomment -%}
+
+{%- assign diagram_base = "/assets/diagrams/" | append: include.file -%}
+{%- assign svg_path = diagram_base | append: ".svg" | relative_url -%}
+{%- assign source_path = diagram_base | append: ".excalidraw" | relative_url -%}
+
+<figure class="excalidraw-embed">
+  <img src="{{ svg_path }}"
+       alt="{{ include.alt | escape }}"
+       loading="lazy"
+       decoding="async" />
+
+  {%- if include.caption -%}
+    <figcaption class="excalidraw-embed__caption">{{ include.caption | escape }}</figcaption>
+  {%- endif -%}
+
+  <p class="excalidraw-embed__links">
+    <a href="{{ source_path }}" download>Download .excalidraw source</a>
+    <span aria-hidden="true">·</span>
+    <a href="https://excalidraw.com" target="_blank" rel="noopener">Edit on excalidraw.com</a>
+  </p>
+</figure>

@@ -1,0 +1,81 @@
+---
+layout: default
+title: Home
+---
+
+<section class="hero">
+  <div class="container">
+    <span class="hero__eyebrow">Measurement · Low-latency JVM · PREEMPT_RT · DDS · Aeron · C++ · Python · Java</span>
+    <h1 class="hero__title">{{ site.title }}</h1>
+    <p class="hero__lead">{{ site.description }}</p>
+    <div class="hero__cta">
+      <a class="btn btn--primary"
+         href="{{ '/docs/00-outline/' | relative_url }}">Start reading →</a>
+      <a class="btn btn--secondary"
+         href="https://github.com/{{ site.github_username }}/{{ site.github_repo }}"
+         rel="noopener">View on GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><span class="stat__value">📦</span><span class="stat__label">One workload: a parcel sortation line, measured as scan-to-divert</span></div>
+      <div class="stat"><span class="stat__value">📈</span><span class="stat__label">Every example reports a distribution (p50 / p99 / p99.9), never a mean</span></div>
+      <div class="stat"><span class="stat__value">🧵</span><span class="stat__label">The same technique in C++, Python and Java, where the language allows it</span></div>
+      <div class="stat"><span class="stat__value">🐧</span><span class="stat__label">Down to PREEMPT_RT and CPU isolation, with before/after jitter from cyclictest</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 class="section-heading">What this site is</h2>
+    <p class="section-sub">
+      A chapter-based path through latency engineering, built around one physical
+      deadline. A parcel passes a scanner and reaches a diverter some distance
+      downstream; belt speed times that distance is the time the controller has to
+      sense, decide and act. Every chapter asks whether its technique fits inside
+      that scan-to-divert budget, and answers with a measured distribution. The
+      book starts with measurement (percentiles, coordinated omission,
+      HdrHistogram), asks whether a garbage-collected runtime can hold a tight
+      tail, works through the hot path and the threading and I/O models of C++,
+      Python and Java, then goes beneath the code to the real-time Linux kernel,
+      CPU partitioning and kernel bypass. From there it treats transport as a
+      latency decision (gRPC, DDS, Aeron and SBE, FIX, Kafka, Modbus), shows how to
+      observe a low-latency system without slowing it down, and closes with a
+      failure model and a capstone that holds command latency while the data path
+      is flooded. Everything on a critical path is open source. It assumes you can
+      read at least one of the three languages; it is not a tutorial in any of them.
+    </p>
+
+    {%- comment -%}
+      Two-level navigation: the homepage shows one card per Part. Each Part
+      card links to its own page (the _parts collection) which lists that
+      part's chapters. New chapters appear under their part automatically;
+      new parts appear here just by adding a file to _parts/.
+    {%- endcomment -%}
+    <div class="cards">
+      {% assign parts_sorted = site.parts | sort: "order" %}
+      {% for part in parts_sorted %}
+      {% assign part_docs = site.docs | where: "part", part.part_name %}
+      <a class="card" href="{{ part.url | relative_url }}">
+        <div class="card__eyebrow">Part {{ part.order }}</div>
+        <h3 class="card__title">{{ part.title }}</h3>
+        {% if part.blurb %}
+        <p class="card__desc">{{ part.blurb }}</p>
+        {% endif %}
+        <div class="card__meta">
+          {% if part_docs.size > 0 %}
+            <span>{{ part_docs.size }} chapter{% if part_docs.size != 1 %}s{% endif %}</span>
+          {% else %}
+            <span>Coming soon</span>
+          {% endif %}
+          <span>Explore →</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
