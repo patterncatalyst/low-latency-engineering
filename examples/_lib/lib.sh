@@ -13,12 +13,14 @@
 #   ALLOW_BUSY=1  measure even if a lowlat-* VM is running (the numbers are then
 #                 labelled by the profile's lab.running_domains, but are noisy)
 #   SKIP_BUILD=1  reuse existing builds
+#   LOWLAT_BUILD  C++ binary dir (default examples/build/release); set a private
+#                 one when several builds run at once
 
 set -euo pipefail
 
 LOWLAT_EXAMPLES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOWLAT_ROOT="$(cd "$LOWLAT_EXAMPLES/.." && pwd)"
-LOWLAT_BUILD="$LOWLAT_EXAMPLES/build/release"
+LOWLAT_BUILD="${LOWLAT_BUILD:-$LOWLAT_EXAMPLES/build/release}"
 
 if [[ -t 1 && -z ${NO_COLOR:-} ]]; then
   _c_ok=$'\e[32m'; _c_bad=$'\e[31m'; _c_step=$'\e[36m'; _c_off=$'\e[0m'
@@ -58,11 +60,11 @@ capture_profile() {
 build_cpp() {
   [[ ${SKIP_BUILD:-0} == 1 ]] && return 0
   step "building C++ (release preset) ${*:-all}"
-  (cd "$LOWLAT_EXAMPLES" && cmake --preset release >/dev/null)
+  (cd "$LOWLAT_EXAMPLES" && cmake --preset release -B "$LOWLAT_BUILD" >/dev/null)
   if (($#)); then
-    (cd "$LOWLAT_EXAMPLES" && cmake --build --preset release --target "$@")
+    cmake --build "$LOWLAT_BUILD" --target "$@"
   else
-    (cd "$LOWLAT_EXAMPLES" && cmake --build --preset release)
+    cmake --build "$LOWLAT_BUILD"
   fi
 }
 
