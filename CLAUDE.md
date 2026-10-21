@@ -117,6 +117,10 @@ talks. Pull and re-point; cross-link; don't rewrite.
 - Containers: Docker Engine + Compose plugin everywhere, host and lab VMs (never
   Docker Desktop, no Podman). minikube uses the docker driver; CRC keeps its default
   CRI-O + crun runtime.
+- NEVER change the development host: no kernel, boot-param, sysctl, tuned, governor,
+  hugepage or package changes, and no host sudo. The host only runs unprivileged
+  user-space programs and Docker containers. Every system-level change happens in
+  the lowlat-* VMs (lgtm-systems-programming lab).
 - A throwaway KVM/libvirt VM is MANDATORY for the
   RT-kernel, partitioning, isolcpus/nohz_full/IRQ, cyclictest and kernel-bypass
   chapters - never on the host. Use lgtm-systems-programming scripts by name

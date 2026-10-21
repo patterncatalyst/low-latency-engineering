@@ -51,7 +51,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S0 | Survey latest stable + pin + licence for every dependency → `_plans/versions.md`; seed `reconciliation-plan.md` | – | sonnet | todo |
 | S1 | Record decisions (Docker Engine, Q2–Q5) in CLAUDE.md, Part 0 blurb, outline | answers | MAIN | done |
 | S2 | Contracts: `contracts/proto/lowlat/line/v1/{parcel,divert}.proto`, measurement schema, README with design rationale | S0 | sonnet | todo |
-| S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | todo |
+| S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | done |
 | S4 | Build scaffolding: CMake + presets, protobuf prefix script, Maven aggregator, uv workspace | S0,S2 | sonnet | todo |
 | S5–S7 | Measurement kits C++ / Python (+`lowlat-report`) / Java with correction unit tests | S4 | sonnet ×3 | todo |
 | S8 | Reference line simulator + README | S4 | sonnet | todo |
@@ -107,6 +107,13 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | Simulator wake-up jitter on a non-RT kernel | emit-lateness histogram on every run |
 
 ## Decisions
+
+- **No changes to the development host** (user, 2026-10-21): no kernel, boot-param,
+  sysctl, tuned, governor, hugepage or package changes and no host sudo. The host runs
+  only unprivileged user-space programs and Docker containers; every system-level change
+  happens in `lowlat-target`. The RT kernel is compiled in a throwaway `fedora:44`
+  container and installed only in the guest. The optional host-tuning commands from the
+  planner (`tuned-adm`, `perf_event_paranoid`, `pyperf system tune`) are dropped.
 
 - **Q1 container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs; no Podman; CRC keeps its default CRI-O + `crun` (user, 2026-10-21).
 - **Q2 means in Little's / Amdahl's laws:** decided (default): a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
