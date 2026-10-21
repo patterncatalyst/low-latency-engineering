@@ -105,9 +105,26 @@ g_tuned() {
   jstr "$p"
 }
 
+# Keep only latency-relevant cmdline parameters; drop root=UUID, BOOT_IMAGE and
+# anything else that identifies the machine, since profiles are published.
+latency_cmdline() {
+  local tok keep=()
+  for tok in $1; do
+    case ${tok%%=*} in
+      isolcpus|nohz|nohz_full|rcu_nocbs|rcu_nocb_poll|irqaffinity|threadirqs|preempt|\
+      mitigations|nosmt|idle|intel_idle.max_cstate|processor.max_cstate|intel_pstate|\
+      clocksource|tsc|skew_tick|nosoftlockup|nowatchdog|nmi_watchdog|audit|selinux|\
+      hugepages|hugepagesz|default_hugepagesz|transparent_hugepage|numa_balancing|\
+      kthread_cpus|housekeeping|isolcpus.*|workqueue.*)
+        keep+=("$tok") ;;
+    esac
+  done
+  printf '%s' "${keep[*]}"
+}
+
 g_kernel() {
   local rel ver cmd preempt rt_file rt=false
-  rel=$(uname -r); ver=$(uname -v); cmd=$(read_file /proc/cmdline)
+  rel=$(uname -r); ver=$(uname -v); cmd=$(latency_cmdline "$(read_file /proc/cmdline)")
   case $ver in
     *PREEMPT_RT*) preempt=PREEMPT_RT ;;
     *PREEMPT_DYNAMIC*) preempt=PREEMPT_DYNAMIC ;;
@@ -200,13 +217,24 @@ g_tools() {
      '{gcc: $gcc, clang: $clang, java: $java, python3: $py, cmake: $cmake}'
 }
 
+# Publishable label instead of the real hostname: the lab VM's name inside a
+# lowlat-* guest, otherwise "bare-metal-host"; LOWLAT_HOST_LABEL overrides.
+host_label() {
+  local h
+  h=$(hostname 2>/dev/null || true)
+  if [[ -n ${LOWLAT_HOST_LABEL:-} ]]; then printf '%s' "$LOWLAT_HOST_LABEL"
+  elif [[ $h == lowlat-* ]]; then printf '%s' "$h"
+  else printf 'bare-metal-host'
+  fi
+}
+
 build_json() {
-  jq -n --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg host "$(hostname 2>/dev/null || echo unknown)" \
+  jq -n --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg host "$(host_label)" \
     --argjson cpu "$(g_cpu)" --argjson power "$(g_power)" --argjson tuned "$(g_tuned)" \
     --argjson kernel "$(g_kernel)" --argjson clock "$(g_clock)" --argjson process "$(g_process)" \
     --argjson virt "$(g_virt)" --argjson load "$(g_load)" --argjson memory "$(g_memory)" \
     --argjson lab "$(g_lab)" --argjson tools "$(g_tools)" \
-    '{schema: "lowlat-profile/1", captured_at: $at, hostname: $host,
+    '{schema: "lowlat-profile/1", captured_at: $at, host_label: $host,
       cpu: $cpu, power: $power, tuned: $tuned, kernel: $kernel, clock: $clock,
       process: $process, virt: $virt, load: $load, memory: $memory, lab: $lab, tools: $tools}'
 }
