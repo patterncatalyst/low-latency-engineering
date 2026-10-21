@@ -114,14 +114,14 @@ for lang in cpp java python; do
   expect_within_2x "$corrected" "$intended" "$lang closed-loop-corrected p99 within 2x of intended-time p99"
   expect_lt "$naive" 1000000 "$lang closed-loop-naive p99 hides it (< 1 ms)"
 
-  c_receipt=$(p99 "$lang" receipt-time-control)
   c_intended=$(p99 "$lang" intended-time-control)
   c_corrected=$(p99 "$lang" closed-loop-corrected-control)
-  printf '%s control: receipt=%s intended=%s closed-corrected=%s\n' \
-    "$lang" "$c_receipt" "$c_intended" "$c_corrected"
-  expect_within_2x "$c_receipt" "$c_intended" "$lang control receipt-time within 2x of intended-time"
-  expect_within_2x "$c_corrected" "$c_intended" "$lang control closed-loop-corrected within 2x of intended-time"
-  expect_lt "$c_intended" 50000000 "$lang control intended-time p99 shows no stall (< 50 ms)"
+  c_naive=$(p99 "$lang" closed-loop-naive-control)
+  printf '%s control: intended=%s closed-corrected=%s closed-naive=%s\n' \
+    "$lang" "$c_intended" "$c_corrected" "$c_naive"
+  # intended-time still carries the simulator's send lateness and the loopback hop (~100-200 us).
+  expect_lt "$c_intended" 1000000 "$lang control intended-time p99 has no stall tail (< 1 ms)"
+  expect_within_2x "$c_corrected" "$c_naive" "$lang control closed-loop-corrected within 2x of closed-loop-naive"
 done
 
 step "reports (schema, histogram decode, percentile recompute)"
