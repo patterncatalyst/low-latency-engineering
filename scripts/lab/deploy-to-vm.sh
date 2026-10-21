@@ -17,18 +17,18 @@ guard_name "$VM"
 command -v rsync >/dev/null || die "rsync not found on the host (dnf install rsync)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 REMOTE_DIR="${REMOTE_DIR:-/home/${GUEST_USER}/low-latency-engineering}"
-IP="$(vm_ip "$VM")"
+DEST="$(ssh_dest "$VM")"
 
 for d in examples scripts; do
   [[ -d "$REPO_ROOT/$d" ]] || die "missing $REPO_ROOT/$d"
 done
 
-echo "→ syncing examples/ and scripts/ to ${GUEST_USER}@${IP}:${REMOTE_DIR}"
+echo "→ syncing examples/ and scripts/ to ${DEST}:${REMOTE_DIR}"
 # shellcheck disable=SC2029  # REMOTE_DIR is meant to expand on the client
-ssh "${SSH_OPTS[@]}" "${GUEST_USER}@${IP}" "mkdir -p '${REMOTE_DIR}'"
+ssh "${SSH_OPTS[@]}" "$DEST" "mkdir -p '${REMOTE_DIR}'"
 rsync -az --delete \
   -e "ssh ${SSH_OPTS[*]}" \
   --exclude '.git' --exclude 'target/' --exclude 'build/' --exclude '__pycache__' --exclude '.venv' \
   "$REPO_ROOT/examples" "$REPO_ROOT/scripts" \
-  "${GUEST_USER}@${IP}:${REMOTE_DIR}/"
+  "${DEST}:${REMOTE_DIR}/"
 echo "deployed to $VM:$REMOTE_DIR"

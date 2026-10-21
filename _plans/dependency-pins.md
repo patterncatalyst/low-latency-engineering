@@ -107,7 +107,7 @@ Distro packages, resolved on this Fedora 44 host. These float with the distro an
 | Component | Version seen | Source | Notes |
 |---|---|---|---|
 | kernel (Fedora 44 updates) | kernel-7.2.11-200.fc44 (stable 2026-10-17) | Bodhi API; host runs `7.2.11-200.fc44.x86_64`. `dnf -C repoquery` showed 7.2.10-200 only because its cached metadata was stale. | Upstream version 7.2.11. kernel.org lists 7.2.12 as stable and 7.3 as mainline; Fedora has not shipped 7.2.12 yet. |
-| rt-tests | 5.0.7-5.fc44 | `dnf -C repoquery --latest-limit 1` | |
+| realtime-tests (cyclictest) | 2.11-1.fc44 | `dnf repoquery --whatprovides "*/cyclictest"` | Fedora's `rt-tests` is an unrelated package |
 | linuxptp | 4.4-10.fc44 via dnf cache; Bodhi shows 4.4-9.fc44 stable | dnf and Bodhi | The two sources disagree by one release; the newer dnf figure may be a cached or testing build. Treat as 4.4. |
 | tuned | 2.28.0-1.fc44 | dnf and Bodhi | |
 

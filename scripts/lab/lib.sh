@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # lib.sh — shared helpers for the lowlat VM lab scripts. Source it, don't run it.
 #
-# Provides: config (lab.env), the name guard, vm_ip, render_user_data, and the
+# Provides: config (lab.env), the name guard, ssh_dest/wait_ssh, render_user_data, and the
 # step/ok/warn/die output helpers.
 
 LAB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,16 +35,29 @@ set_lab_vms() {
   if [[ "$LAB_PEER" = "1" ]]; then guard_name "$peer"; LAB_VMS+=("$peer"); fi
 }
 
-# vm_ip <name> — the IPv4 address libvirt leased to the guest.
-vm_ip() {
-  local vm="$1" ip
-  guard_name "$vm"
-  ip="$(virsh -q domifaddr "$vm" 2>/dev/null | awk '/ipv4/ {sub(/\/.*/,"",$4); print $4; exit}')"
-  if [[ -z "${ip:-}" ]]; then
-    ip="$(virsh -q domifaddr "$vm" --source agent 2>/dev/null | awk '/ipv4/ {sub(/\/.*/,"",$4); print $4; exit}')"
-  fi
-  [[ -n "${ip:-}" ]] || { echo "no lease yet for $vm — wait for cloud-init and retry" >&2; return 1; }
-  echo "$ip"
+# ssh_dest <name> — the ssh destination for a guest. The lab has no guest IPs:
+# networking is passt (user-mode, unprivileged sockets on the host) and ssh goes
+# over AF_VSOCK through libvirt's ssh proxy (/etc/ssh/ssh_config.d/30-libvirt-ssh-proxy.conf),
+# so no host port, bridge, NAT or firewall rule is involved.
+ssh_dest() {
+  guard_name "$1"
+  echo "${GUEST_USER}@qemu:system/$1"
+}
+
+# wait_ssh <name> [tries] — wait until the guest's sshd answers over vsock.
+wait_ssh() {
+  local vm="$1" tries="${2:-60}"
+  for _ in $(seq 1 "$tries"); do
+    ssh "${SSH_OPTS[@]}" -o ConnectTimeout=5 -o BatchMode=yes "$(ssh_dest "$vm")" true 2>/dev/null && return 0
+    sleep 3
+  done
+  echo "$vm: no ssh over vsock yet — is it running and has cloud-init finished first boot?" >&2
+  return 1
+}
+
+# forget_host_key <name> — drop the guest's key after a re-provision or destroy.
+forget_host_key() {
+  ssh-keygen -q -f "$LAB_KNOWN_HOSTS" -R "qemu:system/$1" >/dev/null 2>&1 || true
 }
 
 # render_user_data <hostname> <pubkey-file> — print the cloud-init user-data.
@@ -61,4 +74,5 @@ render_user_data() {
 sha256_of() { sha256sum "$1" | cut -d' ' -f1; }
 
 # shellcheck disable=SC2034  # used by the scripts that source this file
-SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o "UserKnownHostsFile=$HOME/.ssh/known_hosts")
+LAB_KNOWN_HOSTS="$LAB_CACHE/known_hosts"   # lab-only, so guest keys never touch ~/.ssh/known_hosts
+SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o "UserKnownHostsFile=$LAB_KNOWN_HOSTS")

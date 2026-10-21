@@ -12,4 +12,5 @@ virsh destroy "$VM" 2>/dev/null || true
 virsh undefine "$VM" --remove-all-storage --nvram 2>/dev/null \
   || virsh undefine "$VM" 2>/dev/null || true
 rm -f "${LAB_CACHE:?}/${VM:?}.qcow2" "${LAB_CACHE:?}/${VM:?}-seed.img"
+forget_host_key "$VM"
 echo "destroyed $VM"

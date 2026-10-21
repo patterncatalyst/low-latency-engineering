@@ -17,6 +17,22 @@ Every script checks each domain name against `LAB_GUARD_PREFIX` (`lowlat-`)
 for anything else. A wrong `LAB_PREFIX`, a stray `TARGET_VM`, or a typo cannot
 reach another project's VM.
 
+## Networking: passt, ssh over vsock
+
+The lab changes nothing on the host. Each guest uses QEMU's passt backend
+(`<interface type='user'><backend type='passt'/>`): the guest's outbound traffic
+leaves through ordinary unprivileged sockets that passt opens on the host, so
+there is no bridge, no NAT, no forwarding and no firewall rule, and Docker's
+firewall rules cannot interfere. Guests have no host-reachable IP address. ssh
+goes over AF_VSOCK (`--vsock cid.auto=yes`) through libvirt's ssh proxy
+(`/etc/ssh/ssh_config.d/30-libvirt-ssh-proxy.conf`); the guest's systemd starts
+sshd on vsock by itself. The destination is `fedora@qemu:system/<vm>`, with a
+lab-only known_hosts file under `$LAB_CACHE`. No host port is opened.
+
+The cost: guests cannot reach each other. Every r01 measurement runs inside one
+guest. A two-guest path (PTP, network chapters) needs its own design when it is
+needed, never a change to the shared host's firewall.
+
 ## Base image (S0 placeholder)
 
 `lab.env` holds `BASE_URL`, `BASE_IMG` and `BASE_SHA256`. `BASE_IMG` and
@@ -27,7 +43,7 @@ while they are unset and verifies the sha256 of the cached image before every us
 ## Host prerequisites (once)
 
 ```bash
-sudo dnf install -y virt-install qemu-img cloud-utils libvirt rsync
+sudo dnf install -y virt-install qemu-img cloud-utils libvirt libvirt-ssh-proxy passt passt-selinux rsync
 sudo systemctl enable --now libvirtd
 sudo usermod -aG libvirt "$USER"      # re-login, or wrap commands in: sg libvirt -c '...'
 [ -f ~/.ssh/id_ed25519.pub ] || ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519
@@ -39,8 +55,8 @@ sudo usermod -aG libvirt "$USER"      # re-login, or wrap commands in: sg libvir
 scripts/lab/provision-vm.sh lowlat-target   # download+verify image, overlay disk, cloud-init, boot
 scripts/lab/lab-ssh.sh lowlat-target cat /var/log/lab-ready   # expect: lab-ready: ok  (wait for cloud-init)
 scripts/lab/snapshot-vm.sh lowlat-target    # snapshot 'lab-ready': your revert point
-scripts/lab/lab-up.sh                       # start, wait for the lease, print the IP
-scripts/lab/lab-status.sh                   # state, IP, readiness marker, snapshots
+scripts/lab/lab-up.sh                       # start, wait for ssh over vsock
+scripts/lab/lab-status.sh                   # state, ssh destination, readiness, snapshots
 scripts/lab/lab-ssh.sh [vm [command...]]   # ssh as fedora (passwordless sudo)
 scripts/lab/deploy-to-vm.sh                 # rsync examples/ and scripts/ into the guest
 scripts/lab/revert-vm.sh lowlat-target [snapshot]   # undo a destructive run
@@ -60,7 +76,7 @@ Defaults: 4 vCPU, 8192 MB RAM, 40 GB disk (`VCPUS`, `RAM_MB`, `DISK_GB`).
 
 ## Guest toolset
 
-Real-time and time: `rt-tests`, `linuxptp`, `chrony`, `tuned` with
+Real-time and time: `realtime-tests` (cyclictest; not Fedora's unrelated `rt-tests`), `linuxptp`, `chrony`, `tuned` with
 `tuned-profiles-cpu-partitioning`, `realtime-setup`. Profiling: `perf`,
 `kernel-tools`, `numactl`. Toolchains: `gcc-c++`, `clang`, `cmake`,
 `ninja-build`, `java-25-openjdk-devel`, `maven`, `python3`, `uv`, plus `jq`,
@@ -71,9 +87,9 @@ passwordless sudo and your `~/.ssh/id_ed25519.pub`.
 
 ## Optional peer
 
-Set `LAB_PEER=1` to make `lab-up`, `lab-down`, `lab-ips` and `lab-status` also
-manage `lowlat-peer` (provision it with `provision-vm.sh lowlat-peer`). Off by
-default.
+Set `LAB_PEER=1` to make `lab-up`, `lab-down` and `lab-status` also manage
+`lowlat-peer` (provision it with `provision-vm.sh lowlat-peer`). Off by default.
+With passt networking the peer cannot reach the target directly (see above).
 
 ## Measurement labelling
 

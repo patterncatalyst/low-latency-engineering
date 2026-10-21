@@ -9,7 +9,8 @@
 # Refuses any name not starting with 'lowlat-'. Refuses to clobber an existing
 # domain; run ./destroy-vm.sh <name> first for a clean rebuild.
 #
-# Requires (host): virt-install, qemu-img, cloud-localds, libvirtd running, your
+# Requires (host): virt-install, qemu-img, cloud-localds, passt + passt-selinux,
+# libvirt-ssh-proxy, libvirtd running, your
 # user in the `libvirt` group (or wrap via `sg libvirt -c '...'`).
 #
 # Downloads the Fedora Cloud Base qcow2 once into ~/.cache, verifies its sha256
@@ -32,6 +33,8 @@ fi
 command -v virt-install >/dev/null || die "virt-install not found (dnf install virt-install)"
 command -v cloud-localds >/dev/null || die "cloud-localds not found (dnf install cloud-utils)"
 command -v qemu-img >/dev/null || die "qemu-img not found (dnf install qemu-img)"
+command -v passt >/dev/null || die "passt not found (dnf install passt passt-selinux)"
+[[ -x /usr/libexec/libvirt-ssh-proxy ]] || die "libvirt-ssh-proxy not found (dnf install libvirt-ssh-proxy)"
 [[ -f "$SSH_PUBKEY" ]] || die "no SSH public key at $SSH_PUBKEY — generate one: ssh-keygen -t ed25519"
 case "$BASE_IMG$BASE_SHA256" in
   *TODO*) die "BASE_IMG / BASE_SHA256 in lab.env still hold the TODO(S0) placeholder — fill them from the S0 survey" ;;
@@ -70,7 +73,7 @@ cloud-localds "$SEED" "$TMP_USERDATA" "$LAB_DIR/cloud-init/meta-data"
 ok "seed: $SEED"
 
 # ---- Boot the domain --------------------------------------------------------
-step "starting domain $VM_NAME ($VCPUS vCPU / ${RAM_MB}MB / ${DISK_GB}G) on network '$NETWORK'"
+step "starting domain $VM_NAME ($VCPUS vCPU / ${RAM_MB}MB / ${DISK_GB}G), passt networking, ssh over vsock"
 virt-install \
   --name "$VM_NAME" \
   --memory "$RAM_MB" \
@@ -80,14 +83,15 @@ virt-install \
   --disk "path=$OVERLAY,format=qcow2,bus=virtio" \
   --disk "path=$SEED,device=cdrom" \
   --os-variant fedora-unknown \
-  --network "network=$NETWORK,model=virtio" \
+  --network "type=user,backend.type=passt,model=virtio" \
+  --vsock cid.auto=yes \
   --graphics none \
   --noautoconsole
 
+forget_host_key "$VM_NAME"
 ok "domain $VM_NAME created"
 echo
-echo "Wait for cloud-init (a few minutes: it installs Docker and the RT toolset), then:"
-echo "    $SCRIPT_DIR/vm-ip.sh $VM_NAME"
+echo "Wait for cloud-init (a few minutes: it installs Docker and the RT toolset), then"
 echo "confirm it's ready (expect 'lab-ready: ok'):"
 echo "    $SCRIPT_DIR/lab-ssh.sh $VM_NAME cat /var/log/lab-ready"
 echo "then snapshot the tooled baseline:"

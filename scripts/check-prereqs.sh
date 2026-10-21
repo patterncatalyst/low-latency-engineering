@@ -327,7 +327,7 @@ run_vm() {
   else
     record FAIL "guest RT kernel" "uname -v: ${uv:-?}; realtime=${rt:-?}" "S13 RT kernel not installed yet"
   fi
-  vm_need cyclictest rt-tests
+  vm_need cyclictest realtime-tests
   vm_need ptp4l linuxptp
   vm_need phc2sys linuxptp
   vm_need tuned-adm tuned

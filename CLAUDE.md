@@ -121,6 +121,9 @@ talks. Pull and re-point; cross-link; don't rewrite.
   hugepage or package changes, and no host sudo. The host only runs unprivileged
   user-space programs and Docker containers. Every system-level change happens in
   the lowlat-* VMs (lgtm-systems-programming lab).
+- Lab VMs use passt networking and ssh over vsock (`fedora@qemu:system/<vm>`):
+  no bridge, NAT, forwarding or firewall rule on the host. Never fix lab
+  networking by changing the host firewall; guests cannot reach each other.
 - A throwaway KVM/libvirt VM is MANDATORY for the
   RT-kernel, partitioning, isolcpus/nohz_full/IRQ, cyclictest and kernel-bypass
   chapters - never on the host. Use lgtm-systems-programming scripts by name

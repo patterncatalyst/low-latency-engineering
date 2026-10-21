@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lab-status.sh — state, IP, readiness marker and snapshots of the lab guest(s).
+# lab-status.sh — state, ssh destination, readiness marker and snapshots of the lab guest(s).
 #   ./lab-status.sh
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -11,11 +11,7 @@ for VM in "${LAB_VMS[@]}"; do
   state="$(virsh domstate "$VM" 2>/dev/null || echo unknown)"
   echo "$VM: $state"
   [[ "$state" = "running" ]] || continue
-  if ip="$(vm_ip "$VM" 2>/dev/null)"; then
-    echo "  ip:    $ip"
-    echo "  ready: $(ssh "${SSH_OPTS[@]}" -o ConnectTimeout=5 "${GUEST_USER}@${ip}" 'head -1 /var/log/lab-ready' 2>/dev/null || echo 'unreachable')"
-  else
-    echo "  ip:    no lease yet"
-  fi
+  echo "  ssh:   $(ssh_dest "$VM")"
+  echo "  ready: $(ssh "${SSH_OPTS[@]}" -o ConnectTimeout=5 -o BatchMode=yes "$(ssh_dest "$VM")" 'head -1 /var/log/lab-ready' 2>/dev/null || echo 'unreachable')"
   virsh snapshot-list "$VM" --name 2>/dev/null | sed '/^$/d; s/^/  snapshot: /'
 done

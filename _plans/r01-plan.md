@@ -58,7 +58,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S9a–c | Consumers C++ / Python / Java | S5–S8 | sonnet ×3 | done |
 | S10 | `scripts/lab/` from lgtm-systems-programming (LAB_PREFIX=lowlat, 4 vCPU, 8 GB; RT/PTP/tuned packages; refuses non-`lowlat-*`) | S0 | sonnet | done |
 | S11 | `scripts/check-prereqs.sh` (PASS/WARN/FAIL; warns on system protoc 3.19) | S0 | sonnet | done |
-| S12 | Provision `lowlat-target`, snapshot `lab-ready` | S10 | MAIN | todo |
+| S12 | Provision `lowlat-target`, snapshot `lab-ready` | S10 | MAIN | done (passt networking + ssh over vsock; no host firewall change) |
 | S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | todo |
 | S14 | `examples/00-prerequisites/verify.sh` + README (VM=1 runs lab smoke) | S9,S11 | sonnet | done (VM=1 path not yet run) |
 | S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | done |
@@ -133,7 +133,7 @@ Folded in from the planner's second pass; these refine the steps above.
   `grep -rni podman CLAUDE.md _parts _docs _plans` returns only intentional "not used" lines.
 - **S3 host facts already checked:** clocksource `tsc`, governor `powersave`, tuned
   `balanced`, kernel `PREEMPT_DYNAMIC` (no `CONFIG_PREEMPT_RT`), Fedora `protoc` 3.19.6.
-  Fedora repos carry `rt-tests`, `realtime-setup`, `linuxptp`,
+  Fedora repos carry `realtime-tests` (cyclictest), `realtime-setup`, `linuxptp`,
   `tuned-profiles-cpu-partitioning`; no `kernel-rt`, no `tuned-profiles-realtime`.
 - **S13 (coordinated omission) sharper variants and criteria:** receipt-time vs
   intended-time vs closed-loop + HdrHistogram correction. At 1 kHz × 10 s with one 200 ms

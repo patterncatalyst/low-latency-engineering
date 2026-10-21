@@ -9,5 +9,4 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VM="${1:-${TARGET_VM:-${LAB_PREFIX}-target}}"
 [[ $# -gt 0 ]] && shift
 guard_name "$VM"
-IP="$(vm_ip "$VM")"
-exec ssh "${SSH_OPTS[@]}" "${GUEST_USER}@${IP}" "$@"
+exec ssh "${SSH_OPTS[@]}" "$(ssh_dest "$VM")" "$@"
