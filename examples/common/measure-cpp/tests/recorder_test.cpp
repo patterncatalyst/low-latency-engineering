@@ -152,3 +152,12 @@ TEST_F(Measure, OtherKitsGoldensAgree) {
   }
   if (compared == 0) GTEST_SKIP() << "no java-golden.json or python-golden.json present yet";
 }
+
+TEST_F(Measure, NotesAppearOnlyWhenGiven) {
+  Recorder r{"t", "v"};
+  r.record(1000);
+  EXPECT_FALSE(r.report().contains("notes"));
+  EXPECT_FALSE(r.report("").contains("notes"));
+  const json doc = r.report("reordered=1; rcvbuf_requested=2; rcvbuf_granted=4");
+  EXPECT_EQ(doc.at("notes"), "reordered=1; rcvbuf_requested=2; rcvbuf_granted=4");
+}

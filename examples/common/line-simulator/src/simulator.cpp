@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "lowlat/line/clock.hpp"
+#include "lowlat/line/fd.hpp"
 #include "lowlat/line/schedule.hpp"
 #include "lowlat/line/sscc.hpp"
 #include "lowlat/line/v1/parcel.pb.h"  // generated: contracts/proto/lowlat/line/v1/parcel.proto
@@ -31,23 +32,6 @@ using namespace std::chrono_literals;
 constexpr std::int64_t kStartLeadNs = 20'000'000;
 // GS1 documentation prefix; every barcode is syntactically valid, none is real.
 constexpr std::string_view kCompanyPrefix = "0614141";
-
-// RAII file descriptor: closed on destruction, never copied.
-class Fd {
- public:
-  explicit Fd(int fd) noexcept : fd_(fd) {}
-  Fd(Fd&& other) noexcept : fd_(std::exchange(other.fd_, -1)) {}
-  Fd(const Fd&) = delete;
-  Fd& operator=(const Fd&) = delete;
-  Fd& operator=(Fd&&) = delete;
-  ~Fd() {
-    if (fd_ >= 0) ::close(fd_);
-  }
-  [[nodiscard]] int get() const noexcept { return fd_; }
-
- private:
-  int fd_;
-};
 
 // A connected UDP socket. connect() on a datagram socket only fixes the peer,
 // so each send skips the address lookup; it also makes an absent receiver

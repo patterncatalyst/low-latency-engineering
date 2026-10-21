@@ -1,25 +1,16 @@
 #include "lowlat/line/config.hpp"
 
-#include <charconv>
 #include <cmath>
 #include <format>
 #include <stdexcept>
 
+#include "lowlat/line/cli.hpp"
+
 namespace lowlat::line {
 namespace {
 
-[[noreturn]] void fail(std::string_view message) { throw std::invalid_argument(std::string{message}); }
-
-// Parses all of `text` as a T; anything left over is an error.
-template <typename T>
-T number(std::string_view option, std::string_view text) {
-  T value{};
-  const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
-  if (ec != std::errc{} || end != text.data() + text.size()) {
-    fail(std::format("{}: '{}' is not a valid number", option, text));
-  }
-  return value;
-}
+using cli::fail;
+using cli::number;
 
 double positive(std::string_view option, std::string_view text) {
   const double v = number<double>(option, text);

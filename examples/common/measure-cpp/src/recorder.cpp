@@ -85,10 +85,10 @@ void Recorder::record_corrected(std::int64_t latency_ns, std::int64_t expected_i
   }
 }
 
-nlohmann::json Recorder::report() const {
+nlohmann::json Recorder::report(std::string_view notes) const {
   nlohmann::json profile = load_profile();  // fail before doing any other work
   const hdr_histogram* const h = hist_.get();
-  return {
+  nlohmann::json doc{
       {"schema", "lowlat-report/1"},
       {"example", example_},
       {"language", "cpp"},
@@ -107,10 +107,12 @@ nlohmann::json Recorder::report() const {
        {{"compiler", compiler_string()}, {"flags", LOWLAT_MEASURE_BUILD_FLAGS}, {"gil_enabled", nullptr}}},
       {"profile", std::move(profile)},
   };
+  if (!notes.empty()) doc["notes"] = std::string{notes};
+  return doc;
 }
 
-nlohmann::json Recorder::write_report(const std::filesystem::path& path) const {
-  nlohmann::json doc = report();
+nlohmann::json Recorder::write_report(const std::filesystem::path& path, std::string_view notes) const {
+  nlohmann::json doc = report(notes);
   std::ofstream out{path};
   out << doc.dump(2) << '\n';
   if (!out) throw std::runtime_error(std::format("cannot write report to {}", path.string()));

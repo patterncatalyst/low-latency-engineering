@@ -65,10 +65,11 @@ class Recorder {
   [[nodiscard]] const hdr_histogram& histogram() const noexcept { return *hist_; }
 
   /// The report document (schema lowlat-report/1). Throws if LOWLAT_PROFILE is unset.
-  [[nodiscard]] nlohmann::json report() const;
+  [[nodiscard]] nlohmann::json report(std::string_view notes = {}) const;
 
-  /// Writes report() to `path` and returns it.
-  nlohmann::json write_report(const std::filesystem::path& path) const;
+  /// Writes report(notes) to `path` and returns it. `notes` is free text for
+  /// the optional `notes` field; it is written only when non-empty.
+  nlohmann::json write_report(const std::filesystem::path& path, std::string_view notes = {}) const;
 
   /// One aligned line: example, language, variant, count, dropped, p50, p90,
   /// p99, p99.9, max in microseconds (1 decimal). Never a mean.
