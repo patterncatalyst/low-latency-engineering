@@ -64,6 +64,7 @@ class Recorder {
   [[nodiscard]] std::int64_t count() const noexcept { return hdr_total_count(hist_.get()); }
   [[nodiscard]] std::uint64_t dropped() const noexcept { return dropped_; }
   [[nodiscard]] const hdr_histogram& histogram() const noexcept { return *hist_; }
+  [[nodiscard]] const std::string& variant() const noexcept { return variant_; }
 
   /// The report document (schema lowlat-report/1). Throws if LOWLAT_PROFILE is unset.
   /// `notes` is free text for the optional `notes` field, written only when non-empty.

@@ -1,15 +1,11 @@
 #include "lowlat/co/experiment.hpp"
 
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <array>
 #include <atomic>
 #include <cerrno>
 #include <format>
-#include <memory>
 #include <stdexcept>
 #include <system_error>
 #include <thread>
@@ -26,30 +22,6 @@ namespace {
 using line::monotonic_ns;
 
 std::string variant(std::string_view base, const std::string& suffix) { return std::string{base} + suffix; }
-
-line::Fd open_bound(const Config& cfg) {
-  const auto colon = cfg.bind.rfind(':');
-  if (colon == std::string::npos) throw std::invalid_argument("--bind must be host:port");
-  addrinfo hints{};
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_DGRAM;
-  hints.ai_flags = AI_PASSIVE;
-  addrinfo* raw = nullptr;
-  if (const int rc = ::getaddrinfo(cfg.bind.substr(0, colon).c_str(), cfg.bind.substr(colon + 1).c_str(), &hints, &raw);
-      rc != 0) {
-    throw std::runtime_error(std::format("cannot resolve {}: {}", cfg.bind, ::gai_strerror(rc)));
-  }
-  const std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> addr{raw, &::freeaddrinfo};
-  line::Fd fd{::socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)};
-  if (fd.get() < 0) throw std::system_error(errno, std::generic_category(), "socket");
-  ::setsockopt(fd.get(), SOL_SOCKET, SO_RCVBUF, &cfg.rcvbuf, sizeof cfg.rcvbuf);
-  const timeval tick{.tv_sec = 0, .tv_usec = 100'000};  // bounds the idle check
-  ::setsockopt(fd.get(), SOL_SOCKET, SO_RCVTIMEO, &tick, sizeof tick);
-  if (::bind(fd.get(), addr->ai_addr, addr->ai_addrlen) != 0) {
-    throw std::system_error(errno, std::generic_category(), std::format("bind {}", cfg.bind));
-  }
-  return fd;
-}
 
 // Keeps the compiler from deleting the work of a closed-loop request.
 std::atomic<unsigned> g_sink{0};
@@ -95,7 +67,8 @@ Recorders::Recorders(const std::string& suffix)
 void stall_for(std::chrono::milliseconds d) { std::this_thread::sleep_for(d); }
 
 std::uint64_t run_receive(const Config& cfg, Recorders& rec) {
-  const line::Fd sock = open_bound(cfg);
+  int granted = 0;  // not reported here
+  const line::Fd sock = line::open_bound(cfg.bind, cfg.rcvbuf, /*tick_ms=*/100, granted);  // 100 ms bounds the idle check
   line::SeqTracker tracker;
   line::v1::ParcelEvent ev;
   std::array<char, 2048> datagram{};

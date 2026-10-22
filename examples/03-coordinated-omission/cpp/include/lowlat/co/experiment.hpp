@@ -54,7 +54,7 @@ void stall_for(std::chrono::milliseconds d);
 /// intended-time. Returns the number of parcels that never arrived.
 std::uint64_t run_receive(const Config& cfg, Recorders& rec);
 
-/// `requests` closed-loop requests, one per kInterval: each starts, handles one
+/// `requests` closed-loop requests, one per kExpectedInterval: each starts, handles one
 /// parcel, finishes, and only then is the next one issued. Request `cfg.stall_seq`
 /// stalls. Each latency goes in plain (naive) and through record_corrected.
 void run_closed_loop(const Config& cfg, std::uint64_t requests, Recorders& rec);

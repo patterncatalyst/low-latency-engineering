@@ -16,10 +16,9 @@ constexpr std::string_view kUsage = R"(usage: co-experiment run   [--bind H:P] [
        co-experiment probe [--out DIR]
 )";
 
-void emit(const lowlat::measure::Recorder& r, const std::filesystem::path& dir, std::string_view variant,
-          std::string_view notes) {
+void emit(const lowlat::measure::Recorder& r, const std::filesystem::path& dir, std::string_view notes) {
   r.print_summary();
-  r.write_report(dir / std::format("cpp-{}.json", variant), notes);
+  r.write_report(dir / std::format("cpp-{}.json", r.variant()), notes);
 }
 
 }  // namespace
@@ -45,17 +44,17 @@ int main(int argc, char** argv) {
       co::run_closed_loop(cfg, cfg.expect, rec);
       const std::string notes = std::format("stall_ms={} stall_seq={} dropped={}; the stall is a blocking sleep", cfg.stall_ms,
                                             cfg.stall_seq, dropped);
-      emit(rec.receipt_time, cfg.out_dir, "receipt-time" + cfg.suffix, notes);
-      emit(rec.intended_time, cfg.out_dir, "intended-time" + cfg.suffix, notes);
-      emit(rec.closed_loop_corrected, cfg.out_dir, "closed-loop-corrected" + cfg.suffix,
-           notes + "; record_corrected, expected interval 1 ms");
-      emit(rec.closed_loop_naive, cfg.out_dir, "closed-loop-naive" + cfg.suffix, notes);
+      emit(rec.receipt_time, cfg.out_dir, notes);
+      emit(rec.intended_time, cfg.out_dir, notes);
+      emit(rec.closed_loop_corrected, cfg.out_dir, notes + "; record_corrected, expected interval 1 ms");
+      emit(rec.closed_loop_naive, cfg.out_dir, notes);
     } else if (mode == "probe") {
       co::ClockProbe probe;
       co::run_clock_probe(1'000'000, probe);
-      emit(probe.line_monotonic_ns, cfg.out_dir, "clock-read",
-           "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); value = second - first");
-      emit(probe.steady_clock, cfg.out_dir, "clock-read-steady_clock",
+      emit(probe.line_monotonic_ns, cfg.out_dir,
+           "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); "
+           "value = second - first");
+      emit(probe.steady_clock, cfg.out_dir,
            "1e6 back-to-back pairs of std::chrono::steady_clock::now; value = second - first");
     } else {
       std::print(stderr, "{}", kUsage);
