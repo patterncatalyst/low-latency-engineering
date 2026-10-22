@@ -22,16 +22,6 @@
       <groupId>org.openjdk.jmh</groupId>
       <artifactId>jmh-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-launcher</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -42,15 +32,17 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <showWarnings>true</showWarnings>
-          <compilerArgs>
+          <!-- JMH-generated code cannot take -Werror: lint only. -->
+          <compilerArgs combine.self="override">
             <arg>-Xlint:all</arg>
           </compilerArgs>
-          <!-- JDK 23+ no longer runs annotation processors found on the classpath. -->
+          <!-- JDK 23+ no longer runs annotation processors found on the classpath;
+               the version comes from dependencyManagement. -->
+          <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
           <annotationProcessorPaths>
             <path>
               <groupId>org.openjdk.jmh</groupId>
               <artifactId>jmh-generator-annprocess</artifactId>
-              <version>${jmh.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
@@ -59,14 +51,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
+          <!-- Same execution as the parent's; the JMH layout replaces its configuration. -->
           <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
+            <id>shade</id>
+            <configuration combine.self="override">
               <createDependencyReducedPom>false</createDependencyReducedPom>
-              <finalName>benchmarks</finalName>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.openjdk.jmh.Main</mainClass>
