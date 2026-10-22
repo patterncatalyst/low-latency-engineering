@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 390" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="55" y="60" width="130" height="56" rx="9" fill="#f4f4f4" stroke="#888888" stroke-width="1.5"/>
+<text x="120.0" y="86.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Intended emit</text>
+<text x="120.0" y="103.0" font-size="11.5" fill="#555555" text-anchor="middle">belt schedule</text>
+<rect x="275" y="60" width="130" height="56" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="340.0" y="86.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Actual send</text>
+<text x="340.0" y="103.0" font-size="11.5" fill="#555555" text-anchor="middle">simulator wakes</text>
+<rect x="495" y="60" width="130" height="56" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="560.0" y="86.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Dequeue</text>
+<text x="560.0" y="103.0" font-size="11.5" fill="#555555" text-anchor="middle">consumer receives</text>
+<rect x="715" y="60" width="130" height="56" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="780.0" y="86.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Done</text>
+<text x="780.0" y="103.0" font-size="11.5" fill="#555555" text-anchor="middle">work finished</text>
+<rect x="120" y="170" width="660" height="46" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="450.0" y="191.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">intended-time</text>
+<text x="450.0" y="208.0" font-size="11.5" fill="#555555" text-anchor="middle">schedule -&gt; done: charged every wait</text>
+<rect x="340" y="228" width="440" height="46" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="560.0" y="249.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">closed-loop</text>
+<text x="560.0" y="266.0" font-size="11.5" fill="#555555" text-anchor="middle">own request send -&gt; done</text>
+<rect x="560" y="286" width="220" height="46" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="670.0" y="307.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">receipt-time</text>
+<text x="670.0" y="324.0" font-size="11.5" fill="#555555" text-anchor="middle">dequeue -&gt; done</text>
+<path d="M185,88 L275,88" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="230.0" y="80.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">wake late</text>
+<text x="230.0" y="80.0" font-size="11" fill="#555" text-anchor="middle">wake late</text>
+<path d="M405,88 L495,88" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="450.0" y="80.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">socket queue</text>
+<text x="450.0" y="80.0" font-size="11" fill="#555" text-anchor="middle">socket queue</text>
+<path d="M625,88 L715,88" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="670.0" y="80.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">work</text>
+<text x="670.0" y="80.0" font-size="11" fill="#555" text-anchor="middle">work</text>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Same parcel, three clocks: only intended-time starts at the schedule</text>
+<text x="120" y="150" font-size="12" fill="#1d1d1d" text-anchor="start">time -&gt;</text>
+<text x="440" y="366" font-size="12" fill="#1d1d1d" text-anchor="middle">A stall adds to the first interval; the other two start after the wait.</text>
+</svg>
