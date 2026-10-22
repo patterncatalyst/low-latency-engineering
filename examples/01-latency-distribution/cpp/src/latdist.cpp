@@ -8,8 +8,7 @@
 // The common line consumer (lowlat::line::consume_with) binds, parses, tracks
 // sequence gaps and records latency. This file supplies only the handlers.
 #include <algorithm>
-#include <atomic>
-#include <csignal>
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -21,16 +20,15 @@
 #include <string_view>
 #include <vector>
 
+#include "lowlat/line/cli.hpp"
 #include "lowlat/line/clock.hpp"
 #include "lowlat/line/consumer.hpp"
+#include "lowlat/line/signals.hpp"
 
 namespace {
 
 namespace line = lowlat::line;
 using line::monotonic_ns;
-
-std::atomic<bool> g_stop{false};
-extern "C" void on_signal(int) { g_stop.store(true, std::memory_order_relaxed); }
 
 // A dependent multiply-add chain: each step needs the previous result, so it can
 // neither be vectorised nor folded away, and the empty asm makes `x` observable.
@@ -82,7 +80,13 @@ class Batch {
   explicit Batch(std::size_t size) : size_(size) { pending_.reserve(size); }
 
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
-    pending_.push_back({ev.intended_emit_ns(), ev.barcode()});
+    pending_.push_back({ev.intended_emit_ns(), {}});
+    const std::string& barcode = ev.barcode();
+    if (barcode.size() != pending_.back().barcode.size()) {
+      pending_.pop_back();
+      throw std::invalid_argument("SSCC must be 18 ASCII digits");
+    }
+    std::ranges::copy(barcode, pending_.back().barcode.begin());  // fixed buffer: no allocation per parcel
     if (pending_.size() >= size_) flush(done);
   }
   void drain(line::Completion& done) { flush(done); }  // a partial last batch still gets handled
@@ -93,11 +97,11 @@ class Batch {
  private:
   struct Pending {
     std::int64_t intended_ns;
-    std::string barcode;
+    std::array<char, 18> barcode;  // an SSCC-18: exactly 18 digits, held in place
   };
 
   void flush(line::Completion& done) {
-    for (const auto& p : pending_) lane_sink += line::lane_for(p.barcode);
+    for (const auto& p : pending_) lane_sink += line::lane_for(std::string_view{p.barcode.data(), p.barcode.size()});
     const auto done_ns = monotonic_ns();  // one completion time for the whole batch
     for (const auto& p : pending_) done.complete(p.intended_ns, done_ns);
     pending_.clear();
@@ -144,7 +148,7 @@ class Bimodal {
 template <line::ParcelHandler H>
 void serve(const line::ConsumerConfig& cfg, H& handler) {
   lowlat::measure::Recorder rec{cfg.example, cfg.variant};
-  const auto result = line::consume_with(cfg, g_stop, rec, handler, [&](int, int) {
+  const auto result = line::consume_with(cfg, line::g_stop, rec, handler, [&](int, int) {
     std::println("latdist-consumer: variant {} on {}", cfg.variant, cfg.bind);
     std::fflush(stdout);  // bound: a script reading a redirected stdout waits on this line
   });
@@ -153,7 +157,10 @@ void serve(const line::ConsumerConfig& cfg, H& handler) {
                result.reordered, result.stopped_by, handler.lane_sink);
   const std::int64_t span_ns = result.last_done_ns - result.first_done_ns;
   const double span_s = static_cast<double>(span_ns) / 1e9;
-  const auto mhz = static_cast<std::int64_t>(static_cast<double>(result.completed) / span_s * 1000.0);
+  // span_s is 0 with fewer than two completions: report 0 rather than cast inf/NaN.
+  const auto mhz = span_ns > 0
+                       ? static_cast<std::int64_t>(static_cast<double>(result.completed) / span_s * 1000.0)
+                       : std::int64_t{0};
   const auto notes =
       std::format("throughput_mhz={}; done_span_ns={}; reordered={}{}", mhz, span_ns, result.reordered, handler.notes());
   rec.print_summary();
@@ -171,17 +178,15 @@ int main(int argc, char** argv) {
                                        "01-latency-distribution", "--variant", "per-parcel"};
     std::int64_t slow_us = 2000;
     for (int i = 1; i < argc; ++i) {
-      if (std::string_view{argv[i]} == "--slow-us" && i + 1 < argc) slow_us = std::stoll(argv[++i]);
-      else args.emplace_back(argv[i]);
+      if (std::string_view{argv[i]} == "--slow-us" && i + 1 < argc) {
+        slow_us = line::cli::number<std::int64_t>("--slow-us", argv[++i]);
+        if (slow_us <= 0) line::cli::fail("--slow-us must be > 0");
+      } else args.emplace_back(argv[i]);
     }
     const line::ConsumerConfig cfg = line::parse_consumer_args(args);
     if (cfg.report) (void)measure::load_profile();
 
-    struct sigaction sa{};
-    sa.sa_handler = on_signal;  // no SA_RESTART: recv must return EINTR
-    sigemptyset(&sa.sa_mask);
-    sigaction(SIGINT, &sa, nullptr);
-    sigaction(SIGTERM, &sa, nullptr);
+    line::install_stop_handlers();
 
     if (cfg.variant == "per-parcel") {
       PerParcel h;
