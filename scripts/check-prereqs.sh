@@ -95,14 +95,18 @@ check_os() {
 # cxx_std23 <compiler>: compile and run a tiny <print> program with -std=c++23.
 cxx_std23() {
   local cxx="$1" dir rc=0
-  dir="$(mktemp -d)"
+  if [[ -z ${SCRATCH:-} ]]; then
+    SCRATCH="$(mktemp -d)"
+    trap 'rm -rf "$SCRATCH"' EXIT
+  fi
+  dir="$SCRATCH"
   printf '#include <print>\nint main() { std::println("ok {}", 23); }\n' >"$dir/t.cpp"
   if "$cxx" -std=c++23 -o "$dir/t" "$dir/t.cpp" >/dev/null 2>&1 && "$dir/t" >/dev/null 2>&1; then
     rc=0
   else
     rc=1
   fi
-  rm -rf "$dir"
+  rm -f "$dir/t" "$dir/t.cpp"
   return "$rc"
 }
 
@@ -251,15 +255,20 @@ check_virt() {
   check_group libvirt
   check_group kvm
   if have virsh; then
-    local netinfo
-    netinfo="$(virsh -c qemu:///system net-info default 2>/dev/null || true)"
-    if grep -Eq '^Active:[[:space:]]+yes' <<<"$netinfo"; then
-      record PASS "libvirt network default" "active"
+    # The lab uses passt networking and ssh over vsock: no libvirt network is involved.
+    if timeout 10 virsh -c qemu:///system uri >/dev/null 2>&1; then
+      record PASS "libvirt (qemu:///system)" "reachable"
     else
-      record FAIL "libvirt network default" "not active or libvirtd unreachable" "sudo systemctl enable --now libvirtd && sudo virsh net-start default && sudo virsh net-autostart default"
+      record FAIL "libvirt (qemu:///system)" "libvirtd unreachable" "sudo systemctl enable --now libvirtd (and be in the libvirt group)"
     fi
   else
     record FAIL "virsh" "not found" "sudo dnf install libvirt-client libvirt-daemon-kvm"
+  fi
+  need_tool "passt" passt FAIL "sudo dnf install passt passt-selinux"
+  if [[ -x /usr/libexec/libvirt-ssh-proxy ]]; then
+    record PASS "libvirt-ssh-proxy" "/usr/libexec/libvirt-ssh-proxy"
+  else
+    record FAIL "libvirt-ssh-proxy" "not found" "sudo dnf install libvirt-ssh-proxy"
   fi
   need_tool "virt-install" virt-install FAIL "sudo dnf install virt-install"
   need_tool "qemu-img" qemu-img FAIL "sudo dnf install qemu-img"
