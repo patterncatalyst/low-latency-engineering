@@ -106,13 +106,14 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
 1. processed throughput of `per-parcel` and `batch-32` differs by less than 1 %.
    Throughput is `count / (last done - first done)`, written to the report's
    `notes` as `throughput_mhz` (milli-Hz, integer). The batch variant's first
-   completion is 31 ms into the run, so its figure is about 0.3 % higher.
+   completion is 31 ms into the run, so its C++ and Python figures are about
+   0.3 % higher; Java's differ by under 0.04 % in r01-run1..3.
 2. `batch-32` p50 is at least 10x the `per-parcel` p50.
 3. `bimodal-1pct` p99 is at least 20x its own p50.
 4. `bimodal-1pct` p50 is under a quarter of the same run's measured slow-path
    duration (`slow_path_us` in `notes`): the median stays in the fast mode. An
    earlier version compared it with the `per-parcel` run's p50 and failed in one
-   in a quiet-host run, because on an untuned host the median itself moves between
+   quiet-host run (commit `1811055`), because on an untuned host the median itself moves between
    runs (C++ per-parcel p50 152, 156 and 94 us across r01-run1..3). Comparing within one run removes that dependence.
 
 All reports must also have `count = 10000`, `dropped = 0`, and pass

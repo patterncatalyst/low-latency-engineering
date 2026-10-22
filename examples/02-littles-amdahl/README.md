@@ -32,8 +32,7 @@ premise).
 
 **Why 997 us, not 1000.** The arrivals are deterministic, one every 1 ms. A sampler on a 1 ms
 tick sees the same phase of the arrival cycle every time, just after an arrival, and over-counts
-by about half a parcel. The first run did exactly that: L = 1.53 against a prediction of 1.03
-(+48 %). A period that is not a divisor of the arrival period lets the phase drift through the
+by about half a parcel; a 1 ms sampler did exactly that during development. A period that is not a divisor of the arrival period lets the phase drift through the
 whole cycle, which is the sampling Little's Law assumes.
 
 **The warehouse framing.** The scan-to-divert budget is 480 ms (1.2 m of belt at 2.5 m/s). The
@@ -43,7 +42,7 @@ stretches W. verify.sh prints it from the report.
 
 ## B. Amdahl's Law: a sort-plan table behind one lock
 
-A fixed batch of 3,200 parcels is shared among N workers. Each parcel costs CPU work that
+A fixed batch of parcels (3,200 in C++ and Java, 1,200 in Python) is shared among N workers. Each parcel costs CPU work that
 parallelises (`scan_work`), then updates a shared sort-plan table under **one lock** (`update_plan`):
 the serial fraction, sized to about 10 %.
 
@@ -75,8 +74,8 @@ Criteria: C++ and Java speedup at N = 4 within +-15 % of the prediction; Python 
 Amdahl's formula assumes the serial part runs alone. A lock does not guarantee that: while one
 worker is in the lock section the others can be in their parallel part, so the two overlap and the
 run beats the formula. The workload therefore runs in **waves**: each worker scans its 160
-parcels, all workers meet at a barrier (`std::barrier`, `CyclicBarrier`, `threading.Barrier` /
-`multiprocessing.Barrier`), then every worker commits its 160 updates under the lock, and they
+parcels (60 in Python), all workers meet at a barrier (`std::barrier`, `CyclicBarrier`, `threading.Barrier` /
+`multiprocessing.Barrier`), then every worker commits its updates under the lock, and they
 meet again. That is the strictly serial structure the formula describes, and it is a fair model of
 a wave-picked sortation plan whose next wave depends on the committed table.
 
@@ -108,7 +107,7 @@ amdahl-py/            uv workspace member lowlat-amdahl (console script amdahl-p
 verify.sh             the criteria above
 ```
 
-All three kits take the `model` block through `write_report` / `writeReport(path, notes, model)`.
+The Java kit takes the `model` block through `writeReport(path, notes, model)`; the C++ and Python kits return the report as a JSON object, and the example adds the block before writing.
 
 Ports: UDP 47220 (C++ consumer) and 47221 (Java consumer).
 

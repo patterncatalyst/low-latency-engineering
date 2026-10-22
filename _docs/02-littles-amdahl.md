@@ -58,7 +58,7 @@ The formula assumes the serial part runs alone, and a lock does not guarantee th
 
 ### The sampler for L
 
-The consumer receives the simulator's UDP stream, spins for a drawn service time and marks each parcel done. The sampler counts the parcels due by the belt's schedule minus those done.
+The consumer (`littles.cpp`, `LittlesConsumer.java`) receives the simulator's UDP stream, spins for a drawn service time and marks each parcel done. The sampler counts the parcels due by the belt's schedule minus those done.
 
 {% include codetabs.html langs="C++|Java" %}
 
@@ -116,7 +116,7 @@ Sampled sample_in_system(std::stop_token stop, const std::atomic<std::int64_t>& 
 
 Python has no counterpart here: Little's Law runs on the C++ and Java consumers, and the Python program covers Amdahl's Law.
 
-`done` is an atomic counter the handler increments after each parcel. `arrivals_by` converts the clock into the number of parcels the schedule has released, in integer arithmetic. The difference is the instantaneous `L`. The sample is taken when the clock is read, not at the nominal tick, so a late wake-up cannot pair a stale instant with a fresh count.
+`done` is an atomic counter the receive loop increments after each parcel's service time. `arrivals_by` converts the clock into the number of parcels the schedule has released, in integer arithmetic. The difference is the instantaneous `L`. The sample is taken when the clock is read, not at the nominal tick, so a late wake-up cannot pair a stale instant with a fresh count.
 
 Arrivals are deterministic, one every 1 ms, so a sampler on a 1 ms tick sees the same phase each time, just after an arrival, and over-counts by about half a parcel. The 997 us interval does not divide the arrival period, so the phase drifts through the whole cycle. The origin `t0` comes from the first parcel seen, since parcel `seq` is due at `t0 + seq / lambda`.
 
@@ -177,11 +177,11 @@ After the run, the consumer reduces both measurements and writes them next to th
 
 `w_sum_ns` accumulates every `W`, and its comment states the rule: it feeds the model block only. The block holds `lambda_per_s`, the sampled `L`, `W_mean_seconds_modelling_input`, the prediction and the relative error. The field name carries the label. The warehouse sub-block gives the 480 parcels in flight from the same `littles_L`, with the budget in place of the mean.
 
-The languages diverge in the plumbing. The measurement kit carries the block in all three languages. The C++ and Python kits return the report as a JSON object, so the block is added before the write. The Java kit's `Report` record has an optional `model` component: the example passes the map to `LatencyRecorder.writeReport(path, notes, model)`, and the kit omits the key when the map is empty.
+The languages diverge in the plumbing. Every report can carry the block. The C++ and Python kits return the report as a JSON object, so the block is added before the write. The Java kit's `Report` record has an optional `model` component: the example passes the map to `LatencyRecorder.writeReport(path, notes, model)`, and the kit omits the key when the map is empty.
 
 ### The phased worker
 
-The worker is where the serial part becomes strictly serial. All three languages share the same shape: scan a wave's parcels, wait at the barrier, commit them under the lock, wait again.
+The worker (`amdahl.cpp`, `work.py`, `Amdahl.java`) is where the serial part becomes strictly serial. All three languages share the same shape: scan a wave's parcels, wait at the barrier, commit them under the lock, wait again.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 

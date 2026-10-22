@@ -2,7 +2,7 @@
 title: "Latency vs bandwidth: latency is a distribution"
 order: 1
 part: "Understanding & Measuring Latency"
-description: "Equal throughput can hide a 100x difference in median latency, and one slow parcel in a hundred moves p99 by an order of magnitude while the median stays put. Measure the distribution, never one number."
+description: "Equal throughput can hide an 80x to 180x difference in median latency, and one slow parcel in a hundred moves p99 by an order of magnitude while the median stays put. Measure the distribution, never one number."
 duration: 45 minutes
 ---
 
@@ -21,7 +21,7 @@ By the end of this chapter you can:
 
 A parcel passes the barcode scanner and the controller has until the parcel reaches the diverter to pick a lane. The belt does not wait: at the line's speed the budget is `1.2 m / 2.5 m/s = 480 ms`, minus encoder jitter and actuation time. A parcel whose decision arrives after the diverter has fired goes down the wrong lane. A controller that is fast for most parcels and slow for a few is a controller that mis-sorts those few.
 
-That makes "how fast is it?" incomplete in two ways. A design can raise the parcels handled per second while making each parcel wait longer. A handler can also be fast for 99 parcels and slow for the hundredth, so one summary number describes neither group.
+That makes "how fast is it?" incomplete in two ways. A design can raise the parcels handled per second while making each parcel wait longer. A handler can be fast for 99 parcels and slow for the hundredth, so one summary number describes neither group.
 
 The code is in `examples/01-latency-distribution/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -69,7 +69,7 @@ Each language has one executable with three variants selected by `--variant`: `p
 
 The common line consumer owns the receive path: it binds a UDP socket, parses each `ParcelEvent`, tracks sequence gaps and records latency. Between "received" and "done" it calls one function, the handler, for every new parcel. The handler does the variant's work and reports the parcel done through a `Completion`, which records `done - intended_emit` when called. The simulator stamps `intended_emit_ns` with the scheduled time, so a late send does not hide a late handling.
 
-A handler may report a parcel done inside the call or later. That is the whole contract: one loop serves a consumer that handles parcels one by one and one that holds them. The listings are `consumer.hpp`, `loop.py` and `ParcelHandler.java` under `examples/common/line-simulator/consumers/`.
+A handler may report a parcel done inside the call or later. That is the whole contract: one loop serves a consumer that handles parcels one by one and one that holds them. The listings are `consumer.hpp`, `loop.py`, `ParcelHandler.java` and `LineReceiver.java` under `examples/common/line-simulator/consumers/`.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -143,7 +143,7 @@ The C++ and Python loops reuse one event object for every datagram, so a handler
 
 ### The three handlers
 
-The per-parcel handler is a lane lookup followed by `done.complete(ev)`; the clock is read after the work. The batch and bimodal handlers are in `examples/01-latency-distribution/`: `cpp/src/latdist.cpp`, `latdist-py/src/lowlat_latdist/handlers.py` and `java/src/main/java/io/patterncatalyst/lowlat/latdist/Latdist.java`.
+The per-parcel handler is a lane lookup followed by `done.complete(ev)` (Python passes the intended time and `now()`); the clock is read after the work. The batch and bimodal handlers are in `examples/01-latency-distribution/`: `cpp/src/latdist.cpp`, `latdist-py/src/lowlat_latdist/handlers.py` and `java/src/main/java/io/patterncatalyst/lowlat/latdist/Latdist.java`.
 
 **Batch-32 and deferred completion.**
 
@@ -253,7 +253,7 @@ class Batch:
     }
 ```
 
-Each call stores the intended emission time and the barcode. The 32nd call runs `flush`, which looks up all 32 lanes, reads the clock once and completes every held parcel with that time. The first parcel's latency is its 31 ms wait plus the handling, which is what Figure 1.1 shows. A run of 10,000 parcels is 312 full batches and 16 parcels over, so `drain` matters: without it the last 16 parcels would never be recorded.
+Each call stores the intended emission time and the barcode. The 32nd call runs `flush` (`drain` in Python), which looks up all 32 lanes, reads the clock once and completes every held parcel with that time. The first parcel's latency is its 31 ms wait plus the handling, which is what Figure 1.1 shows. A run of 10,000 parcels is 312 full batches and 16 parcels over, so `drain` matters: without it the last 16 parcels would never be recorded.
 
 **Bimodal and the slow branch.**
 
@@ -490,7 +490,7 @@ Run the example from the repository root:
 examples/01-latency-distribution/verify.sh
 ```
 
-It builds all three consumers, runs each variant at 1 kHz for 10 s (10,000 parcels), writes nine reports and asserts the criteria. The example's `README.md` lists the flags.
+It builds all three consumers, runs each variant at 1 kHz for 10 s (10,000 parcels), writes nine reports and asserts the criteria. The `README.md` lists the flags.
 
 All numbers below come from the committed runs `r01-run1..3` in `examples/01-latency-distribution/results/`. Profile: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges are the minimum and maximum across the three runs and the three languages. The earlier failed check under "The median itself moved" comes from git history.
 
@@ -521,7 +521,7 @@ The Java runs show a second tail effect. Their notes record `JIT not warmed: fir
 
 ### The median itself moved
 
-The per-parcel median is not a constant of the code. It moved between runs of the same binary again, on this untuned host. C++ per-parcel p50 was 152 us in `r01-run1`, 156 us in `r01-run2` and 94 us in `r01-run3`; Python went 102, 85 and 161 us; Java 118, 192 and 174 us. Nothing in the program or stream changed. The host runs governor `powersave` and tuned profile `balanced`, so the kernel chooses frequency and idle state at run time. One binary's median moved by a factor of up to 1.9; the reports record no frequency counters, so the data do not isolate the cause.
+The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 152 us in `r01-run1`, 156 us in `r01-run2` and 94 us in `r01-run3`; Python went 102, 85 and 161 us; Java 118, 192 and 174 us. Nothing in the program changed. The host runs governor `powersave` and tuned profile `balanced`, so the kernel chooses frequency and idle state at run time. One binary's median moved by a factor of up to 1.9; the reports record no frequency counters, so the data do not isolate the cause.
 
 Variants in one run differ too: in `r01-run1` the C++ bimodal p50 was 79 us and the C++ per-parcel p50 152 us.
 

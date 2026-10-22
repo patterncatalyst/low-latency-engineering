@@ -1,17 +1,17 @@
-# Build the Jekyll site on every push and pull request; deploy to GitHub Pages
-# only from main. Uses the Jekyll version pinned in the Gemfile, not GitHub
+# Build the Jekyll site on pushes to main and on pull requests; deploy to GitHub
+# Pages only from main. Uses the Jekyll version pinned in the Gemfile, not GitHub
 # Pages' built-in Jekyll 3.10.
 #
 # One-time setup: Settings → Pages → Build and deployment → Source: GitHub
 # Actions. After that, every push to main builds AND deploys automatically;
-# pushes to other branches and PRs build only (a green/red validation signal),
-# with no deploy.
+# PRs build only (a green/red validation signal), with no deploy. Pushes to
+# other branches don't trigger a run: the PR run covers them without a duplicate.
 
 name: Build and deploy site
 
 on:
   push:
-    branches: ["**"]      # build on a push to ANY branch
+    branches: [main]      # build and deploy on a push to main
   pull_request:
     branches: [main]      # build on PRs targeting main
   workflow_dispatch:      # allow manual runs from the Actions UI
@@ -31,17 +31,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@v1.333.0
         with:
           ruby-version: "4.0"
           bundler-cache: true     # caches Gemfile.lock deps automatically
 
       - name: Configure GitHub Pages
         id: pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@v6.0.0
 
       - name: Build with Jekyll
         # --baseurl renders absolute URLs under /<repo-name>/ for project Pages.
@@ -52,7 +52,7 @@ jobs:
           JEKYLL_ENV: production
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v5.0.0
         # actions/configure-pages already points this at _site/.
 
   deploy:
@@ -67,4 +67,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v5.0.1

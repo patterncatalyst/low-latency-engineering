@@ -87,7 +87,7 @@ read and show up in these numbers).
   correction is the kit's `record_corrected` / `recordCorrected`, never hand-rolled.
 - The closed-loop phase runs after the UDP phase in the same process, with the same
   stall; a pure closed loop (one request per 1 ms, no queueing behind the stall).
-- Java and Python run unwarmed on purpose (noted in the reports): the first parcels
+- Java and Python run unwarmed by design (noted in the reports): the first parcels
   include JIT and interpreter warm-up.
 
 ## Percentile rank differs between the HdrHistogram ports

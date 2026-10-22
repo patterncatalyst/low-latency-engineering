@@ -119,11 +119,11 @@ Java also offers `copyCorrectedForCoordinatedOmission` for a finished histogram.
 
 ## How the code works
 
-Each language has one program with two subcommands, `run` and `probe`. Every program owns four recorders per run, one per variant, and variant names carry a suffix (`-control` for the run with no stall).
+Each language has one program with two subcommands, `run` and `probe`: `experiment.cpp`, `experiment.py`, and `ClockProbe.java` with `Experiment.java`. Every program owns four recorders per run, one per variant, and variant names carry a suffix (`-control` for the run with no stall).
 
 ### Timestamping against the intended time
 
-The receive loop does one thing the line consumer does not: it takes a clock read the instant `recv` returns, before parsing. Parsing a protobuf message takes time that is not queueing.
+The receive loop does one thing the line consumer does not: it starts a latency clock the instant `recv` returns, before parsing. Parsing a protobuf message takes time that is not queueing.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -332,8 +332,8 @@ The next chapter, Benchmark harnesses: Google Benchmark, pyperf and JMH, takes t
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), for the broader treatment of measuring and reasoning about latency.
-- Chapter 1, Latency vs bandwidth (Part 1), for latency as a distribution and why the book reports p50, p99 and p99.9 and never a mean.
-- Chapter 4, Benchmark harnesses (Part 1), for how harnesses handle warm-up and dead-code elimination in the measured loop.
+- Chapter 1, *Latency vs bandwidth*, in Part 1, for latency as a distribution and why the book reports p50, p99 and p99.9 and never a mean.
+- Chapter 4, *Benchmark harnesses*, in Part 1, for how harnesses handle warm-up and dead-code elimination in the measured loop.
 - `examples/common/MEASUREMENT.md` for the histogram parameters, the report format and the correction tests every kit passes.
 
 ---

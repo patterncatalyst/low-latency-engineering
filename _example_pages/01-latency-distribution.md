@@ -5,8 +5,8 @@ order: 1
 permalink: /examples/01-latency-distribution/
 card_eyebrow: "Example 01 · Chapter 1"
 card_title: "Per-parcel, batch-32 and a bimodal tail"
-card_blurb: "Equal throughput, very different shape: batching moves the p50 by two orders of magnitude, and one slow parcel in a hundred moves p99 while the median stays put."
-description: "Equal throughput, very different shape: batching moves the p50 by two orders of magnitude, and one slow parcel in a hundred moves p99 while the median stays put."
+card_blurb: "Equal throughput, a different shape: batching raises the p50 80x to 180x, and one slow parcel in a hundred moves p99 while the median stays put."
+description: "Equal throughput, a different shape: batching raises the p50 80x to 180x, and one slow parcel in a hundred moves p99 while the median stays put."
 languages: "C++ · Python · Java"
 ---
 

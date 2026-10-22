@@ -42,7 +42,7 @@ consumer_pid=""
 cleanup() { [[ -n $consumer_pid ]] && kill "$consumer_pid" 2>/dev/null || true; }
 trap cleanup EXIT
 
-# run_one LANG PORT CMD...: start the consumer, wait until its UDP socket is bound (ss; stdout is block-buffered into the file), drive the
+# run_one LANG PORT CMD...: start the consumer, wait until its UDP socket is bound (ss), drive the
 # simulator into it, wait for the consumer to exit and require exit 0.
 run_one() {
   local lang=$1 port=$2; shift 2

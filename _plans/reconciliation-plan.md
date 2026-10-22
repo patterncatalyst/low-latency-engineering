@@ -14,7 +14,7 @@ and committed but not asserted), `smoke` (ran once, not a measurement), `unverif
 
 | Run | What | Host profile |
 |---|---|---|
-| `r01-run1..3` | `verify.sh` of examples 00 to 04, run serially with the lab VM down; committed in `examples/NN-*/results/r01-run{1,2,3}/` | bare-metal host (XPS 15 9510, 16 logical CPUs), `virt: none`, governor `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), clocksource `tsc`, load average 0.35 to 1.61 at the start; "quiet host" |
+| `r01-run1..3` | `verify.sh` of examples 00 to 04, run serially with the lab VM down; committed in `examples/NN-*/results/r01-run{1,2,3}/`. Examples 00, 01, 02 and 04 re-measured 2026-10-22 after the consumer-hook and converter fixes (commit 26a547c); example 03's runs are from 2026-10-21 (commit 1811055) and pass the current `lowlat-report check` | bare-metal host (XPS 15 9510, 16 logical CPUs), `virt: none`, governor `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), clocksource `tsc`, load average 0.35 to 1.61 at the start; "quiet host" |
 | `r01-vm-smoke` | `ALLOW_BUSY=1 VM=1 examples/00-prerequisites/verify.sh`, 2026-10-21, `lowlat-target` running | host reports taken with the guest running (never quoted); guest output in `vm/`, labelled `vm` |
 
 Every `verify.log` in `r01-run1..3` ends with all criteria passing and contains no failed
@@ -39,7 +39,7 @@ never compared.
 | 01.2 | per-parcel and batch-32 throughput differ by less than 1 % | verified (r01-run1..3) | `throughput_mhz` in each report's `notes` |
 | 01.3 | batch-32 p50 >= 10x per-parcel p50 | verified (r01-run1..3) | batch-32 p50 15.2 to 15.5 ms against per-parcel 0.08 to 0.19 ms |
 | 01.4 | bimodal p99 >= 20x its own p50 | verified (r01-run1..3) | `verify.log`; margin is thin by design (1 % slow parcels sit on the p99 boundary) |
-| 01.5 | bimodal p50 < 1/4 of the same run's measured `slow_path_us` | verified (r01-run1..3) | replaced the cross-run p50 check after it failed once on the earlier S19 attempt (user decision 2026-10-21) |
+| 01.5 | bimodal p50 < 1/4 of the same run's measured `slow_path_us` | verified (r01-run1..3) | replaced the cross-run p50 check (bimodal p50 < 2x per-parcel p50) after it failed once in the earlier S19 runs: commit 1811055, `r01-run2/verify.log`, C++ got 158335 ns, needed < 147838 ns (user decision 2026-10-21) |
 
 ## Example 02: Little's Law and Amdahl's Law
 
@@ -53,7 +53,7 @@ never compared.
 | 02.6 | Python threads speedup at N = 4 < 1.3x (GIL) | verified (r01-run1..3) | 0.49 to 0.67x, `build.gil_enabled = true` |
 | 02.7 | Python processes speedup at N = 4 > 2x | verified (r01-run1..3) | 2.84 to 2.94x |
 | 02.8 | Unit tests (C++ model, Java JUnit, Python pytest) pass | verified (r01-run1..3) | `verify.log` |
-| 02.9 | `--sync free` (no barriers) beats the Amdahl prediction | observed, not asserted | 3.5 to 3.6x C++, 3.5x Java against 3.1x predicted |
+| 02.9 | `--sync free` (no barriers) beats the Amdahl prediction | observed, not asserted | 3.6x C++, 3.5 to 3.6x Java against 3.1x predicted |
 | 02.10 | Effective GHz recorded from `perf stat` | observed, not asserted | C++ 4.35 to 4.36, Java 4.34 to 4.35, Python 3.78 to 3.97 |
 
 ## Example 03: coordinated omission
@@ -92,7 +92,7 @@ never compared.
 | L.5 | `/dev/ptp0` (KVM virtual PTP) exists after every boot, `phc2sys` locks to it, Docker Engine is up | verified (r01-lab) | `r01-lab/guest-ptp.txt` (module loaded by `/etc/modules-load.d/ptp_kvm.conf`); `r01-lab/guest-phc2sys.txt` (state s2, offset within a few ns); `check-prereqs-vm.txt` PASS "guest: docker". The S13 lock relied on a hand `modprobe`; the rebuild found `/dev/ptp0` missing after reboot, now fixed in cloud-init |
 | L.6 | Snapshots `lab-ready` and `lab-ready-rt` exist; `ebpf-*` and `systems-*` domains unchanged | verified (r01-lab) | `r01-lab/snapshots.txt`; `r01-lab/domains.txt` (other labs shut off) |
 | L.7 | `VM=1 verify.sh` needs `ALLOW_BUSY=1` and ran end to end once | smoke (r01-vm-smoke) | `r01-vm-smoke/NOTES.md`; host reports in that directory were taken on a busy host and are never quoted |
-| L.8 | A guest RT kernel beats the stock kernel under load | unverified (not claimed) | the 60 s unpinned smoke did not show it (worst case worse on RT); needs vCPU pinning and many runs in r05 |
+| L.8 | A guest RT kernel beats the stock kernel under load | unverified (not claimed) | the S13 60 s unpinned smoke did not show it (worst case worse on RT; recorded in `_plans/r01-plan.md`, raw output not committed); needs vCPU pinning and many runs in r05 |
 
 ## Iteration log
 

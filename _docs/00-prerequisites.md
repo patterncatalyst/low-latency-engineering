@@ -32,13 +32,13 @@ The code is in `examples/00-prerequisites/`. The run script there builds and run
 
 Three toolchains build the examples on Fedora 44.
 
-- **C++20/23** with CMake. The examples tree is one CMake superproject driven by presets; The host reports GCC 16.2.1, Clang 22.1.8 and CMake 4.3.0; CMake 4.3 is the minimum.
+- **C++20/23** with CMake. The examples tree is one CMake superproject driven by presets. The host reports GCC 16.2.1, Clang 22.1.8 and CMake 4.3.0; CMake 4.3 is the minimum.
 - **Python 3.14** managed by `uv`, which builds the environment from `examples/pyproject.toml`.
 - **Java 25** with Maven on the plain JVM. The host reports OpenJDK 25.0.3.
 
 Containers use Docker Engine with the Compose plugin, on the host and in the guest, for control-plane work and throwaway builds, not a hot path.
 
-Dependencies are pinned to exact upstream releases, and `versions.env` is the machine-readable copy: protobuf 36.2 (Java 4.36.2, Python 7.36.2, one release train) with abseil 20250512.1, and the HdrHistogram kits HdrHistogram_c 0.12.1, `hdrhistogram` 0.10.8 and HdrHistogram 2.2.2. The protobuf compiler is built from the pinned tarball, never Fedora's package, so all three languages generate code from one `protoc`.
+Dependencies are pinned to exact upstream releases: protobuf 36.2 (Java 4.36.2, Python 7.36.2, one release train) with abseil 20250512.1, recorded in `versions.env`, and the HdrHistogram kits HdrHistogram_c 0.12.1, `hdrhistogram` 0.10.8 and HdrHistogram 2.2.2. The protobuf compiler is built from the pinned tarball, never Fedora's package, so all three languages generate code from one `protoc`.
 
 ### Checking the host
 
@@ -54,7 +54,7 @@ Every host number in this chapter carries one profile: bare-metal host, Intel Co
 
 {% include excalidraw.html file="00-lab-topology" alt="A host band holding lab-ssh.sh, libvirt-ssh-proxy, passt and Docker Engine, with a guest band inside it holding cyclictest, linuxptp, the PREEMPT_RT kernel, Docker and the snapshots lab-ready and lab-ready-rt; an amber ssh-over-AF_VSOCK path runs from the proxy to the guest, and guest traffic leaves through passt." caption="Figure 0.2 — The lab guest is reached by ssh over vsock and networked by passt, so the host needs no NAT, bridge or firewall change. VM numbers are never compared with bare-metal numbers." %}
 
-Real-time kernels, `isolcpus`, `tuned` and PTP change a machine in ways nobody should apply to the machine they work on. That happens in a disposable KVM guest; the host runs only unprivileged programs and Docker containers.
+Real-time kernels, `isolcpus`, `tuned` and PTP change a machine, so they live in a disposable KVM guest; the host runs only unprivileged programs and Docker containers.
 
 Every lab script keys off `LAB_PREFIX=lowlat`, so the guest is `lowlat-target`. A name guard refuses any domain not named `lowlat-*`. The lifecycle:
 
@@ -65,13 +65,13 @@ scripts/lab/lab-ssh.sh lowlat-target        # ssh as fedora
 scripts/lab/revert-vm.sh lowlat-target      # undo a destructive run
 ```
 
-Networking uses QEMU's passt backend. Outbound guest traffic leaves through ordinary unprivileged sockets that passt opens on the host, so there is no bridge, NAT, forwarding or firewall rule. The guest has no host-reachable address; ssh goes over AF_VSOCK through libvirt's ssh proxy, wrapped by `lab-ssh.sh`.
+Networking uses QEMU's passt backend. Guest traffic leaves through unprivileged host sockets, so there is no bridge, NAT, forwarding or firewall rule. The guest has no host-reachable address; ssh goes over AF_VSOCK through libvirt's ssh proxy, wrapped by `lab-ssh.sh`.
 
-The guest carries `realtime-tests` (which provides `cyclictest`), `linuxptp`, `tuned`, `perf`, the toolchains and Docker Engine; the snapshot `lab-ready` is the baseline on the stock kernel.
+The guest carries `realtime-tests` (which provides `cyclictest`), `linuxptp`, `tuned`, `perf`, the toolchains and Docker Engine, and loads `ptp_kvm` at boot so `/dev/ptp0` exposes the host clock; `lab-ready` is the stock-kernel baseline. `check-prereqs.sh --vm` passes 9 of 9 guest checks, and `phc2sys` locks to `/dev/ptp0` within a few ns (`results/r01-lab/`, VM).
 
-Fedora 44 ships no `kernel-rt`, and the stock kernel lacks `CONFIG_PREEMPT_RT`. `scripts/lab/build-rt-kernel.sh` therefore rebuilds Fedora's kernel SRPM `kernel-7.2.11-200.fc44` with the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway `docker run --rm` container from a digest-pinned `fedora:44` image, installs nothing on the host and fails unless the config contains `CONFIG_PREEMPT_RT=y`.
+Fedora 44 ships no `kernel-rt`, and the stock kernel lacks `CONFIG_PREEMPT_RT`. `scripts/lab/build-rt-kernel.sh` therefore rebuilds Fedora's kernel SRPM `kernel-7.2.11-200.fc44` with the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway, digest-pinned `fedora:44` container, installs nothing on the host and fails unless the config contains `CONFIG_PREEMPT_RT=y`.
 
-Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies the RPMs in over vsock, verifies the checksums, installs the RT kernel beside the stock one, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for the real-time chapters.
+Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies and verifies the RPMs, installs the RT kernel beside the stock one, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for the real-time chapters.
 
 ## The measurement pipeline
 
@@ -260,7 +260,7 @@ Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, 
 
 Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first, one syscall when a datagram is waiting, and parks in a `Selector` only when the queue is empty. It parses from a direct `ByteBuffer`, which protobuf-java reads in place, and reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is the `ParcelHandler` interface; the receiver calls one instance, so the call site is monomorphic and the JIT can inline it. All three request a 4 MiB receive buffer and print what the kernel granted.
 
-Example 00's handler is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the measured latency.
+Example 00's handler (`consumer.cpp`, `loop.py`, `LineReceiver.java`) is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the measured latency.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -293,7 +293,7 @@ def lane_handler(event: ParcelEvent, complete: Completion) -> None:
 
 C++ keeps its lane counts in the handler object. Python passes the event's intended time and a fresh `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; a later chapter passes its own handler to `run(ParcelHandler)`.
 
-Each consumer prints its listening line and flushes it. The run script waits on that line in a redirected stdout before starting the simulator; an unflushed line would sit in the buffer until exit. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
+Each consumer flushes stdout once its socket is bound, so a run script waiting on a ready line in a redirected stdout sees it at once, not at exit. Example 00's script polls `ss` for the bound socket instead. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
 
 ## Measure
 

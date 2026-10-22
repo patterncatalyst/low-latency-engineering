@@ -91,7 +91,7 @@ long first call would show more.
 
 Numbers here are host bare metal, untuned: governor `powersave`, tuned profile `balanced`,
 turbo on (recorded in `profile.json` and in every report). pyperf prints "the benchmark
-result may be unstable" and advises `pyperf system tune`. That warning is kept on purpose.
+result may be unstable" and advises `pyperf system tune`. The warning stays.
 Tuning the system (governor, turbo, CPU isolation) changes the host, which this repository
 does not do; it is taught in Part 5, inside the lab VM. `pyperf system show` is read-only and
 its output is saved as `pyperf.system-show.txt`.
@@ -102,7 +102,7 @@ its output is saved as `pyperf.system-show.txt`.
 |---|---|
 | Google Benchmark | 30 per benchmark: real time per iteration of each repetition |
 | JMH | every sampled invocation, from `rawDataHistogram` (ns per check digit) |
-| pyperf | 24 measured values (6 processes x 4), and the 30 warm-up values as a separate variant |
+| pyperf | 24 measured values (6 processes x 4), and the 31 warm-up values (13 from the calibration run, 3 per worker process) as a separate variant |
 
 Reports are whole nanoseconds, the report unit. A value under 0.5 ns is recorded as 0, which
 for the eliminated variants is the point. The `lowlat-report show` table prints microseconds

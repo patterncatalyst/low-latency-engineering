@@ -86,7 +86,7 @@ The arc is below. Chapters link as they ship; see the
 - Ch30 · Withstand and act: restart, failover, redundant paths, graceful degradation
 - Ch31 · Observe: feeding every tier back into observability
 
-## Part 9 — Capstone
+## Part 9 — The Whole Line
 - Ch32 · A latency-tiered line end to end, holding command latency while the data path is flooded
 
 ## Appendices

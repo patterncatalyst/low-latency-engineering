@@ -39,7 +39,7 @@ chapter of its own.
 | 6 Transports by Latency Budget | 19–25 | host (Docker Engine); DDS/Aeron latency runs in VM |
 | 7 Observing Without Wrecking It | 26–27 | host + LGTM |
 | 8 Failure: Detect, Withstand, Act, Observe | 28–31 | host |
-| 9 Capstone | 32 | VM |
+| 9 The Whole Line | 32 | VM |
 | Appendices | A–F | — |
 
 ## Foundations first (r01)
@@ -75,7 +75,7 @@ infrastructure plus the chapters that explain it:
 | r07 | Part 6b (Ch23–25): FIX/Artio, WebSockets + Kafka, Modbus + D-Bus | Appendix D (PTP) with Ch21 follow-up |
 | r08 | Part 7 (Ch26–27): low-overhead observability | LGTM via lgtm-docker-stack |
 | r09 | Part 8 (Ch28–31): failure model | Appendix A |
-| r10 | Part 9 (Ch32): capstone | VM; command latency held under data flood |
+| r10 | Part 9 (Ch32): the whole line | VM; command latency held under data flood |
 | r11 | Appendices C, E, F; coverage-map audit; manuscript build | Appendix C proves coverage of every reference topic |
 | r12 | Companion decks (100, 101 ×2, 201, appendix decks) | decks last, mined from finished content |
 

@@ -45,7 +45,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      kits: ${{ steps.diff.outputs.kits }}
+      run: ${{ steps.diff.outputs.run }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -58,11 +58,11 @@ jobs:
             base="${{ github.event.before }}"
           fi
           if ! files="$(git diff --name-only "$base" "${{ github.sha }}" 2>/dev/null)"; then
-            echo "kits=true" >> "$GITHUB_OUTPUT"   # cannot diff (new branch, force push): build everything
+            echo "run=true" >> "$GITHUB_OUTPUT"   # cannot diff (new branch, force push): build everything
           elif grep -qE '^(examples/|contracts/|scripts/|versions\.env$|\.github/workflows/ci\.yml$)' <<<"$files"; then
-            echo "kits=true" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "kits=false" >> "$GITHUB_OUTPUT"
+            echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
   # Static checks: front matter, Liquid hygiene, figures against _data/diagrams.yml,
@@ -82,7 +82,7 @@ jobs:
   # Builds protoc and the C++ protobuf library once and caches them for cpp and python.
   protobuf:
     needs: changes
-    if: needs.changes.outputs.kits == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
     steps:
@@ -103,7 +103,7 @@ jobs:
   # C++: the kits, the line simulator, the consumers and every chapter's C++ example.
   cpp:
     needs: [changes, protobuf]
-    if: needs.changes.outputs.kits == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
     steps:
@@ -126,7 +126,7 @@ jobs:
   # Python: the uv workspace, the generated protobuf modules, pytest and ruff.
   python:
     needs: [changes, protobuf]
-    if: needs.changes.outputs.kits == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
     env:
@@ -154,7 +154,7 @@ jobs:
   # Java: the aggregator builds every module (kits, simulator consumer, chapter examples) and runs the tests.
   java:
     needs: changes
-    if: needs.changes.outputs.kits == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
     env:

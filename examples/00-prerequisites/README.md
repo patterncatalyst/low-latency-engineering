@@ -29,8 +29,7 @@ check fails, and never changes the host.
 
 UDP `47200` (C++), `47201` (Python), `47202` (Java) on `127.0.0.1`; override the
 first with `PORT_BASE`. The languages run one after another, never concurrently.
-Readiness is detected by polling `ss` for the bound socket, because a consumer's
-stdout is block-buffered when redirected to a file.
+Readiness is detected by polling `ss` for the bound socket.
 
 ## Flags and environment
 
