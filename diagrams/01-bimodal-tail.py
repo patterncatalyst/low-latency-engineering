@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/01-bimodal-tail.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -37,17 +38,21 @@ edges = [
 ]
 
 notes = [
-    {"x": 440, "y": 28, "text": "p50 stays in the fast mode; p99 lands in the millisecond slow mode",
+    {"x": 440, "y": 28,
+        "text": "p50 stays in the fast mode; p99 lands in the millisecond slow mode",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 489, "y": 88, "text": "queued behind it", "anchor": "middle", "size": 11},
-    {"x": 440, "y": 365, "text": "1 parcel in 100 takes the slow path and delays the next few; the median never sees it.",
+    {"x": 440, "y": 365,
+        "text": ("1 parcel in 100 takes the slow path and delays the next few; "
+                 "the median never sees it."),
      "anchor": "middle", "size": 12},
 ]
 
 g.emit("01-bimodal-tail", 880, 385, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "01-bimodal-tail.svg"))
     json.load(open(os.path.join(g.OUT, "01-bimodal-tail.excalidraw")))
     print("ok: 01-bimodal-tail")

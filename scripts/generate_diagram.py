@@ -39,14 +39,21 @@ def _svg(width, height, bands, nodes, edges, notes):
     o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
              f'font-family="\'Red Hat Text\', system-ui, sans-serif" role="img">')
     o.append('<defs>'
-             '<marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>'
-             '<marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker>'
+             '<marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" '
+             'markerWidth="9" markerHeight="9" orient="auto-start-reverse">'
+             '<path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>'
+             '<marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" '
+             'markerWidth="9" markerHeight="9" orient="auto-start-reverse">'
+             '<path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker>'
              '</defs>')
     for b in bands:
-        x,y,w,h,label,fill = b["x"],b["y"],b["w"],b["h"],b.get("label",""),b.get("fill","#fafafa")
-        o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="#ddd"/>')
+        x, y, w, h = b["x"], b["y"], b["w"], b["h"]
+        label, fill = b.get("label", ""), b.get("fill", "#fafafa")
+        o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" '
+                 f'stroke="#ddd"/>')
         if label:
-            o.append(f'<text x="{x+12}" y="{y+20}" font-size="12" font-weight="700" fill="#1d1d1d">{esc(label)}</text>')
+            o.append(f'<text x="{x+12}" y="{y+20}" font-size="12" font-weight="700" '
+                     f'fill="#1d1d1d">{esc(label)}</text>')
     # Nodes are drawn BEFORE edges so arrowheads render on top of the boxes
     # (otherwise a box painted afterwards hides the head and the arrow looks
     # like it stops short or disappears behind the box).
@@ -55,7 +62,8 @@ def _svg(width, height, bands, nodes, edges, notes):
         dash = ' stroke-dasharray="6 4"' if n.get("style")=="ghost" else ""
         sw = 2 if n.get("style") in ("box","accent","user","ink") else 1.5
         x,y,w,h = n["x"],n["y"],n["w"],n["h"]
-        o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"{dash}/>')
+        o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{fill}" '
+                 f'stroke="{stroke}" stroke-width="{sw}"{dash}/>')
         lines = n["lines"]
         cx = x+w/2
         tcol = INK
@@ -63,25 +71,33 @@ def _svg(width, height, bands, nodes, edges, notes):
         n_extra = len(lines)-1
         block_h = 17 + n_extra*15
         ty = y + (h-block_h)/2 + 14
-        o.append(f'<text x="{cx}" y="{ty}" font-size="13.5" font-weight="700" fill="{tcol}" text-anchor="middle">{esc(lines[0])}</text>')
+        o.append(f'<text x="{cx}" y="{ty}" font-size="13.5" font-weight="700" fill="{tcol}" '
+                 f'text-anchor="middle">{esc(lines[0])}</text>')
         for i,ln in enumerate(lines[1:]):
-            o.append(f'<text x="{cx}" y="{ty+17+i*15}" font-size="11.5" fill="{scol}" text-anchor="middle">{esc(ln)}</text>')
+            o.append(f'<text x="{cx}" y="{ty+17+i*15}" font-size="11.5" fill="{scol}" '
+                     f'text-anchor="middle">{esc(ln)}</text>')
     for e in edges:
         col = "#b8650a" if e.get("amber") else "#555"
         mk = "am" if e.get("amber") else "a"
         dash = ' stroke-dasharray="5 4"' if e.get("dashed") else ""
         ms = f' marker-start="url(#{mk})"' if e.get("bidir") else ""
-        o.append(f'<path d="M{e["x1"]},{e["y1"]} L{e["x2"]},{e["y2"]}" fill="none" stroke="{col}" stroke-width="2"{dash}{ms} marker-end="url(#{mk})"/>')
+        o.append(f'<path d="M{e["x1"]},{e["y1"]} L{e["x2"]},{e["y2"]}" fill="none" '
+                 f'stroke="{col}" stroke-width="2"{dash}{ms} marker-end="url(#{mk})"/>')
         if e.get("label"):
             mx,my = (e["x1"]+e["x2"])/2, (e["y1"]+e["y2"])/2
             lx,ly = mx+e.get("lx",6), my+e.get("ly",-6)
             # white halo under the label so it stays legible over a line/box
-            o.append(f'<text x="{lx}" y="{ly}" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">{esc(e["label"])}</text>')
-            o.append(f'<text x="{lx}" y="{ly}" font-size="11" fill="{col}" text-anchor="middle">{esc(e["label"])}</text>')
+            o.append(f'<text x="{lx}" y="{ly}" font-size="11" fill="#ffffff" stroke="#ffffff" '
+                     f'stroke-width="3" paint-order="stroke" text-anchor="middle">'
+                     f'{esc(e["label"])}</text>')
+            o.append(f'<text x="{lx}" y="{ly}" font-size="11" fill="{col}" '
+                     f'text-anchor="middle">{esc(e["label"])}</text>')
     for t in notes:
         anchor = t.get("anchor","start")
         bold = ' font-weight="700"' if t.get("bold") else ''
-        o.append(f'<text x="{t["x"]}" y="{t["y"]}" font-size="{t.get("size",11)}" fill="{t.get("color","#1d1d1d")}" text-anchor="{anchor}"{bold}>{esc(t["text"])}</text>')
+        o.append(f'<text x="{t["x"]}" y="{t["y"]}" font-size="{t.get("size",11)}" '
+                 f'fill="{t.get("color","#1d1d1d")}" text-anchor="{anchor}"{bold}>'
+                 f'{esc(t["text"])}</text>')
     o.append('</svg>')
     return "\n".join(o)
 
@@ -97,20 +113,25 @@ def _exc(bands, nodes, edges, notes):
     def text(x,y,s,size=14,color="#111111"):
         els.append({"id":f"t{_seed()}","type":"text","x":x,"y":y,"width":max(40,len(s)*size*0.55),
             "height":size*1.25,"angle":0,"strokeColor":color,"backgroundColor":"transparent","fillStyle":"solid",
-            "strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":None,
-            "roundness":None,"seed":_seed(),"versionNonce":_seed(),"isDeleted":False,"boundElements":[],
-            "updated":1,"link":None,"locked":False,"text":s,"fontSize":size,"fontFamily":1,"textAlign":"left",
-            "verticalAlign":"top","containerId":None,"originalText":s,"lineHeight":1.25,"baseline":size})
+            "strokeWidth":1,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],
+            "frameId":None,"roundness":None,"seed":_seed(),"versionNonce":_seed(),
+            "isDeleted":False,"boundElements":[],"updated":1,"link":None,"locked":False,
+            "text":s,"fontSize":size,"fontFamily":1,"textAlign":"left",
+            "verticalAlign":"top","containerId":None,"originalText":s,"lineHeight":1.25,
+            "baseline":size})
     def arrow(x1,y1,x2,y2,color="#555555",dashed=False):
         els.append({"id":f"a{_seed()}","type":"arrow","x":x1,"y":y1,"width":abs(x2-x1),"height":abs(y2-y1),
             "angle":0,"strokeColor":color,"backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,
-            "strokeStyle":"dashed" if dashed else "solid","roughness":1,"opacity":100,"groupIds":[],"frameId":None,
-            "roundness":{"type":2},"seed":_seed(),"versionNonce":_seed(),"isDeleted":False,"boundElements":[],
-            "updated":1,"link":None,"locked":False,"points":[[0,0],[x2-x1,y2-y1]],"lastCommittedPoint":None,
-            "startBinding":None,"endBinding":None,"startArrowhead":None,"endArrowhead":"arrow"})
+            "strokeStyle":"dashed" if dashed else "solid","roughness":1,"opacity":100,"groupIds":[],
+            "frameId":None,"roundness":{"type":2},"seed":_seed(),"versionNonce":_seed(),
+            "isDeleted":False,"boundElements":[],"updated":1,"link":None,"locked":False,
+            "points":[[0,0],[x2-x1,y2-y1]],"lastCommittedPoint":None,
+            "startBinding":None,"endBinding":None,"startArrowhead":None,
+            "endArrowhead":"arrow"})
     for b in bands:
         rect(b["x"],b["y"],b["w"],b["h"],"#dddddd",b.get("fill","#fafafa"))
-        if b.get("label"): text(b["x"]+12,b["y"]+6,b["label"],12,"#555555")
+        if b.get("label"):
+            text(b["x"]+12,b["y"]+6,b["label"],12,"#555555")
     for n in nodes:
         fill,stroke = STYLES[n.get("style","box")]
         rect(n["x"],n["y"],n["w"],n["h"],stroke,fill,dashed=(n.get("style")=="ghost"))

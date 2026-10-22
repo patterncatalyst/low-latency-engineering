@@ -59,7 +59,7 @@ jobs:
           fi
           if ! files="$(git diff --name-only "$base" "${{ github.sha }}" 2>/dev/null)"; then
             echo "run=true" >> "$GITHUB_OUTPUT"   # cannot diff (new branch, force push): build everything
-          elif grep -qE '^(examples/|contracts/|scripts/|versions\.env$|\.github/workflows/ci\.yml$)' <<<"$files"; then
+          elif grep -qE '^(examples/|contracts/|scripts/|diagrams/|versions\.env$|\.github/workflows/ci\.yml$)' <<<"$files"; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -149,7 +149,7 @@ jobs:
         run: |
           uv sync --all-packages
           uv run pytest
-          uv run ruff check
+          uv run ruff check . ../scripts ../diagrams
 
   # Java: the aggregator builds every module (kits, simulator consumer, chapter examples) and runs the tests.
   java:

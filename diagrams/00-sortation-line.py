@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/00-sortation-line.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -24,7 +25,7 @@ stations = [
 ]
 
 nodes = []
-for x, (style, lines) in zip(xs, stations):
+for x, (style, lines) in zip(xs, stations, strict=True):
     if style != "ghost":
         nodes.append({"x": x, "y": Y, "w": W, "h": H, "style": style, "lines": lines})
 
@@ -60,7 +61,8 @@ notes = [
 g.emit("00-sortation-line", 880, 420, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "00-sortation-line.svg"))
     json.load(open(os.path.join(g.OUT, "00-sortation-line.excalidraw")))
     print("ok: 00-sortation-line")

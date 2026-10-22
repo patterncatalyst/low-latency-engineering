@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/00-measurement-pipeline.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -13,15 +14,18 @@ g.OUT = os.path.join(ROOT, "assets", "diagrams")
 bands = []
 
 nodes = [
-    {"x": 20, "y": 175, "w": 120, "h": 70, "style": "user", "lines": ["line-simulator", "C++, 1 kHz"]},
+    {"x": 20, "y": 175, "w": 120, "h": 70, "style": "user",
+        "lines": ["line-simulator", "C++, 1 kHz"]},
     {"x": 165, "y": 175, "w": 120, "h": 70, "style": "kernel",
      "lines": ["UDP datagrams", "127.0.0.1"]},
     {"x": 330, "y": 100, "w": 130, "h": 60, "style": "user", "lines": ["C++", "-> HdrHistogram"]},
-    {"x": 330, "y": 190, "w": 130, "h": 60, "style": "user", "lines": ["Python", "-> HdrHistogram"]},
+    {"x": 330, "y": 190, "w": 130, "h": 60, "style": "user",
+        "lines": ["Python", "-> HdrHistogram"]},
     {"x": 330, "y": 280, "w": 130, "h": 60, "style": "user", "lines": ["Java", "-> HdrHistogram"]},
     {"x": 500, "y": 175, "w": 160, "h": 70, "style": "ink",
      "lines": ["lowlat-report/1", "JSON + machine profile"]},
-    {"x": 500, "y": 80, "w": 160, "h": 60, "style": "sub", "lines": ["profile.sh", "machine profile"]},
+    {"x": 500, "y": 80, "w": 160, "h": 60, "style": "sub",
+        "lines": ["profile.sh", "machine profile"]},
     {"x": 700, "y": 175, "w": 160, "h": 70, "style": "accent",
      "lines": ["lowlat-report check", "schema + decode,", "recompute percentiles"]},
 ]
@@ -48,7 +52,8 @@ notes = [
 g.emit("00-measurement-pipeline", 880, 395, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "00-measurement-pipeline.svg"))
     json.load(open(os.path.join(g.OUT, "00-measurement-pipeline.excalidraw")))
     print("ok: 00-measurement-pipeline")

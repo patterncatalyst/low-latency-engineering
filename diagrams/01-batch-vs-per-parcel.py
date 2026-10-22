@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/01-batch-vs-per-parcel.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -43,16 +44,19 @@ nodes.append({"x": 735, "y": 300, "w": 120, "h": 46, "style": "ink",
 edges.append({"x1": 624, "y1": 323, "x2": 735, "y2": 323})
 
 notes = [
-    {"x": 440, "y": 28, "text": "Same arrivals, equal throughput: batching makes the first parcel wait ~31 ms",
+    {"x": 440, "y": 28,
+        "text": "Same arrivals, equal throughput: batching makes the first parcel wait ~31 ms",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
-    {"x": 440, "y": 384, "text": "Both designs handle 1 kHz arrivals, less than 1 % apart in throughput.",
+    {"x": 440, "y": 384,
+        "text": "Both designs handle 1 kHz arrivals, less than 1 % apart in throughput.",
      "anchor": "middle", "size": 12},
 ]
 
 g.emit("01-batch-vs-per-parcel", 880, 400, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "01-batch-vs-per-parcel.svg"))
     json.load(open(os.path.join(g.OUT, "01-batch-vs-per-parcel.excalidraw")))
     print("ok: 01-batch-vs-per-parcel")

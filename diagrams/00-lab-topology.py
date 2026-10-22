@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/00-lab-topology.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -23,13 +24,19 @@ nodes = [
      "lines": ["libvirt-ssh-proxy", "ssh to vsock"]},
     {"x": 40, "y": 290, "w": 170, "h": 60, "style": "sub",
      "lines": ["passt", "user-mode network"]},
-    {"x": 240, "y": 90, "w": 150, "h": 60, "style": "sub", "lines": ["Docker Engine", "host containers"]},
-    {"x": 450, "y": 100, "w": 175, "h": 60, "style": "user", "lines": ["cyclictest", "realtime-tests"]},
+    {"x": 240, "y": 90, "w": 150, "h": 60, "style": "sub",
+        "lines": ["Docker Engine", "host containers"]},
+    {"x": 450, "y": 100, "w": 175, "h": 60, "style": "user",
+        "lines": ["cyclictest", "realtime-tests"]},
     {"x": 645, "y": 100, "w": 175, "h": 60, "style": "sub", "lines": ["linuxptp", "chrony, tuned"]},
-    {"x": 450, "y": 190, "w": 175, "h": 60, "style": "kernel", "lines": ["Linux kernel", "PREEMPT_RT"]},
-    {"x": 645, "y": 190, "w": 175, "h": 60, "style": "sub", "lines": ["Docker", "guest containers"]},
-    {"x": 450, "y": 290, "w": 175, "h": 56, "style": "sub", "lines": ["lab-ready", "tooled baseline"]},
-    {"x": 645, "y": 290, "w": 175, "h": 56, "style": "sub", "lines": ["lab-ready-rt", "RT kernel snapshot"]},
+    {"x": 450, "y": 190, "w": 175, "h": 60, "style": "kernel",
+        "lines": ["Linux kernel", "PREEMPT_RT"]},
+    {"x": 645, "y": 190, "w": 175, "h": 60, "style": "sub",
+        "lines": ["Docker", "guest containers"]},
+    {"x": 450, "y": 290, "w": 175, "h": 56, "style": "sub",
+        "lines": ["lab-ready", "tooled baseline"]},
+    {"x": 645, "y": 290, "w": 175, "h": 56, "style": "sub",
+        "lines": ["lab-ready-rt", "RT kernel snapshot"]},
 ]
 
 edges = [
@@ -50,7 +57,8 @@ notes = [
 g.emit("00-lab-topology", 880, 425, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "00-lab-topology.svg"))
     json.load(open(os.path.join(g.OUT, "00-lab-topology.excalidraw")))
     print("ok: 00-lab-topology")

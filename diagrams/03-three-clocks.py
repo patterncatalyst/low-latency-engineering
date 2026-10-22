@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/03-three-clocks.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -18,8 +19,8 @@ stamps = [
     ("user", ["Dequeue", "consumer receives"]),
     ("user", ["Done", "work finished"]),
 ]
-nodes = [{"x": c - 65, "y": 60, "w": 130, "h": 56, "style": s, "lines": l}
-         for c, (s, l) in zip(CX, stamps)]
+nodes = [{"x": c - 65, "y": 60, "w": 130, "h": 56, "style": s, "lines": lines}
+         for c, (s, lines) in zip(CX, stamps, strict=True)]
 
 # interval bars, left edge at the clock's start
 nodes += [
@@ -38,17 +39,20 @@ edges = [
 ]
 
 notes = [
-    {"x": 440, "y": 28, "text": "Same parcel, three clocks: only intended-time starts at the schedule",
+    {"x": 440, "y": 28,
+        "text": "Same parcel, three clocks: only intended-time starts at the schedule",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 120, "y": 150, "text": "time ->", "anchor": "start", "size": 12},
-    {"x": 440, "y": 366, "text": "A stall adds to the first interval; the other two start after the wait.",
+    {"x": 440, "y": 366,
+        "text": "A stall adds to the first interval; the other two start after the wait.",
      "anchor": "middle", "size": 12},
 ]
 
 g.emit("03-three-clocks", 880, 390, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "03-three-clocks.svg"))
     json.load(open(os.path.join(g.OUT, "03-three-clocks.excalidraw")))
     print("ok: 03-three-clocks")

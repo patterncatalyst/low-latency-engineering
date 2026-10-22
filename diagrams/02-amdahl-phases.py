@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/02-amdahl-phases.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -46,23 +47,27 @@ nodes.append({"x": 400, "y": 210, "w": 450, "h": 110, "style": "ink",
                         "Java             3.08-3.09x -> 2.71-2.74x"]})
 
 notes = [
-    {"x": 440, "y": 28, "text": "The serial phase never shrinks, so N workers give less than N times",
+    {"x": 440, "y": 28,
+        "text": "The serial phase never shrinks, so N workers give less than N times",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 560, "y": 148, "text": "serial fraction s ~ 0.095-0.099 (C++, Java),",
      "size": 12},
     {"x": 560, "y": 166, "text": "measured as lock time / wall time at N = 1",
      "size": 12},
-    {"x": 110, "y": 350, "text": "grey bar = barrier; amber = serial phase (one worker at a time holds the lock)",
+    {"x": 110, "y": 350,
+        "text": "grey bar = barrier; amber = serial phase (one worker at a time holds the lock)",
      "size": 12},
     {"x": 850, "y": 350, "text": "time ->", "anchor": "end", "size": 12},
-    {"x": 440, "y": 385, "text": "Speedup is capped at 1 / s; the measured value sits under the prediction.",
+    {"x": 440, "y": 385,
+        "text": "Speedup is capped at 1 / s; the measured value sits under the prediction.",
      "anchor": "middle", "size": 12},
 ]
 
 g.emit("02-amdahl-phases", 880, 405, bands=bands, nodes=nodes, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "02-amdahl-phases.svg"))
     json.load(open(os.path.join(g.OUT, "02-amdahl-phases.excalidraw")))
     print("ok: 02-amdahl-phases")

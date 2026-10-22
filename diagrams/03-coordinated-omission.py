@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/03-coordinated-omission.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -12,7 +13,8 @@ g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 bands = [
     {"x": 20, "y": 44, "w": 840, "h": 170, "label": "UDP run: ~200 parcels queue behind the stall"},
-    {"x": 20, "y": 226, "w": 840, "h": 170, "label": "Closed-loop client: 1 request per 1 ms, same stall"},
+    {"x": 20, "y": 226, "w": 840, "h": 170,
+        "label": "Closed-loop client: 1 request per 1 ms, same stall"},
 ]
 
 nodes = [
@@ -53,14 +55,16 @@ edges = [
 notes = [
     {"x": 440, "y": 28, "text": "A 200 ms stall: only the schedule clock and the back-fill see it",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
-    {"x": 440, "y": 420, "text": "Dashed: samples the stalled client never took, added back by the correction.",
+    {"x": 440, "y": 420,
+        "text": "Dashed: samples the stalled client never took, added back by the correction.",
      "anchor": "middle", "size": 12},
 ]
 
 g.emit("03-coordinated-omission", 880, 440, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "03-coordinated-omission.svg"))
     json.load(open(os.path.join(g.OUT, "03-coordinated-omission.excalidraw")))
     print("ok: 03-coordinated-omission")

@@ -17,8 +17,8 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
   diagrams-yml   every _data/diagrams.yml name has both files; chapters 0-4 have >= 2 entries
   codetabs       `langs` count equals the number of fenced blocks that follow the tag
   shell-syntax   `bash -n` on every *.sh under scripts/ and examples/ (not .venv/build/target)
-  means          "mean latency"/"average latency" fail (unless the sentence negates it); every other use of mean/average in
-                 _docs is printed for review
+  means          "mean latency"/"average latency" fail (unless the sentence negates it);
+                 every other use of mean/average in _docs is printed for review
 """
 import json
 import re
@@ -248,7 +248,8 @@ def check_shell_syntax() -> None:
 
 # ---------------------------------------------------------------- no mean latency
 BAD_MEAN = re.compile(r"\b(mean|average|avg)\s+(latenc(?:y|ies)|response\s+time)", re.I)
-NEGATED = re.compile(r"\b(never|not|no|nor|without|n't|none)\b", re.I)  # "never quotes a mean latency"
+# "never quotes a mean latency"
+NEGATED = re.compile(r"\b(never|not|no|nor|without|n't|none)\b", re.I)
 MEAN = re.compile(r"\b(mean|means|average|averages|avg)\b", re.I)
 
 

@@ -2,7 +2,8 @@
 
 Regenerate from the repo root:  python3 diagrams/02-littles-law.py
 """
-import os, sys
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -43,7 +44,8 @@ edges = [
 ]
 
 notes = [
-    {"x": 440, "y": 28, "text": "L = lambda x W: parcels in the system = arrival rate x residence time",
+    {"x": 440, "y": 28,
+        "text": "L = lambda x W: parcels in the system = arrival rate x residence time",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 440, "y": 448, "text": "W-bar is a modelling input to the law, never a reported latency.",
      "anchor": "middle", "size": 12},
@@ -52,7 +54,8 @@ notes = [
 g.emit("02-littles-law", 880, 460, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
-    import json, xml.dom.minidom
+    import json
+    import xml.dom.minidom
     xml.dom.minidom.parse(os.path.join(g.OUT, "02-littles-law.svg"))
     json.load(open(os.path.join(g.OUT, "02-littles-law.excalidraw")))
     print("ok: 02-littles-law")
