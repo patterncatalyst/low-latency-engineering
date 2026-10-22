@@ -17,7 +17,7 @@ target_compile_options(lowlat_warnings INTERFACE -Wall -Wextra -Wpedantic)
 
 # -DLOWLAT_SANITIZE=address,undefined (the "sanitize" preset) instruments the
 # first-party targets through the same interface. The generated protobuf code
-# (lowlat_proto) stays uninstrumented on purpose: protobuf's headers switch on
+# (lowlat_proto) stays uninstrumented: protobuf's headers switch on
 # extra has-bit checks under ASan that the pinned, unsanitized libprotobuf does
 # not match.
 set(LOWLAT_SANITIZE "" CACHE STRING "Comma-separated -fsanitize= list for first-party targets")
