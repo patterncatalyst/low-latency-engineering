@@ -5,10 +5,9 @@ the closed-loop phase records one request stream plain and through ``record_corr
 Single thread under the GIL: the per-datagram interpreter cost is part of every number.
 """
 
-from __future__ import annotations
-
 import socket
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from lowlat.line.v1.parcel_pb2 import ParcelEvent
@@ -18,6 +17,12 @@ from lowlat_measure import Recorder
 
 EXAMPLE = "03-coordinated-omission"
 EXPECTED_INTERVAL_NS = 1_000_000  # the closed-loop client's 1 ms request interval
+
+# Probe variant -> (clock name for the report notes, the clock).
+CLOCKS: dict[str, tuple[str, Callable[[], int]]] = {
+    "clock-read": ("time.monotonic_ns", time.monotonic_ns),
+    "clock-read-perf_counter_ns": ("time.perf_counter_ns", time.perf_counter_ns),
+}
 
 
 @dataclass
@@ -113,12 +118,8 @@ def closed_loop(rec: Recorders, requests: int, *, stall_ms: int, stall_seq: int)
 
 def clock_probe(calls: int) -> dict[str, Recorder]:
     """Cost of one clock read: two back-to-back reads, the difference recorded."""
-    probes = {
-        "clock-read": ("time.monotonic_ns", time.monotonic_ns),
-        "clock-read-perf_counter_ns": ("time.perf_counter_ns", time.perf_counter_ns),
-    }
     out: dict[str, Recorder] = {}
-    for variant, (_, clock) in probes.items():
+    for variant, (_, clock) in CLOCKS.items():
         rec = Recorder(EXAMPLE, variant)
         record = rec.record
         for _ in range(calls):

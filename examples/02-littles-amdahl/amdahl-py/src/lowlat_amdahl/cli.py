@@ -13,23 +13,23 @@ every parcel updating one shared sort-plan table under one lock. Two executors f
 Each repetition's wall time is recorded in the measurement kit (variant ``amdahl-<mode>-n<N>``).
 """
 
-from __future__ import annotations
-
 import argparse
 import multiprocessing as mp
 import threading
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import AbstractContextManager, ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter_ns
 from typing import Any
 
 from lowlat_measure import Recorder
-from lowlat_measure.recorder import load_profile
+from lowlat_measure.recorder import require_profile
+from lowlat_measure.table import format_rows
 
 from lowlat_amdahl.model import amdahl_speedup
-from lowlat_amdahl.work import CELLS, process_share
+from lowlat_amdahl.work import CELLS, Meeting, process_share
 
 # Process-pool workers get the shared table through the pool initializer (the only place a
 # multiprocessing.Array may be handed over) and keep it here.
@@ -40,7 +40,9 @@ _shared: dict[str, Any] = {}
 LOCK_ITERS = {"threads": 85, "processes": 60}
 
 
-def _init_worker(cell: Any, lock: Any, wave: Any) -> None:
+def _init_worker(
+    cell: MutableSequence[int], lock: AbstractContextManager[object], wave: Meeting | None
+) -> None:
     _shared["cell"] = cell
     _shared["lock"] = lock
     _shared["wave"] = wave
@@ -62,7 +64,7 @@ def _share_in_process(args: tuple[int, int, int, int, int, int, bool]) -> int:
     )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Options:
     batch: int
     round_parcels: int
@@ -78,38 +80,56 @@ class Options:
 
 
 class Bench:
-    """One mode (threads or processes): pools per N, a shared table, one batch per call."""
+    """One mode (threads or processes): pools per N, a shared table, one batch per call.
+
+    A context manager: leaving the ``with`` block shuts the pools down, and so does a
+    failure while they are being built.
+    """
 
     def __init__(self, mode: str, opts: Options) -> None:
         self.mode = mode
         self.opts = opts
-        if mode == "threads":
-            self.cell: Any = [0] * CELLS
-            self.lock: Any = threading.Lock()
-            self.waves: dict[int, Any] = {n: threading.Barrier(n, timeout=60) for n in opts.workers}
-            self.pools: dict[int, Executor] = {
-                n: ThreadPoolExecutor(max_workers=n) for n in opts.workers
-            }
-        else:
-            self.cell = mp.Array("q", CELLS, lock=False)
-            self.lock = mp.Lock()
-            self.waves = {n: mp.Barrier(n, timeout=60) for n in opts.workers}
-            self.pools = {
-                n: ProcessPoolExecutor(
-                    max_workers=n,
-                    initializer=_init_worker,
-                    initargs=(self.cell, self.lock, self.waves[n] if opts.phased else None),
-                )
-                for n in opts.workers
-            }
-        for n, pool in self.pools.items():  # start every worker before anything is timed
-            list(pool.map(_noop, range(n * 2)))
+        self.cell: MutableSequence[int]
+        self.lock: AbstractContextManager[object]
+        self.waves: dict[int, Meeting]
+        self.pools: dict[int, Executor]
+        with ExitStack() as stack:
+            if mode == "threads":
+                self.cell = [0] * CELLS
+                self.lock = threading.Lock()
+                self.waves = {n: threading.Barrier(n, timeout=60) for n in opts.workers}
+                self.pools = {
+                    n: stack.enter_context(ThreadPoolExecutor(max_workers=n))
+                    for n in opts.workers
+                }
+            else:
+                self.cell = mp.Array("q", CELLS, lock=False)
+                self.lock = mp.Lock()
+                self.waves = {n: mp.Barrier(n, timeout=60) for n in opts.workers}
+                self.pools = {
+                    n: stack.enter_context(
+                        ProcessPoolExecutor(
+                            max_workers=n,
+                            initializer=_init_worker,
+                            initargs=(self.cell, self.lock, self.waves[n] if opts.phased else None),
+                        )
+                    )
+                    for n in opts.workers
+                }
+            for n, pool in self.pools.items():  # start every worker before anything is timed
+                list(pool.map(_noop, range(n * 2)))
+            self._stack = stack.pop_all()
+
+    def __enter__(self) -> Bench:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self._stack.close()
 
     def run(self, n: int, *, timed: bool = False) -> tuple[int, int]:
         """One batch on ``n`` workers. Returns (wall ns, ns inside the lock when timed)."""
         o = self.opts
-        for i in range(CELLS):
-            self.cell[i] = 0
+        self.cell[:] = [0] * CELLS
         pool = self.pools[n]
         t0 = perf_counter_ns()
         if self.mode == "threads":
@@ -140,11 +160,7 @@ class Bench:
         return perf_counter_ns() - t0, in_lock
 
     def checksum(self) -> int:
-        return sum(self.cell[i] for i in range(CELLS))
-
-    def close(self) -> None:
-        for pool in self.pools.values():
-            pool.shutdown()
+        return sum(self.cell)
 
 
 def _noop(_: int) -> int:
@@ -152,11 +168,7 @@ def _noop(_: int) -> int:
 
 
 def run_mode(mode: str, opts: Options) -> list[dict[str, Any]]:
-    for n in opts.workers:
-        if opts.batch % (n * opts.round_parcels):
-            raise SystemExit(f"--batch must be a multiple of N x --round-parcels for N={n}")
-    bench = Bench(mode, opts)
-    try:
+    with Bench(mode, opts) as bench:
         for _ in range(opts.warmup):
             for n in opts.workers:
                 bench.run(n)
@@ -182,8 +194,6 @@ def run_mode(mode: str, opts: Options) -> list[dict[str, Any]]:
                 if bench.checksum() != reference:
                     raise RuntimeError(f"N={n}: sort-plan table differs from the one-worker table")
                 recorders[n].record(wall)
-    finally:
-        bench.close()
 
     p50_one = recorders[opts.workers[0]].percentiles()["p50"]
     reports = []
@@ -220,7 +230,7 @@ def run_mode(mode: str, opts: Options) -> list[dict[str, Any]]:
             f"sync={'phased' if opts.phased else 'free'}",
             model,
         )
-        rec.print_summary()
+        print(format_rows([report]))
         scope = "the lock only; the GIL is not in the model" if mode == "threads" else "the lock"
         print(
             f"  {mode} N={n}: Amdahl predicts {predicted:.2f}x ({scope}), "
@@ -230,7 +240,7 @@ def run_mode(mode: str, opts: Options) -> list[dict[str, Any]]:
     return reports
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="amdahl-py", description=__doc__.split("\n\n")[0])
     ap.add_argument("--batch", type=int, default=1200)
     ap.add_argument("--round-parcels", type=int, default=60, help="parcels per worker per wave")
@@ -251,8 +261,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument(
         "--modes", nargs="+", choices=["threads", "processes"], default=["threads", "processes"]
     )
+    return ap
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    ap = build_parser()
     a = ap.parse_args(argv)
-    load_profile()  # a number without a profile is not publishable
+    for n in a.workers:
+        if a.batch % (n * a.round_parcels):
+            ap.error(f"--batch must be a multiple of N x --round-parcels for N={n}")
+    if not require_profile("amdahl-py"):  # a number without a profile is not publishable
+        return 2
     a.report_dir.mkdir(parents=True, exist_ok=True)
     for mode in a.modes:
         opts = Options(
@@ -260,7 +279,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             round_parcels=a.round_parcels,
             phased=a.sync == "phased",
             parallel_iters=a.parallel_iters,
-            lock_iters=a.lock_iters or LOCK_ITERS[mode],
+            lock_iters=LOCK_ITERS[mode] if a.lock_iters is None else a.lock_iters,
             reps=a.reps,
             warmup=a.warmup,
             calibration_runs=5,

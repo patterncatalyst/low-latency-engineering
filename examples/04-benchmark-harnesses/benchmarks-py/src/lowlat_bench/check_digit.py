@@ -7,6 +7,7 @@ weighted sum up to a multiple of ten.
 from itertools import cycle
 
 BODY_DIGITS = 17
+PREFIX_COUNT = 1024  # size of the prefix set the benchmarks share
 
 
 def check_digit(digits17: str) -> int:

@@ -1,7 +1,5 @@
 """Amdahl's Law, a modelling tool: it takes a time fraction as input, never a latency."""
 
-from __future__ import annotations
-
 
 def amdahl_speedup(serial_fraction: float, workers: int) -> float:
     """Speedup on ``workers`` workers when ``serial_fraction`` s of the one-worker run is serial.

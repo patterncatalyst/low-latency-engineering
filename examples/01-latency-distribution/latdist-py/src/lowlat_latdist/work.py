@@ -1,7 +1,5 @@
 """The slow "re-lookup" path: real CPU work calibrated to a target duration."""
 
-from __future__ import annotations
-
 import time
 
 _MASK = (1 << 64) - 1

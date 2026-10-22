@@ -12,9 +12,9 @@ the JSON (``warmups``) where they can be compared with the measured ``values``.
 
 import pyperf
 
-from lowlat_bench.check_digit import check_digit, prefixes
+from lowlat_bench.check_digit import PREFIX_COUNT, check_digit, prefixes
 
-PREFIXES = prefixes(1024)
+PREFIXES = prefixes(PREFIX_COUNT)
 
 
 def check_all() -> None:
@@ -24,6 +24,6 @@ def check_all() -> None:
 
 if __name__ == "__main__":
     runner = pyperf.Runner()
-    runner.metadata["description"] = "SSCC-18 check digit over 1024 prefixes"
+    runner.metadata["description"] = f"SSCC-18 check digit over {PREFIX_COUNT} prefixes"
     # inner_loops: each call checks len(PREFIXES) prefixes, so pyperf reports time per check.
     runner.bench_func("check_digit", check_all, inner_loops=len(PREFIXES))

@@ -4,8 +4,6 @@ Each is a ``lowlat_consumer.Handler``: called once per new parcel with the event
 by the loop, so copy what must outlive the call) and the ``Completion`` to report done.
 """
 
-from __future__ import annotations
-
 import time
 
 from lowlat.line.v1.parcel_pb2 import ParcelEvent

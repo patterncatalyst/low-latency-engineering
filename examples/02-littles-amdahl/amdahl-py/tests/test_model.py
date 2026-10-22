@@ -1,5 +1,7 @@
 """The model and the work functions: the arithmetic the verify.sh criteria rest on."""
 
+import threading
+
 import pytest
 from lowlat_amdahl.model import amdahl_speedup
 from lowlat_amdahl.work import CELLS, process_share
@@ -16,8 +18,6 @@ def test_ten_percent_serial():
 
 
 def test_table_is_independent_of_how_the_batch_is_split():
-    import threading
-
     def table(workers: int) -> list[int]:
         cell = [0] * CELLS
         lock = threading.Lock()

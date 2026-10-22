@@ -12,31 +12,29 @@ Values are rounded to whole nanoseconds, the report unit. A value that rounds to
 loop the optimizer removed.
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import sys
+from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from lowlat_measure.recorder import Recorder, percentiles_of
+from lowlat_measure.recorder import Recorder
+
+from lowlat_bench.check_digit import PREFIX_COUNT
 
 EXAMPLE = "04-benchmark-harnesses"
+_UNIT_NS = {"ns": 1.0, "us": 1e3, "ms": 1e6, "s": 1e9}  # Google Benchmark time_unit -> ns
 
 
 def _finish(
     rec: Recorder, out: Path, language: str, build: dict[str, Any], notes: str
 ) -> dict[str, Any]:
-    report = rec.build_report(notes)
-    report["language"] = language
     # The report speaks for `language`, so its percentiles follow that language's
     # HdrHistogram rank convention (Java rounds the rank up); `lowlat-report check`
     # recomputes them the same way.
-    report["percentiles"] = percentiles_of(rec.histogram, language)
-    report["build"] = build
-    out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    return report
+    return rec.write_report(out, notes, language=language, build=build)
 
 
 def _ns(value: float) -> int:
@@ -47,17 +45,17 @@ def from_gbench(src: Path, out_dir: Path) -> list[Path]:
     data = json.loads(src.read_text(encoding="utf-8"))
     ctx = data["context"]
     build = {
-        "compiler": f"Google Benchmark {ctx.get('library_version', 'v1.10.0')}; "
+        "compiler": f"Google Benchmark {ctx.get("library_version", "unknown")}; "
         "see the C++ report for the compiler",
         "gil_enabled": None,
         "flags": f"library_build_type={ctx.get('library_build_type')}",
     }
-    samples: dict[str, list[float]] = {}
+    samples: defaultdict[str, list[float]] = defaultdict(list)
     for b in data["benchmarks"]:
         if b.get("run_type") != "iteration":
             continue
-        unit = {"ns": 1.0, "us": 1e3, "ms": 1e6, "s": 1e9}[b["time_unit"]]
-        samples.setdefault(b["run_name"].split("/")[0], []).append(b["real_time"] * unit)
+        unit = _UNIT_NS[b["time_unit"]]
+        samples[b["run_name"].split("/")[0]].append(b["real_time"] * unit)
     written = []
     for name, values in samples.items():
         rec = Recorder(EXAMPLE, name.removeprefix("BM_CheckDigit_").lower())
@@ -90,7 +88,7 @@ def from_jmh(src: Path, out_dir: Path) -> list[Path]:
         for fork in b["primaryMetric"]["rawDataHistogram"]:
             for iteration in fork:
                 for value, count in iteration:
-                    rec.histogram.record_value(_ns(value), int(count))
+                    rec.record(_ns(value), int(count))
         path = out_dir / f"report-java-{rec.variant}.json"
         _finish(
             rec,
@@ -98,7 +96,7 @@ def from_jmh(src: Path, out_dir: Path) -> list[Path]:
             "java",
             build,
             f"JMH SampleTime, {b['forks']} forks x {b['measurementIterations']} iterations of "
-            f"{b['measurementTime']}; samples are invocations of {1024} check digits, "
+            f"{b['measurementTime']}; samples are invocations of {PREFIX_COUNT} check digits, "
             "reported as ns per check digit (JMH normalises by OperationsPerInvocation) "
             "from the rawDataHistogram, rounded to whole ns.",
         )
@@ -136,18 +134,21 @@ def from_pyperf(src: Path, out_dir: Path) -> list[Path]:
     return written
 
 
-def main(argv: list[str] | None = None) -> int:
+CONVERTERS = {"gbench": from_gbench, "jmh": from_jmh, "pyperf": from_pyperf}
+
+
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("harness", choices=["gbench", "jmh", "pyperf"])
+    parser.add_argument("harness", choices=sorted(CONVERTERS))
     parser.add_argument("source", type=Path, help="the harness's JSON output")
     parser.add_argument("out_dir", type=Path, help="directory for the report-*.json files")
     args = parser.parse_args(argv)
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    convert = {"gbench": from_gbench, "jmh": from_jmh, "pyperf": from_pyperf}[args.harness]
+    convert = CONVERTERS[args.harness]
     for path in convert(args.source, args.out_dir):
         print(path)
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

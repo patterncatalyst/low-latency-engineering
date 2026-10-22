@@ -1,16 +1,14 @@
 """co-experiment-py run|probe: Ch3 coordinated omission. See the example README."""
 
-from __future__ import annotations
-
 import argparse
-import socket
-import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from lowlat_consumer import open_socket
 from lowlat_consumer.cli import parse_hostport
+from lowlat_consumer.loop import DEFAULT_RCVBUF
 from lowlat_measure import Recorder
-from lowlat_measure.recorder import load_profile
+from lowlat_measure.recorder import require_profile
 from lowlat_measure.table import format_rows
 
 from lowlat_co import experiment
@@ -26,9 +24,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--stall-seq", type=int, default=5_000)
     run.add_argument("--suffix", default="")
     run.add_argument("--out", type=Path, required=True)
+    run.set_defaults(func=do_run)
     probe = sub.add_parser("probe", help="cost of one clock read")
     probe.add_argument("--calls", type=int, default=1_000_000)
     probe.add_argument("--out", type=Path, default=Path("."))
+    probe.set_defaults(func=do_probe)
     return p
 
 
@@ -39,9 +39,8 @@ def emit(rec: Recorder, out: Path, notes: str) -> None:
 
 def do_run(args: argparse.Namespace) -> None:
     rec = experiment.Recorders(args.suffix)
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 << 20)
-        sock.bind(args.bind)
+    sock, _granted = open_socket(args.bind, DEFAULT_RCVBUF)
+    with sock:
         print(f"listening on {args.bind[0]}:{args.bind[1]}", flush=True)
         dropped = experiment.receive(
             sock, rec, expect=args.expect, stall_ms=args.stall_ms, stall_seq=args.stall_seq
@@ -58,22 +57,16 @@ def do_run(args: argparse.Namespace) -> None:
 
 
 def do_probe(args: argparse.Namespace) -> None:
-    what = {
-        "clock-read": "time.monotonic_ns",
-        "clock-read-perf_counter_ns": "time.perf_counter_ns",
-    }
     for variant, rec in experiment.clock_probe(args.calls).items():
-        notes = f"{args.calls} back-to-back pairs of {what[variant]}; value = second - first"
+        label = experiment.CLOCKS[variant][0]
+        notes = f"{args.calls} back-to-back pairs of {label}; value = second - first"
         emit(rec, args.out, notes)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    try:
-        load_profile()  # fail before the run, not after it
-    except RuntimeError as exc:
-        print(f"co-experiment-py: {exc}", file=sys.stderr)
+    if not require_profile("co-experiment-py"):  # fail before the run, not after it
         return 2
     args.out.mkdir(parents=True, exist_ok=True)
-    {"run": do_run, "probe": do_probe}[args.mode](args)
+    args.func(args)
     return 0

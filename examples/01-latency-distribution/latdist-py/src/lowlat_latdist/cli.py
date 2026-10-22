@@ -8,17 +8,14 @@ module supplies only the handler (``lowlat_latdist.handlers``). Variants:
 * ``bimodal-1pct``  per-parcel, but ``seq % 100 == 0`` runs a ~2 ms busy loop.
 """
 
-from __future__ import annotations
-
 import argparse
-import sys
 from collections.abc import Sequence
 
 from lowlat_consumer import GapTracker, Handler, install_signal_handlers, open_socket, run
 from lowlat_consumer.cli import build_parser as build_consumer_parser
 from lowlat_consumer.cli import parse_hostport
 from lowlat_measure import Recorder
-from lowlat_measure.recorder import load_profile
+from lowlat_measure.recorder import require_profile
 from lowlat_measure.table import format_rows
 
 from lowlat_latdist.handlers import Batch, Bimodal, per_parcel
@@ -30,7 +27,7 @@ SLOW_EVERY = 100
 
 def build_parser() -> argparse.ArgumentParser:
     """The common consumer's flags, with this example's defaults and ``--slow-us``."""
-    p = build_consumer_parser()
+    p = build_consumer_parser(variants=VARIANTS)
     p.prog = "latdist-py"
     p.description = __doc__
     p.set_defaults(
@@ -45,15 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    if args.variant not in VARIANTS:
-        parser.error(f"--variant: one of {', '.join(VARIANTS)}")
+    args = build_parser().parse_args(argv)
     install_signal_handlers()
-    try:
-        load_profile()
-    except RuntimeError as exc:
-        print(f"latdist-py: {exc}", file=sys.stderr)
+    if not require_profile("latdist-py"):
         return 2
 
     policy: Handler | Batch | Bimodal
@@ -67,12 +58,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     drain = policy.drain if isinstance(policy, Batch) else None
 
     sock, _granted = open_socket(args.bind, args.rcvbuf)
-    host, port = args.bind
-    print(f"latdist-py: variant {args.variant} on {host}:{port}", flush=True)
-
     rec = Recorder(args.example, args.variant)
     tracker = GapTracker()
     with sock:
+        host, port = args.bind
+        print(f"latdist-py: variant {args.variant} on {host}:{port}", flush=True)
         result = run(
             sock, rec, tracker, policy, args.expect, args.idle_timeout_ms * 1_000_000, drain
         )
