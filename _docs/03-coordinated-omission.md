@@ -178,7 +178,7 @@ The receive loop does one thing the line consumer does not: it starts a latency 
 ```
 
 ```java
-            sink = Handle.laneOf(event.getBarcode());
+            sink = Lanes.laneOf(event.getBarcode());
             if (o.stallMs() > 0 && event.getSeq() == o.stallSeq()) {
                 stall(o.stallMs());
             }
@@ -263,7 +263,7 @@ The closed loop is the standard benchmark shape: start, work, finish, then issue
 ```java
         for (long i = 0; i < requests; i++) {
             long startNs = System.nanoTime();
-            sink = Handle.laneOf(barcode);
+            sink = Lanes.laneOf(barcode);
             if (o.stallMs() > 0 && i == o.stallSeq()) {
                 stall(o.stallMs());
             }

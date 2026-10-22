@@ -69,8 +69,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     print(f"received {tracker.received} dropped {tracker.dropped} (stopped: {result.stopped})")
     span = result.last_done_ns - result.first_done_ns
+    # Completions per second x 1000, exact; one completion (or none) spans no time.
+    mhz = result.completed * 1_000_000_000_000 // span if span > 0 else "n/a"
     notes = (
-        f"throughput_mhz={result.completed * 1_000_000_000_000 // span}; done_span_ns={span}; "
+        f"throughput_mhz={mhz}; done_span_ns={span}; "
         f"reordered={tracker.reordered}; single thread, GIL"
     )
     if isinstance(policy, Batch | Bimodal):

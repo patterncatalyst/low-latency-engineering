@@ -154,11 +154,11 @@ void serve(const line::ConsumerConfig& cfg, H& handler) {
   std::println("received {}, dropped {}, reordered {} (stopped: {}) [{}]", result.received, result.dropped,
                result.reordered, result.stopped_by, handler.lane_sink);
   const std::int64_t span_ns = result.last_done_ns - result.first_done_ns;
-  const double span_s = static_cast<double>(span_ns) / 1e9;
-  // span_s is 0 with fewer than two completions: report 0 rather than cast inf/NaN.
-  const auto mhz = span_ns > 0
-                       ? static_cast<std::int64_t>(static_cast<double>(result.completed) / span_s * 1000.0)
-                       : std::int64_t{0};
+  // Completions per second x 1000; one completion (or none) spans no time, so there is no rate.
+  const std::string mhz =
+      span_ns > 0 ? std::to_string(static_cast<std::int64_t>(static_cast<double>(result.completed) * 1e12 /
+                                                             static_cast<double>(span_ns)))
+                  : "n/a";
   const auto notes =
       std::format("throughput_mhz={}; done_span_ns={}; reordered={}{}", mhz, span_ns, result.reordered, handler.notes());
   rec.print_summary();

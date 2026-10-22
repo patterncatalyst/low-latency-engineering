@@ -152,9 +152,8 @@ After the run, the consumer reduces both measurements and writes them next to th
 
 ```java
         // --- the model block: the only place a mean appears ---------------------------------
-        Sampled s = sampled[0];
         double lambda = o.rateHz();
-        double wMeanS = wSumNs / received / 1e9;
+        double wMeanS = service.wSumNs / received / 1e9;
         double lSampled = (double) s.sumInSystem / s.samples;
         double lPredicted = Model.littlesL(lambda, wMeanS);
         double relErr = (lSampled - lPredicted) / lPredicted;

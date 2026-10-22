@@ -105,7 +105,8 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
 
 1. processed throughput of `per-parcel` and `batch-32` differs by less than 1 %.
    Throughput is `count / (last done - first done)`, written to the report's
-   `notes` as `throughput_mhz` (milli-Hz, integer). The batch variant's first
+   `notes` as `throughput_mhz` (milli-Hz, integer; `n/a` when fewer than two
+   parcels completed, which fails the criterion). The batch variant's first
    completion is 31 ms into the run, so its C++ and Python figures are about
    0.3 % higher; Java's differ by under 0.04 % in r01-run1..3.
 2. `batch-32` p50 is at least 10x the `per-parcel` p50.
