@@ -42,6 +42,7 @@ packages:
   - kernel-tools          # turbostat / cpupower
   - perf
   - numactl
+  - stress-ng             # load generator for the isolation / interference chapters
   # toolchains
   - gcc-c++
   - clang
@@ -78,6 +79,11 @@ runcmd:
   - [ bash, -c, "alternatives --set iptables /usr/bin/iptables-nft" ]
   - [ bash, -c, "systemctl enable --now docker" ]
   - [ bash, -c, "systemctl enable --now chronyd" ]
+  # Pinned Temurin (versions.env), sha256-checked, selected as the guest's java/javac.
+  # Fedora's java-25-openjdk stays installed for its devel dependencies but is not selected.
+  - [ bash, -c, "curl -fL --retry 3 -o /tmp/temurin.tar.gz '__TEMURIN_URL__' && echo '__TEMURIN_SHA256__  /tmp/temurin.tar.gz' | sha256sum --quiet -c - && mkdir -p /opt/temurin-__TEMURIN_VERSION__ && tar -xzf /tmp/temurin.tar.gz -C /opt/temurin-__TEMURIN_VERSION__ --strip-components=1 && rm -f /tmp/temurin.tar.gz" ]
+  - [ bash, -c, "for t in java javac jar jcmd jfr; do alternatives --install /usr/bin/$t $t /opt/temurin-__TEMURIN_VERSION__/bin/$t 99000 && alternatives --set $t /opt/temurin-__TEMURIN_VERSION__/bin/$t; done" ]
+  - [ bash, -c, "printf 'export JAVA_HOME=/opt/temurin-__TEMURIN_VERSION__\\nexport PATH=$JAVA_HOME/bin:$PATH\\n' > /etc/profile.d/temurin.sh" ]
   # Readiness marker: written last, only once the key tools are present and the
   # Docker daemon actually answers (a binary on PATH is not a running engine).
   - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v tuned-adm >/dev/null && test -c /dev/ptp0 && docker info >/dev/null 2>&1; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]

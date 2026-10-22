@@ -1,0 +1,20 @@
+$ virsh vcpucount lowlat-target
+maximum      config         4
+maximum      live           4
+current      config         4
+current      live           4
+
+
+$ virsh vcpupin lowlat-target
+ VCPU   CPU Affinity
+----------------------
+ 0      0-15
+ 1      0-15
+ 2      0-15
+ 3      15
+
+
+$ <cputune> in the persistent config
+  <cputune>
+    <vcpupin vcpu='3' cpuset='15'/>
+  </cputune>
