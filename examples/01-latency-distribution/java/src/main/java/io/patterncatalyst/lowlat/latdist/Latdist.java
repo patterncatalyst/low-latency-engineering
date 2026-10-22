@@ -32,27 +32,37 @@ public final class Latdist {
     private Latdist() {
     }
 
-    public static void main(String[] args) throws IOException {
-        Config config;
-        Policy policy;
-        try {
-            // --slow-us is the only flag the common parser does not know; the rest go to it, over
-            // this example's defaults.
-            long slowUs = 2000;
+    /**
+     * {@code --slow-us} is the only flag the common parser does not know: split it off, and pass the rest
+     * to {@link Config#parse} over this example's defaults.
+     */
+    record SlowUs(long micros, List<String> rest) {
+        static SlowUs split(String[] args) {
+            long micros = 2000;
             List<String> rest = new ArrayList<>();
             for (int i = 0; i < args.length; i++) {
                 if (args[i].equals("--slow-us") && i + 1 < args.length) {
-                    slowUs = Long.parseLong(args[++i]);
+                    micros = Long.parseLong(args[++i]);
                 } else {
                     rest.add(args[i]);
                 }
             }
-            if (slowUs <= 0) {
+            if (micros <= 0) {
                 throw new IllegalArgumentException("--slow-us must be > 0");
             }
+            return new SlowUs(micros, List.copyOf(rest));
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Config config;
+        Policy policy;
+        try {
+            SlowUs split = SlowUs.split(args);
+            long slowUs = split.micros();
             Config base = Config.parse(List.of("--bind", "127.0.0.1:47210", "--example", "01-latency-distribution",
                     "--variant", "per-parcel"));
-            config = Config.parse(rest, base);
+            config = Config.parse(split.rest(), base);
             policy = switch (config.variant()) {
                 case "per-parcel" -> new PerParcel();
                 case "batch-32" -> new Batch(BATCH);

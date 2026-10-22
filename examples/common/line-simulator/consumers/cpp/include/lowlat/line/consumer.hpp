@@ -162,9 +162,8 @@ ConsumerResult consume_with(const ConsumerConfig& cfg, const std::atomic<bool>& 
                             Handler& handler, const ReadyFn& on_ready = {}) {
   ConsumerResult result;
   const int tick_ms = std::min(kTickMs, cfg.idle_timeout_ms);
-  const Bound bound = open_bound(cfg.bind, cfg.rcvbuf, tick_ms);
-  const Fd& sock = bound.fd;
-  result.granted_rcvbuf = bound.rcvbuf_granted;
+  const auto [sock, granted] = open_bound(cfg.bind, cfg.rcvbuf, tick_ms);
+  result.granted_rcvbuf = granted;
   if (on_ready) on_ready(bound_port_of(sock.get()), result.granted_rcvbuf);
 
   SeqTracker tracker;
