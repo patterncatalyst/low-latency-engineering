@@ -12,6 +12,6 @@ _SERIAL = slice(8, 17)
 
 def lane_for(barcode: str) -> int:
     """Lane 0..7 from the SSCC serial reference modulo 8."""
-    if len(barcode) != 18 or not barcode.isdigit():
+    if len(barcode) != 18 or not (barcode.isascii() and barcode.isdigit()):
         raise ValueError(f"not an SSCC-18: {barcode!r}")
     return int(barcode[_SERIAL]) % LANES

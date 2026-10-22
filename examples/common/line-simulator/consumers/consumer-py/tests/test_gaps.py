@@ -36,3 +36,32 @@ def test_lane_lookup(serial, lane):
 def test_lane_rejects_non_sscc():
     with pytest.raises(ValueError):
         lane_for("12345")
+
+
+@pytest.mark.parametrize(
+    "barcode",
+    [
+        "00614141000000013x",
+        "00614141000000013",
+        "0061414100000001300",
+        "٠٠٦١٤١٤١٠٠٠٠٠٠٠١٣٠",
+        "x06141410000000130",
+    ],
+    ids=["trailing-letter", "17-chars", "19-chars", "non-ascii-digits", "leading-letter"],
+)
+def test_lane_rejects_malformed_barcodes(barcode):
+    with pytest.raises(ValueError):
+        lane_for(barcode)
+
+
+@pytest.mark.parametrize(
+    ("barcode", "lane"),  # the same barcodes the C++ Lane.SerialModuloEight test uses
+    [
+        ("006141410000000134", 5),
+        ("006141410000000008", 0),
+        ("006141419999999997", 7),
+        ("906141410000000070", 7),
+    ],
+)
+def test_lane_matches_cpp_fixtures(barcode, lane):
+    assert lane_for(barcode) == lane
