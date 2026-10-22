@@ -22,7 +22,9 @@ STYLES = {
 }
 INK = "#111111"; GREY = "#555555"; AMBER = "#b8650a"
 
-def _seed(): return random.randint(1, 2_000_000_000)
+# Seeded per figure in emit(), so a spec regenerates byte-identical files.
+_RNG = random.Random()
+def _seed(): return _RNG.randint(1, 2_000_000_000)
 def esc(s): return html.escape(str(s), quote=True)
 
 # ---- SVG ------------------------------------------------------------------
@@ -120,6 +122,7 @@ def _exc(bands, nodes, edges, notes):
 
 def emit(name, width, height, bands=None, nodes=None, edges=None, notes=None):
     bands=bands or []; nodes=nodes or []; edges=edges or []; notes=notes or []
+    _RNG.seed(name)
     open(f"{OUT}/{name}.svg","w").write(_svg(width,height,bands,nodes,edges,notes))
     json.dump(_exc(bands,nodes,edges,notes), open(f"{OUT}/{name}.excalidraw","w"), indent=1)
     # validate
