@@ -61,7 +61,10 @@ PREEMPT_RT guest (snapshot `lab-ready-rt`). The output is committed in
 `check-prereqs.sh --vm` reported 8 PASS, 0 WARN, 0 FAIL, and `cyclictest` ran one
 unpinned, untuned 60 s thread. This is a smoke test of the lab path, not a
 measurement. The host reports in that directory were taken with the guest running
-and are never quoted (see `NOTES.md` there).
+and are never quoted (see `NOTES.md` there). That smoke test predates the
+`/dev/ptp0` check; after the guest was rebuilt from the scripts on 2026-10-22,
+`check-prereqs.sh --vm` passes 9 of 9 and `phc2sys` locks to `/dev/ptp0`
+(`results/r01-lab/`, VM).
 
 **Labelling rule:** every number from the guest is labelled `vm` and is never
 compared with a bare-metal number. The guest shows what the lab can do (real-time
