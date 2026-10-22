@@ -1,0 +1,99 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "03-coordinated-omission",
+  "language": "python",
+  "variant": "intended-time",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 158847,
+    "p90": 190847,
+    "p99": 101449727,
+    "p99_9": 190578687,
+    "max": 200409087
+  },
+  "hdr_histogram": "HISTFAAABEN4nK1VQYtjRRCe/rpevUqn09P79u3zTfYZQhxiiOERQgizcYhhGQaRYR3msLssw7In8bCCHkT0LHjw6Mmb/8GLV8/iwZ8gnjzp1ZtUJ7i6K7IH0/26i+qq6ur+vuo0n3918+Ag/+Fg97P72Rwc2PP5d98cvPX7TvHlBzgEbqED5LDIqEMZcuoBtwgZDmHQRQc95Oihi1s4VNNDWFj0YNFBRlYVhjKCQQ4D3NABBobQRa6R6SYy4FXoZFSEIQJZGJDagsmwBViYwIbFqNqwYRDDgHeNDIgEZJhN0u+cQSAYMkSGAVjAEtkUgTQ0MwisInRPQDyEYYXULFMPDQxBxiqqCXJiq05ddVYtaJ/2btcchljvSM1zFTSDHLsMdse0aZF2BxAwBYZ4FgGxMJywsHNCIBFPHMSxd8zesyspBulLdN5L9GWsonBwFF0UiVz46CsXohMfvPfOlRScr6oyFNFPBs1o0qxW8+N2uVm168niYrt9+3yzvd/ebc8Xy6v5YnUyuX+53ly12/VqNb3ers7m0/PTi3Y2nyynm+n83mI8mJ1M1rOT/qo9nbT9+Wy9WM6G7fFwPJ8ct6PZoJkO+vWoLkb1oC6LphnWdX9cNbEpi1gUVVW6UDaubpoyFrEOpffBxaD5+cJ7CUUMZRFJfJAQuHCuLLwnh0DeE1P0ejVsmIiCEQcE49iDFXRhYiMCZu1G8YaQUo6SgXUKcgaXYFXcFERlA5lEOisgn8yVUpYZeyqmWDrsHXqgXsJeCcmWDCmhjUIKDaU470ivxaP4d4EMR7qqBXUjVYDWSWKNBWuu1GGTSGIZOXVSNaWC0dmkoJZNqiDaKTLdBXq4tGooSxmbHbVS3mlApnyXtBklLqZyM6SBWPOmdGXEerFMIjAsAEcxzOTZi5dAcA4ukAi56LwjIkcQh1CQpwDjhL2NzgVmNo4CIosTYa1fn7hNHpAoTlEksIgX1u3EU7ILQqQ17TS4lMJSlcGJlxjqWBQxVOWgrod1HIzq0Ww8HBy30/F4Np7NxmU7mk7Ww/F4s9osz9aXm4v1aHO2WK+Xm/cen129c3334dMPr0/fv3782eXjp5cPnzx6+Oh8ebq9WD+5vF5P7t3brtrj6ebkqm3byWa2miyWg5NhPRr0h+P+oK5nMQx8NRzGpiqLuh43jStdX8utqmIZOMY61P2qKn0hofBRKt+IL1zjvPNwjkWERQKT1zoXBxH2BvoOeXFRuelI9DUzzFZhUPrqU6ewIOEIovSAAsYRJwYjKgcVT7Z7s5xgRc131AVloqxUNnWU0NmOLsgYR8gSUdX/BvAGbuvU3XFOH/MvDB7A4iO8gndxBxlew6f4McfXwE9H+MXj+xy/Mn62z/ofBr/9W//W4BN8/I/veekB7vzV3nxBehnNHbyO26m9up+ftRc1L2f1cpqj57SH6KZ/x95+/Pv3f2r+2/ZPvH6F4A==",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T02:30:49Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 1852854,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 1.27,
+      "load5": 0.7,
+      "load15": 0.41,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; single thread, GIL"
+}

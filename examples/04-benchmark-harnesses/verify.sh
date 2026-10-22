@@ -44,6 +44,7 @@ ok "C++ (GoogleTest), Java (JUnit, ran during package) and Python (pytest) agree
 step "C++ Google Benchmark: 30 repetitions per benchmark"
 "$(cpp_bin check-digit-bench)" --benchmark_out="$OUT/gbench.json" \
   --benchmark_out_format=json >"$OUT/gbench.console.txt" 2>&1
+redact_host "$OUT/gbench.json"
 echo "Google Benchmark aggregates (default output also prints a mean; read median and p99):"
 jq -r '.benchmarks[] | select(.aggregate_name == "median" or .aggregate_name == "p99")
        | "  \(.run_name | split("/")[0])  \(.aggregate_name)  \(.real_time * 1000 | round / 1000) \(.time_unit)"' \
@@ -90,6 +91,7 @@ step "Python pyperf: 6 worker processes x 4 values, 3 warm-ups each"
 rm -f "$OUT/pyperf.json"
 pyrun python "$HERE/benchmarks-py/src/lowlat_bench/bench_check_digit.py" \
   -o "$OUT/pyperf.json" --processes 6 --values 4 --warmups 3 >"$OUT/pyperf.console.txt" 2>&1
+redact_host "$OUT/pyperf.json"
 grep -E 'WARNING|not tuned|system tune' "$OUT/pyperf.console.txt" || true
 pyrun python -m pyperf stats "$OUT/pyperf.json" | tee "$OUT/pyperf.stats.txt"
 pyrun python -m pyperf system show >"$OUT/pyperf.system-show.txt" 2>&1 || true

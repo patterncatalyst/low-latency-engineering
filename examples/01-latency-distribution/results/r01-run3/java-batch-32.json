@@ -1,0 +1,96 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "01-latency-distribution",
+  "language" : "java",
+  "variant" : "batch-32",
+  "unit" : "ns",
+  "count" : 10000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 15253503,
+    "p90" : 28196863,
+    "p99" : 31195135,
+    "p99_9" : 31244287,
+    "max" : 31457279
+  },
+  "hdr_histogram" : "HISTFAAABDF4nGVU32scVRSeOXP27t2bm5vxZjJut9NJssbtNl3jssaw2BBDu8QYpLQQapAQIgSsMUgsfahBRERBRUHwyTfFZ5+kIPgn9NkH/wZffPfF79zJJqadzWTu/e53fn3nzBRf/DAdRfVGVF3J6TPGcqP/+0/R6/9UwJMP6XFMb9PH9Bz9THSFXqXn6SV6j+gGvUD0R0wJvUt1miKiWZqhCMfX+DJdpgbV8Etw14E2sJrCr4G1/NWBA+VASASqcNhwHUAUGLKa4EY4lXOmiluT50RwEbzPcw1bOK9TyKAiXKUb8BWcicklQg2v4J7FfSuUMSsGOJyUePARcok4IYZjCkcVRiGa+EdZLInUaBoryUhYEyFGImYhHBbJGXx6EFLniCufiBeWQhQqHAf5Am2icjNOCPsZDvEbEL1GLDrwdJB4EsVAbE5CsAT7EHFanLwc9pXQDawaYF5CExKal4ZNBt8vQgnp1nX6Tpp5jb6Msb+O+1emP2v0Y0r/ckgS6UxV5Uo93OCaJiVaaK2Utc4q5w0rrTRAVhREOBU/6MGKNYOGI7KkLGuryBjHTqlIyUWRFgvHYOAJonDRD+ZxOxBZPJ8OzBSFwaqFcfk6pt9i+lvREwoJJyHhoLckjH8GMVLXyorcpMw2dDIQSNtmqozOnPOZN7i0ijJERTXIzYDGZEK76xxmTrS7hTfjcUK/xKFMrrM4VAjL0CE1zZYvnLWRY47G3Tba5xpCWW9zbyEbG0pRuIKIEcykciXRopB07ZlI4T2oiwa4EySllLF5y5fWG9ngnKU/WqVNgyRcZjLv2TpEyFWmpDId2hamchat/iumu0FUqBNx6sr+UmGspMJ5J8+LbitPdZNFFjaaOZESnzYVdVJTLvVbNpXGUd51ZbFQZtbm2jnlGCqqU9N5zJmYkjjDWLC1zcFSYVMlnfadtCzbZZYGS5kOE5StOvWMrbHN/lLpxJbYddN8oej4zGbGpArDZi/YXqEP6CqsjMnXby9AoOHKqNv2We5lmImn8OqMGX54r4OhHg42emWW584+zVD58nYXpQ37N/t50cLwEAQ8Z5BVeW+3kyq92hsN8qLInOWLDG2yxd2O12qttz5olkVm5GU4Y5COUMbCfhdDM1xaHxRl4dFKac0FRnt/EYyVzmh5rmx50TEwZuh9MMJL1n5nAEa/u746h0wrhnwDZugj5fIH23bn0c1eYRXLd+ZNTOjRnt15sLE4dwbZ9Gjf3XsICLM6hu4fuDsnUBBTVcd7IdDBgd/6ZKO7cAYZv3eYbn06WjyHdLZznG6ebHU7Y4hNdvuR3zjZXOzYMwhWfvPhZr8NCStI+9FncT463hz+H1v7PG6NjrZeK7MxprLlr+Jy7fitc4x0NvgmLlcPt4dlLliD3gDW/zYuV+7vCqbCR1bA3vdx2T/cW2mPwf8AUal9DA==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T02:33:49Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 1855575,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.74,
+      "load5" : 0.64,
+      "load15" : 0.43,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0"
+    }
+  },
+  "notes" : "throughput_mhz=1003143; done_span_ns=9968660013; reordered=0; JIT not warmed: first parcels included; batch=32"
+}

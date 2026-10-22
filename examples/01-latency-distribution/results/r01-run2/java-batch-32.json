@@ -1,0 +1,96 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "01-latency-distribution",
+  "language" : "java",
+  "variant" : "batch-32",
+  "unit" : "ns",
+  "count" : 10000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 15220735,
+    "p90" : 28196863,
+    "p99" : 31195135,
+    "p99_9" : 31227903,
+    "max" : 31801343
+  },
+  "hdr_histogram" : "HISTFAAAA2Z4nGVTQYsjRRSuenmp1FRqetqetrcntm0208YwxhjDODtGycYxzI5BPCyDFwdFUQ+r4GUFUZBBdNE9iLoq682TohdPgjd/gHgSwYPnPXhaRPQmflWVsBHT5HW9933ve6+qXhfvXNsUon5ehF9t8ZZYHg6//0KcvxkCf79O70s6R+t0P/5NupPWCL/baIMEnWEBW+caLDlTI9ryC6rTg3QHryHnHG/S7Qhuw54h3kLuuxL+ffQc3Q29R2mb6+Rka1TX64TsplPYdAb63FANWEiHAq6wexq+UN0/NYYD4wnOuAzmJjXYeUiuKaGFpyhBjEcAUYKVCGV8IoPiyygVeEhlBBg8cgvfEFaoqVzYMYSDtOCgU3cvz9pwJbwgN3wFd1jKJ6ONJl4bKHrXMu0eHNX6YlMN2nRy99KbcJ+lV+kXpp836DtFP+hFBVaKI6uxQHNoDaum28Ta4lQQtNiGsMoqvFlrrYzWcZrEJini3Ko0N4ZVYmPtW1NeFlwIrOPimvQyfcv0eY1+cr1AzqZGk2GN9v05u13aWCFsbBynVbtXtfOObRWQZdREq7jYGgbhU6IfJX0VTkFFLaPQvgEcZkWQjqxJIJPEUacqd6pWFeWFUcIQGg8Tdkvna5cBmSwmrdhw3R1pUMEGY6OTTJc7raqf9ToDbawhfzlbbpBfpI8kkSnyyBhEcRtR2kmK/uTiuLtn0cH/uDqpTBS4IsrKtCyP5uPhbmxU7GdohSt0WhlrhZ8U08rzoj2bTff6mV1w8cUE8jVJKulaE7lqOKs8bxXl5Gg87RURx7zkPo2P7nE9LCPFPBydvCefHySG3U0/5hA1aiW4sMHo4gfyhUG2gvCg7ZDe8MnP5DN7mV1But2UWXV25x/Lk4M0WiAP0AUud3J8M9Vo8qG8NEviWwgVA48MH7kqLx8kyQqSj3K0X47GV+QbsyRdQbJRyyHDvVN5Kudx5qHX6Cwdlmb+jfxVdjFI9DACB2179KX8TfaWgWnHHl2Xv/8nMLsub8ih4mXATBxjNwS2Dzpm/AkIEx388Y7Zvwp8GgV/v29GV+RNOYswkQ/R9u5QD07ln+gr+P193XvrD3m8cKup7l3+Sz6VBrc81L1X/pHHWXBbc9W99DYd58HNn1DVS6d0snTnuuNd5dx/ARVAeA8=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T02:26:20Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 1848333,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.54,
+      "load5" : 0.49,
+      "load15" : 0.29,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0"
+    }
+  },
+  "notes" : "throughput_mhz=1003174; done_span_ns=9968357363; reordered=0; JIT not warmed: first parcels included; batch=32"
+}

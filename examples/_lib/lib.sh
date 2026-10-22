@@ -31,6 +31,19 @@ step() { printf '%s━━ %s%s\n' "$_c_step" "$*" "$_c_off"; }
 ok()   { printf '%s✓ %s%s\n' "$_c_ok" "$*" "$_c_off"; }
 die()  { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off" >&2; exit 1; }
 
+# redact_host JSON...: replace the machine's hostname with the profile's
+# host_label in third-party output (Google Benchmark, pyperf record it), so a
+# committed result never names the machine.
+redact_host() {
+  local host label f
+  host=$(hostname)
+  label=$(jq -r .host_label "$LOWLAT_PROFILE")
+  for f in "$@"; do
+    jq --arg h "$host" --arg l "$label" \
+      'walk(if type == "string" then split($h) | join($l) else . end)' "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+  done
+}
+
 # example_dir: absolute path of the calling example (the dir holding verify.sh).
 example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 

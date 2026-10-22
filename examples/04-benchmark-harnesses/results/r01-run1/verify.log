@@ -1,0 +1,128 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+━━ building C++ (release preset) check-digit-bench check-digit-test
+[1/20] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[2/18] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[3/15] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[4/11] Scanning /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/cpp/check_digit_bench.cpp for CXX dependencies
+[5/11] Scanning /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/cpp/check_digit_test.cpp for CXX dependencies
+[6/11] Generating CXX dyndep file 04-benchmark-harnesses/cpp/CMakeFiles/check-digit-bench.dir/CXX.dd
+[7/11] Generating CXX dyndep file 04-benchmark-harnesses/cpp/CMakeFiles/check-digit-test.dir/CXX.dd
+[8/11] Building CXX object 04-benchmark-harnesses/cpp/CMakeFiles/check-digit-bench.dir/check_digit_bench.cpp.o
+/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/cpp/check_digit_bench.cpp:44:16: warning: 'DoNotOptimize<int>' is deprecated: DoNotOptimize(T const&) can permit undesired compiler optimizations. Pass a non-const lvalue instead; if the argument is an expression result, store it in a local variable first. [-Wdeprecated-declarations]
+   44 |     benchmark::DoNotOptimize(digit);
+      |                ^
+/home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/benchmark-src/include/benchmark/utils.h:62:1: note: 'DoNotOptimize<int>' has been explicitly marked deprecated here
+   62 | BENCHMARK_DEPRECATED_MSG(BENCHMARK_DONOTOPTIMIZE_CONST_REF_DEPRECATED_MSG)
+      | ^
+/home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/benchmark-src/include/benchmark/macros.h:59:54: note: expanded from macro 'BENCHMARK_DEPRECATED_MSG'
+   59 | #define BENCHMARK_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+      |                                                      ^
+1 warning generated.
+[9/11] Linking CXX executable 04-benchmark-harnesses/cpp/check-digit-bench
+[10/11] Building CXX object 04-benchmark-harnesses/cpp/CMakeFiles/check-digit-test.dir/check_digit_test.cpp.o
+[11/11] Linking CXX executable 04-benchmark-harnesses/cpp/check-digit-test
+━━ building Java benchmarks.jar (runs the parity test)
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+━━ unit tests: check digit parity on known-good SSCCs
+Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] 2 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 2 tests.
+.....                                                                    [100%]
+5 passed in 0.01s
+✓ C++ (GoogleTest), Java (JUnit, ran during package) and Python (pytest) agree on the check digit
+━━ C++ Google Benchmark: 30 repetitions per benchmark
+Google Benchmark aggregates (default output also prints a mean; read median and p99):
+  BM_CheckDigit_Guarded  median  4.721 ns
+  BM_CheckDigit_Guarded  p99  4.753 ns
+  BM_CheckDigit_Eliminated  median  0 ns
+  BM_CheckDigit_Eliminated  p99  0 ns
+  median guarded = 4.7209706729281384 ns, eliminated = 1.7698039300739766E-10 ns (divisor floored at 0.01 ns)
+✓ C++: eliminated median is >= 10x lower than guarded (472 >= 10)
+━━ Java JMH SampleTime: 3 forks x (3 warm-up + 5 measured) iterations
+JMH percentile view (percent, ns per check digit):
+  eliminated
+    p0.0  0
+    p50.0  0
+    p90.0  0
+    p95.0  0
+    p99.0  0
+    p99.9  0
+    p99.99  5
+    p99.999  15.825
+    p99.9999  17
+    p100.0  17
+  guarded
+    p0.0  14
+    p50.0  32
+    p90.0  34
+    p95.0  35
+    p99.0  38
+    p99.9  50
+    p99.99  155.636
+    p99.999  177
+    p99.9999  177
+    p100.0  177
+✓ JMH SampleTime output includes p0.99 and p0.999
+  p50 guarded = 32.0 ns, eliminated = 0.0 ns (divisor floored at 0.01 ns)
+✓ Java: eliminated p50 is >= 10x lower than guarded (3200 >= 10)
+━━ Python pyperf: 6 worker processes x 4 values, 3 warm-ups each
+WARNING: the benchmark result may be unstable
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Total duration: 6.6 sec
+Start date: 2026-10-21 22:25:53
+End date: 2026-10-21 22:26:00
+Raw value minimum: 128 ms
+Raw value maximum: 134 ms
+
+Number of calibration run: 1
+Number of run with values: 6
+Total number of run: 7
+
+Number of warmup per run: 3
+Number of value per run: 4
+Loop iterations per value: 2^16 (64 outer-loops x 1024 inner-loops)
+Total number of values: 24
+
+Minimum:         1.95 us
+Median +- MAD:   2.00 us +- 0.03 us
+Mean +- std dev: 2.00 us +- 0.03 us
+Maximum:         2.05 us
+
+  0th percentile: 1.95 us (-2% of the mean) -- minimum
+  5th percentile: 1.96 us (-2% of the mean)
+ 25th percentile: 1.97 us (-2% of the mean) -- Q1
+ 50th percentile: 2.00 us (-0% of the mean) -- median
+ 75th percentile: 2.03 us (+2% of the mean) -- Q3
+ 95th percentile: 2.05 us (+2% of the mean)
+100th percentile: 2.05 us (+2% of the mean) -- maximum
+
+Number of outlier (out of 1.86 us..2.14 us): 0
+
+WARNING: the benchmark result may be unstable
+* Not enough samples to get a stable result (95% certainly of less than 1% variation)
+
+Try to rerun the benchmark with more runs, values and/or loops.
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Use pyperf stats, pyperf dump and pyperf hist to analyze results.
+Use --quiet option to hide these warnings.
+host tuning state (pyperf system show, read-only; untuned by design):
+  CPU scaling governor: 0-15=powersave
+  Turbo Boost (intel_pstate): Turbo Boost enabled
+  CPU scaling governor: Use CPU scaling governor 'performance'
+  Turbo Boost (intel_pstate): Disable Turbo Boost to get more reliable CPU frequency
+✓ pyperf recorded values (24 >= 20)
+✓ pyperf worker processes with values (6 >= 3)
+  warm-up vs warmed (calibration run, cold interpreter): first warm-up 1895.1 ns, median measured 1999.5 ns
+━━ converting harness samples to lowlat reports
+report percentiles in ns (lowlat-report show prints microseconds, too coarse here):
+  cpp guarded: n=30 p50=5 p90=5 p99=5 p99.9=5 max=5
+  cpp eliminated: n=30 p50=0 p90=0 p99=0 p99.9=0 max=0
+  java eliminated: n=139177 p50=0 p90=0 p99=0 p99.9=0 max=17
+  java guarded: n=71819 p50=32 p90=34 p99=38 p99.9=50 max=177
+  python check_digit-measured: n=24 p50=1997 p90=2045 p99=2046 p99.9=2046 max=2046
+  python check_digit-warmup: n=31 p50=1963 p90=2026 p99=2045 p99.9=2045 max=2045
+✓ 6 lowlat reports validate (profile embedded: bare-metal-host)
+✓ 04-benchmark-harnesses: C++ 472x, Java 3200x, pyperf 24 values / 6 processes; results in /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses//results/r01-run1

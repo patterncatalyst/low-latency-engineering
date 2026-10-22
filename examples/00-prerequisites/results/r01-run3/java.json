@@ -1,0 +1,96 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "00-prerequisites",
+  "language" : "java",
+  "variant" : "baseline",
+  "unit" : "ns",
+  "count" : 5000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 140031,
+    "p90" : 200703,
+    "p99" : 333823,
+    "p99_9" : 26755071,
+    "max" : 31571967
+  },
+  "hdr_histogram" : "HISTFAAABEV4nF1VO64sNRD1lKura+r6+vn69R2Gy4MXIRGyAzKIWQA7gAixAxJCxAbICQhBYhGICCGEEDEJS+Cc8jwEjHrcdrt+rjqn/OLzr56X4h+V9au39wnT99/9/uvy3l/rww8fi4uGRcxo4e4W0qL5Jfp1TJvTeg/v8zqGOxYeY07IWRM1N3NoN/MmJiJFFO8wbapmVkS00LwZJlYgUlzxUcQU04oB2/xpUanc0VxW6G2YF91dMS9pHAY2pY+yRLivsssZf9jacskB+8U4LmdQgbEKAc7z0Z3ikNptg/Yuj/hWuVWlGt4VVivdIHZEj7kWd9gRqwjevflsE8noSNu0F603RVp4bg50jsEVieox+7gebcyn4zp7P3p/OtqU3rq32SXCA7rNW/OB/LcItY6SaKAWzT0mJHszlKLDXHPUB7WyCYnSpR/RLaCAOgSWDIOlQYloqakJpRWpt8IMMyjDekVYAgfzgI4pfwzcCwytgmpAKPOvNZVXjaEmVFVUGU8g0VmQLF9iAcaRBwy6soIKsHgMDRFkigiIVVBNhYBx6irwJZArCS+JkrCwMHoRswwMr+KWIRodQAqH5NmINbxhiq4gjOTyDCODL84iOoJrlqHyzLawBxderNzARpBlyHwkQUtQZ+wwjo/ByHUdOnUSmU7Aph6XxGDoQnEhOim/JwzrUkVidsk86Nl2SYCTDHbHAO4WKvk/p8ktoYvfWV6Te5o6J/bLyjCRe9ZNhYqE9vNl7rwYsEOS1OIOP9xjnS64QQ5kqbMiZCXdrQV2rCw3yamywldSL8tsyTa3pPXiHSBXWMesbLYBVL4QDfXG+kaNBJKSokhVes+iErAwhpdnDsmm5dlYf72F6AAfmEBcNdYmsk5gUcEO2hlxDSiBC+Qngc5PgAAZMIL9q2AGAtEhBjDPKZIK4KASVYQWkewBEVIMWwWUhWCMlvCkhcYWmTMhGxuC8R4kPYgbkBzdFTy/Rlx7G8rm4L2XEWPEcfF50T788O5ztD7GWxgapg3DHL3NpzmOd67Rnyb6yOxHO2Je0BIufrmwo7Bnux12oEH1q8OEzXzYqBBQi2N4145MBNegGPN7RKC9DHIfceKcDSkawbqijSCx6E9Iuyel2VmIApxU0Q2RfxaokGy3VbbgpCppXtfl4AvjdSFc5R/qbwstq/MCvrrfbpNtlZsqJcFX2ZsWlSxvjHOCe3HJS+KFgEyYrjuFCC52/0rujoDm7JHMwXJR8ayc8S54AyOF0nhNboEkZ1o9y8uM9YFfUhiS6QK3RvKtWF2X2Z4+1mW1LR95OKWk2k2FbL8JlXUvYb3nyfZXZkl1im3r4ks53dLsMzrf4TjDJdsR1gMFHjIx99ki7uRNrPeUfxtfniEZjzhmwc4vJ/lQPpAvRX4/yTevy7dNvtvlN5Nfq/xU5efKyRcif57+//xxkh9P8ql89p//v1efyN/nuUpb",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T02:33:31Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 1855067,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.87,
+      "load5" : 0.66,
+      "load15" : 0.43,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0"
+    }
+  },
+  "notes" : "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=4194304"
+}

@@ -1,0 +1,100 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 10000,
+  "dropped": 0,
+  "example": "03-coordinated-omission",
+  "hdr_histogram": "HISTFAAABDp4nMWUzW5bRRTHM/977vHx5HgyTEZXF9ekUWVZxoqsNLJCaqJgosiq0qhEoWJRVVXbRReIPS/AhiXiAYBnYAF71oglT9A9rNmgM9fABqmVWOA7vnc+z9f8zhl98fXu1lbvj63uV22+bmurWh/++O3WB791E989x08eNXZRgRzsASpiIgYcMQME1FQREVUAVeTAsJ6zVjPBobaJClTDmRB2NjZhVHqECjV24OygI3JAHzQg9FGhMgFV0dudJjtJTBAC0OMKRR7DlHXr5MgxAOkVcSbQkYBJBIFd9sHHJg3bvTjMbQqas6bYaBANwqJBhYWExNykwMQgYQeCOWzKS9csYjgym50485CJgsXBrC22OCL0qDPAFZ+ptgDCnLVl72ChMzXC7MUzkxC8kCc4781N9o6hDGIhBhMCiQizCHEMErSJmjnkSJJTTOqDIGQOXmIQZRPJUiQRM5N6ZdWY2jY1e3l/OtubzBfHZ/fnJw+vbx5fP/ns06vr9c362ZPTy5dX5xfL1fJovprdP5mvT87PVqeX6+Xl+eXV2SdPF+tH64cPb54+e/HyxeWjR9dPb6anZ4dH66Pj+XJxMJzOprP98Xg4n0zGzaid5eHozsH4ziisFpOLxcXpxerq8Hr1+HR1sjg+PzhYzQ8Pjuarg8Pjs+V4tjo6mM9W+4fL5cl8NV1MzxYns8lysTqdLKeL2XS4N90bL47ujNJkvDfKozxt2zjK+9q0mfNQQgohhCiUSYKKBg/xsPgFBotj0tb4Eec5kMXTeyWWwEqRmKQBCwurE7seWNzEQHDl5sukXZuQ8x33tkRs+BuK2IBdsKXSDHk2SrigZGQ4A5ZKivyVWxvI7VQPHTiogT5Rbd9uyd5GeJddtA2H7c0p6/dsJ3ZQSQ2jkXpFcFWmUcnACCzbK9SEXsmyfjemt+A21ruiuks+hz762O4MtLaDkmnoo6xbpu5iYHT/vakrGDADim7rMxUHyQxzbDGwcDqxUkLEHpZzjkGlxLB4Z3MB8J4ja1R41Rxj9G0jqrFJ0gT2WWPIrBJzUolt8DG0MTTapuiHaU+0ja02eZSSchNSm2yUG9WUYkoh5uCDRrSjVoP6mLndT8nHxspEDkE0+lZjE1tJ7FU5tt5PmhS0yZybUZv3fdJhCM1IgglkE5tizCFr4iDRN0E15JREQiTHGlkSR4ESJSNPhTyzKomSZ/WZvIh49hwcWCJ76QoGscCgBPwGLc9UomoF0diymmxV2Fl1tiA7gaPa4Kypq7kdV5tqyz2qMdjgUWNTvqx07haM3Oa6Cwo7dr813sUAfQwKIduocBsVbuEW+niOQlKNu/gI7+EeKnyMB3iAGrexjS8dvnd41cdXQ/yg+LmHXxivqk37tcLv7t/bNw6fv+b5EO/j3n/638UtvFMc+T+/b2MbAwzK+5/e68ZvvvPNxn8CMn+GNQ==",
+  "language": "cpp",
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep",
+  "percentiles": {
+    "max": 200409087,
+    "p50": 91711,
+    "p90": 162687,
+    "p99": 100401151,
+    "p99_9": 190447615
+  },
+  "profile": {
+    "captured_at": "2026-10-22T02:38:18Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.37,
+      "load15": 0.58,
+      "load5": 0.91,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 1861604,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "intended-time"
+}
