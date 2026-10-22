@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.patterncatalyst.lowlat</groupId>
+    <artifactId>lowlat-examples</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>offheap-lockfree-java</artifactId>
+  <name>offheap-lockfree-java (Ch7 lock-free hand-off, off-heap state, affinity)</name>
+
+  <properties>
+    <!-- JVM arguments Chronicle needs on Java 17 and later. Verbatim from the `java17` profile
+         (activation jdk [17,)) of net.openhft:root-parent-pom:2026.0, the parent POM of
+         every Chronicle 2026.x module and the source of the ${jvm.requiredArgs} that
+         Chronicle's own builds hand to surefire. The Queue, Map and Core
+         docs at the pinned tags name the requirement but give no list; this profile is the
+         list Chronicle builds and tests with.
+         https://repo1.maven.org/maven2/net/openhft/root-parent-pom/2026.0/root-parent-pom-2026.0.pom
+         The shaded jar's manifest cannot carry them (the Add-Opens manifest entry is honoured only
+         for `java -jar`), so run scripts pass the same list.
+         The last line is not Chronicle's: JNA 5.5.0 (the BOM's pin, used by Affinity) calls
+         System::load, which JDK 25 reports as a restricted-method warning unless native
+         access is enabled. -->
+    <chronicle.jvmArgs>
+      --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+      --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED
+      --add-exports=java.base/jdk.internal.util=ALL-UNNAMED
+      --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+      --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+      --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED
+      --add-opens=java.base/java.io=ALL-UNNAMED
+      --add-opens=java.base/java.lang=ALL-UNNAMED
+      --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+      --add-opens=java.base/java.util=ALL-UNNAMED
+      --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED
+      --enable-native-access=ALL-UNNAMED
+    </chronicle.jvmArgs>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.agrona</groupId>
+      <artifactId>agrona</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.lmax</groupId>
+      <artifactId>disruptor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.openhft</groupId>
+      <artifactId>chronicle-queue</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.openhft</groupId>
+      <artifactId>chronicle-map</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.openhft</groupId>
+      <artifactId>affinity</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>line-consumer-java</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>benchmarks</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Chronicle's add-opens and add-exports arguments (see the chronicle.jvmArgs property). -->
+          <argLine>${chronicle.jvmArgs}</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <!-- `mvn exec:exec -Dexec.mainClass=...` runs with the same Chronicle arguments. -->
+          <executable>java</executable>
+          <arguments>
+            <argument>${chronicle.jvmArgs}</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>${exec.mainClass}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <!-- -Xlint:all -Werror stay on (parent). The JMH processor runs for main only: on test
+             sources it claims no annotation and -Xlint:processing would fail -Werror. -->
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <configuration>
+              <proc>none</proc>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <!-- JDK 23+ no longer runs annotation processors found on the classpath;
+               the version comes from dependencyManagement. -->
+          <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.openjdk.jmh</groupId>
+              <artifactId>jmh-generator-annprocess</artifactId>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <!-- Same execution as the parent's; the JMH layout replaces its configuration. -->
+          <execution>
+            <id>shade</id>
+            <configuration combine.self="override">
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.openjdk.jmh.Main</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                    <exclude>module-info.class</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

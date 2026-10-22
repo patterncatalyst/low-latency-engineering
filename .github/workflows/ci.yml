@@ -33,12 +33,16 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Packages check-prereqs.sh looks for, as Fedora 44 names them.
+  # Packages check-prereqs.sh looks for, as Fedora 44 names them. No JDK here: the
+  # java job installs the pinned Temurin tarball instead (JAVA_PACKAGES + the steps below).
   FEDORA_PACKAGES: >-
     git tar zstd jq which findutils diffutils
     clang gcc-c++ cmake ninja-build zlib-ng-compat-devel
-    java-25-openjdk-devel maven
     python3.14 uv
+  # Maven comes from Fedora; the JDK it runs on is the pinned Temurin (Q12), because
+  # Fedora's java-25-openjdk floats (25.0.4 while Temurin is 25.0.5). gzip unpacks the tarball.
+  JAVA_PACKAGES: >-
+    git tar gzip curl findutils maven
 
 jobs:
   # Decides whether the build jobs run. The workflow always runs, so ci-ok always reports.
@@ -153,17 +157,40 @@ jobs:
           uv run ruff format --check . ../scripts ../diagrams
 
   # Java: the aggregator builds every module (kits, simulator consumer, chapter examples) and runs the tests.
+  # The JDK is the Temurin tarball pinned in versions.env (TEMURIN_URL, SHA-checked), the same
+  # build the lab guest runs; the tarball is cached on its SHA and re-verified on every run.
   java:
     needs: changes
     if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
-    env:
-      JAVA_HOME: /usr/lib/jvm/java-25-openjdk
     steps:
       - name: Install packages (container only)
-        run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
+        run: dnf -y --setopt=install_weak_deps=False install ${{ env.JAVA_PACKAGES }}
       - uses: actions/checkout@v7.0.1
+      - name: Read the Temurin pin
+        id: temurin
+        run: |
+          . ./versions.env
+          echo "sha256=$TEMURIN_SHA256" >> "$GITHUB_OUTPUT"
+          echo "version=$TEMURIN_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6.1.0
+        id: jdk
+        with:
+          path: ~/.cache/lowlat/temurin.tar.gz
+          key: lowlat-temurin-${{ steps.temurin.outputs.sha256 }}
+      - name: Fetch Temurin (skipped on a cache hit), verify the SHA, install
+        run: |
+          . ./versions.env
+          tarball="$HOME/.cache/lowlat/temurin.tar.gz"
+          mkdir -p "$(dirname "$tarball")"
+          [ -f "$tarball" ] || curl -fL --retry 3 -o "$tarball" "$TEMURIN_URL"
+          [ "$(sha256sum "$tarball" | cut -d' ' -f1)" = "$TEMURIN_SHA256" ] || { echo "Temurin SHA256 mismatch" >&2; rm -f "$tarball"; exit 1; }
+          jdk="$HOME/.cache/lowlat/temurin-$TEMURIN_VERSION"
+          mkdir -p "$jdk"
+          tar -xzf "$tarball" -C "$jdk" --strip-components=1
+          echo "JAVA_HOME=$jdk" >> "$GITHUB_ENV"
+          echo "$jdk/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v6.1.0
         with:
           path: ~/.m2/repository
@@ -173,6 +200,7 @@ jobs:
         run: |
           java -version
           mvn -v
+          [ "$(java -version 2>&1 | head -1 | cut -d'"' -f2)" = "${{ steps.temurin.outputs.version }}" ]
       - name: Build and test every module
         run: mvn -B -f examples/pom.xml verify
 
