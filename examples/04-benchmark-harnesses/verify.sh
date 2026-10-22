@@ -98,7 +98,10 @@ py_values=$(jq '[.benchmarks[0].runs[] | .values // empty | length] | add' "$OUT
 py_procs=$(jq '[.benchmarks[0].runs[] | select(.values)] | length' "$OUT/pyperf.json")
 assert_ge "$py_values" 20 "pyperf recorded values"
 assert_ge "$py_procs" 3 "pyperf worker processes with values"
-py_warm=$(jq -r '[.benchmarks[0].runs[0].warmups[0][1], ([.benchmarks[0].runs[] | .values // empty | .[]] | sort | .[length / 2 | floor])]
+# Median as pyperf computes it: the middle value, or the midpoint of the two middle values.
+py_warm=$(jq -r 'def median: sort | if length % 2 == 1 then .[length / 2 | floor]
+                                   else (.[length / 2 - 1] + .[length / 2]) / 2 end;
+                 [.benchmarks[0].runs[0].warmups[0][1], ([.benchmarks[0].runs[] | .values // empty | .[]] | median)]
                  | map(. * 1e9 * 10 | round / 10) | "first warm-up \(.[0]) ns, median measured \(.[1]) ns"' "$OUT/pyperf.json")
 echo "  warm-up vs warmed (calibration run, cold interpreter): $py_warm"
 
