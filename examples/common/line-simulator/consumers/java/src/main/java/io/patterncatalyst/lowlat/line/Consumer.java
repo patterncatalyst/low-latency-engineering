@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
@@ -86,10 +87,20 @@ public final class Consumer {
         LatencyRecorder recorder = receiver.recorder();
         recorder.printSummary();
         System.out.println(receiver.notes());
+        if (receiver.windows() != null) {
+            receiver.windows().first().printSummary();
+            receiver.windows().steady().printSummary();
+        }
         Path report = config.report();
         if (report != null) {
-            recorder.writeReport(report, receiver.reportNotes());
+            Map<String, Object> runtime = receiver.runtime();
+            recorder.writeReport(report, receiver.reportNotes(), null, runtime);
             System.out.println("report: " + report);
+            if (receiver.windows() != null) {
+                for (Path window : receiver.windows().writeReports(report, receiver.reportNotes(), runtime)) {
+                    System.out.println("report: " + window);
+                }
+            }
         }
     }
 }

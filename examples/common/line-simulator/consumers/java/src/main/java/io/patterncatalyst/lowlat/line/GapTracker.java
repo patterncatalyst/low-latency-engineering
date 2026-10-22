@@ -14,6 +14,17 @@ final class GapTracker {
     private long dropped;
     private long reordered;
     private long lastGap;
+    private final long window; // 0: no window
+    private long droppedBelowWindow;
+
+    GapTracker() {
+        this(0);
+    }
+
+    /** With a window, also counts the dropped parcels numbered below it. */
+    GapTracker(long window) {
+        this.window = window;
+    }
 
     /** Observe one {@code seq}; the number of newly missing parcels is {@link #lastGap()}. */
     Arrival observe(long seq) {
@@ -24,6 +35,10 @@ final class GapTracker {
         }
         lastGap = seq - highest - 1;
         dropped += lastGap;
+        long firstMissing = highest + 1;
+        if (firstMissing < window) {
+            droppedBelowWindow += Math.min(seq, window) - firstMissing;
+        }
         highest = seq;
         return Arrival.NEW;
     }
@@ -35,6 +50,11 @@ final class GapTracker {
 
     long dropped() {
         return dropped;
+    }
+
+    /** Dropped parcels numbered below the window (0 when there is none). */
+    long droppedBelowWindow() {
+        return droppedBelowWindow;
     }
 
     long reordered() {

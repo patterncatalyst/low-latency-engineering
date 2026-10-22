@@ -13,12 +13,13 @@ public record Config(
         long idleTimeoutMs,
         Path report,
         String example,
-        String variant) {
+        String variant,
+        long window) {
 
     static final String USAGE = """
             usage: line-consumer-java [--bind HOST:PORT] [--rcvbuf BYTES] [--expect N]
                                       [--idle-timeout-ms MS] [--report FILE]
-                                      [--example NAME] [--variant NAME]
+                                      [--example NAME] [--variant NAME] [--window N]
               --bind            UDP address to bind (default 127.0.0.1:47000)
               --rcvbuf          SO_RCVBUF request in bytes (default 4194304)
               --expect          stop after N datagrams, received + dropped (default: no limit)
@@ -27,10 +28,18 @@ public record Config(
               --report          write the lowlat-report/1 JSON here (needs LOWLAT_PROFILE)
               --example         report example name (default 00-line-consumer)
               --variant         report variant (default baseline)
+              --window          also report parcels seq < N as <variant>-first-N and the rest
+                                as <variant>-steady, beside --report (default: none)
             """;
 
+    /** A config without a window. */
+    public Config(String bindHost, int bindPort, int rcvbuf, long expect, long idleTimeoutMs, Path report,
+            String example, String variant) {
+        this(bindHost, bindPort, rcvbuf, expect, idleTimeoutMs, report, example, variant, 0);
+    }
+
     public static Config defaults() {
-        return new Config("127.0.0.1", 47000, 4 << 20, 0, 2000, null, "00-line-consumer", "baseline");
+        return new Config("127.0.0.1", 47000, 4 << 20, 0, 2000, null, "00-line-consumer", "baseline", 0);
     }
 
     public InetSocketAddress bindAddress() {
@@ -55,6 +64,7 @@ public record Config(
         Path report = base.report;
         String example = base.example;
         String variant = base.variant;
+        long window = base.window;
         for (int i = 0; i < args.size(); i++) {
             String flag = args.get(i);
             if (flag.equals("-h") || flag.equals("--help")) {
@@ -76,10 +86,11 @@ public record Config(
                 case "--report" -> report = Path.of(value);
                 case "--example" -> example = value;
                 case "--variant" -> variant = value;
+                case "--window" -> window = positiveLong(flag, value);
                 default -> throw new IllegalArgumentException("unknown option " + flag);
             }
         }
-        return new Config(bindHost, bindPort, rcvbuf, expect, idleTimeoutMs, report, example, variant);
+        return new Config(bindHost, bindPort, rcvbuf, expect, idleTimeoutMs, report, example, variant, window);
     }
 
     /** A {@code HOST:PORT} option value. */
