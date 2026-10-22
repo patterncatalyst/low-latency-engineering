@@ -25,7 +25,7 @@ for i in range(7):
     nodes.append({"x": x, "y": 118, "w": 44, "h": 30, "style": "accent", "lines": ["done"]})
     edges.append({"x1": x + 22, "y1": 94, "x2": x + 22, "y2": 118})
 nodes.append({"x": 735, "y": 105, "w": 120, "h": 56, "style": "ink",
-              "lines": ["p50 85-192 us", "C++, Python, Java"]})
+              "lines": ["p50 84-183 us", "C++, Python, Java"]})
 edges.append({"x1": 664, "y1": 133, "x2": 735, "y2": 133})
 
 # batch lane

@@ -41,10 +41,10 @@ for n, ytop in lanes:
 
 nodes.append({"x": 400, "y": 210, "w": 450, "h": 110, "style": "ink",
               "lines": ["N = 4 speedup, predicted -> measured",
-                        "C++              3.11x -> 2.81-2.85x",
-                        "Python threads   3.07-3.08x -> 0.56-0.83x",
-                        "Python processes 3.02-3.05x -> 2.81-2.95x",
-                        "Java             3.08-3.09x -> 2.71-2.74x"]})
+                        "C++              3.11x -> 2.82-2.84x",
+                        "Python threads   3.08x -> 0.63-0.80x",
+                        "Python processes 3.04-3.05x -> 2.88-2.93x",
+                        "Java             3.08x -> 2.73-2.75x"]})
 
 notes = [
     {"x": 440, "y": 28,

@@ -85,8 +85,8 @@ machine profile and matches `lowlat-report check`. Exit 0 requires all of it.
 It held on all three quiet-host runs, `r01-run1..3` (bare-metal host, governor
 `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44, `virt: none`): every report
 had `count = 5000` and `dropped = 0`. The p99 smoke values were not asserted; across
-the runs they were 176,255 to 195,711 ns (C++), 202,239 to 450,815 ns (Python) and
-317,439 to 325,119 ns (Java, which includes JIT warm-up).
+the runs they were 187,391 to 250,495 ns (C++), 213,759 to 453,887 ns (Python) and
+305,919 to 493,311 ns (Java, which includes JIT warm-up).
 
 The `VM=1` path ran once (`results/r01-vm-smoke/`, labelled VM): 8 of 8 guest
 checks passed and `cyclictest` produced its output. Those values are VM numbers and

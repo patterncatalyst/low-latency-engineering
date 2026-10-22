@@ -24,9 +24,9 @@ nodes = [
     {"x": 492, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#102"]},
     {"x": 558, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#103"]},
     {"x": 624, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#104"]},
-    {"x": 40, "y": 250, "w": 230, "h": 70, "style": "ink", "lines": ["Fast mode", "p50 78-183 us"]},
+    {"x": 40, "y": 250, "w": 230, "h": 70, "style": "ink", "lines": ["Fast mode", "p50 77-219 us"]},
     {"x": 400, "y": 250, "w": 240, "h": 70, "style": "ink",
-     "lines": ["Slow mode", "p99 2.2-5.9 ms", "#100 and the parcels behind it"]},
+     "lines": ["Slow mode", "p99 2.1-6.7 ms", "#100 and the parcels behind it"]},
     {"x": 670, "y": 250, "w": 190, "h": 70, "style": "ghost",
      "lines": ["one summary number", "describes neither group"]},
 ]

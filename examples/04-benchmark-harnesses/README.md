@@ -82,8 +82,8 @@ executions, which is why pyperf runs warm-up values first, discards them from th
 records them. For this function the effect is small: pyperf's own output reports
 `2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each value covers 64
 calls of the 1,024-prefix function and the interpreter is warm before the first value
-finishes. The first warm-up of the calibration run (a cold interpreter) was 1,909 to 1,957 ns
-per check digit and the median measured value 2,016 to 2,071 ns across r01-run1..3: a few
+finishes. The first warm-up of the calibration run (a cold interpreter) was 1,887 to 1,922 ns
+per check digit and the median measured value 1,961 to 2,014 ns across r01-run1..3: a few
 percent apart, inside the spread of the run, and `verify.sh` prints both. A function with a
 long first call would show more.
 
@@ -124,9 +124,9 @@ Ranges over the three runs:
 
 | Harness | Result |
 |---|---|
-| Google Benchmark (C++) | guarded median 4.74 to 4.76 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 474 to 475x (divisor floored at 0.01 ns, so a lower bound) |
+| Google Benchmark (C++) | guarded median 4.73 to 4.78 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 472 to 478x (divisor floored at 0.01 ns, so a lower bound) |
 | JMH SampleTime (Java) | guarded p50 32 to 33 ns; eliminated p50 0 ns; ratio 3,200 to 3,300x (floored) |
-| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 2,011 to 2,071 ns |
+| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,961 to 2,013 ns |
 
 ## Licences
 
