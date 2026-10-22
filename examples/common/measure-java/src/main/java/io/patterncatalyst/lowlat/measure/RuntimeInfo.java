@@ -14,11 +14,23 @@ import java.util.Map;
  */
 public final class RuntimeInfo {
 
-    private static final List<String> GC_FLAG_PREFIXES =
-            List.of("-XX:+Use", "-XX:-Use", "-Xmx", "-Xms", "-XX:MaxGCPauseMillis", "-XX:+ZGenerational",
-                    "-XX:-ZGenerational", "-Xlog:gc", "-XX:+AlwaysPreTouch");
+    /**
+     * The JVM input arguments {@code gc.flags} keeps: the collector selection and its mode, the
+     * heap sizing and the memory-backing flags that change GC behavior. Listed one by one, not by a
+     * {@code -XX:+Use} prefix, which would also capture unrelated switches such as
+     * {@code UseCompactObjectHeaders}.
+     */
+    private static final List<String> GC_FLAG_PREFIXES = List.of(
+            "-XX:+UseSerialGC", "-XX:+UseParallelGC", "-XX:+UseG1GC", "-XX:+UseZGC", "-XX:+UseShenandoahGC",
+            "-XX:+UseEpsilonGC", "-XX:ShenandoahGCMode=", "-Xms", "-Xmx", "-Xmn", "-XX:MaxGCPauseMillis=",
+            "-XX:+AlwaysPreTouch", "-XX:+UseTransparentHugePages", "-XX:+UseLargePages", "-Xlog:gc");
 
     private RuntimeInfo() {}
+
+    /** True for a JVM argument that selects or tunes the collector or the heap. */
+    static boolean isGcFlag(String argument) {
+        return GC_FLAG_PREFIXES.stream().anyMatch(argument::startsWith);
+    }
 
     /**
      * {@code gc.collectors}: the {@code GarbageCollectorMXBean} names; {@code gc.flags}: the GC-
@@ -29,7 +41,7 @@ public final class RuntimeInfo {
                 .map(GarbageCollectorMXBean::getName)
                 .toList();
         List<String> flags = ManagementFactory.getRuntimeMXBean().getInputArguments().stream()
-                .filter(a -> GC_FLAG_PREFIXES.stream().anyMatch(a::startsWith))
+                .filter(RuntimeInfo::isGcFlag)
                 .toList();
         Map<String, Object> gc = new LinkedHashMap<>();
         gc.put("collectors", collectors);
