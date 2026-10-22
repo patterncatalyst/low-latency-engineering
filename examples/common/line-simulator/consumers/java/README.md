@@ -22,6 +22,7 @@ LOWLAT_PROFILE=/tmp/profile.json java -jar \
 | `--expect N` | no limit | stop after N datagrams, received + dropped |
 | `--idle-timeout-ms MS` | 2000 | stop after MS of silence once the first datagram arrived |
 | `--report FILE` | none | write `lowlat-report/1` (needs `LOWLAT_PROFILE`); `notes` = `reordered=N; rcvbuf_requested=X; rcvbuf_granted=Y` |
+| `--window N` | none | also write `<stem>-first-N` (seq < N) and `<stem>-steady` reports beside `--report` |
 | `--example`, `--variant` | `00-line-consumer`, `baseline` | report labels |
 
 SIGINT/SIGTERM stop the loop and still write the report (exit 130/143). A negative

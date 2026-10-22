@@ -28,6 +28,7 @@ the consumer checks it before binding.
 | `--expect N` | none | stop after N datagrams, received plus dropped |
 | `--idle-timeout-ms MS` | 2000 | stop after MS of silence, once the first datagram has arrived |
 | `--report FILE` | none | write the `lowlat-report/1` JSON |
+| `--window N` | none | also write `<stem>-first-N` (seq < N) and `<stem>-steady` reports beside `--report` |
 | `--example NAME` | `00-line-consumer` | report example |
 | `--variant NAME` | `baseline` | report variant |
 

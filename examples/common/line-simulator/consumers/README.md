@@ -37,6 +37,50 @@ object that records `done_ns − intended_emit_ns`. Example 00 uses the lane loo
 as its handler; example 01 supplies batching and slow-path handlers (C++
 `consume_with`, Python `run`, Java `LineReceiver.run(ParcelHandler)`).
 
+## Windows (`--window N`)
+
+With `--window N` (C++, Java, Python) a consumer also reports the run in two parts: parcels
+with `seq < N` as variant `<variant>-first-N`, the rest as `<variant>-steady`. They are
+written beside `--report FILE` as `<stem>-first-N<ext>` and `<stem>-steady<ext>`, **in
+addition to** the full `<variant>` report, which keeps its meaning (so a windowed run records
+each latency twice; a run without `--window` pays nothing). The two counts sum to the full
+count, and each gap is booked as `dropped` in the window of the missing parcels. The first
+window carries the warm-up (JIT, page faults, cold caches); Ch5 compares it with steady state.
+A handler that completes parcels later than the call that received them must pass the parcel's
+`seq` to `Completion` (C++/Java `complete(seq, intended, done)`, Python `complete(intended,
+done, seq)`), otherwise the parcel is attributed to whichever one the loop is handling.
+
+## Completion on another thread
+
+`Completion` is single-writer, not thread-safe. Exactly one thread calls `complete` at a time:
+the receive thread by default, or a thread the handler hands it to (Ch7's decide thread). The
+handler keeps the `Completion` from its first call, starts the thread, and in `drain` (called
+on the receive thread when the loop ends) stops and joins it. The loop reads the counts and
+the report reads the recorder only after `drain` returns, so the join is the happens-before
+edge that publishes everything the owner wrote: no lock and no atomic on the recording path.
+The receive thread must not call `complete` once ownership has moved. C++ test:
+`ConsumerOwnership` in `cpp/tests/consumer_test.cpp` (`std::jthread`); Java:
+`WindowAndOwnershipTest`; the Python test is a thread joined in `drain`.
+
+## Other wire formats (Java `Decoder`)
+
+The Java receive loop is `EventReceiver<E>` with a `Decoder<E>`: `decode(ByteBuffer)` returns
+the event the handler sees and `seq(E)` feeds the gap tracker. `LineReceiver` is
+`EventReceiver<ParcelEvent>` with the protobuf decoder, so r01 handlers (`ParcelHandler`)
+compile unchanged. A flat decoder returns a reused view over the datagram, so a handler for
+it allocates nothing per parcel (the view reader in the tests, `FlatParcel`, is the reference;
+Ch8 measures it). The wire layout is `contracts/flat/parcel-v1`; Python reads it with
+`lowlat_consumer.flat`, and the C++ header `parcel_v1.hpp` is the source of truth.
+
+## Allocation on the receive thread (Java)
+
+`EventReceiver.runtime()` returns the report's `runtime` block: `RuntimeInfo.jvm()` plus
+`alloc_bytes_per_parcel`, the receive thread's `ThreadMXBean.getThreadAllocatedBytes` difference
+between the start and the end of the loop divided by the parcels received. The counter is read
+twice per run, never per parcel. It counts the receive thread only (selector, channel, decode,
+and handler work done on that thread), so work moved to a decide thread is not in it.
+`line-consumer-java` writes it into every report.
+
 The ready line (the first line printed once the socket is bound) is flushed
 immediately in all three, so a script can wait on a redirected stdout.
 
