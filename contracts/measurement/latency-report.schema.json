@@ -108,8 +108,8 @@
   },
   "$defs": {
     "noMean": {
-      "description": "No-mean rule: no property name in this subtree is 'mean' or ends in '_mean' or 'mean_ns'.",
-      "propertyNames": { "not": { "pattern": "^(mean|.*_mean|.*mean_ns)$" } },
+      "description": "No-mean rule: no property name in this subtree names a mean or an average, matched case-insensitively: mean, avg or average as a whole word or snake_case/kebab-case/dotted part (mean, mean_ns, pause_mean_ns, mean_compile_ns, avg, avg_ns, average_ns), as a camelCase part (meanNs, avgNs, pauseMeanNs), or as a trailing meanns/avgns.",
+      "propertyNames": { "not": { "pattern": "(^|[_.-])([Mm][Ee][Aa][Nn]|[Aa][Vv][Gg])([_.0-9-]|$|[A-Z])|(^|[_.-])[Aa][Vv][Ee][Rr][Aa][Gg][Ee]|[A-Za-z0-9](Mean|Avg)([A-Z_0-9-]|$)|[A-Za-z0-9]Average|([Mm][Ee][Aa][Nn]|[Aa][Vv][Gg])_?[Nn][Ss]$" } },
       "additionalProperties": { "$ref": "#/$defs/noMean" },
       "items": { "$ref": "#/$defs/noMean" }
     }

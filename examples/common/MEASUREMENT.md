@@ -95,8 +95,11 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
   - `ctx_switches`: `voluntary`, `involuntary` (integers)
   - `alloc_stalls`: `count`, `max_ns` (integers; `jdk.ZAllocationStall` events, written by `JfrPauses`)
 
-  No key anywhere inside `runtime` may be named `mean` or end in `_mean` or `mean_ns`; the
-  schema rejects it, so `lowlat-report validate` and `check` both fail. Key order is the
+  No key anywhere inside `runtime` may name a mean or an average. The schema matches the key
+  case-insensitively and rejects `mean`, `avg` and `average` as a whole key or as a part of a
+  snake_case, kebab-case or camelCase one (`mean_ns`, `pause_mean_ns`, `mean_compile_ns`,
+  `avg_ns`, `average_ns`, `meanNs`, `avgNs`) and a trailing `meanns`/`avgns`, so
+  `lowlat-report validate` and `check` both fail. Keys such as `meaning` pass. Key order is the
   order above for the typed members; the kits write the object as given, after `model`.
   The Java kit never adds `runtime` on its own: `RuntimeInfo.jvm()` returns a mutable map
   with `gc.collectors` (`GarbageCollectorMXBean` names), `gc.heap_bytes` (`Runtime.maxMemory()`)

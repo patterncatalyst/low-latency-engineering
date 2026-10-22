@@ -147,7 +147,27 @@ def test_runtime_block_rejects_mean(capsys: pytest.CaptureFixture[str]) -> None:
     assert "pause_mean_ns" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("key", ["mean", "mean_ns", "pause_mean", "pause_mean_ns"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "mean",
+        "mean_ns",
+        "pause_mean",
+        "pause_mean_ns",
+        "mean_compile_ns",
+        "avg",
+        "avg_ns",
+        "pause_avg_ns",
+        "average",
+        "average_ns",
+        "meanNs",
+        "avgNs",
+        "pauseMeanNs",
+        "MEAN_NS",
+        "Mean",
+        "avgns",
+    ],
+)
 def test_runtime_rejects_mean_anywhere(
     lowlat_profile: Path, tmp_path: Path, key: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -173,4 +193,32 @@ def test_runtime_only_when_given(lowlat_profile: Path, tmp_path: Path) -> None:
     report = rec.write_report(out, runtime=runtime)
     assert list(report)[-1] == "runtime"
     assert json.loads(out.read_text(encoding="utf-8"))["runtime"] == runtime
+    assert main(["check", str(out)]) == 0
+
+
+@pytest.mark.parametrize("name", ["invalid-runtime-avg.json", "invalid-runtime-camel.json"])
+def test_runtime_rejects_average_fixtures(name: str, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["check", str(EXAMPLES / name)]) == 1
+    assert capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "p50_ns",
+        "max_ns",
+        "count",
+        "compilations",
+        "alloc_bytes_per_parcel",
+        "first-1000",
+        "meaning",
+        "averted",
+        "pause_p99_ns",
+    ],
+)
+def test_runtime_accepts_legitimate_keys(lowlat_profile: Path, tmp_path: Path, key: str) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    out = tmp_path / "ok.json"
+    rec.write_report(out, runtime={"jit": {"steady": {key: 1}}})
     assert main(["check", str(out)]) == 0
