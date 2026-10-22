@@ -21,7 +21,7 @@ by another name.
 | Java | `zgc` | `-XX:+UseZGC`: generational (the only mode in JDK 25); marking, relocation and reference processing run concurrently |
 | Java | `shenandoah-gen` | `-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational` |
 | Java | `shenandoah` | `-XX:+UseShenandoahGC`, non-generational (observed) |
-| Java | `undersized-heap` | ZGC with the heap at 1.3x the measured live set: no headroom, so allocation stalls |
+| Java | `undersized-heap` | ZGC with the heap at 1.05x the measured live set: almost no headroom, so allocation stalls |
 | Java | `thp` | ZGC with `-XX:+UseTransparentHugePages` (observed; the host's THP mode is `madvise`) |
 | Java | `jfr-off` | ZGC without the flight recorder (observed: what the recording costs) |
 | Python | `cyclic-garbage` | each parcel's scan history is a reference cycle: only the cyclic collector frees it |
@@ -89,7 +89,9 @@ The script runs every JVM on its own, one after the other. It needs 4 GB for a h
 start while a `lowlat-*` VM is running; `ALLOW_BUSY=1` measures anyway (the numbers are then noisy and
 the profile says so). `SKIP_BUILD=1`, `RESULTS_DIR` and `LOWLAT_BUILD` are the shared options of
 `examples/_lib/lib.sh`. `RECHECK=results/<run-id>` evaluates the criteria on a committed run without
-running anything.
+running anything. `SWEEP=1` runs the heap-multiple sweep instead of the criteria: ZGC at 1.30, 1.15, 1.10,
+1.075 and 1.05x the live set and at 4 GB, six runs, with the reports written to the results directory and
+a table printed (see the headroom cliff below).
 
 By hand, the ZGC variant (consumer first, then the simulator):
 
@@ -127,17 +129,52 @@ is about 0.5 MB, far under the 20 MB budget for the iteration.
    maximum; the `zgc` maximum is under 1 ms; the `shenandoah-gen` maximum is at most a fifth of the
    `stop-the-world` maximum.
 2. **The tail the line sees.** `zgc` p99.9 is at most a third of `stop-the-world` p99.9.
-3. **Headroom.** `undersized-heap` records at least one `jdk.ZAllocationStall` and its p99.9 is at least
-   3x the right-sized `zgc` p99.9.
+3. **Headroom.** `undersized-heap` (heap = 1.05x the measured live set) records at least one
+   `jdk.ZAllocationStall` and its p99.9 is at least 3x the right-sized `zgc` p99.9.
 4. **Python.** `frozen` runs zero generation-2 collections in the measured window; `cyclic-garbage` runs
    at least one.
-5. **C++.** The `bulk-free` maximum is at least 10x the `deferred-free` p99.9 (same run);
-   the `deferred-free` maximum is within 3x of the `no-free` control's.
+5. **C++.** The `bulk-free` maximum is at least 10x the `deferred-free` p99.9 (same run).
 6. **Every report.** `count = 300000`, `dropped = 0`, `lowlat-report check` passes, and each Java
    report's `build.flags` names its collector and its heap size.
 
-Observed, not asserted: `shenandoah` (non-generational), `thp` and `jfr-off`. They are printed beside
-`zgc` so a reader sees what the transparent huge pages and the recording cost.
+Observed, not asserted: `shenandoah` (non-generational), `thp` and `jfr-off`, printed beside `zgc` so a
+reader sees what the transparent huge pages and the recording cost; and the `deferred-free` and `no-free`
+maxima. Those two maxima are single operating-system events of 0.3 to 2 ms on both sides (across
+calibration runs the ratio of one to the other ranged from 0.4 to 2.7), so the chapter reads them as a
+pair, and the claim that the reclaimer thread leaves the hot path rests on the `deferred-free` p99.9
+against the `bulk-free` maximum in criterion 5.
+
+### Why 1.05x: the headroom cliff
+
+ZGC needs a few percent of heap beyond the live set to keep up; it does not need 30 %. With the heap fixed
+(`-Xms` = `-Xmx`) it cannot grow, so as the headroom shrinks it collects more often, and only when the
+free space is gone does an allocating thread wait. At 1.3x the live set (2,348 MB for the 1,806 MB live
+set) ZGC rode out a doubled allocation rate by running more minor collections (162 at 400 MB/s, 270 at
+800 MB/s) and never stalled. Allocation rate is not the lever; headroom is, and the transition is sharp:
+about 90 to 180 MB of free heap (5 to 10 % of the live set) separates no stalls from hundreds. The
+criterion therefore uses 1.05x, where the heap sits 87 MB above the live set. That heap survived every run
+without an out-of-memory error and without a dropped parcel (the socket buffer absorbed stalls of up to
+210 ms), and `verify.sh` measures the live set first, so the size follows the workload.
+
+Observed during calibration, 2026-10-22, one run per row, 10 kHz x 30 s, ZGC with `-Xms` = `-Xmx` and
+`-XX:+AlwaysPreTouch`, 400 MB/s allocation flag (about 476 MB/s measured on the receive thread), live set
+1,806 MB. Host profile: `bare-metal-host`, i7-11800H (8 cores, SMT on), governor `powersave`, tuned
+`balanced`, THP `madvise`, kernel 7.2.11-200.fc44.x86_64. This is calibration data, not a committed run;
+`SWEEP=1 ./verify.sh` reproduces it and writes the reports.
+
+| Heap (x live set) | MB | Allocation stalls | Max stall | p99 | p99.9 | Minor / major collections |
+|---|---|---|---|---|---|---|
+| right-sized (4 GB) | 4096 | 0 | - | 0.083 ms | 0.162 ms | 28 / 12 |
+| 1.30 | 2348 | 0 | - | 0.092 ms | 0.162 ms | 162 / 28 |
+| 1.15 | 2077 | 0 | - | 0.095 ms | 0.161 ms | 400 / 64 |
+| 1.10 | 1987 | 0 | - | 0.089 ms | 0.172 ms | 590 / 104 |
+| 1.075 | 1942 | 14 | 50.5 ms | 0.139 ms | 25.2 ms | 718 / 146 |
+| 1.05 | 1897 | 884 | 98.2 ms | 43.5 ms | 73.1 ms | 1882 / 186 |
+
+At 800 MB/s: 1.30x gave 0 stalls and 270 minor collections, 1.15x gave 0 and 702, 1.10x gave 1 stall of
+2.8 ms, 1.05x gave 2,115 stalls with a 209 ms maximum. Three further runs at 1.05x gave 618, 643 and 865
+stalls (p99.9 97 to 157 ms); three at 1.075x gave 12, 5 and 14 stalls with p99.9 of 24, 1.5 and 14 ms,
+which is why 1.075x is not used: one of the three clears the 3x bound by only 3.6x.
 
 How the Python lane counts: CPython 3.14.8 has the generational cycle collector (3.14.0 to 3.14.4 shipped
 an incremental one that 3.14.5 reverted), so a generation-2 collection walks every tracked object that is
@@ -167,6 +204,6 @@ CPython 3.14.8: PSF licence. Versions are pinned in `_plans/dependency-pins.md` 
 
 ## Verification status
 
-Unverified until the iteration's measurement runs (S13). One functional run on a busy host has exercised
-every variant end to end; criteria 3 and 5 (second half) have not held there and are calibrated before
-verification.
+Unverified until the iteration's measurement runs (S13). Calibrated on a quiet host on 2026-10-22: three
+dry runs plus the heap sweep above; criterion 3 uses the 1.05x heap that clears its bounds by two orders of
+magnitude, and the former criterion 5 second half is now an observed pair.

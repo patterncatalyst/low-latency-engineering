@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Ch5 verify: what the JVM costs per parcel, and how to stop paying it on the first one.
-#   1. JMH -prof gc: `escaping` >= 24 B/op, `scalar-replaced` <= 1 B/op, `--no-escape-analysis` >= 24 B/op.
+#   1. JMH -prof gc: `escaping` >= 24 B/op, `scalar-replaced` <= 1 B/op, `--no-escape-analysis` >= 24 B/op
+#      (the 24 B and C++ 16 B are exact object sizes: exact counters, the 2x calibration margin does not apply).
 #   2. `--unwarmed`: first-window p99 >= 5x the steady p99 (same run).
 #   3. `warmed`: first-window p99 <= 3x the steady p99 (same run).
 #   4. `aot-cache`: median time to ready <= 0.8x the no-cache median (5 alternating launches); the AOT log
@@ -244,9 +245,9 @@ jmh_bytes() {
 escaping=$(jmh_bytes escaping)
 scalar=$(jmh_bytes scalarReplaced)
 noea=$(jmh_bytes scalarReplacedNoEscapeAnalysis)
-verdict "1: escaping allocates the decision" ">=" "$escaping" 24
+verdict "1: escaping allocates the decision (exact counter)" ">=" "$escaping" 24
 verdict "1: scalar-replaced allocates nothing" "<=" "$scalar" 1
-verdict "1: --no-escape-analysis allocates it again" ">=" "$noea" 24
+verdict "1: --no-escape-analysis allocates it again (exact counter)" ">=" "$noea" 24
 jq -n --argjson e "$escaping" --argjson s "$scalar" --argjson n "$noea" \
   '{unit: "B/op", escaping: $e, "scalar-replaced": $s, "--no-escape-analysis": $n}' >"$OUT/alloc-per-op.json"
 
@@ -254,7 +255,7 @@ gb() { jq -er --arg n "$1" --arg c "$2" '.benchmarks[] | select(.run_name | star
 c_value=$(gb BM_Decide_Value 'B/op')
 c_alloc=$(gb BM_Decide_Allocating 'B/op')
 c_pmr=$(gb BM_Decide_Pmr 'B/op')
-verdict "1 (C++): --allocating pays one heap allocation per parcel" ">=" "$c_alloc" 16
+verdict "1 (C++): --allocating pays one heap allocation per parcel (exact counter)" ">=" "$c_alloc" 16
 verdict "1 (C++): value pays none" "<=" "$c_value" 1
 printf '  observed (C++): pmr arena %.2f B/op through the global allocator\n' "$c_pmr"
 printf '  observed (C++) median ns/op: value %.1f, --allocating %.1f, pmr %.1f\n' \
