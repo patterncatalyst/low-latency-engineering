@@ -1,6 +1,7 @@
 """--window: the run is split at parcel N; ownership: a completion made on another thread counts."""
 
 import json
+import queue
 import socket
 import subprocess
 import sys
@@ -78,22 +79,30 @@ def test_two_windows_sum_to_the_total_and_drops_are_split():
 
 
 def test_completion_made_on_another_thread_counts_every_parcel():
+    """A decide thread, started on the first parcel, completes while the receive loop runs."""
     done_ids: set[int] = set()
-    pending: list[tuple[int, int]] = []
 
     class Handler:
+        def __init__(self) -> None:
+            self.queue: queue.SimpleQueue[tuple[int, int] | None] = queue.SimpleQueue()
+            self.thread: threading.Thread | None = None
+
         def __call__(self, event: ParcelEvent, complete: Completion) -> None:
-            pending.append((event.seq, event.intended_emit_ns))
+            if self.thread is None:
+                self.thread = threading.Thread(target=self._decide, args=(complete,))
+                self.thread.start()
+            self.queue.put((event.seq, event.intended_emit_ns))
+
+        def _decide(self, complete: Completion) -> None:
+            done_ids.add(threading.get_ident())
+            while (item := self.queue.get()) is not None:
+                seq, intended = item
+                complete(intended, time.monotonic_ns(), seq)
 
         def drain(self, complete: Completion) -> None:
-            def decide() -> None:
-                done_ids.add(threading.get_ident())
-                for seq, intended in pending:
-                    complete(intended, time.monotonic_ns(), seq)
-
-            t = threading.Thread(target=decide)
-            t.start()
-            t.join()  # the join publishes what the decide thread wrote
+            self.queue.put(None)
+            assert self.thread is not None
+            self.thread.join()  # the join publishes what the decide thread wrote
 
     rec, w, _, result = _run(list(range(50)), 20, Handler())
     assert done_ids and threading.get_ident() not in done_ids

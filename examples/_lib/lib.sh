@@ -243,6 +243,13 @@ task_ctx_switches() {
 # READY_TIMEOUT seconds (default 60) bounds the wait; the output is printed if CMD dies first
 # or never gets ready. A FIFO delivers the line the moment it is written, so there is no
 # polling granularity in the number.
+#
+# Clock: EPOCHREALTIME is the wall clock (CLOCK_REALTIME), microsecond resolution. Bash has no
+# monotonic clock ($SECONDS is whole seconds; /proc/uptime has 10 ms resolution, too coarse for a
+# ~100 ms interval; `date +%s%N` is the same wall clock plus a fork). Wall time is acceptable
+# here: NTP slews at 500 ppm at most (50 us over 100 ms), and only a clock step during the launch
+# would skew one number, which shows up as an outlier among the repeated launches. The
+# duration is a coarse startup figure, not a latency sample.
 time_to_ready() {
   local pattern=${READY_PATTERN:-ready} timeout=${READY_TIMEOUT:-60}
   local fdir fifo fd pid line seen='' t0 t1 deadline

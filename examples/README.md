@@ -51,6 +51,9 @@ Python (from `examples/`):
 ../scripts/gen-python-proto.sh && uv sync --all-packages && uv run pytest && uv run ruff check
 ```
 
+The protobuf modules are generated, not committed. On a fresh tree `uv run pytest` stops
+at startup with a message naming `scripts/gen-python-proto.sh` until that script has run.
+
 ## Where versions live
 
 `versions.env` (repo root) is the machine-readable source for protobuf and abseil;
