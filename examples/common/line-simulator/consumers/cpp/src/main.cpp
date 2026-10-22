@@ -2,6 +2,7 @@
 // latency against the belt's schedule. See ../README.md.
 #include <atomic>
 #include <csignal>
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <print>
@@ -47,7 +48,11 @@ int main(int argc, char** argv) {
     measure::Recorder latency{cfg.example, cfg.variant};
     std::println("line-consumer: listening on {}, SO_RCVBUF requested {} B", cfg.bind, cfg.rcvbuf);
     const line::ConsumerResult result = line::consume(
-        cfg, g_stop, latency, [](int, int granted) { std::println("SO_RCVBUF granted: {} B", granted); });
+        cfg, g_stop, latency, [](int, int granted) {
+          std::println("SO_RCVBUF granted: {} B", granted);
+          // The socket is bound: flush so a script reading a redirected stdout can wait on this line.
+          std::fflush(stdout);
+        });
     std::println("received {}, dropped {}, reordered {}, malformed {} (stopped: {})", result.received,
                  result.dropped, result.reordered, result.malformed, result.stopped_by);
 

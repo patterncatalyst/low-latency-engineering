@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /** Command-line options of the consumer (see consumers/README.md). */
-record Config(
+public record Config(
         String bindHost,
         int bindPort,
         int rcvbuf,
@@ -29,17 +29,25 @@ record Config(
               --variant         report variant (default baseline)
             """;
 
-    static Config defaults() {
+    public static Config defaults() {
         return new Config("127.0.0.1", 47000, 4 << 20, 0, 2000, null, "00-line-consumer", "baseline");
     }
 
-    InetSocketAddress bindAddress() {
+    public InetSocketAddress bindAddress() {
         return new InetSocketAddress(bindHost, bindPort);
     }
 
     /** Parse the argument vector; throws {@link IllegalArgumentException} with a user-facing message. */
-    static Config parse(List<String> args) {
-        Config c = defaults();
+    public static Config parse(List<String> args) {
+        return parse(args, defaults());
+    }
+
+    /**
+     * Parse over {@code base}: an example starts from its own defaults (port, example name,
+     * variant) and still gets the common flags and their validation.
+     */
+    public static Config parse(List<String> args, Config base) {
+        Config c = base;
         for (int i = 0; i < args.size(); i++) {
             String flag = args.get(i);
             if (flag.equals("-h") || flag.equals("--help")) {
@@ -103,7 +111,7 @@ record Config(
     }
 
     /** Thrown by {@link #parse} for {@code --help}. */
-    static final class HelpRequested extends RuntimeException {
+    public static final class HelpRequested extends RuntimeException {
         private static final long serialVersionUID = 1L;
 
         HelpRequested() {

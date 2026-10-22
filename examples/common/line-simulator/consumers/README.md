@@ -31,6 +31,15 @@ measures latency against the belt's schedule, not against arrival.
 5. A negative latency is a bug: it means the two processes are not on the same
    monotonic clock. Abort with a clear message instead of recording it.
 
+The per-parcel step is a hook: each receive loop calls a handler for every new
+parcel, and the handler reports it done (now or later) through a completion
+object that records `done_ns − intended_emit_ns`. Example 00 uses the lane lookup
+as its handler; example 01 supplies batching and slow-path handlers (C++
+`consume_with`, Python `run`, Java `LineReceiver.run(ParcelHandler)`).
+
+The ready line (the first line printed once the socket is bound) is flushed
+immediately in all three, so a script can wait on a redirected stdout.
+
 Clock reads:
 
 - C++: `lowlat::line::monotonic_ns()` from `line-simulator/include/lowlat/line/clock.hpp`

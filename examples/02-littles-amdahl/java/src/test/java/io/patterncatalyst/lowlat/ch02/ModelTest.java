@@ -3,12 +3,7 @@ package io.patterncatalyst.lowlat.ch02;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import tools.jackson.databind.json.JsonMapper;
 
 class ModelTest {
 
@@ -33,16 +28,5 @@ class ModelTest {
     @Test
     void warehouseFraming() {
         assertEquals(480.0, Model.littlesL(1000.0, 0.480), 1e-9);
-    }
-
-    @Test
-    void modelBlockIsAddedAndTheRestKept(@TempDir Path dir) throws Exception {
-        Path report = dir.resolve("r.json");
-        Files.writeString(report, "{\"schema\":\"lowlat-report/1\",\"count\":3}");
-        ModelReport.addModel(report, Map.of("predicted_L", 2.5));
-        var root = JsonMapper.builder().build().readTree(report.toFile());
-        assertEquals("lowlat-report/1", root.get("schema").asString());
-        assertEquals(3, root.get("count").asInt());
-        assertEquals(2.5, root.get("model").get("predicted_L").asDouble(), 1e-12);
     }
 }

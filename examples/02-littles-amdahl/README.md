@@ -103,14 +103,12 @@ GIL is not in the model, which is the point of the comparison. Free-threaded Pyt
 cpp/                  CMake targets littles-consumer, amdahl-cpp, ch02-model-test (auto-discovered)
   include/lowlat/ch02/model.hpp   amdahl_speedup, arrivals_by, littles_L
 java/                 Maven module littles-amdahl-java (parent: examples/pom.xml)
-  .../ch02/Model.java, LittlesConsumer.java, Amdahl.java, ModelReport.java
+  .../ch02/Model.java, LittlesConsumer.java, Amdahl.java
 amdahl-py/            uv workspace member lowlat-amdahl (console script amdahl-py)
 verify.sh             the criteria above
 ```
 
-`ModelReport` exists because the Java kit's `Report` record has no `model` component: the report
-the kit wrote is read back, the `model` block is added, and the file is rewritten. The C++ and
-Python kits return the report as a JSON object, so the block is added before writing.
+All three kits take the `model` block through `write_report` / `writeReport(path, notes, model)`.
 
 Ports: UDP 47220 (C++ consumer) and 47221 (Java consumer).
 

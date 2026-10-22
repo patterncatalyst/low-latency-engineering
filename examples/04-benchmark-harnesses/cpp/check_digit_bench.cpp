@@ -40,8 +40,8 @@ void BM_CheckDigit_Guarded(benchmark::State& state) {
   benchmark::DoNotOptimize(prefixes.data());
   std::size_t i = 0;
   for (auto _ : state) {
-    const int digit = check_digit(prefixes[i++ & (kPrefixCount - 1)]);
-    benchmark::DoNotOptimize(digit);
+    int digit = check_digit(prefixes[i++ & (kPrefixCount - 1)]);
+    benchmark::DoNotOptimize(digit);  // non-const lvalue: the const& overload is deprecated
     benchmark::ClobberMemory();  // force pending writes out; nothing may be reordered past here
   }
 }

@@ -265,8 +265,7 @@ public final class Amdahl {
             model.put("parcels_per_worker_per_wave", o.roundParcels());
             Path report = o.reportDir().resolve("java-" + tag + "-n" + n + ".json");
             recs.get(k).writeReport(report, o.reps() + " repetitions after " + o.warmup()
-                    + " warm-up rounds; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=" + (o.phased() ? "phased" : "free"));
-            ModelReport.addModel(report, model);
+                    + " warm-up rounds; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=" + (o.phased() ? "phased" : "free"), model);
             recs.get(k).printSummary();
             System.out.printf("  N=%d: predicted %.2fx, measured %.2fx (p50 wall %.1f ms), error %+.1f%%%n",
                     n, predicted, measured, p50 / 1e6, (measured - predicted) / predicted * 100.0);

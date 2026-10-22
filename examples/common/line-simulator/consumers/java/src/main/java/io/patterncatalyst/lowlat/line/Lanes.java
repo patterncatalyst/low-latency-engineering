@@ -1,9 +1,9 @@
 package io.patterncatalyst.lowlat.line;
 
 /** The r01 "handle" step: map a parcel to one of eight sortation lanes. */
-final class Lanes {
+public final class Lanes {
 
-    static final int LANES = 8;
+    public static final int LANES = 8;
 
     private static final int SERIAL_START = 8; // extension(1) + company prefix(7)
     private static final int SERIAL_END = 17; // 9-digit serial reference; digit 17 is the check digit
@@ -17,7 +17,7 @@ final class Lanes {
      *
      * @throws IllegalArgumentException if {@code sscc} is not 18 ASCII digits
      */
-    static int laneOf(String sscc) {
+    public static int laneOf(String sscc) {
         if (sscc.length() != 18) {
             throw new IllegalArgumentException("SSCC-18 must be 18 digits, got '" + sscc + "'");
         }

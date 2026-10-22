@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Objects;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
@@ -115,13 +116,22 @@ public final class LatencyRecorder {
 
     /** As {@link #report()}; {@code notes} is written only when non-null and non-empty. */
     public Report report(String notes) {
+        return report(notes, null);
+    }
+
+    /**
+     * As {@link #report(String)}, with an optional {@code model} object: the only place a
+     * time-average may appear. Omitted when null or empty.
+     */
+    public Report report(String notes, Map<String, Object> model) {
         Histogram h = histogram();
         return new Report(Report.SCHEMA, example, "java", variant, "ns",
                 h.getTotalCount(), dropped(),
                 new Percentiles(h.getValueAtPercentile(50), h.getValueAtPercentile(90),
                         h.getValueAtPercentile(99), h.getValueAtPercentile(99.9), h.getMaxValue()),
                 encode(h), BuildInfo.current(), loadProfile(),
-                notes == null || notes.isEmpty() ? null : notes);
+                notes == null || notes.isEmpty() ? null : notes,
+                model == null || model.isEmpty() ? null : model);
     }
 
     /** Write the report as JSON and return it. Fails if {@code LOWLAT_PROFILE} is unset. */
@@ -131,7 +141,12 @@ public final class LatencyRecorder {
 
     /** As {@link #writeReport(Path)}, with optional free-text {@code notes} (omitted when empty). */
     public Report writeReport(Path path, String notes) {
-        Report report = report(notes);
+        return writeReport(path, notes, null);
+    }
+
+    /** As {@link #writeReport(Path, String)}, with an optional {@code model} object (omitted when null or empty). */
+    public Report writeReport(Path path, String notes, Map<String, Object> model) {
+        Report report = report(notes, model);
         try {
             Path parent = path.toAbsolutePath().getParent();
             if (parent != null) {

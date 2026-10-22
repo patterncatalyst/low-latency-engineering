@@ -43,6 +43,7 @@ public final class Consumer {
         }
         System.out.printf("listening on %s, SO_RCVBUF requested %d, granted %d%n",
                 receiver.localAddress(), config.rcvbuf(), receiver.grantedRcvbuf());
+        System.out.flush(); // bound: a script reading a redirected stdout waits on this line
 
         AtomicReference<Throwable> failure = new AtomicReference<>();
         AtomicReference<LineReceiver.StopReason> reason = new AtomicReference<>();

@@ -229,9 +229,8 @@ public final class LittlesConsumer {
         System.out.printf("warehouse: %.0f ms scan-to-divert x %.0f/s = %.0f parcels in flight on %.2f m of belt "
                 + "at %s m/s%n", o.budgetMs(), lambda, inFlight, beltM, o.beltMps());
         if (o.report() != null) {
-            latency.writeReport(o.report(), "received=%d dropped=%d seed=%d; W recorded per parcel as done - "
-                    + "intended emit time; JIT not warmed".formatted(received, dropped, o.seed()));
-            ModelReport.addModel(o.report(), model);
+            latency.writeReport(o.report(), ("received=%d dropped=%d seed=%d; W recorded per parcel as done - "
+                    + "intended emit time; JIT not warmed").formatted(received, dropped, o.seed()), model);
             System.out.println("report: " + o.report());
         }
     }

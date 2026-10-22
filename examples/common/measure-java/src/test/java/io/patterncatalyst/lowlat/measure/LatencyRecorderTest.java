@@ -181,4 +181,25 @@ class LatencyRecorderTest {
         assertEquals("reordered=0; rcvbuf_requested=1; rcvbuf_granted=2",
                 JSON.readTree(noted.toFile()).get("notes").asString());
     }
+
+    @Test
+    void modelBlockIsCarriedAndOmittedWhenAbsent(@org.junit.jupiter.api.io.TempDir Path dir) throws IOException {
+        LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "model");
+        rec.record(MS);
+        Path plain = dir.resolve("plain.json");
+        Path modelled = dir.resolve("modelled.json");
+        rec.writeReport(plain);
+        rec.writeReport(modelled, "n", java.util.Map.of("predicted_L", 2.5,
+                "warehouse", java.util.Map.of("belt_mps", 2)));
+        assertFalse(JSON.readTree(plain.toFile()).has("model"));
+        JsonNode tree = JSON.readTree(modelled.toFile());
+        assertEquals(2.5, tree.get("model").get("predicted_L").asDouble(), 1e-12);
+        assertEquals(2, tree.get("model").get("warehouse").get("belt_mps").asInt());
+        assertEquals("n", tree.get("notes").asString());
+        // the schema allows exactly the documented keys, model among them
+        for (String field : List.of("schema", "example", "language", "variant", "unit", "count",
+                "dropped", "percentiles", "hdr_histogram", "build", "profile")) {
+            assertTrue(tree.has(field), field);
+        }
+    }
 }

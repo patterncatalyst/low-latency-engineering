@@ -31,15 +31,25 @@ The calibration doubles the iteration count until a run lasts 20 ms, then keeps
 the fastest of several further runs (a preempted run measures the scheduler).
 Each report's `notes` records the measured slow-path duration (`slow_path_us`).
 
-## Why the consumers are copies of the receive loop
+## The handler hook
 
-The common `line-consumer` has no hook between "received" and "done", and
-`common/` is not edited from a chapter example. Each language here therefore
-copies the minimal receive loop (bound UDP socket, parse, sequence tracking,
-`done_ns - intended_emit_ns`) and adds the policy. The lane lookup reuses the
-common code where it is public (`line::lane_for` in C++, `lowlat_consumer.handle`
-and `GapTracker` in Python); Java has its own 8-line copy because the common
-`Lanes` class is package-private.
+The common line consumer owns the receive path: bind, parse, sequence and gap
+tracking, timestamping and recording. It calls a per-parcel handler between
+"received" and "done", and the handler reports each parcel done, inside the call
+or later; the loop records `done - intended_emit` at that moment. This example
+supplies only the three handlers (per-parcel, batch-32, bimodal). Batch-32 keeps
+each parcel's `intended_emit` and completes the held parcels together, with one
+done time for the batch, when the 32nd arrives; its end-of-run drain hook
+completes a partial last batch.
+
+| Language | Hook |
+|---|---|
+| C++ | `line::consume_with(cfg, stop, recorder, handler)`; the handler is a template parameter satisfying `line::ParcelHandler` (`handler(const ParcelEvent&, line::Completion&)`, optional `drain(Completion&)`), so the call is inlined into the loop |
+| Python | `lowlat_consumer.run(sock, rec, tracker, handler, expect, idle_ns, drain)`; the handler is a callable `(ParcelEvent, Completion) -> None` |
+| Java | `LineReceiver.run(ParcelHandler)`; `ParcelHandler.onParcel(ParcelEvent, Completion)` and a default `drain(Completion)` |
+
+Each language reuses the common CLI parser and adds only `--slow-us`; the lane
+lookup is the common `lane_for` / `Lanes.laneOf`.
 
 ## Layout
 
@@ -87,6 +97,7 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
 | `--slow-us` | 2000 | target duration of the slow path (`bimodal-1pct`) |
 | `--report FILE` | none | write the `lowlat-report/1` JSON (needs `LOWLAT_PROFILE`) |
 | `--example` | `01-latency-distribution` | report example name |
+| `--rcvbuf BYTES` | 4194304 | `SO_RCVBUF` request (common consumer flag) |
 
 ## Expected effect and criteria
 

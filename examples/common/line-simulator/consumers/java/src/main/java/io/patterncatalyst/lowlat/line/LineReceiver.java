@@ -20,13 +20,13 @@ import java.util.Arrays;
  * called from any thread. Everything else is owned by the receive thread, and readers must
  * happen-after {@code run()} returns (join the thread).
  */
-final class LineReceiver implements AutoCloseable {
+public final class LineReceiver implements AutoCloseable {
 
     /** Why {@link #run()} returned. */
-    enum StopReason { EXPECTED, IDLE, REQUESTED }
+    public enum StopReason { EXPECTED, IDLE, REQUESTED }
 
     /** A negative latency means the producer and this JVM are not on one monotonic clock. */
-    static final class NegativeLatencyException extends IllegalStateException {
+    public static final class NegativeLatencyException extends IllegalStateException {
         private static final long serialVersionUID = 1L;
 
         NegativeLatencyException(String message) {
@@ -43,14 +43,16 @@ final class LineReceiver implements AutoCloseable {
     private final ByteBuffer buffer = ByteBuffer.allocateDirect(MAX_DATAGRAM);
     private final LatencyRecorder recorder;
     private final GapTracker gaps = new GapTracker();
+    private final Completion completion;
     private final long[] laneCounts = new long[Lanes.LANES];
     private long received;
     private long malformed;
     private volatile boolean stopRequested;
 
-    LineReceiver(Config config) throws IOException {
+    public LineReceiver(Config config) throws IOException {
         this.config = config;
         this.recorder = LatencyRecorder.singleThreaded(config.example(), config.variant());
+        this.completion = new Completion(recorder);
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET);
         try {
             ch.setOption(StandardSocketOptions.SO_RCVBUF, config.rcvbuf());
@@ -66,43 +68,80 @@ final class LineReceiver implements AutoCloseable {
         this.grantedRcvbuf = ch.getOption(StandardSocketOptions.SO_RCVBUF);
     }
 
-    int grantedRcvbuf() {
+    public int grantedRcvbuf() {
         return grantedRcvbuf;
     }
 
-    InetSocketAddress localAddress() throws IOException {
+    public InetSocketAddress localAddress() throws IOException {
         return (InetSocketAddress) channel.getLocalAddress();
     }
 
-    LatencyRecorder recorder() {
+    public LatencyRecorder recorder() {
         return recorder;
+    }
+
+    /** Parcels newly counted missing from the sequence so far. */
+    public long dropped() {
+        return gaps.dropped();
+    }
+
+    /** Datagrams at or below the highest seq seen (reordered or duplicated). */
+    public long reordered() {
+        return gaps.reordered();
+    }
+
+    /** What the handlers completed so far; read it after {@code run} returns. */
+    public Completion completion() {
+        return completion;
     }
 
     GapTracker gaps() {
         return gaps;
     }
 
-    long received() {
+    public long received() {
         return received;
     }
 
-    long malformed() {
+    public long malformed() {
         return malformed;
     }
 
-    long[] laneCounts() {
+    public long[] laneCounts() {
         return laneCounts.clone();
     }
 
-    void stop() {
+    public void stop() {
         stopRequested = true;
         selector.wakeup();
     }
 
-    StopReason run() throws IOException {
+    /** Receives with the example 00 handler: the lane lookup, then done. Fills {@link #laneCounts()}. */
+    public StopReason run() throws IOException {
+        return run((event, done) -> {
+            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the r01 "handle" step
+            done.complete(event);
+        });
+    }
+
+    /**
+     * Receives until the expected count, the idle timeout or {@link #stop()}, calling
+     * {@code handler} for each new parcel and then {@link ParcelHandler#drain}. Gaps are booked
+     * into the recorder as they appear.
+     */
+    public StopReason run(ParcelHandler handler) throws IOException {
+        StopReason reason = receive(handler);
+        handler.drain(completion);
+        return reason;
+    }
+
+    private StopReason receive(ParcelHandler handler) throws IOException {
         long lastRxNs = 0;
         boolean seenFirst = false;
         while (!stopRequested) {
+            if (config.expect() > 0 && received + gaps.dropped() >= config.expect()) {
+                return StopReason.EXPECTED;
+            }
             buffer.clear();
             // Drain first: under load a datagram is already waiting, and this costs one syscall
             // rather than select + receive.
@@ -129,6 +168,7 @@ final class LineReceiver implements AutoCloseable {
                 continue;
             }
             seenFirst = true;
+            // Stamped on receipt, not on completion: a handler may hold parcels for a while.
             lastRxNs = System.nanoTime();
 
             if (gaps.observe(event.getSeq()) == GapTracker.Arrival.REORDERED) {
@@ -137,19 +177,9 @@ final class LineReceiver implements AutoCloseable {
             if (gaps.lastGap() > 0) {
                 recorder.addDropped(gaps.lastGap());
             }
-            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the r01 "handle" step
-            long doneNs = System.nanoTime();
-            long latencyNs = doneNs - event.getIntendedEmitNs();
-            if (latencyNs < 0) {
-                throw new NegativeLatencyException("negative latency " + latencyNs + " ns for seq "
-                        + event.getSeq() + ": intended_emit_ns is ahead of this JVM's System.nanoTime(); "
-                        + "producer and consumer must run on one host (one CLOCK_MONOTONIC)");
-            }
-            recorder.record(latencyNs);
             received++;
-            if (config.expect() > 0 && received + gaps.dropped() >= config.expect()) {
-                return StopReason.EXPECTED;
-            }
+            completion.begin(event.getSeq());
+            handler.onParcel(event, completion);
         }
         return StopReason.REQUESTED;
     }

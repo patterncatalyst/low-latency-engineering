@@ -19,12 +19,6 @@
 #include "lowlat/line/fd.hpp"
 
 namespace lowlat::line {
-namespace {
-
-// Longest the receive blocks before the loop re-checks the stop flag. A signal
-// normally ends the wait at once (EINTR); the tick only closes the window
-// between testing the flag and entering recv.
-constexpr int kTickMs = 100;
 
 // A bound IPv4 UDP socket with the receive timeout set.
 Fd open_bound(const std::string& bind_to, int rcvbuf, int tick_ms, int& granted) {
@@ -76,7 +70,12 @@ int bound_port_of(int fd) {
   return ntohs(sa.sin_port);
 }
 
-}  // namespace
+void throw_negative_latency(std::int64_t latency_ns, std::uint64_t seq) {
+  throw std::runtime_error(std::format(
+      "negative latency {} ns at seq {}: the simulator and consumer are not on the same CLOCK_MONOTONIC "
+      "(different host or VM?)",
+      latency_ns, seq));
+}
 
 // --- CLI --------------------------------------------------------------------
 
@@ -158,75 +157,25 @@ unsigned lane_for(std::string_view sscc) {
 
 // --- Receive loop -----------------------------------------------------------
 
+namespace {
+
+// Example 00's handler: the lane lookup is the work, then done.
+struct LaneHandler {
+  std::array<std::uint64_t, kLanes> counts{};
+
+  void operator()(const v1::ParcelEvent& ev, Completion& done) {
+    ++counts[lane_for(ev.barcode())];  // the r01 "work"
+    done.complete(ev);
+  }
+};
+
+}  // namespace
+
 ConsumerResult consume(const ConsumerConfig& cfg, const std::atomic<bool>& stop, measure::Recorder& latency,
                        const ReadyFn& on_ready) {
-  ConsumerResult result;
-  const int tick_ms = std::min(kTickMs, cfg.idle_timeout_ms);
-  const Fd sock = open_bound(cfg.bind, cfg.rcvbuf, tick_ms, result.granted_rcvbuf);
-  if (on_ready) on_ready(bound_port_of(sock.get()), result.granted_rcvbuf);
-
-  SeqTracker tracker;
-  v1::ParcelEvent ev;
-  std::array<char, 2048> datagram{};
-  std::int64_t last_rx_ns = 0;
-  bool started = false;
-  std::uint64_t booked_dropped = 0;
-
-  while (true) {
-    if (stop.load(std::memory_order_relaxed)) {
-      result.stopped_by = "signal";
-      break;
-    }
-    if (cfg.expect && tracker.received() + tracker.dropped() >= *cfg.expect) {
-      result.stopped_by = "expect";
-      break;
-    }
-
-    const ssize_t n = ::recv(sock.get(), datagram.data(), datagram.size(), 0);
-    if (n < 0) {
-      if (errno == EINTR) continue;  // loop head sees the stop flag
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        const std::int64_t waited_ns = monotonic_ns() - last_rx_ns;
-        if (started && waited_ns >= std::int64_t{cfg.idle_timeout_ms} * 1'000'000) {
-          result.stopped_by = "idle";
-          break;
-        }
-        continue;
-      }
-      throw std::system_error(errno, std::generic_category(), "recv");
-    }
-    started = true;
-
-    // Skipped datagrams still count as activity for the idle timeout.
-    if (!ev.ParseFromArray(datagram.data(), static_cast<int>(n))) {
-      ++result.malformed;
-      last_rx_ns = monotonic_ns();
-      continue;
-    }
-    if (tracker.observe(ev.seq()) == SeqTracker::Kind::reordered) {
-      last_rx_ns = monotonic_ns();
-      continue;
-    }
-
-    ++result.lane_counts[lane_for(ev.barcode())];  // the r01 "work"
-
-    const std::int64_t done_ns = monotonic_ns();
-    last_rx_ns = done_ns;
-    const std::int64_t latency_ns = done_ns - ev.intended_emit_ns();
-    if (latency_ns < 0) {
-      throw std::runtime_error(std::format(
-          "negative latency {} ns at seq {}: the simulator and consumer are not on the same CLOCK_MONOTONIC "
-          "(different host or VM?)",
-          latency_ns, ev.seq()));
-    }
-    latency.record(latency_ns);
-    latency.add_dropped(tracker.dropped() - booked_dropped);
-    booked_dropped = tracker.dropped();
-  }
-
-  result.received = tracker.received();
-  result.dropped = tracker.dropped();
-  result.reordered = tracker.reordered();
+  LaneHandler handler;
+  ConsumerResult result = consume_with(cfg, stop, latency, handler, on_ready);
+  std::ranges::copy(handler.counts, std::begin(result.lane_counts));
   return result;
 }
 

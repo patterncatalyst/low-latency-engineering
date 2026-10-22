@@ -36,8 +36,10 @@ Versions come from `versions.env` / `_plans/dependency-pins.md`.
 - `record(latency_ns)`
 - `record_corrected(latency_ns, expected_interval_ns)`
 - `add_dropped(n)` — parcels that never arrived (sequence gaps)
-- `write_report(path, notes=None)` — writes one JSON report (below) and returns it;
-  `notes` is an optional free-text string (run conditions, buffer sizes)
+- `write_report(path, notes=None, model=None)` — writes one JSON report (below) and returns it;
+  `notes` is an optional free-text string (run conditions, buffer sizes); `model` is an
+  optional JSON object written as the report's `model` block (omitted when absent) in all
+  three kits (Java: `writeReport(path, notes, Map<String, Object> model)`)
 - `print_summary()` — one aligned table line to stdout: example, language,
   variant, count, dropped, p50, p90, p99, p99.9, max, in microseconds with 1
   decimal. **Never a mean.**
