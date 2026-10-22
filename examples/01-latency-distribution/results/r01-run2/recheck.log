@@ -1,0 +1,37 @@
+━━ checking reports
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/cpp-per-parcel.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/cpp-batch-32.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/cpp-bimodal-1pct.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/python-per-parcel.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/python-batch-32.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/python-bimodal-1pct.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/java-per-parcel.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/java-batch-32.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/java-bimodal-1pct.json
+example                  language  variant       count  dropped      p50      p90      p99    p99.9      max
+01-latency-distribution  cpp       per-parcel    10000        0     73.9    156.5    293.1    314.9    415.7
+01-latency-distribution  cpp       batch-32      10000        0  15188.0  28180.5  31162.4  31195.1  31211.5
+01-latency-distribution  cpp       bimodal-1pct  10000        0    158.3    183.4   5136.4   6131.7   6828.0
+01-latency-distribution  python    per-parcel    10000        0    186.4    320.0    347.9    360.7    492.0
+01-latency-distribution  python    batch-32      10000        0  15245.3  28229.6  31227.9  31244.3  31277.1
+01-latency-distribution  python    bimodal-1pct  10000        0    190.1    208.3   4837.4   6053.9   7110.7
+01-latency-distribution  java      per-parcel    10000        0    178.8    200.7    287.0  22298.6  31998.0
+01-latency-distribution  java      batch-32      10000        0  15220.7  28196.9  31195.1  31227.9  31801.3
+01-latency-distribution  java      bimodal-1pct  10000        0    164.4    408.3   6271.0  30572.5  40304.6
+━━ criteria: cpp
+✓ cpp A: throughput per-parcel=1000135 mHz vs batch-32=1003218 mHz differs < 1 % (308300 < 1000135)
+✓ cpp A: batch-32 p50 >= 10x per-parcel p50 (73919 ns) (15187967 >= 739190)
+✓ cpp B: bimodal p99 >= 20x its own p50 (158335 ns) (5136383 >= 3166700)
+✓ cpp B: bimodal p50 stays under 1/4 of its slow path (2023000 ns) (158335 < 505750)
+━━ criteria: python
+✓ python A: throughput per-parcel=1000142 mHz vs batch-32=1003211 mHz differs < 1 % (306900 < 1000142)
+✓ python A: batch-32 p50 >= 10x per-parcel p50 (186367 ns) (15245311 >= 1863670)
+✓ python B: bimodal p99 >= 20x its own p50 (190079 ns) (4837375 >= 3801580)
+✓ python B: bimodal p50 stays under 1/4 of its slow path (2043000 ns) (190079 < 510750)
+━━ criteria: java
+✓ java A: throughput per-parcel=1003292 mHz vs batch-32=1003174 mHz differs < 1 % (11800 < 1003292)
+✓ java A: batch-32 p50 >= 10x per-parcel p50 (178815 ns) (15220735 >= 1788150)
+✓ java B: bimodal p99 >= 20x its own p50 (164351 ns) (6270975 >= 3287020)
+✓ java B: bimodal p50 stays under 1/4 of its slow path (2033000 ns) (164351 < 508250)
+✓ 01-latency-distribution: the distribution, not one number, is the result
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.54

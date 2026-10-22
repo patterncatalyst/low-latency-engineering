@@ -97,7 +97,12 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
    completion is 31 ms into the run, so its figure is about 0.3 % higher.
 2. `batch-32` p50 is at least 10x the `per-parcel` p50.
 3. `bimodal-1pct` p99 is at least 20x its own p50.
-4. `bimodal-1pct` p50 is under 2x the `per-parcel` p50 (the median barely moves).
+4. `bimodal-1pct` p50 is under a quarter of the same run's measured slow-path
+   duration (`slow_path_us` in `notes`): the median stays in the fast mode. An
+   earlier version compared it with the `per-parcel` run's p50 and failed in one
+   of three quiet-host runs (r01-run2), because on an untuned host the median
+   itself moves between runs (C++ per-parcel p50 157, 74 and 80 us across
+   r01-run1..3). Comparing within one run removes that dependence.
 
 All reports must also have `count = 10000`, `dropped = 0`, and pass
 `lowlat-report check`.
