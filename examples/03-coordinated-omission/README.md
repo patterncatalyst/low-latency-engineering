@@ -55,7 +55,7 @@ Each language is also a plain program (`run` and `probe` subcommands):
 
 ### Why `intended-time` has a floor the others cannot see
 
-With no stall, `intended-time` p99 is still about 0.2 ms while `receipt-time` is a few
+With no stall, `intended-time` p99 is still 0.18 to 0.35 ms while `receipt-time` is a few
 microseconds. `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,

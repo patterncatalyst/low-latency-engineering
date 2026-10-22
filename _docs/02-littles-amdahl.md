@@ -420,7 +420,7 @@ Python threads stay near 1x at N = 2 and fall to 0.48 to 0.52x at N = 4. The CPU
 
 ### An observation: the free-running lock
 
-`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.59 to 3.60x at N = 4 in C++ and 3.51 to 3.57x in Java, over the predicted 3.09 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
+`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.59 to 3.60x at N = 4 in C++ and 3.51 to 3.57x in Java, over the predicted 3.08 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
 
 ## Cross-check
 

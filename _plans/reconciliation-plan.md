@@ -38,7 +38,7 @@ never compared.
 | 01.1 | Every report has `count = 10000`, `dropped = 0` and passes `check` (3 languages x 3 variants) | verified (r01-run1..3) | `results/r01-run*/*.json`, `verify.log` |
 | 01.2 | per-parcel and batch-32 throughput differ by less than 1 % | verified (r01-run1..3) | `throughput_mhz` in each report's `notes` |
 | 01.3 | batch-32 p50 >= 10x per-parcel p50 | verified (r01-run1..3) | batch-32 p50 15.1 to 15.5 ms against per-parcel 0.095 to 0.19 ms |
-| 01.4 | bimodal p99 >= 20x its own p50 | verified (r01-run1..3) | `verify.log`; margin is thin by design (1 % slow parcels sit on the p99 boundary); the narrowest margin of the suite (Python run 2, p99 28.1x its own p50 against the 20x bound) |
+| 01.4 | bimodal p99 >= 20x its own p50 | verified (r01-run1..3) | `verify.log`; margin is thin by design (1 % slow parcels sit on the p99 boundary); the narrowest margin of example 01's criteria (Python run 2, p99 28.1x its own p50 against the 20x bound) |
 | 01.5 | bimodal p50 < 1/4 of the same run's measured `slow_path_us` | verified (r01-run1..3) | replaced the cross-run p50 check (bimodal p50 < 2x per-parcel p50) after it failed once in the earlier S19 runs: commit 1811055, `r01-run2/verify.log`, C++ got 158335 ns, needed < 147838 ns (user decision 2026-10-21) |
 
 ## Example 02: Little's Law and Amdahl's Law
@@ -53,7 +53,7 @@ never compared.
 | 02.6 | Python threads speedup at N = 4 < 1.3x (GIL) | verified (r01-run1..3) | 0.48 to 0.52x, `build.gil_enabled = true` |
 | 02.7 | Python processes speedup at N = 4 > 2x | verified (r01-run1..3) | 2.93 to 3.01x |
 | 02.8 | Unit tests (C++ model, Java JUnit, Python pytest) pass | verified (r01-run1..3) | `verify.log` |
-| 02.9 | `--sync free` (no barriers) beats the Amdahl prediction | observed, not asserted | 3.59 to 3.60x C++, 3.51 to 3.57x Java against 3.09 to 3.11x predicted |
+| 02.9 | `--sync free` (no barriers) beats the Amdahl prediction | observed, not asserted | 3.59 to 3.60x C++, 3.51 to 3.57x Java against 3.08 to 3.11x predicted |
 | 02.10 | Effective GHz recorded from `perf stat` | observed, not asserted | C++ 4.33 to 4.35, Java 4.35 to 4.36, Python 3.74 to 3.93 |
 
 ## Example 03: coordinated omission

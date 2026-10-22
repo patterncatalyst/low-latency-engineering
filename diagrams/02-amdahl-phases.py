@@ -44,7 +44,7 @@ nodes.append({"x": 400, "y": 210, "w": 450, "h": 110, "style": "ink",
                         "C++              3.11x -> 2.83-2.84x",
                         "Python threads   3.08x -> 0.48-0.52x",
                         "Python processes 3.04-3.05x -> 2.93-3.01x",
-                        "Java             3.08x -> 2.74x"]})
+                        "Java        3.08-3.09x -> 2.74x"]})
 
 notes = [
     {"x": 440, "y": 28,
