@@ -20,6 +20,7 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
   means          "mean latency"/"average latency" fail (unless the sentence negates it);
                  every other use of mean/average in _docs is printed for review
 """
+
 import json
 import re
 import subprocess
@@ -31,8 +32,10 @@ from pathlib import Path
 try:
     import yaml
 except ImportError:  # pragma: no cover
-    sys.exit("PyYAML is required: python3 -m pip install pyyaml, or "
-             "uv run --project examples --with pyyaml python scripts/validate.py")
+    sys.exit(
+        "PyYAML is required: python3 -m pip install pyyaml, or "
+        "uv run --project examples --with pyyaml python scripts/validate.py"
+    )
 
 ROOT = Path(__file__).resolve().parent.parent
 DIAGRAMS_DIR = ROOT / "assets" / "diagrams"
@@ -109,9 +112,7 @@ def check_front_matter() -> Pages:
         for path in sorted((ROOT / coll).glob("*.md")):
             data, _head, body = load_front_matter(path)
             pages[coll][path] = (data, body)
-    print(
-        f"front matter: {sum(len(v) for v in pages.values())} files in {', '.join(COLLECTIONS)}"
-    )
+    print(f"front matter: {sum(len(v) for v in pages.values())} files in {', '.join(COLLECTIONS)}")
 
     part_names = {d.get("part_name") for d, _ in pages["_parts"].values()}
     for path, (data, _body) in pages["_docs"].items():

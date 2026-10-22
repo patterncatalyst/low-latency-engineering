@@ -99,8 +99,7 @@ class Bench:
                 self.lock = threading.Lock()
                 self.waves = {n: threading.Barrier(n, timeout=60) for n in opts.workers}
                 self.pools = {
-                    n: stack.enter_context(ThreadPoolExecutor(max_workers=n))
-                    for n in opts.workers
+                    n: stack.enter_context(ThreadPoolExecutor(max_workers=n)) for n in opts.workers
                 }
             else:
                 self.cell = mp.Array("q", CELLS, lock=False)

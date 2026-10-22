@@ -156,9 +156,7 @@ class Recorder:
         build: Mapping[str, Any] | None = None,
         runtime: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        report = self.build_report(
-            notes, model, language=language, build=build, runtime=runtime
-        )
+        report = self.build_report(notes, model, language=language, build=build, runtime=runtime)
         Path(path).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         return report
 

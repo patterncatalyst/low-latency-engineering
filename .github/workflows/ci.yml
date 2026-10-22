@@ -150,6 +150,7 @@ jobs:
           uv sync --all-packages
           uv run pytest
           uv run ruff check . ../scripts ../diagrams
+          uv run ruff format --check . ../scripts ../diagrams
 
   # Java: the aggregator builds every module (kits, simulator consumer, chapter examples) and runs the tests.
   java:
