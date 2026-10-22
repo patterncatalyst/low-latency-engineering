@@ -96,8 +96,8 @@ render_user_data() {
   [[ -f "$keyfile" ]] || die "no SSH public key at $keyfile — generate one: ssh-keygen -t ed25519"
   key="$(cat "$keyfile")"
   tmpl="$(<"$LAB_DIR/cloud-init/user-data.tmpl")"
-  tmpl="${tmpl//__HOSTNAME__/$host}"
-  printf '%s\n' "${tmpl//__SSH_PUBKEY__/$key}"
+  tmpl="${tmpl//__HOSTNAME__/"$host"}"
+  printf '%s\n' "${tmpl//__SSH_PUBKEY__/"$key"}"
 }
 
 # sha256_of <file> — the bare hex digest.
