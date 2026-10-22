@@ -69,7 +69,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S20 | ≥2 figures per chapter 0–4, wired into `_data/diagrams.yml` | S14–S18 | sonnet | done 2026-10-21: 11 figures (`_plans/r01-figures.md`), Opus-validated |
 | S21–S25 | Ch0–Ch4 prose with codetabs, quoting only S19 results | S19,S20 | sonnet ×5 | done 2026-10-22: Opus-validated (`_plans/r01-chapters.md`) |
 | S26 | Wiring: examples table, outline links, plan status, reconciliation, `validate.py`, `wordcount.sh`, CI build job for kits | S21–25 | sonnet | done 2026-10-22: `examples.html` + 5 `_example_pages`, outline links, example READMEs from r01-run1..3, `examples/pom.xml` builds all modules (`build_java` now `-pl -am`), `scripts/{wordcount.sh,validate.py}`, `.github/workflows/ci.yml` (unrun until the PR), `reconciliation-plan.md`; Jekyll build in `ruby:4.0` renders all pages |
-| S27 | Idiomatic + voice review, Jekyll build, Opus validation, package, PR | S26 | MAIN | todo |
+| S27 | Idiomatic + voice review, Jekyll build, Opus validation, package, PR | S26 | MAIN | in progress: review fixes, re-measure (c3e4cce), re-quote done; final validation, package, PR next |
 
 ## Acceptance criteria
 
