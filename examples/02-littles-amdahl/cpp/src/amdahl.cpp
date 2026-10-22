@@ -15,7 +15,6 @@
 //     S(N) = 1 / ((1 - p) + p / N),  p = 1 - s the parallel fraction,
 // compared with the measured ratio of median wall times (HdrHistogram p50 of
 // --reps repetitions per N, variant amdahl-n<N>). See ../README.md.
-#include <algorithm>
 #include <array>
 #include <barrier>
 #include <cstdint>
@@ -23,11 +22,9 @@
 #include <exception>
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <mutex>
 #include <numeric>
 #include <print>
-#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>

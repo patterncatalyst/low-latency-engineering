@@ -8,34 +8,23 @@
 // The time-average L, the offered rate lambda and the mean W go into the
 // report's `model` block (the only place a mean may appear), with the
 // prediction lambda * W. See ../README.md.
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-
 #include <algorithm>
-#include <array>
 #include <atomic>
-#include <cerrno>
-#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
-#include <fstream>
 #include <format>
 #include <print>
 #include <random>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <thread>
-#include <vector>
 
 #include "lowlat/ch02/model.hpp"
 #include "lowlat/line/cli.hpp"
 #include "lowlat/line/clock.hpp"
-#include "lowlat/line/fd.hpp"
-#include "lowlat/line/v1/parcel.pb.h"
+#include "lowlat/line/consumer.hpp"
 #include "lowlat/measure/recorder.hpp"
 
 namespace {
@@ -77,24 +66,10 @@ Options parse(int argc, char** argv) {
     else if (opt == "--variant") o.variant = val;
     else cli::fail(std::format("unknown option '{}'", opt));
   }
-  return o;
-}
-
-lowlat::line::Fd open_socket(int port) {
-  lowlat::line::Fd fd{::socket(AF_INET, SOCK_DGRAM, 0)};
-  if (fd.get() < 0) throw std::system_error(errno, std::generic_category(), "socket");
-  const int rcvbuf = 4 * 1024 * 1024;
-  ::setsockopt(fd.get(), SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof rcvbuf);
-  const timeval tv{.tv_sec = 0, .tv_usec = 100'000};
-  ::setsockopt(fd.get(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
-  sockaddr_in sa{};
-  sa.sin_family = AF_INET;
-  sa.sin_port = htons(static_cast<std::uint16_t>(port));
-  inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr);
-  if (::bind(fd.get(), reinterpret_cast<sockaddr*>(&sa), sizeof sa) != 0) {
-    throw std::system_error(errno, std::generic_category(), std::format("bind 127.0.0.1:{}", port));
+  if (o.rate_hz <= 0 || o.sample_us <= 0 || o.duration_s <= 0 || !(o.service_mean_us > 0.0)) {
+    cli::fail("--rate, --sample-us, --duration and --service-mean-us must be > 0");
   }
-  return fd;
+  return o;
 }
 
 // What the sampler thread hands back through join().
@@ -137,71 +112,75 @@ void serve(std::int64_t service_ns) {
   }
 }
 
+// The per-parcel hook for lowlat::line::consume_with. On the first parcel it
+// anchors the schedule and starts the sampler; for each parcel it spends a drawn
+// service time, completes the parcel, and keeps the sum of W for the model block.
+class LittlesHandler {
+ public:
+  explicit LittlesHandler(const Options& o)
+      : o_(o), service_us_{1.0 / o.service_mean_us}, cap_us_(10.0 * o.service_mean_us), rng_{o.seed} {}
+
+  void operator()(const lowlat::line::v1::ParcelEvent& ev, lowlat::line::Completion& completion) {
+    if (!sampler_.joinable()) {
+      // Parcel `seq` is due at t0 + seq/lambda, so t0 follows from any first parcel.
+      const auto seq = static_cast<std::int64_t>(ev.seq());
+      t0_ns_ = ev.intended_emit_ns() - seq * 1'000'000'000 / o_.rate_hz;
+      sampler_ = std::jthread{[this](std::stop_token st) { sampled_ = sample_in_system(st, done_, t0_ns_, o_); }};
+    }
+    serve(static_cast<std::int64_t>(std::min(service_us_(rng_), cap_us_) * 1000.0));
+    const std::int64_t done_ns = monotonic_ns();
+    done_.fetch_add(1, std::memory_order_release);
+    completion.complete(ev.intended_emit_ns(), done_ns);  // throws on a negative W
+    w_sum_ns_ += static_cast<long double>(done_ns - ev.intended_emit_ns());
+  }
+
+  // End of run: the sampler ends at t0 + duration; join also publishes `sampled_`.
+  void drain(lowlat::line::Completion&) {
+    if (sampler_.joinable()) sampler_.join();
+  }
+
+  [[nodiscard]] const Sampled& sampled() const noexcept { return sampled_; }
+  [[nodiscard]] long double w_sum_ns() const noexcept { return w_sum_ns_; }
+
+ private:
+  const Options& o_;
+  std::exponential_distribution<double> service_us_;
+  double cap_us_;  // a service time is bounded, as a retry count is
+  std::mt19937_64 rng_;
+  std::atomic<std::int64_t> done_{0};
+  std::int64_t t0_ns_ = 0;
+  Sampled sampled_;
+  long double w_sum_ns_ = 0;  // sum of W: input to the model block only, never reported as a latency
+  std::jthread sampler_;      // last: stopped and joined first if the run unwinds
+};
+
 }  // namespace
 
 int main(int argc, char** argv) try {
   const Options o = parse(argc, argv);
   if (!o.report.empty()) (void)lowlat::measure::load_profile();  // fail before the run
-  const lowlat::line::Fd sock = open_socket(o.port);
-  const std::int64_t expect = o.rate_hz * o.duration_s;
+
+  lowlat::line::ConsumerConfig cfg;
+  cfg.bind = std::format("127.0.0.1:{}", o.port);
+  cfg.expect = static_cast<std::uint64_t>(o.rate_hz) * static_cast<std::uint64_t>(o.duration_s);
+  // idle_timeout_ms: 2 s after the last parcel the run is over (the default).
 
   lowlat::measure::Recorder latency{o.example, o.variant};
-  std::mt19937_64 rng{o.seed};
-  std::exponential_distribution<double> service_us{1.0 / o.service_mean_us};
-  const double cap_us = 10.0 * o.service_mean_us;  // a service time is bounded, as a retry count is
-
-  std::atomic<std::int64_t> done{0};
-  std::jthread sampler;
-  Sampled sampled;
-  std::int64_t t0_ns = 0, received = 0, dropped = 0, next_seq = 0, last_rx_ns = 0;
-  long double w_sum_ns = 0;  // sum of W: input to the model block only, never reported as a latency
-  lowlat::line::v1::ParcelEvent ev;
-  std::array<char, 2048> dg{};
+  LittlesHandler handler{o};
+  const std::atomic<bool> no_stop{false};  // this program is stopped by --duration or by idling, not by a signal
 
   std::println("littles-consumer: 127.0.0.1:{}, lambda={} /s, service mean {} us (offered utilisation {:.2f})",
                o.port, o.rate_hz, o.service_mean_us, o.rate_hz * o.service_mean_us / 1e6);
 
-  while (received + dropped < expect) {
-    const ssize_t n = ::recv(sock.get(), dg.data(), dg.size(), 0);
-    if (n < 0) {
-      if (errno == EINTR) continue;
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        if (last_rx_ns != 0 && monotonic_ns() - last_rx_ns > 2'000'000'000) break;  // idle: the run is over
-        continue;
-      }
-      throw std::system_error(errno, std::generic_category(), "recv");
-    }
-    if (!ev.ParseFromArray(dg.data(), static_cast<int>(n))) continue;
-    const auto seq = static_cast<std::int64_t>(ev.seq());
-    if (seq < next_seq) continue;  // reordered
-    dropped += seq - next_seq;
-    next_seq = seq + 1;
-
-    if (!sampler.joinable()) {
-      // Parcel `seq` is due at t0 + seq/lambda, so t0 follows from any first parcel.
-      t0_ns = ev.intended_emit_ns() - seq * 1'000'000'000 / o.rate_hz;
-      sampler = std::jthread{[&](std::stop_token st) { sampled = sample_in_system(st, done, t0_ns, o); }};
-    }
-    serve(static_cast<std::int64_t>(std::min(service_us(rng), cap_us) * 1000.0));
-    const std::int64_t done_ns = monotonic_ns();
-    last_rx_ns = done_ns;
-    done.fetch_add(1, std::memory_order_release);
-    ++received;
-
-    const std::int64_t w_ns = done_ns - ev.intended_emit_ns();
-    if (w_ns < 0) throw std::runtime_error("negative latency: simulator and consumer not on one CLOCK_MONOTONIC");
-    latency.record(w_ns);
-    w_sum_ns += static_cast<long double>(w_ns);
-  }
-  latency.add_dropped(static_cast<std::uint64_t>(dropped));
-  if (sampler.joinable()) {
-    sampler.join();  // the sampler ends at t0 + duration; join also publishes `sampled`
-  }
+  const lowlat::line::ConsumerResult run = lowlat::line::consume_with(cfg, no_stop, latency, handler);
+  const std::int64_t received = static_cast<std::int64_t>(run.completed);
+  const std::int64_t dropped = static_cast<std::int64_t>(run.dropped);
+  const Sampled& sampled = handler.sampled();
   if (received == 0 || sampled.samples == 0) throw std::runtime_error("no parcels received");
 
   // --- the model block: the only place a mean appears ---------------------
   const double lambda = static_cast<double>(o.rate_hz);
-  const double w_mean_s = static_cast<double>(w_sum_ns / received) / 1e9;
+  const double w_mean_s = static_cast<double>(handler.w_sum_ns() / received) / 1e9;
   const double l_sampled = static_cast<double>(sampled.sum_in_system) / static_cast<double>(sampled.samples);
   const double l_predicted = lowlat::ch02::littles_L(lambda, w_mean_s);
   const double rel_err = (l_sampled - l_predicted) / l_predicted;
