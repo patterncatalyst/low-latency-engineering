@@ -40,10 +40,10 @@ for n, ytop in lanes:
 
 nodes.append({"x": 400, "y": 210, "w": 450, "h": 110, "style": "ink",
               "lines": ["N = 4 speedup, predicted -> measured",
-                        "C++              3.11x -> 2.84-2.85x",
-                        "Python threads   3.07-3.08x -> 0.49-0.67x",
-                        "Python processes 3.04x -> 2.84-2.94x",
-                        "Java             3.09x -> 2.73-2.76x"]})
+                        "C++              3.11x -> 2.81-2.85x",
+                        "Python threads   3.07-3.08x -> 0.56-0.83x",
+                        "Python processes 3.02-3.05x -> 2.81-2.95x",
+                        "Java             3.08-3.09x -> 2.71-2.74x"]})
 
 notes = [
     {"x": 440, "y": 28, "text": "The serial phase never shrinks, so N workers give less than N times",

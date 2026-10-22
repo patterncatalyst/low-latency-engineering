@@ -31,14 +31,14 @@
 - name: "02-littles-law"
   section: "Ch2 · Little's Law and Amdahl's Law"
   title: "Little's Law on the line"
-  alt: "The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.5 to +0.6 %, Java +2.0 to +4.4 %."
-  caption: "Figure 2.1 — The consumer as a queue. Sampled L matches lambda x W-bar within 0.6 % in C++ and 4.4 % in Java; W-bar is a model input, never a reported latency."
+  alt: "The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.1 to +1.2 %, Java +2.0 to +4.6 %."
+  caption: "Figure 2.1 — The consumer as a queue. Sampled L matches lambda x W-bar within 1.2 % in C++ and 4.6 % in Java; W-bar is a model input, never a reported latency."
 
 - name: "02-amdahl-phases"
   section: "Ch2 · Little's Law and Amdahl's Law"
   title: "Amdahl's Law in phases at N = 1, 2 and 4"
   alt: "Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java."
-  caption: "Figure 2.2 — The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.84-2.85x, Java 2.73-2.76x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x."
+  caption: "Figure 2.2 — The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.81-2.85x, Java 2.71-2.74x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x."
 
 - name: "03-three-clocks"
   section: "Ch3 · Measuring correctly"

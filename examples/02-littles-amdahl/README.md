@@ -91,7 +91,7 @@ are costs the formula does not have. Amdahl is an upper bound that is already ge
 
 ### What the Python pair shows
 
-Threads stay under 1x (0.49 to 0.67x at N = 4 in r01-run1..3; the CPU-bound loop holds the GIL,
+Threads stay under 1x (0.56 to 0.83x at N = 4 in r01-run1..3; the CPU-bound loop holds the GIL,
 `build.gil_enabled` is `true` in the report) because every barrier and lock hand-off also pays
 GIL hand-off. Processes track the prediction. The prediction for threads covers only the lock; the
 GIL is not in the model, which is the point of the comparison. Free-threaded Python is Appendix E.
@@ -138,13 +138,13 @@ All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor `
 
 | Criterion | Result (r01-run1..3) |
 |---|---|
-| A, C++: L within 5 % of lambda x W-bar | PASS: error +0.46 to +0.63 % (L 1.025 to 1.047 against 1.019 to 1.042) |
-| A, Java: L within 5 % of lambda x W-bar | PASS: error +2.04 to +4.44 % (L 1.151 to 1.238 against 1.124 to 1.190) |
-| B, C++ N = 4 within 15 % | PASS: s = 0.0951 to 0.0952, predicted 3.11x, measured 2.84 to 2.85x (-8.6 to -8.9 %) |
-| B, Java N = 4 within 15 % | PASS: s = 0.0987 to 0.0988, predicted 3.09x, measured 2.73 to 2.76x (-10.7 to -11.6 %) |
-| B, Python threads < 1.3x | PASS: 0.49 to 0.67x (GIL enabled) |
-| B, Python processes > 2x | PASS: 2.84 to 2.94x |
-| Effective GHz (user cycles / task-clock) | C++ 4.35 to 4.36, Java 4.34 to 4.35, Python 3.78 to 3.97 (`perf stat`, no root) |
+| A, C++: L within 5 % of lambda x W-bar | PASS: error +0.07 to +1.20 % (L 1.033 to 1.046 against 1.021 to 1.039) |
+| A, Java: L within 5 % of lambda x W-bar | PASS: error +2.02 to +4.57 % (L 1.130 to 1.175 against 1.105 to 1.124) |
+| B, C++ N = 4 within 15 % | PASS: s = 0.0950 to 0.0956, predicted 3.11x, measured 2.81 to 2.85x (-8.6 to -9.5 %) |
+| B, Java N = 4 within 15 % | PASS: s = 0.0984 to 0.0993, predicted 3.08 to 3.09x, measured 2.71 to 2.74x (-11.3 to -12.3 %) |
+| B, Python threads < 1.3x | PASS: 0.56 to 0.83x (GIL enabled) |
+| B, Python processes > 2x | PASS: 2.81 to 2.95x |
+| Effective GHz (user cycles / task-clock) | C++ 4.31 to 4.32, Java 4.31 to 4.33, Python 3.80 to 3.96 (`perf stat`, no root) |
 
 The W-bar in the Little's Law rows is the labelled modelling input in the report's `model` block.
 Reported latencies are percentiles.
