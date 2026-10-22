@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAMZ4nC2MvWoCURSE7/nOuXdXyLr+wC4SsZc0wSKNRSoleYDgC2lhI4IhXcAy4AuEdJJA0NaAj2AhQgKprMJqphmYb2aaw1ndObd0Z+m/i3Pav36du9vvc1D/upl85OuXu+Oo8dt7TKb+jSfptLKsUomDmBkSPGqCEJFagscjUCUi4RIKkkKDHIWieyJiIVC7sLiWhbhcDoaZWIpSJWdARBcUoXSaRiZW3MIVbZ49O9jAuzAWunwaD2yVFdyzCPzAXjkof6qEHVo=",
+  "hdr_histogram": "HISTFAAAANN4nC2MsUoDQRRF5533JtlZ18Rx2UIIBMVmO1urkCaNXyAh6S38AlvTBCIB7WwE0TKgFmqjH6ClZeytJB8gEtZ4mwvncG/r9Dx3zr25VfS/xTnt7T1duc5iBfKf/tl4d3HbnX5m98GjeAw1CF/J+9bsUn7vZPYt8xu5GH7svDQSqGNmNcEbghAqojTx5okWKGhTglbQUmwzSzdSI8kMhfJvdEzBNhGljifSRKystJhCDpFDTtgncO2ZCJFIwREHDHgV1nlOGK0xqvFQfTy2WQKFQiGz",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); value = second - first",
   "percentiles": {
-    "max": 4495,
+    "max": 16399,
     "p50": 12,
     "p90": 13,
-    "p99": 13,
-    "p99_9": 15
+    "p99": 43,
+    "p99_9": 46
   },
   "profile": {
-    "captured_at": "2026-10-22T15:00:44Z",
+    "captured_at": "2026-10-22T15:44:45Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.33,
-      "load15": 1.03,
-      "load5": 0.97,
+      "load1": 1.02,
+      "load15": 0.69,
+      "load5": 0.76,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2086157,
+      "pid": 2119310,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

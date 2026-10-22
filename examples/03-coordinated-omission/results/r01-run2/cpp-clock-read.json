@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAANh4nC2OoU4DURRE3z33vbuv20K72bahgYDBgSAVtQgSKmvqSeAT+IWa6gaB4wNIRRWKBIfAEFzT1BMgVACqgizLiJlkMpOZndEkd849uxL6r+Kcnh7d3bjjVWnk8976euv96uRn3Xm6vJfz/aYH1FP1CEhjKbdxsf14OO9+Daf91dlsd1qLZkAdAr6ghAodlIQNMmiVXgshIRTBaN7am7HRjBbTWkwtNUFNY2BAILBHnZzAQVHtk1CMq+G9eAzk7xXCA4yNT3gVLlAycl7grcJHxrfyC+mVIxI=",
+  "hdr_histogram": "HISTFAAAAOF4nC2MIUsEURSF3/3ufW/e7DoMsyOKaBCbQTTJisG2VSyC2R9gFpOgwqJJBS2CacAmpgkqGE0Lm6yaNi7mDbLunhMOfBy+pbOb0jn37SbR6Ypz2tmoH93OcALK/v710/LLRXvUKwbvVHovVfv5k9HA+h/8WmxgJCEIylwt1Wy9+XPwunu7dlV8JQEgQ/CIhRwxJcOT4g0/rVhKSoGSoAhN9P+gaJghtlrEFYuxYU0yCkrmyRFytljHMzYumjcZOwXDJJCwzSEL7HEnnMKb0hUu4Yhz4ZgTuik9eFjlD1PQJxI=",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); value = second - first",
   "percentiles": {
-    "max": 5923,
+    "max": 13751,
     "p50": 12,
-    "p90": 13,
-    "p99": 46,
-    "p99_9": 48
+    "p90": 18,
+    "p99": 42,
+    "p99_9": 45
   },
   "profile": {
-    "captured_at": "2026-10-22T14:54:40Z",
+    "captured_at": "2026-10-22T15:38:40Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,10 +54,10 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.66,
-      "load15": 1.16,
-      "load5": 1.21,
-      "running": 2
+      "load1": 1.27,
+      "load15": 0.73,
+      "load5": 0.87,
+      "running": 1
     },
     "memory": {
       "hugepages_free": 0,
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2080855,
+      "pid": 2113941,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

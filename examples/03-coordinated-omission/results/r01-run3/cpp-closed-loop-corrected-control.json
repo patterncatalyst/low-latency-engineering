@@ -7,18 +7,18 @@
   "count": 10000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAjJ4nC1SsYoUQRDdev2mtrau7Otb58ZlPRcDzQzkNDfSxB/wA8TAL1CjCw4DI9FELhLxE0SMjBQMLzASAxFREIMLLxCRmt2Bec1U97x69V7vHT4/O5mUh5P1UzarTCbl1tV3Lyc3TtaFC/gqx90RP+MUb2R/bxFajaQVqhIEwI4QGFjUaBriPjQz12gOMwocETRd2f6lP/gtT7u/POEne1a+nznGt+6g/MCX7r08LkfyBId4Ia/Low94i3/4iQM5xb1XuHP/wfW7bW91cdmq1b4f6pXl0OarOtSY2wDtNdCMhIlRvTUqqAJGtT5lwgh0KCoOAUqKBtaQqCwQJQq53ucWC4CihQKYsphynBqhLqY0NzXVqq5O1WBoWK3hdWDfejetVqNZXbVFzOd1HtZ7RPSt9V7rsvbLRV0MQ8zrnlW16uw9vHef917NIpQ1PCzMTFuP9NfcAM2F6iApykI1zVhYQTWhkvkWkpEmGDUNUGRk3AByUHGVLFAUknQFMgLGc4UoMFkfT4BCARkdHY+o6XgNspYcHGkkDUzGkSg302gqVDRjySKFyDvkaWOjOy00aJlUhqhEXqPqQ2ILa9pUvRrVTBym6rTsrClVXTTlZXPJnmkCSoaOKUchBVu5dFnqNl9TdJhhF7PMGoJtnMM2Cgu2sYMZug3K+s/cmG4Myu/RCRn77GC67pLT54SFmOIMpijoyNmaf4atUUAZGXdT2zWcx010uI0Ol/FxhV87+A/iTjf1",
+  "hdr_histogram": "HISTFAAAAnt4nDVTsapkRRCdOn1uTb16NW3bXsfrcB0HGR6PRWRZxNTM7zAyFiPjxUwRQVgMRIXdzMzoscGGi4iRH7CJm6yRiRsYSd377KC7qDrdVadO9fzFt69tNuXPzbrK7SmbTfno7s1Pmw//Xh1v+acv5b589nlXwFSpAoEQBQLgFQwqWiw8fOrtdDxYmDpDGY1wKqP6D/ha/ijP+TufbL8qf+2elqfb+/y+/KvP5Bs+lge4wTP5tXz8HX6RR/hNPrmR6wdydXWvn/xYx3O7M+7P+1Mcorle6cnrVb/np/18p47q1VQ91ExpAaWxUOEgVBFCiAlI0kQJCIUDSBACbgkrSFsVUCiZACWVqiBvH6d1N2fTcJN9azYd59arTVZNo7Z3os+H0/H6/em98/mD6+tp3/pYI+rUxuPpfD70Y5+P46Efxmkf1eo0ulubWzRv1sO6aWtufay9neIwjbVGMCrdFZrEqisJC/NQGJ3e1NNnSOIgsvalZGqeyUxIVKQLAEQX/qqpXkJo2QhhcQAZSBhdVZcUDodlI/MqPU0uj4lZqGo6nNB1Miwqq7rXProKomttam7VD7H3Ph2q93ftWKNO+9q0zrPPNsUUfbSxJjoHpzZ2m1qt3bN/rtoQLSLYiGbq7s6wFEadCx1QKam4pX4AsjozywlQsUVqXQgLRAtuFy81ewKIDRxyDAQoGFBQNHcMy5QvgS3e5sUKuOSCydRYfkMBClesANuMcE22JioKolCULCkR/g9eZHTZhpREkC9rIgSrFEmPZSkfmX5Yb75++wMLMpjWTvNbUtK/7Biwg+ACO+zwKne8xEPg4Rt4MeCfN/Gj4EvgZ8N/3p4+zA==",
   "language": "cpp",
   "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep; record_corrected, expected interval 1 ms",
   "percentiles": {
-    "max": 9831,
-    "p50": 102,
-    "p90": 361,
-    "p99": 757,
-    "p99_9": 1058
+    "max": 23247,
+    "p50": 106,
+    "p90": 575,
+    "p99": 940,
+    "p99_9": 1110
   },
   "profile": {
-    "captured_at": "2026-10-22T15:00:44Z",
+    "captured_at": "2026-10-22T15:44:45Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.33,
-      "load15": 1.03,
-      "load5": 0.97,
+      "load1": 1.02,
+      "load15": 0.69,
+      "load5": 0.76,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2086157,
+      "pid": 2119310,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

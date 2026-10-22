@@ -7,18 +7,18 @@
   "count": 10000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAqB4nDVTv8odRRS/5zdnzz05OR7GcV2WZVk2l/BxCSIfaWKnWOQBLETwFXwEC9HUNvoAKVKmloCQIoWFSEhhpdYiViLfA8iZ+zmwM7uzM3N+/2Z98t07hwPPh0srtyMdDuXx9Yunhw//uUzcY2GAQEDBgCP4iLe4cAFUxMOn0SLcmdlEUcCmquJ7fU1f00v8i1/w7XBDr45/0Wv+G7/Sy+EHelK+p5/pOd7QTfnyq/IHfivPyk/0dHhBN+UZvaHn+OJPTJ89vv5kv96Wq/HT6YP1wXm81o/303n+aF/Gea/3MddYzbmqVq2AkQqYlY1ZHRBiYiEtLBhUCkQYTGDBESBOWgV8tw+C5HkEsRQUEHOSBpgU4JRBzcAcxJ27qIAMdVQW35pp7G2t2pbms4fXxcet1XqKdX3vtO1XV++v28PzvJ2X5cF52+/vp7rOW9Tdx3Hy2tZxG5fp4e6r+zyP4xTbafHQmPYadfLRvGpYdVerIcJi7qwCSSwqsHxY1FVE3ZSEkowoE4wLQxgCBiT9ZFbNrcoonPyOki8gSOk9iSgxCfe/xEopQ5dNshdkAWg/lrvY2YsbhFnBYJWG0I6IocIizYPNR7emLmxRwyJMuWqIhmuE1qg+tWmZxnNr2mJ1t7HF3pqtc52bumu1qDY1c/cWm43e1LYY14ip1T3r1dpMJ5UIcVMXZTUVZWamRNNNtWAyrSwZEhYTIJdIEtVkCJEuWeHe0COSkeoDMlcMxuWzXxHCwP2qpOBDJqiHLOe4h6sAF0ExpIr/7+5e4VJAU/OSQe0xzPl0LkWG3FYSwFDYeoYzpyTpBkRKT2x6pMqaTsqQFHAJc4LrK9Fx0eXIrDNgQMGdW8B3cA9v49EFHe7ic3xDeBc/LniE3wn/AZOcQvk=",
+  "hdr_histogram": "HISTFAAAApZ4nC2TMaskRRDHt/5dU1uvXl1f09eMzTC3DOvyeDyWZZHjBZcIIhcZ3HcwMzU2Ow4UFNFIMTi4Cw7BVIwMjMTA0MDwMDG7D6Bw1O41M3R113RN/X9VPT/59t5qlf5cnUd6O9NqlR4df3m2ev/1eeNd4YQBYBDfxX0wwyGmuZQylW1rLFlLdoiW4uZ5zg+mj57iH/p9+Asv81fp6/V/8tvwh/+QfuW/6ef0ip7RK7r9kT75hr6nRy/o9gs6HD988DjvtvmD3bEuy3TIxeo07/2mLwd/7Nvcb3VjrZUqGW6sUkVVjN2kWwYLFGLCDDgxC0FBIgDo9IiAmTgsCIGhJNVUTEUYHENcWRev2aoV5oySTVncyEyLaSm51VrmuebiZTOW4tV8XLrPY9+N07Lp47LZLcf3rm761e7hvL0+bKbJrndLb/kwzX1ubdPmPt9MV/O4rfs6LWMbWyuj55KtZJEck5qL5GLFXFngJiYS+pxNARMXiKhxpC5nUUyhl4RUIGoQTiKkYIgQwKwhkUO9sySkOCEJgDAgwcwZ0KgwGTGSkBOTaCCKBAITEL8n5iThAmmgDbIRmtPJMAMMGkmawqFs8a16hjGLwDkoZys6tpqvyq62mrV473O+bvvjdj8u11Mf+36z0TotbZl6Lx0qo5U+io9u3tyr1+J5lM7G6kVUoQhidFJiBIIjnRog3oHXfBm4OJYXWIMgeIfXuMAlkmBAwl0hDCCsGfc4cWIMnBC0ENQGlgEYYpNBSBokcQECRzgeoudSVCO8POCUDYVBnECSAvjpLIZwkHBcMDAxhKNiKokzZeFQIqf+pVMUfls2OifD5xQoGjrxJYh/InxH+L/jM3xJuBOLj/Ev41M8r/j8Dt4AXm9Bcw==",
   "language": "cpp",
   "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep",
   "percentiles": {
-    "max": 4287,
-    "p50": 118,
-    "p90": 666,
-    "p99": 992,
-    "p99_9": 1145
+    "max": 22495,
+    "p50": 108,
+    "p90": 640,
+    "p99": 1010,
+    "p99_9": 1250
   },
   "profile": {
-    "captured_at": "2026-10-22T14:54:40Z",
+    "captured_at": "2026-10-22T15:38:40Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,10 +54,10 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.66,
-      "load15": 1.16,
-      "load5": 1.21,
-      "running": 2
+      "load1": 1.27,
+      "load15": 0.73,
+      "load5": 0.87,
+      "running": 1
     },
     "memory": {
       "hugepages_free": 0,
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2080855,
+      "pid": 2113941,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

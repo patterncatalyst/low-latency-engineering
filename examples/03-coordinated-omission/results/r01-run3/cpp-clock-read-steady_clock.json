@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAJh4nC2JMQ4BURRF/zv/+f6YMQX5UZBMRUNhBzrNRGYdNqGhUKNRkeg0Wq3KBlQ6CyCWIJNxi3tuzu2ttm1jzNpUsX+KMXY6vh7N5FuJ8Ayf02B3KDZnfbAYtXzq1AFq8aAqZaFYsNQhJip3ToQKtfLPCCAwA0/SSCAVFYcuhS45fYTgmlxihmTkzNnD3fMSOtwsb+EHkUgU6g==",
+  "hdr_histogram": "HISTFAAAAI14nC3IMQrCQBBA0Zk/u3E3FiIhSECwkGAb8ABW5gbW3sBTBMHayk4rryCCWHoJDxHEwk6L+JsHf9zsMxHZSJf9VRGrq8tRFm038urZFtvd6vpNX/bxb6tT55MBnj6Yy4gYMwylYOmMCZEpOSE4TV2iuB6RkrsyYs054MkZclLmELkpJcpBeST8AKJjFGs=",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of std::chrono::steady_clock::now; value = second - first",
   "percentiles": {
-    "max": 2763,
+    "max": 1693,
     "p50": 13,
     "p90": 13,
     "p99": 14,
     "p99_9": 14
   },
   "profile": {
-    "captured_at": "2026-10-22T15:00:44Z",
+    "captured_at": "2026-10-22T15:44:45Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.33,
-      "load15": 1.03,
-      "load5": 0.97,
+      "load1": 1.02,
+      "load15": 0.69,
+      "load5": 0.76,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2086157,
+      "pid": 2119310,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

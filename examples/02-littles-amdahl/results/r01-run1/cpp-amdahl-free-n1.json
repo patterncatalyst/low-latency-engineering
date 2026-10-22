@@ -7,7 +7,7 @@
   "count": 10,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAADB4nJNpmSzMwMDAxwABzFCakYGB2c1gxwIG+w8QgaOTmJiYWFhZGFkYmViZAJ/vBdI=",
+  "hdr_histogram": "HISTFAAAAC54nJNpmSzMwMDAwwABzFCakYGB2c1gxwIG+w8QgYOTmJiYWJiYGFmYWQCTrQXE",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
@@ -18,22 +18,22 @@
     "predicted_speedup": 1.0,
     "relative_error": 0.0,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.09532316602951109,
+    "serial_fraction_modelling_input": 0.09511260893587883,
     "sync": "free: no barriers",
-    "wall_p50_ns": 78249983,
-    "wall_p50_ns_n1": 78249983,
+    "wall_p50_ns": 77922303,
+    "wall_p50_ns_n1": 77922303,
     "workers": 1
   },
   "notes": "10 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
   "percentiles": {
-    "max": 78774271,
-    "p50": 78249983,
-    "p90": 78512127,
-    "p99": 78774271,
-    "p99_9": 78774271
+    "max": 78315519,
+    "p50": 77922303,
+    "p90": 78315519,
+    "p99": 78315519,
+    "p99_9": 78315519
   },
   "profile": {
-    "captured_at": "2026-10-22T14:47:09Z",
+    "captured_at": "2026-10-22T15:31:07Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -69,9 +69,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.38,
-      "load15": 1.15,
-      "load5": 0.99,
+      "load1": 0.17,
+      "load15": 0.59,
+      "load5": 0.42,
       "running": 1
     },
     "memory": {
@@ -92,7 +92,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2073568,
+      "pid": 2106674,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

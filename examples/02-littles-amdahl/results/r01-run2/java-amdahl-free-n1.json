@@ -7,20 +7,20 @@
   "count" : 10,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 78839807,
-    "p90" : 79429631,
-    "p99" : 79691775,
-    "p99_9" : 79691775,
-    "max" : 79691775
+    "p50" : 78184447,
+    "p90" : 78381055,
+    "p99" : 78381055,
+    "p99_9" : 78381055,
+    "max" : 78381055
   },
-  "hdr_histogram" : "HISTFAAAADB4nJNpmSzMwMAgwAABzFCaEch0M9ixgMH+A0Tg5CQmJnYmbhYWIMnMxMoEAKzJBe0=",
+  "hdr_histogram" : "HISTFAAAAC14nJNpmSzMwMDAwwABzFCaEch0M9ixgMH+A0Tg4CQmJlYmBiYWJiY2AJOxBcU=",
   "build" : {
     "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-22T14:53:13Z",
+    "captured_at" : "2026-10-22T15:37:14Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2078882,
+      "pid" : 2112010,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,9 +69,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.65,
-      "load5" : 0.97,
-      "load15" : 1.09,
+      "load1" : 0.38,
+      "load5" : 0.6,
+      "load15" : 0.63,
       "running" : 1
     },
     "memory" : {
@@ -96,13 +96,13 @@
   "model" : {
     "law" : "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers" : 1,
-    "serial_fraction_modelling_input" : 0.09850143888455397,
+    "serial_fraction_modelling_input" : 0.09866103180592281,
     "serial_fraction_basis" : "time inside the lock / wall time, one worker, instrumented runs",
     "predicted_speedup" : 1.0,
     "measured_speedup_p50" : 1.0,
     "relative_error" : 0.0,
-    "wall_p50_ns_n1" : 78839807,
-    "wall_p50_ns" : 78839807,
+    "wall_p50_ns_n1" : 78184447,
+    "wall_p50_ns" : 78184447,
     "batch_parcels" : 3200,
     "lock" : "synchronized (platform threads)",
     "sync" : "free: no barriers",
