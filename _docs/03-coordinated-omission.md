@@ -59,14 +59,17 @@ void run_clock_probe(std::uint64_t calls, ClockProbe& probe) {
 ```
 
 ```python
+# Probe variant -> (clock name for the report notes, the clock).
+CLOCKS: dict[str, tuple[str, Callable[[], int]]] = {
+    "clock-read": ("time.monotonic_ns", time.monotonic_ns),
+    "clock-read-perf_counter_ns": ("time.perf_counter_ns", time.perf_counter_ns),
+}
+
+
 def clock_probe(calls: int) -> dict[str, Recorder]:
     """Cost of one clock read: two back-to-back reads, the difference recorded."""
-    probes = {
-        "clock-read": ("time.monotonic_ns", time.monotonic_ns),
-        "clock-read-perf_counter_ns": ("time.perf_counter_ns", time.perf_counter_ns),
-    }
     out: dict[str, Recorder] = {}
-    for variant, (_, clock) in probes.items():
+    for variant, (_, clock) in CLOCKS.items():
         rec = Recorder(EXAMPLE, variant)
         record = rec.record
         for _ in range(calls):

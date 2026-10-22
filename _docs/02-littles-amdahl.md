@@ -131,7 +131,7 @@ After the run, the consumer reduces both measurements and writes them next to th
 ```cpp
   // --- the model block: the only place a mean appears ---------------------
   const double lambda = static_cast<double>(o.rate_hz);
-  const double w_mean_s = static_cast<double>(w_sum_ns / received) / 1e9;
+  const double w_mean_s = static_cast<double>(handler.w_sum_ns() / received) / 1e9;
   const double l_sampled = static_cast<double>(sampled.sum_in_system) / static_cast<double>(sampled.samples);
   const double l_predicted = lowlat::ch02::littles_L(lambda, w_mean_s);
   const double rel_err = (l_sampled - l_predicted) / l_predicted;
