@@ -29,6 +29,17 @@ def parse_hostport(text: str) -> tuple[str, int]:
     return host, int(port)
 
 
+def positive_int(text: str) -> int:
+    """argparse type: an integer greater than zero."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected an integer, got {text!r}") from None
+    if value <= 0:
+        raise argparse.ArgumentTypeError(f"must be > 0, got {value}")
+    return value
+
+
 def build_parser(variants: Sequence[str] | None = None) -> argparse.ArgumentParser:
     """The consumer's flags; ``variants`` restricts ``--variant`` to a fixed set."""
     p = argparse.ArgumentParser(
@@ -44,21 +55,21 @@ def build_parser(variants: Sequence[str] | None = None) -> argparse.ArgumentPars
     )
     p.add_argument(
         "--rcvbuf",
-        type=int,
+        type=positive_int,
         default=DEFAULT_RCVBUF,
         metavar="BYTES",
         help="SO_RCVBUF request; the kernel may grant less (default 4 MiB)",
     )
     p.add_argument(
         "--expect",
-        type=int,
+        type=positive_int,
         default=None,
         metavar="N",
         help="stop after N datagrams (received + dropped)",
     )
     p.add_argument(
         "--idle-timeout-ms",
-        type=int,
+        type=positive_int,
         default=DEFAULT_IDLE_MS,
         metavar="MS",
         help="stop after MS with nothing received, once the first arrived",

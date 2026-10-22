@@ -13,7 +13,7 @@ from collections.abc import Sequence
 
 from lowlat_consumer import GapTracker, Handler, install_signal_handlers, open_socket, run
 from lowlat_consumer.cli import build_parser as build_consumer_parser
-from lowlat_consumer.cli import parse_hostport
+from lowlat_consumer.cli import parse_hostport, positive_int
 from lowlat_measure import Recorder
 from lowlat_measure.recorder import require_profile
 from lowlat_measure.table import format_rows
@@ -36,7 +36,10 @@ def build_parser() -> argparse.ArgumentParser:
         variant="per-parcel",
     )
     p.add_argument(
-        "--slow-us", type=int, default=2000, help="target slow-path duration (bimodal-1pct)"
+        "--slow-us",
+        type=positive_int,
+        default=2000,
+        help="target slow-path duration (bimodal-1pct)",
     )
     return p
 

@@ -47,6 +47,9 @@ public final class Latdist {
                     rest.add(args[i]);
                 }
             }
+            if (slowUs <= 0) {
+                throw new IllegalArgumentException("--slow-us must be > 0");
+            }
             Config base = Config.parse(List.of("--bind", "127.0.0.1:47210", "--example", "01-latency-distribution",
                     "--variant", "per-parcel"));
             config = Config.parse(rest, base);
