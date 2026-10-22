@@ -8,8 +8,10 @@ filesystem UUID is redacted in the command line.
   (profile `scripts/lab/guest-profiles/isolate-cpu3.conf`, applied by `apply-guest-profile.sh`).
 - `guest-kernel.txt`: still the PREEMPT_RT kernel; the boot entry's grubby args.
 - `guest-java.txt`: Temurin 25.0.5+8 under `/opt/temurin-25.0.5`, `stress-ng` 0.22.01.
-- `vcpupin.txt`: 4 vCPUs; vCPU 3 pinned to host CPU 15. `<cputune>` before: none; after:
-  `<vcpupin vcpu='3' cpuset='15'/>`. A pin, not a host isolation.
+- `vcpupin.txt`: 4 vCPUs; vCPU 3 pinned to host CPU 13 (core 5, the core with the fewest
+  interrupts over both hyperthreads; the first pin, CPU 15, shared core 7 with the second-busiest
+  CPU and was moved the same day, and `lab-ready-iso` re-taken). `<cputune>` before: none; after:
+  `<vcpupin vcpu='3' cpuset='13'/>`. A pin, not a host isolation.
 - `snapshots.txt`: `lab-ready`, `lab-ready-rt`, `lab-ready-iso`.
 - `check-prereqs-vm.txt`: `scripts/check-prereqs.sh --vm`, 13 PASS (incl. Temurin version,
   isolation and vcpupin state).

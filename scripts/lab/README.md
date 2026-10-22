@@ -169,13 +169,13 @@ the real path in `--update-kernel`, so the script addresses the entry by its gru
 never used. It is idempotent (an entry that already matches is not rewritten or rebooted).
 `apply-guest-profile.sh --remove` takes the arguments off again.
 
-**vcpupin.** `scripts/lab/pin-vcpu.sh` pins vCPU 3 of `lowlat-target` to host CPU 15 with
+**vcpupin.** `scripts/lab/pin-vcpu.sh` pins vCPU 3 of `lowlat-target` to host CPU 13 with
 `virsh vcpupin --config` (and `--live` when running) and prints `<cputune>` before and after;
 `pin-vcpu.sh --remove` deletes the `<cputune>` block again. This is libvirt configuration of the lab
-domain only. It is a pin, not an isolation: the host kernel may still schedule other work on CPU 15
-(it is the hyperthread sibling of CPU 7, and nothing on the host is partitioned). CPU 15 is the
-highest-numbered logical CPU; the host uses low-numbered CPUs for boot-time work and default IRQ
-affinity. Override with `PIN_HOST_CPU` / `PIN_VCPU`. The guest has 4 vCPUs (0-3), so guest CPU 3 is vCPU 3.
+domain only. It is a pin, not an isolation: the host kernel may still schedule other work on CPU 13
+and on its hyperthread sibling CPU 5, and nothing on the host is partitioned. Core 5 (CPUs 5 and 13)
+had the fewest interrupts summed over both hyperthreads in `/proc/interrupts` on this host; check
+`lscpu -e`, `thread_siblings_list` and `/proc/interrupts` before reusing the default elsewhere. Override with `PIN_HOST_CPU` / `PIN_VCPU`. The guest has 4 vCPUs (0-3), so guest CPU 3 is vCPU 3.
 
 **Snapshot `lab-ready-iso`.** RT kernel + isolation profile + vcpupin + Temurin + `stress-ng`. It includes the
 domain XML at that moment, so reverting to `lab-ready` or `lab-ready-rt` also restores the unpinned
