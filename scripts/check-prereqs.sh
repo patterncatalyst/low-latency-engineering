@@ -93,12 +93,17 @@ check_os() {
 }
 
 # cxx_std23 <compiler>: compile and run a tiny <print> program with -std=c++23.
-cxx_std23() {
-  local cxx="$1" dir rc=0
+# One scratch directory for the compile probes, removed on exit.
+scratch() {
   if [[ -z ${SCRATCH:-} ]]; then
     SCRATCH="$(mktemp -d)"
     trap 'rm -rf "$SCRATCH"' EXIT
   fi
+}
+
+cxx_std23() {
+  local cxx="$1" dir rc=0
+  scratch
   dir="$SCRATCH"
   printf '#include <print>\nint main() { std::println("ok {}", 23); }\n' >"$dir/t.cpp"
   if "$cxx" -std=c++23 -o "$dir/t" "$dir/t.cpp" >/dev/null 2>&1 && "$dir/t" >/dev/null 2>&1; then
@@ -125,6 +130,24 @@ check_cxx() {
       record FAIL "$cxx -std=c++23" "$ver, cannot build a <print> program" "sudo dnf upgrade $pkg libstdc++-devel (need GCC 14+ headers)"
     fi
   done
+}
+
+# HdrHistogram_c compresses the histograms in every report with zlib; its build needs the headers.
+check_zlib() {
+  local cc
+  scratch
+  cc=$(command -v clang || command -v gcc || true)
+  if [[ -z $cc ]]; then
+    record FAIL "zlib headers" "no C compiler to probe with" "sudo dnf install clang zlib-ng-compat-devel"
+    return
+  fi
+  printf '#include <zlib.h>\nint main(void) { return zlibVersion()[0] == 0; }\n' >"$SCRATCH/z.c"
+  if "$cc" -o "$SCRATCH/z" "$SCRATCH/z.c" -lz >/dev/null 2>&1 && "$SCRATCH/z"; then
+    record PASS "zlib headers" "zlib.h compiles and links (-lz)"
+  else
+    record FAIL "zlib headers" "zlib.h or libz missing" "sudo dnf install zlib-ng-compat-devel"
+  fi
+  rm -f "$SCRATCH/z" "$SCRATCH/z.c"
 }
 
 check_cmake() {
@@ -290,6 +313,7 @@ run_host() {
   printf 'Host prerequisites (protoc pin %s, prefix %s)\n' "$PROTOBUF_VERSION" "$LOWLAT_PREFIX"
   check_os
   check_cxx
+  check_zlib
   check_cmake
   check_java
   check_python
