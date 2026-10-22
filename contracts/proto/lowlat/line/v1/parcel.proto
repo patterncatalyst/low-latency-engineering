@@ -1,0 +1,66 @@
+// Parcel sortation line: events emitted by the line simulator.
+//
+// One ParcelEvent is carried in exactly one UDP datagram to 127.0.0.1. UDP has
+// no backpressure: the simulator never waits for a consumer, like the belt.
+//
+// CLOCK DOMAIN. Every *_ns field in this package is nanoseconds on the Linux
+// CLOCK_MONOTONIC clock of the host that runs the simulator. It is NOT wall
+// time and has no meaning on another host. Producer and consumer must run on
+// the same host (or the same VM). Subtracting two values from different
+// hosts is a bug.
+
+syntax = "proto3";
+
+package lowlat.line.v1;
+
+option java_package = "io.patterncatalyst.lowlat.line.v1";
+option java_multiple_files = true;
+
+// Outer dimensions of a parcel as measured by the dimensioner.
+message Dimensions {
+  // Field numbers 4 to 15 are reserved for future axes or a measurement
+  // quality value.
+  reserved 4 to 15;
+
+  // Length along the belt direction, in millimetres.
+  uint32 length_mm = 1;
+  // Width across the belt, in millimetres.
+  uint32 width_mm = 2;
+  // Height above the belt, in millimetres.
+  uint32 height_mm = 3;
+}
+
+// A parcel passing the scan point. Produced once per parcel by the simulator.
+message ParcelEvent {
+  // Field numbers 9 to 15 are reserved for the next fields that fit in a
+  // one-byte tag; 20 to 29 are reserved for per-stage timestamps.
+  reserved 9 to 15, 20 to 29;
+
+  // Sequence number of the parcel, starting at 0 and incrementing by exactly
+  // one. A gap seen by a consumer means datagrams were dropped.
+  uint64 seq = 1;
+  // Time the open-loop schedule says this parcel should have been emitted,
+  // t0 + seq / rate, in nanoseconds on CLOCK_MONOTONIC (same host only, not
+  // wall time). Latency is measured from this value, never from
+  // actual_emit_ns, so a late sender or slow consumer cannot hide.
+  int64 intended_emit_ns = 2;
+  // Time the simulator actually sent the datagram, in nanoseconds on
+  // CLOCK_MONOTONIC (same host only, not wall time). actual_emit_ns minus
+  // intended_emit_ns is the simulator's own emit lateness.
+  int64 actual_emit_ns = 3;
+  // Belt encoder position at intended_emit_ns, in encoder ticks since the
+  // line started. The belt is the clock: divert deadlines are expressed in
+  // this unit.
+  uint64 encoder_tick = 4;
+  // SSCC-18 serial shipping container code as 18 ASCII decimal digits. A
+  // string, not a number: leading zeros are significant and no arithmetic is
+  // ever done on it.
+  string barcode = 5;
+  // Parcel mass in grams, from the checkweigher.
+  uint32 weight_g = 6;
+  // Parcel dimensions from the dimensioner.
+  Dimensions dims = 7;
+  // Confidence of the barcode read in permille (0 to 1000). Integer on
+  // purpose: no floating point on the wire.
+  uint32 scan_confidence_permille = 8;
+}

@@ -1,0 +1,20 @@
+[project]
+name = "lowlat-line-consumer"
+version = "1.0.0"
+description = "Python line consumer: receives ParcelEvent datagrams and records latency against the belt schedule"
+requires-python = ">=3.14"
+dependencies = ["lowlat-proto", "lowlat-measure"]
+
+[project.scripts]
+line-consumer-py = "lowlat_consumer.cli:main"
+
+[tool.uv.sources]
+lowlat-proto = { workspace = true }
+lowlat-measure = { workspace = true }
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lowlat_consumer"]

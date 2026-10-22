@@ -1,0 +1,128 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+✓ loadavg at start: 0.38 0.60 0.63 (16 CPUs)
+━━ building C++ (release preset) littles-consumer amdahl-cpp ch02-model-test line-simulator
+[1/27] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[2/24] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[3/22] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[4/18] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
+[5/16] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[6/14] Generating CXX dyndep file 02-littles-amdahl/cpp/CMakeFiles/littles-consumer.dir/CXX.dd
+[7/12] Generating CXX dyndep file 02-littles-amdahl/cpp/CMakeFiles/ch02-model-test.dir/CXX.dd
+[8/10] Generating CXX dyndep file 02-littles-amdahl/cpp/CMakeFiles/amdahl-cpp.dir/CXX.dd
+━━ building Java module 02-littles-amdahl/java (tests skipped)
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+━━ unit tests
+Running main() from <repo>/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] 5 tests from 3 test suites ran. (0 ms total)
+[  PASSED  ] 5 tests.
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+...                                                                      [100%]
+3 passed in 0.01s
+━━ Little's Law, cpp: lambda=1000/s for 10s into UDP 47220
+model: lambda=1000/s  L(sampled)=1.040  W-bar(model input)=1.024 ms  predicted L=lambda*W=1.024  error=+1.58%  (samples=10031, max in system=11)
+warehouse: 480 ms scan-to-divert x 1000/s = 480 parcels in flight on 1.20 m of belt at 2.5 m/s
+━━ Little's Law, java: lambda=1000/s for 10s into UDP 47221
+model: lambda=1000/s  L(sampled)=1.182  W-bar(model input)=1.154 ms  predicted L=lambda*W=1.154  error=+2.41%  (samples=10031, max in system=26)
+warehouse: 480 ms scan-to-divert x 1000/s = 480 parcels in flight on 1.20 m of belt at 2.5 m/s
+✓ PASS A cpp no loss: count=10000 dropped=0
+✓ PASS A cpp Little's Law: L(sampled)=1.0402751470441631 vs lambda*W-bar=1.0241122474, error +1.58 % (need within 5 %)
+✓ PASS A java no loss: count=10000 dropped=0
+✓ PASS A java Little's Law: L(sampled)=1.1818363074469145 vs lambda*W-bar=1.1540328812999998, error +2.41 % (need within 5 %)
+warehouse framing: 480.0 ms scan-to-divert at 2.5 m/s = 1.2 m of belt; at 1000 parcels/s that is lambda*W = 480.0 parcels in flight
+━━ Amdahl's Law, cpp: N=1,2,4, 30 repetitions each
+amdahl-cpp: batch 3200 parcels, serial fraction s = 0.0951 (time in lock / wall, N=1, 5 instrumented runs); ideal limit 1/s = 10.51x
+02-littles-amdahl        cpp  amdahl-n1        count=       30 dropped=     0 p50=  78381.1us p90=  79036.4us p99=  79167.5us p99.9=  79167.5us max=   79167.5us
+  N=1: predicted 1.00x, measured 1.00x (p50 wall 78.4 ms), error +0.0%
+02-littles-amdahl        cpp  amdahl-n2        count=       30 dropped=     0 p50=  44204.0us p90=  44466.2us p99=  44662.8us p99.9=  44662.8us max=   44662.8us
+  N=2: predicted 1.83x, measured 1.77x (p50 wall 44.2 ms), error -2.9%
+02-littles-amdahl        cpp  amdahl-n4        count=       30 dropped=     0 p50=  27656.2us p90=  27951.1us p99=  28885.0us p99.9=  28885.0us max=   28885.0us
+  N=4: predicted 3.11x, measured 2.83x (p50 wall 27.7 ms), error -8.9%
+effective GHz (cpp, user cycles / task-clock): 4.35
+━━ Amdahl's Law, java: N=1,2,4, 30 repetitions each
+amdahl-java: batch 3200 parcels, serial fraction s = 0.0987 (time in lock / wall, N=1, 5 instrumented runs); ideal limit 1/s = 10.13x
+02-littles-amdahl          java   amdahl-n1                  30        0    79036.4    79560.7    80478.2    80478.2    80478.2
+  N=1: predicted 1.00x, measured 1.00x (p50 wall 79.0 ms), error +0.0%
+02-littles-amdahl          java   amdahl-n2                  30        0    44924.9    45350.9    47185.9    47185.9    47185.9
+  N=2: predicted 1.82x, measured 1.76x (p50 wall 44.9 ms), error -3.4%
+02-littles-amdahl          java   amdahl-n4                  30        0    28819.5    29409.3    29753.3    29753.3    29753.3
+  N=4: predicted 3.09x, measured 2.74x (p50 wall 28.8 ms), error -11.1%
+effective GHz (java, user cycles / task-clock): 4.36
+━━ Amdahl's Law, python: N=1,2,4, 30 repetitions each
+amdahl-py[threads]: batch 1200 parcels, serial fraction s = 0.0992 (time in lock / wall, N=1, 5 instrumented runs); ideal limit 1/s = 10.08x
+02-littles-amdahl  python  amdahl-threads-n1  30  0  172884.0  176029.7  181141.5  181141.5  181141.5
+  threads N=1: Amdahl predicts 1.00x (the lock only; the GIL is not in the model), measured 1.00x (p50 wall 172.9 ms)
+02-littles-amdahl  python  amdahl-threads-n2  30  0  180748.3  182976.5  186122.2  186122.2  186122.2
+  threads N=2: Amdahl predicts 1.82x (the lock only; the GIL is not in the model), measured 0.96x (p50 wall 180.7 ms)
+02-littles-amdahl  python  amdahl-threads-n4  30  0  330039.3  398458.9  406847.5  406847.5  406847.5
+  threads N=4: Amdahl predicts 3.08x (the lock only; the GIL is not in the model), measured 0.52x (p50 wall 330.0 ms)
+amdahl-py[processes]: batch 1200 parcels, serial fraction s = 0.1046 (time in lock / wall, N=1, 5 instrumented runs); ideal limit 1/s = 9.56x
+02-littles-amdahl  python  amdahl-processes-n1  30  0  193331.2  194641.9  195035.1  195035.1  195035.1
+  processes N=1: Amdahl predicts 1.00x (the lock), measured 1.00x (p50 wall 193.3 ms)
+02-littles-amdahl  python  amdahl-processes-n2  30  0  106692.6  107020.3  107151.4  107151.4  107151.4
+  processes N=2: Amdahl predicts 1.81x (the lock), measured 1.81x (p50 wall 106.7 ms)
+02-littles-amdahl  python  amdahl-processes-n4  30  0  64127.0  66060.3  68157.4  68157.4  68157.4
+  processes N=4: Amdahl predicts 3.04x (the lock), measured 3.01x (p50 wall 64.1 ms)
+effective GHz (python, user cycles / task-clock): 3.93
+✓ PASS B cpp Amdahl N=4: s=0.09510456337412011, predicted 3.11x, measured 2.83x, error -8.9 % (need within 15 %)
+✓ PASS B java Amdahl N=4: s=0.09868079095495211, predicted 3.09x, measured 2.74x, error -11.1 % (need within 15 %)
+✓ PASS B python threads (GIL=true): N=4 speedup 0.52x (need < 1.3x)
+✓ PASS B python processes: N=4 speedup 3.01x (need > 2x)
+━━ observation: --sync free (no barriers), C++ and Java, 10 repetitions
+amdahl-cpp: batch 3200 parcels, serial fraction s = 0.0952 (time in lock / wall, N=1, 5 instrumented runs); ideal limit 1/s = 10.50x
+  N=1: predicted 1.00x, measured 1.00x (p50 wall 77.7 ms), error +0.0%
+  N=2: predicted 1.83x, measured 1.96x (p50 wall 39.6 ms), error +7.4%
+  N=4: predicted 3.11x, measured 3.59x (p50 wall 21.7 ms), error +15.3%
+amdahl-java: batch 3200 parcels, serial fraction s = 0.0987 (time in lock / wall, N=1, 5 instrumented runs); ideal limit 1/s = 10.14x
+  N=1: predicted 1.00x, measured 1.00x (p50 wall 78.2 ms), error +0.0%
+  N=2: predicted 1.82x, measured 1.96x (p50 wall 39.9 ms), error +7.7%
+  N=4: predicted 3.09x, measured 3.51x (p50 wall 22.3 ms), error +13.6%
+━━ validating reports
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-amdahl-free-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-amdahl-free-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-amdahl-free-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-amdahl-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-amdahl-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-amdahl-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/cpp-littles.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-amdahl-free-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-amdahl-free-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-amdahl-free-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-amdahl-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-amdahl-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-amdahl-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/java-littles.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/python-amdahl-processes-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/python-amdahl-processes-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/python-amdahl-processes-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/python-amdahl-threads-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/python-amdahl-threads-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r01-run2/python-amdahl-threads-n4.json
+example            language  variant              count  dropped       p50       p90       p99     p99.9       max
+02-littles-amdahl  cpp       amdahl-free-n1          10        0   77725.7   77987.8   78381.1   78381.1   78381.1
+02-littles-amdahl  cpp       amdahl-free-n2          10        0   39616.5   39747.6   40435.7   40435.7   40435.7
+02-littles-amdahl  cpp       amdahl-free-n4          10        0   21659.6   22478.8   22626.3   22626.3   22626.3
+02-littles-amdahl  cpp       amdahl-n1               30        0   78381.1   79036.4   79167.5   79167.5   79167.5
+02-littles-amdahl  cpp       amdahl-n2               30        0   44204.0   44466.2   44662.8   44662.8   44662.8
+02-littles-amdahl  cpp       amdahl-n4               30        0   27656.2   27951.1   28885.0   28885.0   28885.0
+02-littles-amdahl  cpp       littles-law          10000        0     745.5    2181.1    4329.5    8396.8   10903.6
+02-littles-amdahl  java      amdahl-free-n1          10        0   78184.4   78381.1   78381.1   78381.1   78381.1
+02-littles-amdahl  java      amdahl-free-n2          10        0   39878.7   40435.7   41844.7   41844.7   41844.7
+02-littles-amdahl  java      amdahl-free-n4          10        0   22298.6   22773.8   22790.1   22790.1   22790.1
+02-littles-amdahl  java      amdahl-n1               30        0   79036.4   79560.7   80478.2   80478.2   80478.2
+02-littles-amdahl  java      amdahl-n2               30        0   44924.9   45350.9   47185.9   47185.9   47185.9
+02-littles-amdahl  java      amdahl-n4               30        0   28819.5   29409.3   29753.3   29753.3   29753.3
+02-littles-amdahl  java      littles-law          10000        0     802.3    2265.1    5017.6   21626.9   25854.0
+02-littles-amdahl  python    amdahl-processes-n1     30        0  193331.2  194641.9  195035.1  195035.1  195035.1
+02-littles-amdahl  python    amdahl-processes-n2     30        0  106692.6  107020.3  107151.4  107151.4  107151.4
+02-littles-amdahl  python    amdahl-processes-n4     30        0   64127.0   66060.3   68157.4   68157.4   68157.4
+02-littles-amdahl  python    amdahl-threads-n1       30        0  172884.0  176029.7  181141.5  181141.5  181141.5
+02-littles-amdahl  python    amdahl-threads-n2       30        0  180748.3  182976.5  186122.2  186122.2  186122.2
+02-littles-amdahl  python    amdahl-threads-n4       30        0  330039.3  398458.9  406847.5  406847.5  406847.5
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+✓ 02-littles-amdahl verified: every criterion holds (reports in <repo>/examples/02-littles-amdahl/results/r01-run2)

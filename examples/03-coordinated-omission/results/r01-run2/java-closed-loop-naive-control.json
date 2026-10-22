@@ -1,0 +1,96 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "03-coordinated-omission",
+  "language" : "java",
+  "variant" : "closed-loop-naive-control",
+  "unit" : "ns",
+  "count" : 10000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 705,
+    "p90" : 2623,
+    "p99" : 5935,
+    "p99_9" : 6871,
+    "max" : 26639
+  },
+  "hdr_histogram" : "HISTFAAABEd4nDVVS4tcVRA+t27duqfPvf2607lpZiajdgaiQ6PNGBcOQQPigCKiEMEf4A/wF0gWwZUrg4+dwZW4ciGShSshCYgE/APBVcCdK5fi91VN+nH7nDr1Ol99VX145+5eSu2DFK/64rfC8nx3/156858Q/F2V0+0v1Q/6sLmt38r96uzGbjw6/+Dd7XYYS86qvUlSvEST1VILPi0kXM65XeKxJ410knj2uryK5wQ6rbYUJKrjt9HWZK7QmwrUaZ/gEkfKBUQp5K0bddKZKAOIHyO+GncH1IKowQ/j0vvSIyCcNC7BqtNOLkHMTBqEXPp6iW+S17jTpJZFNrroZ/vDvj6/Xt/a/FR9eke+kK/lqT6s7uUf5Yk+rT+XPyY/y+/1k+qx/Ce/VX/JJ/9WX1aPq++r01+r09vVyfFuuDXbrMabw9l4+N7h9ujk6OXNuJkdjetRb4y7481n1z8+2d28/v7wxmL34nrbn6+O1sPZsBoXx2VtpSyGPKgtykp7zTmPeSGLlcxkVkpf9nVQLbpIpjYYarIANAboUJZi0svMTEux3mZZZ8n46qWkHkYCdysbBTEK7Pss2QYgngdJBajC8wplzopNbwuDS0O9jbib5AJhJlizJDkVZWBYS7HgAHmBNzJNGe4hgG4fxqgW9K1oHfQR9dPQEYMHVEa9wurlBxtQ1jmOg0tzodBJ0ISC8wwm5FYbvAni4GvUrXNyLggcESC3l+Ch0DLDHSNrfIwXTcY1dHg339bSw4d5IoWyzFAeR2uKGY8OAZWfGCFTmgiJCmz9Dp4gLi8NRJnmRMntjfxXv5pEN/BGgQlvMEXHTBggcmdnLL3Jajz38G3kQIP2c7kCyYc4v8T+eAkteBXiq/DxFt4H8qiWt+WavACbV6J/ZWLYXPb2gFV03NJ7D7JGo2+byGdCmUdGIntRcOgQCqyK4yQOkhTvWSIfxo6648SFI568pUWjCN7LiM2OTY59jqKDw0oeg0FEdAYiawYXS8mkJEYHBA4YSoquYQDapCiZedCggvjEoteWGdDUojSJM4rJEd7gfOtmrZNFfD5Fqn7qhE8e1CeSX8vHkoNFbzAIPDTumeTZrHP8Gud163OoU6KIy7eBM8NO6WqKFBtvLy8/YVLnP2nvY62OQjEop5tEE9UX8bKidcigaKLaeTPlLXTq9fdyTmjYORti5vrR9GJe4/GcU8Svey1yxHrOmJ2v22ekoC+SlehMocFhqx4FifMWXHZuFQMbyviT0LC9rM7ALljBHBrV6HglCso/jwA/sXAxCNizRlSzEfnoXA3YMRt9uKvvLypQfJk53vJFGTMC5SwYuSI9yKVQAp1zr4YBRydW4JSDjz6yFxzoxjzhmOCYcerAp1MmwmIOBYszM+OUsUL0fepBSoZFRUkEXtATnwdE/ufa6lzZ6EsgekW+quRRI9+IfCTvyN1OvmvkgXg7/ynyP1rUUL8=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T15:38:40Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2113941,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "redacted"
+    },
+    "load" : {
+      "load1" : 1.27,
+      "load5" : 0.87,
+      "load15" : 0.73,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0"
+    }
+  },
+  "notes" : "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep; JIT not warmed"
+}

@@ -61,6 +61,11 @@ are REFERENCES only.
 - Command path and data path never share a queue; a data flood must never delay
   a command.
 - Never instrument the hot path synchronously; observability goes off-path.
+- protobuf/protoc: latest stable upstream release, pinned, one release across C++,
+  Java and Python; never Fedora's packaged protoc.
+- Means: a time-average may appear only as a labelled modelling input (Little's/
+  Amdahl's laws, Ch2, in a separate `model` block), never as a reported latency.
+- Ch1-4 numbers are host bare metal, untuned (governor/tuned recorded), labelled.
 - Idiomatic code first, in every language: the standard library, the framework's
   own facilities and the established libraries before anything hand-rolled
   (lgtm-idiomatic-review checklists apply while writing, not only at review).
@@ -109,7 +114,17 @@ talks. Pull and re-point; cross-link; don't rewrite.
                          example-plan.md (technique -> workload -> result)
 
 ## Environment isolation
-- Default rootless Podman. A throwaway KVM/libvirt VM is MANDATORY for the
+- Containers: Docker Engine + Compose plugin everywhere, host and lab VMs (never
+  Docker Desktop, no Podman). minikube uses the docker driver; CRC keeps its default
+  CRI-O + crun runtime.
+- NEVER change the development host: no kernel, boot-param, sysctl, tuned, governor,
+  hugepage or package changes, and no host sudo. The host only runs unprivileged
+  user-space programs and Docker containers. Every system-level change happens in
+  the lowlat-* VMs (lgtm-systems-programming lab).
+- Lab VMs use passt networking and ssh over vsock (`scripts/lab/lab-ssh.sh <vm>`):
+  no bridge, NAT, forwarding or firewall rule on the host. Never fix lab
+  networking by changing the host firewall; guests cannot reach each other.
+- A throwaway KVM/libvirt VM is MANDATORY for the
   RT-kernel, partitioning, isolcpus/nohz_full/IRQ, cyclictest and kernel-bypass
   chapters - never on the host. Use lgtm-systems-programming scripts by name
   (LAB_PREFIX=lowlat); revert to snapshot between measurement runs.

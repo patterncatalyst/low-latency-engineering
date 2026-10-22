@@ -1,0 +1,57 @@
+// Parcel sortation line: the decision sent to the diverter.
+//
+// Clock domain: every *_ns field is nanoseconds on the Linux CLOCK_MONOTONIC
+// clock of the host that produced it. It is NOT wall time and is meaningful
+// on the same host only. See parcel.proto.
+
+syntax = "proto3";
+
+package lowlat.line.v1;
+
+option java_package = "io.patterncatalyst.lowlat.line.v1";
+option java_multiple_files = true;
+
+// Destination lane of a diverter decision.
+enum Lane {
+  // Not set. A receiver must treat this as an invalid command.
+  LANE_UNSPECIFIED = 0;
+  // Parcel could not be routed (unreadable barcode, out of tolerance); sent
+  // to the exception lane for manual handling.
+  LANE_EXCEPTION = 1;
+  // Sort lane 1.
+  LANE_1 = 2;
+  // Sort lane 2.
+  LANE_2 = 3;
+  // Sort lane 3.
+  LANE_3 = 4;
+  // Sort lane 4.
+  LANE_4 = 5;
+  // Sort lane 5.
+  LANE_5 = 6;
+  // Sort lane 6.
+  LANE_6 = 7;
+  // Sort lane 7.
+  LANE_7 = 8;
+  // Sort lane 8.
+  LANE_8 = 9;
+}
+
+// The decision for one parcel: which lane, and by when the diverter must act.
+message DivertCommand {
+  // Field numbers 6 to 15 are reserved for future routing fields.
+  reserved 6 to 15;
+
+  // Sequence number of the parcel this command answers (ParcelEvent.seq).
+  uint64 seq = 1;
+  // Destination lane. LANE_UNSPECIFIED is invalid.
+  Lane lane = 2;
+  // Belt position by which the diverter must have been actuated, in encoder
+  // ticks (same unit as ParcelEvent.encoder_tick). A deadline in belt
+  // position, not in time, because conveyor_speed * distance(scan, diverter)
+  // fixes it and the belt never waits.
+  uint64 deadline_encoder_tick = 3;
+  // Time the decision was made, in nanoseconds on CLOCK_MONOTONIC (same host
+  // only, not wall time). decided_ns minus ParcelEvent.intended_emit_ns is
+  // the sense-to-decide part of scan-to-divert latency.
+  int64 decided_ns = 4;
+}

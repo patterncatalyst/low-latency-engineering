@@ -1,0 +1,61 @@
+{
+  "version": 10,
+  "cmakeMinimumRequired": { "major": 4, "minor": 3, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "$env{HOME}/.cache/lowlat/prefix",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release for measurement (clang, -O2 -g, frame pointers)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_FLAGS_RELEASE": "-O2 -g -fno-omit-frame-pointer -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O2 -g -fno-omit-frame-pointer -DNDEBUG"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (clang)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "sanitize",
+      "displayName": "AddressSanitizer + UndefinedBehaviorSanitizer (clang, -O1 -g); not for measurement",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_FLAGS_RELEASE": "-O1 -g -fno-omit-frame-pointer -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O1 -g -fno-omit-frame-pointer -DNDEBUG",
+        "LOWLAT_SANITIZE": "address,undefined"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "release" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "sanitize", "configurePreset": "sanitize" }
+  ],
+  "testPresets": [
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
+    { "name": "sanitize", "configurePreset": "sanitize", "output": { "outputOnFailure": true } }
+  ]
+}

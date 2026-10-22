@@ -1,0 +1,96 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "03-coordinated-omission",
+  "language" : "java",
+  "variant" : "closed-loop-naive",
+  "unit" : "ns",
+  "count" : 10000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 868,
+    "p90" : 5731,
+    "p99" : 6803,
+    "p99_9" : 11775,
+    "max" : 200278015
+  },
+  "hdr_histogram" : "HISTFAAABZt4nDVWz4sdRRDuqa6pqdevd97s7viyxhjXsOiiQfYQY0RBhBAxF0G8igjqQcSDVyUHEVHwFEEQRBQDHryIpxzEgwcv3oME0X9AQQTJ1e+rnmx283p66ldXfd/X78wHn+6nVF5N7Scvnx2WV05ufpWe+adtfC56cPbCOTUV0+KSNYsOImu5V1ayI6ekxzpLkntkIy/LC3h6FE9/dvIwDO6TQXYlaY9PGq3wf4Z/QpgsWIomPKxgkAS/2BYuMzb43EvbR8Zd1TWM8SLLoMKIjMe44QK7U3hexzKhmD7+rcNhJ4InpPPkySwVwYdMR/PVp9++9uYf3Wvf53duyG35ovs9f9j9K590f3U/5B+7m/LGT/KR3JCf5dpv8n53M9/qfuludS9dz1e/7D7r3rrdXbrePfbie5evzJeOL5+Mj2zPz9PxdGHvodPl4nzx7OHJ0VQO55PtdN7PbbdTObLDaTvPx/XM0db1oB6YnR6Pfa9uj3Uep4NyWsZprF686FjlTNFaDmSq47jdqpcypVHn5KbVVcQchypiSdVVzbBvUpNrclHdK9xMhS/RTxfBIJOhCYoPdER7texW0B5YZMwYFmJoKVotXHB2qvQu6B/8sEa2JNZzWLTRIYbIBpeYaYx3CPcYDqNk5bT4nAIJiRjKyLeOcdO9Vyx3Y14pxoX33OXjgFgbJsyBCuVojbGjlgVRRIdGJSkOkGnJXQkw4UM1l5YfB+UzX6AVOD7Surks/mytEvVSaezsFRADCiChoxcKBInWcC9sGtqr6DzHkIrp5GTMOCLCKDYyjLGRCWssJDBYDeOoTGWYAWxRgRUMN82C8VbOgHXCLCM/0+Ct8NAIEidnvVyzUMR1VoIJJovZCHfSGAt6cRLaeksLBMvSNtBR5zwGsXjNsDlmxXMPJivYDWy0LQwjeSW6jr0ULuE1EEWERk/CJQ12gq66jrR4zwnr/rK/C71YAxoJJF3J41i/Ik8uKVJICK02WG3wbh9xd7Czlvt1ExbEzwOyjz4PIQYrKNFKYpvOMISjKEUqcNgAJw8SqTzETkgJf7JHv3kOG4IEseZxeB5vCkU8xACBJQv4sA8+YrKlGZEjgAROb1Vb50k8zMQCgo5Ol4CAFI4MiCzmHLOTnAaZhYM3PpOxIGypSGzuhWR3Bzhm5+vqDFDdKsBWZq9wpnEZIR9m8wz1IOIs1Tq6E9O11Gly35MCMUEy7iJz8S2CWSk+TVUgHBXBCt5XZGAawNVRJ6GFfNhkFSNxR21wabgIfmgok/FUxg4xrwSb0AP2FQ2TVOIF2xCYMp46RImwokrL4gabwtAIBsyAhMYJeorLJLgcXhFebJkPpQAwI8zbrdIEwjFs2vNtgTszEaShGblJAnAxMF7WBoi7mpJC8eJWCt7HYJfdxpeooI8A0mqjpjYoD0HJ3tICt1aQ7cT1RdpESI0iCCML2QkE6lKYSSgwPbUVHRlD2nKjJBO2C7EVbrweWowmgn1oJKbQh9KyBA2DHAW0C1VbiF5zS6JNMqKb7YgppJM5URSJkDg7Mi+F6BvjLkrKVlDKuY5bg/0N4YiK4xaT1kSODK94fzXx0JCnNuBeWyGqzTyaZC0EphlMTAslU6ABaCRUW5eMAmwVECXJQCpCOYDdMMfDqsty3VXel9wdOQiuqPpwAAmCNSCo85o2AhLRRpCm+GijhYobiFbITMIcOHfWUuk22gSmyh5udphV8KuO84jFOJdaphk5wFXWoj6NpWwLOA9W41dJNeORcNfQoIC3OCYagQPx3gF0Cquks1aekwfVuDQ8Lhp0IDjF7wTZo3VxP0c/h/YVTe5i6+4SWgtN5PAaFFZB1V3sbCQEGF++Ev428px828l/nXzdyTdZnpBnocd3TN7lV8LX5btO/u7ljshT8rx8/Gsn/wNqBF+d",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T15:44:45Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2119310,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "redacted"
+    },
+    "load" : {
+      "load1" : 1.02,
+      "load5" : 0.76,
+      "load15" : 0.69,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0"
+    }
+  },
+  "notes" : "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; JIT not warmed"
+}

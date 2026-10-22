@@ -1,0 +1,99 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "03-coordinated-omission",
+  "language": "python",
+  "variant": "receipt-time-control",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 8367,
+    "p90": 19663,
+    "p99": 24943,
+    "p99_9": 32031,
+    "max": 56095
+  },
+  "hdr_histogram": "HISTFAAABPF4nD2VTYscVRSG57x16tTtO3dq7tTUVMpKp6ZSNp2m0zbNpNOGiInEoAGzCAZm40KNH0hQcSEigoj4QdAggv6A/AMFN278Ea5cunDpxo17Oac6DkxV31unzsd7njp3/OUPhzs77qWd4S/Z3mlnJ3lh9eujnev/DBs/HYAABggjZJKAsOt0hQSJXgCM9EKMFMjY9ggJHyEDIcMh9ux/V+0S4EXWXwlS8EUc4zpGOIOzuIDzOMIxUlzCEWe4AMIrSPEqnsBdnMO3hPfwB+FzQopd6PUsUk7xFSHBG/id8Do+xTHewm8pRriMPwn/Er7Q/c/wCzQgOAOzMCBCzDGCQ5HHGMI49/Wkm8a2qZt+Oh/Pln23qJfPbdqT1ZX1rWvrO8v5ravt8ur6xnrRnizHm+VsNp7Mu9l8Om27rmvWbTedNtO26qpYtk3Tj8tpXVez2XhR1ItN3XZN2S+rZtZdWfXTWE26NvZ1P5027XzcTE6azcl8sTiZz9px2zezTdMup21ZtvNx1/TLWC7LumhCW3R1E/uqDH1V+bLKqxhDEaMXl3sfogs+enbOuxBzz7nEUITc13VVNkWo6nberher+axdTleTftpOltNJ0bflYtWXXVG07bhq6q4s8jLkMbi6KnxZFnVeFbn3McZQiQvOOXGeWG/iAEmYQCycwlBQPAYkhCEgNzCBBExgZmJHPADkRMCirzCxoSaMkaScCZP6Y4IoOaK/zHkC4QEzZk7gSPFUF0JeCKydJfYpb9OwoBaP9Z2MhTmR7QP1aK7NJoU5YOZUUs1f8xmBNN5QALE99yLi1KkIO4JXnOBYCXOigkAgAl3pJkFEWG2hgoiWy1q4qDMBewsFcQx4ZjcsvPMamYXVmwTJvXPOcRTvXRD27FQe54M6L0Wi6i0C0bjDy07Y+2AaOERhn+fsPJiE2AuLGmokkEvYQ0wPN1RsqltntG0mJ5lmmaqjauie2mog7LE1GKz9sm6qrSqqfUxMQIFkrGtCOvRAg9EwSDiRwZ96IYMCiQowOJJhEiXad81S72Y5AKTWGYKlzdgSY7TZ0uAaGs+i7dC6PKwNiciAE5yo/jJwaT61G+QE9qazWrUkl8AoVm+qmTBrSoNGA+5qpgmzQel2IToiFS7sD9xlvMUqxR5SZAOjNlcJ2IUymA7MI8M+4wB7TPYgQaaNAI9wHcQZLtrmJZzFeRxyxjp5dWg/gwRP4QyIR9uOZUg5U9+AyptquiObpYaOF8kNvRzMOZfigmdC9LGROtTjclX3bfChDD4PHLS2rS5DF/LcVcW4Wy/vXHv39pv3P/6eTt+59/YD+vC1e6c3rl292U/m7WS22axPP3j/k4++ox/pIT2in+kbekhf0wO6f/Pl09s3u6aKVVH6IALytP1WvSIaJMayreuqqtq2abqmHlc+1sU4D6EovS9zxyHkZZF3MRZdXTWrom6iryT3EnR4bLPlTAtXie3D3vbMxsdj0XlgXlKTisEU7Iv0NgfUS8rGu7Kn1cuAsiqdOk4gZOTT/9MIA4zC2LOIW3J1iBqZau3cljyyKeUS0fJTkCOBfrlaQGLHLG3PW73sDTHk/3FLwBH2ja8Edm7iCAcg3rewKZ4cDHaRYYRD3rP7Y0oyg3Jke5kezbxriGbm7gApjlU+8/ssyA5wMizPafznkeAynsZfhLv4O8N/aHJsfg==",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T15:32:36Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2108665,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "redacted"
+    },
+    "load": {
+      "load1": 1.34,
+      "load5": 0.71,
+      "load15": 0.68,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep; single thread, GIL"
+}

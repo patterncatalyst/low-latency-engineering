@@ -1,0 +1,49 @@
+# uv workspace root for the Python examples.
+# Layout: every Python package lives in a directory named *-py:
+#   common/proto-py   generated protobuf classes (package lowlat_proto)
+#   (later) common/lowlat-report-py, NN-<topic>/<name>-py ...
+# Add a member by creating <dir>/<name>-py/pyproject.toml; the glob picks it up.
+[project]
+name = "lowlat-examples"
+version = "1.0.0"
+requires-python = ">=3.14"
+# Workspace members are listed here so a plain `uv sync` installs them.
+dependencies = ["lowlat-proto", "lowlat-measure", "lowlat-line-consumer"]
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+  "ruff==0.17.1",
+  "jsonschema==4.26.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+lowlat-proto = { workspace = true }
+lowlat-measure = { workspace = true }
+lowlat-line-consumer = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+  "common/*-py",
+  "common/line-simulator/consumers/consumer-py",
+  "[0-9][0-9]-*/*-py",  # chapter examples: NN-<topic>/<name>-py
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+  "common",
+  "common/line-simulator/consumers/consumer-py/tests",
+  "[0-9][0-9]-*",
+]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = ["**/src/lowlat/**"]  # generated *_pb2.py
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

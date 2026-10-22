@@ -1,0 +1,100 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 10000,
+  "dropped": 0,
+  "example": "01-latency-distribution",
+  "hdr_histogram": "HISTFAAAAxt4nC1TwWojRxBVvakplVq9s+32aBi0sixrZ41QNspghHEcsTFGCMU4jhEmGOMYYUzIwYccgtlTWJZkT5tcEkIgOeScay75kxzzC/mE0DPbDHTX65qaqfde9b77abPR4E8a9Yre7dRoRIvy7z8aH/9XA7/dIwahiRgdxPiBsIn38Sna+AjbaAOsiBUMBRsAqhAmEMKDyICqiCNEAQqVIu6ghRhbwFM85Qg7qG7RAsdAkwnoIKwIaCopGRgGSBR1DYAFHDFXryFGJAGOIFUCE0fCDGZWEagRZaOasLCmXhnWapqwc94Z64xLTaKqxrIk4jIrzlpnNE1tN8lSk4+Hg2HP7Q4GRV5k2fNimJep2x3v7faznu/tpoPuaHq0P50fLw+mR6dHZ8u7s6/e0stX9PCafqU/6Wf6hX6nH+kVvaGvQ/DtW3r48g3d3d2vr1/TNy9vzs7PHi5vP1+tb86v79br/fuTk/XZ8urmarW6uJgvrtfr1exqeTy/PSqPl+Ukn453i+6kn/ks6/k0984YUaPWqRojYpiMiFgRU3VvbcKMhJkrVoSNAcNoCAnKQK0RRwhn1KwGMDJKDEFc40E9MNqVBC1o/C6Tat6DUwRxyNwIp5DeroyDRyDEaKIVij/jNoLqhGcgPEFVpo02HmEH2+igE76zgcf4ADvoVDbAFrYRoyrTBnHQGE1soNKdBIxm1QOo+tEAAgoyETgWhN4TNQxRVRKIMd5Ztd4kTpxY61NV58Wm1opx1hrjM/F5am3a7faTwuV+mA4KlxdFt+hPer3+YJp3i/FoMi7L4WhUDp7vj4r+QTldLi72r08P17Pz1e3l5eXJ6vRivjpc7C3nL5azyWJvMVvOjud7Lw4PRodH5V6ZH4zHRXnQ7w+K7nDQzX3f22GWp94XieuZzCWJTRPvE/WaZS6RJDVp4lTE5ibxarvinFj2mqqmNujOmiiLqEJhWCAiLIBVCTPBDAiqzdQXVCGBPCBQW/tAgkE4qqWMQGHiOK5nm4AWx9gMgjBa/LgS8EO8h208wRb+Ar4H/iF8AXyGfwX/A6gsXmw=",
+  "language": "cpp",
+  "notes": "throughput_mhz=1000122; done_span_ns=9998776357; reordered=0",
+  "percentiles": {
+    "max": 389119,
+    "p50": 95103,
+    "p90": 163711,
+    "p99": 179711,
+    "p99_9": 201855
+  },
+  "profile": {
+    "captured_at": "2026-10-22T15:41:41Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.71,
+      "load15": 0.67,
+      "load5": 0.68,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2116470,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "redacted",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "per-parcel"
+}

@@ -1,0 +1,99 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "01-latency-distribution",
+  "language": "python",
+  "variant": "per-parcel",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 107839,
+    "p90": 188031,
+    "p99": 205439,
+    "p99_9": 241023,
+    "max": 382975
+  },
+  "hdr_histogram": "HISTFAAAA2x4nC2U22ojRxCG1f/UlFrl2na7d3aiaGfFIIQRimwUoRhFCK8RihDCGGMWsyQhWZyQC5PDkrvc5CpvkBfIK+QuL5FHyDvkJvehRp4DPVOHPtT/UdVvvz9vtXK0Dlf2NLpWK9tO//qj9frfg+HvH/AFTvAJfsJn+NPhjHJyQM4gIgdnP44zODhkgCPCM2QgOBxRB8/gKAMIHcABHjmZE0IZWS6Dze5AZFM65M1MsA86NgM1875qhpfooI0M3ES4JqrdTJwjs7AjAOzFM4jZK4OUyHnyjth7sUe89z4Qa/DMQShxisKIGoKIOFFSSRK8V1cn1aJXpzSsR5NuFc9T6Fb9qhuL2K1Ui0JSSkWMZdDopUxlGKRUVmUsysFwMBrNzi/vdruHHx8eH7fb+9vV/Wa/vhiPbyaL/e5yvlhuzufzxcVsfjmbTmfz3c1ytdxd7/Y3m4eHtz+/u3989/7X99/fPdze3n315tu76/36bru/mK6Xm6vFbLJYTufj8eloOhnV1ayOKYVhiCmplkWZtNTChxiE7ViJXYziAye1k3Pg4CMlDaxOKUWJKhw5MEv00QNEzBCIJ/EQ8mT1I2EAxKYtOGeAmcln5BhMJhzAhIM04AxmowMhTzcyQoZjyhsiTryJeowMxlQbHTRymwEvDoP5YHQ9N3FPkDX6f2Bcwejq4EBWbsmHlZoNoI0ceZNvcFiQpZrrqKEko49trSNz2tY7RMiYQWVIqsEXRRItopWmH4W0LJMGLUOMMRYxoFAvYi95SSJBC/VJkk+hVPIxBhWyijNDwUkllIlEvBU5JIMQHuINUjbg2KCFY4UPDZreE3EILJYFYWJWhbJXZYUNtr7GyoQuyyjd2pdF6lV1MRyOTs+7Za/u11WvP+5OBpO6P67Ph4vVaDGZLobz1cVov1peXW6+/G57vd3tb2/erpafv7na3Gz318vlenmxnu8XhuV6PV0NF/3L/nzeH54O6klV9gfDYlT1e2W3H7pFT7XXS0VZhKIrFamUIWqQQklEip5RZWUQVRUV8cmz95wI5JklKJHRwxDvQOwMMXZi3cXaBjFwQIibDmE/xL5pGESOnyQ31S0qo7YpSUCbHR96SUYvDh0iZ0fGwIfGELUNimOcwOEVzvA18Br/OZzhJT4yar7Bp/gF/xD+B0J9Xec=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T15:41:41Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2116470,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "redacted"
+    },
+    "load": {
+      "load1": 0.71,
+      "load5": 0.68,
+      "load15": 0.67,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "throughput_mhz=1000120; done_span_ns=9998799912; reordered=0; single thread, GIL"
+}

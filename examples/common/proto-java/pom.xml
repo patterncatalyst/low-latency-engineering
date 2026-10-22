@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.patterncatalyst.lowlat</groupId>
+    <artifactId>lowlat-examples</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>lowlat-proto-java</artifactId>
+  <name>lowlat-proto-java (generated from contracts/proto)</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- Generated protobuf sources are not ours to lint; no -Werror here. -->
+          <showWarnings>false</showWarnings>
+          <compilerArgs combine.self="override"/>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>io.github.ascopes</groupId>
+        <artifactId>protobuf-maven-plugin</artifactId>
+        <configuration>
+          <!-- Maven Central com.google.protobuf:protoc, the pinned version -->
+          <protoc>${protobuf.version}</protoc>
+          <sourceDirectories>
+            <sourceDirectory>${project.basedir}/../../../contracts/proto</sourceDirectory>
+          </sourceDirectories>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
