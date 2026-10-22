@@ -238,13 +238,11 @@ int main(int argc, char** argv) try {
         {"sync", o.phased ? "phased: barriers between the parallel and serial parts of a wave" : "free: no barriers"},
         {"parcels_per_worker_per_wave", o.round_parcels},
     };
-    nlohmann::json doc = recs[k].report(std::format("{} repetitions after {} warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync={}",
-                                                   o.reps, o.warmup, o.phased ? "phased" : "free"));
-    doc["model"] = model;
     const auto path = std::filesystem::path{o.report_dir} / std::format("cpp-{}-n{}.json", tag, n);
-    std::ofstream out{path};
-    out << doc.dump(2) << '\n';
-    if (!out) throw std::runtime_error("cannot write " + path.string());
+    recs[k].write_report(path,
+                         std::format("{} repetitions after {} warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync={}",
+                                     o.reps, o.warmup, o.phased ? "phased" : "free"),
+                         model);
     recs[k].print_summary();
     std::println("  N={}: predicted {:.2f}x, measured {:.2f}x (p50 wall {:.1f} ms), error {:+.1f}%", n, predicted, measured,
                  static_cast<double>(p50[k]) / 1e6, (measured - predicted) / predicted * 100.0);

@@ -16,7 +16,6 @@ Each repetition's wall time is recorded in the measurement kit (variant ``amdahl
 from __future__ import annotations
 
 import argparse
-import json
 import multiprocessing as mp
 import threading
 from collections.abc import Sequence
@@ -193,12 +192,7 @@ def run_mode(mode: str, opts: Options) -> list[dict[str, Any]]:
         p50 = rec.percentiles()["p50"]
         predicted = amdahl_speedup(s, n)
         measured = p50_one / p50
-        report = rec.build_report(
-            f"{opts.reps} repetitions after {opts.warmup} warm-up rounds; wall time of the whole "
-            "batch (pool already started); repetitions interleaved across N; "
-            f"sync={'phased' if opts.phased else 'free'}"
-        )
-        report["model"] = {
+        model = {
             "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
             "workers": n,
             "executor": "ThreadPoolExecutor" if mode == "threads" else "ProcessPoolExecutor",
@@ -219,7 +213,13 @@ def run_mode(mode: str, opts: Options) -> list[dict[str, Any]]:
             "lock": "threading.Lock" if mode == "threads" else "multiprocessing.Lock",
         }
         path = opts.report_dir / f"python-amdahl-{mode}-n{n}.json"
-        path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        report = rec.write_report(
+            path,
+            f"{opts.reps} repetitions after {opts.warmup} warm-up rounds; wall time of the whole "
+            "batch (pool already started); repetitions interleaved across N; "
+            f"sync={'phased' if opts.phased else 'free'}",
+            model,
+        )
         rec.print_summary()
         scope = "the lock only; the GIL is not in the model" if mode == "threads" else "the lock"
         print(

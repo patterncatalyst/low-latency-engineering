@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -65,11 +66,15 @@ class Recorder {
   [[nodiscard]] const hdr_histogram& histogram() const noexcept { return *hist_; }
 
   /// The report document (schema lowlat-report/1). Throws if LOWLAT_PROFILE is unset.
-  [[nodiscard]] nlohmann::json report(std::string_view notes = {}) const;
+  /// `notes` is free text for the optional `notes` field, written only when non-empty.
+  /// `model` is the optional `model` object (the only place a time-average may appear);
+  /// it is written only when it holds a non-empty JSON object.
+  [[nodiscard]] nlohmann::json report(std::string_view notes = {},
+                                      const std::optional<nlohmann::json>& model = std::nullopt) const;
 
-  /// Writes report(notes) to `path` and returns it. `notes` is free text for
-  /// the optional `notes` field; it is written only when non-empty.
-  nlohmann::json write_report(const std::filesystem::path& path, std::string_view notes = {}) const;
+  /// Writes report(notes, model) to `path` and returns it.
+  nlohmann::json write_report(const std::filesystem::path& path, std::string_view notes = {},
+                              const std::optional<nlohmann::json>& model = std::nullopt) const;
 
   /// One aligned line: example, language, variant, count, dropped, p50, p90,
   /// p99, p99.9, max in microseconds (1 decimal). Never a mean.

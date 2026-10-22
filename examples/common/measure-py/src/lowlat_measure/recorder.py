@@ -6,6 +6,7 @@ import json
 import math
 import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -91,7 +92,10 @@ class Recorder:
     def percentiles(self) -> dict[str, int]:
         return percentiles_of(self.histogram)
 
-    def build_report(self, notes: str | None = None) -> dict[str, Any]:
+    def build_report(
+        self, notes: str | None = None, model: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """The ``lowlat-report/1`` document. ``model`` is the optional ``model`` block."""
         report: dict[str, Any] = {
             "schema": SCHEMA_ID,
             "example": self.example,
@@ -107,10 +111,17 @@ class Recorder:
         }
         if notes:
             report["notes"] = notes
+        if model:
+            report["model"] = dict(model)
         return report
 
-    def write_report(self, path: str | Path, notes: str | None = None) -> dict[str, Any]:
-        report = self.build_report(notes)
+    def write_report(
+        self,
+        path: str | Path,
+        notes: str | None = None,
+        model: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        report = self.build_report(notes, model)
         Path(path).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         return report
 

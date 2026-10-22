@@ -124,3 +124,20 @@ def test_java_rank_convention_sparse_tail() -> None:
     # recomputation lands one bucket lower. `check` must use the report's own convention.
     report = FIXTURES / "java-sparse-tail.json"
     assert main(["check", str(report)]) == 0
+
+
+def test_model_block_only_when_given(profile: Path, tmp_path: Path) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    assert "model" not in rec.build_report()
+    assert "model" not in rec.build_report("n", {})
+    model = {"law": "Little: L = lambda * W", "W_mean_seconds_modelling_input": 0.25}
+    out = tmp_path / "m.json"
+    report = rec.write_report(out, model=model)
+    assert report["model"] == model
+    assert "notes" not in report
+    assert json.loads(out.read_text(encoding="utf-8")) == report
+    assert main(["validate", str(out)]) == 0
+    plain = tmp_path / "p.json"
+    rec.write_report(plain)
+    assert "model" not in json.loads(plain.read_text(encoding="utf-8"))

@@ -233,13 +233,12 @@ int main(int argc, char** argv) try {
   std::println("warehouse: {:.0f} ms scan-to-divert x {:.0f}/s = {:.0f} parcels in flight on {:.2f} m of belt at {} m/s",
                o.budget_ms, lambda, model["warehouse"]["in_flight_parcels"].get<double>(), belt_m, o.belt_mps);
   if (!o.report.empty()) {
-    nlohmann::json doc = latency.report(std::format("received={} dropped={} seed={}; W recorded per parcel as done - "
-                                                    "intended emit time",
-                                                    received, dropped, o.seed));
-    doc["model"] = model;
-    std::ofstream out{o.report};
-    out << doc.dump(2) << '\n';
-    if (!out) throw std::runtime_error("cannot write " + o.report);
+    // The model block rides in the kit's report; it is not added to the JSON here.
+    latency.write_report(o.report,
+                         std::format("received={} dropped={} seed={}; W recorded per parcel as done - "
+                                     "intended emit time",
+                                     received, dropped, o.seed),
+                         model);
     std::println("report: {}", o.report);
   }
   return EXIT_SUCCESS;

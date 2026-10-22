@@ -161,3 +161,30 @@ TEST_F(Measure, NotesAppearOnlyWhenGiven) {
   const json doc = r.report("reordered=1; rcvbuf_requested=2; rcvbuf_granted=4");
   EXPECT_EQ(doc.at("notes"), "reordered=1; rcvbuf_requested=2; rcvbuf_granted=4");
 }
+
+TEST_F(Measure, ModelAppearsOnlyWhenGiven) {
+  Recorder r{"t", "v"};
+  r.record(1000);
+  EXPECT_FALSE(r.report().contains("model"));
+  EXPECT_FALSE(r.report("", json::object()).contains("model"));
+  EXPECT_FALSE(r.report("", json(nullptr)).contains("model"));
+  const json model = {{"law", "Little: L = lambda * W"}, {"W_mean_seconds_modelling_input", 0.25}};
+  const json doc = r.report("n", model);
+  EXPECT_EQ(doc.at("model"), model);
+  EXPECT_EQ(doc.at("notes"), "n");
+  EXPECT_TRUE(r.report({}, model).contains("model"));
+}
+
+TEST_F(Measure, WriteReportCarriesModel) {
+  Recorder r{"t", "v"};
+  r.record(1000);
+  const json model = {{"law", "Amdahl"}, {"workers", 4}};
+  const auto path = fs::temp_directory_path() / "lowlat-model-test.json";
+  const json doc = r.write_report(path, "", model);
+  std::ifstream in{path};
+  const json written = json::parse(in);
+  fs::remove(path);
+  EXPECT_EQ(written, doc);
+  EXPECT_EQ(written.at("model"), model);
+  EXPECT_FALSE(written.contains("notes"));
+}
