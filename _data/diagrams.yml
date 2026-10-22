@@ -61,5 +61,5 @@
 - name: "04-dead-code-elimination"
   section: "Ch4 · Benchmark harnesses"
   title: "Dead-code elimination"
-  alt: "C++ and Java lanes each show a guarded variant (DoNotOptimize, Blackhole.consume) with a measured median (4.73 ns in C++, p50 32 ns in Java) and an eliminated variant whose result is unused and removed, timing about 0 ns, at least 472x lower in C++ and at least 3,200x lower in Java; the Python lane is a ghost box: CPython does not eliminate the work, and the contrast there is warm-up."
+  alt: "C++ and Java lanes each show a guarded variant (DoNotOptimize, Blackhole.consume) with a measured median (4.76 to 4.81 ns in C++, p50 32 to 33 ns in Java) and an eliminated variant whose result is unused and removed, timing about 0 ns, at least 475x lower in C++ and at least 3,200x lower in Java; the Python lane is a ghost box: CPython does not eliminate the work, and the contrast there is warm-up."
   caption: "Figure 4.2 — When the result is unused, the compiler or JIT removes the work and the benchmark times nothing."

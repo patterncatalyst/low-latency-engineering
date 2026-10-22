@@ -14,7 +14,7 @@ and committed but not asserted), `smoke` (ran once, not a measurement), `unverif
 
 | Run | What | Host profile |
 |---|---|---|
-| `r01-run1..3` | `verify.sh` of examples 00 to 04, run serially with the lab VM down; committed in `examples/NN-*/results/r01-run{1,2,3}/`. All of examples 00 to 04 re-measured 2026-10-22 at commit c3e4cce, after the S27 validation fixes | bare-metal host (XPS 15 9510, 16 logical CPUs), `virt: none`, governor `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), clocksource `tsc`, load average 0.16 to 1.34 at the start; "quiet host" |
+| `r01-run1..3` | `verify.sh` of examples 00 to 04, run serially with the lab VM down; committed in `examples/NN-*/results/r01-run{1,2,3}/`. Examples 00 to 03 measured 2026-10-22 at commit c3e4cce, after the S27 validation fixes; example 04 re-measured 2026-10-22 at commit 9410287, after the verify.sh pyperf median fix | bare-metal host (XPS 15 9510, 16 logical CPUs), `virt: none`, governor `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), clocksource `tsc`, load average 0.17 to 1.34 at the start (all 15 profile.json files); "quiet host" |
 | `r01-vm-smoke` | `ALLOW_BUSY=1 VM=1 examples/00-prerequisites/verify.sh`, 2026-10-21, `lowlat-target` running | host reports taken with the guest running (never quoted); guest output in `vm/`, labelled `vm` |
 
 Every `verify.log` in `r01-run1..3` ends with all criteria passing and contains no failed
@@ -74,12 +74,12 @@ never compared.
 | # | Claim | Status | Evidence |
 |---|---|---|---|
 | 04.1 | The check digit agrees across the C++, Java and Python tests | verified (r01-run1..3) | `verify.log` |
-| 04.2 | C++: eliminated median >= 10x lower than guarded | verified (r01-run1..3) | 472 to 473x (divisor floored at 0.01 ns: a lower bound) |
-| 04.3 | Java: eliminated p50 >= 10x lower than guarded | verified (r01-run1..3) | 3,200x (floored) |
+| 04.2 | C++: eliminated median >= 10x lower than guarded | verified (r01-run1..3) | 475 to 481x (divisor floored at 0.01 ns: a lower bound) |
+| 04.3 | Java: eliminated p50 >= 10x lower than guarded | verified (r01-run1..3) | 3,200 to 3,300x (floored) |
 | 04.4 | JMH console and JSON include p0.99 and p0.999 | verified (r01-run1..3) | `jmh.console.txt`, `jmh.json` |
 | 04.5 | pyperf JSON holds >= 20 values from >= 3 worker processes | verified (r01-run1..3) | 24 values, 6 processes; 64 outer loops x 1,024 inner loops per value |
 | 04.6 | The six converted reports validate with the profile embedded | verified (r01-run1..3) | `report-*.json` |
-| 04.7 | pyperf warm-up values are close to measured values for this function | observed, not asserted | first warm-up 1,890 to 1,902 ns, median measured 1,961 to 1,974 ns |
+| 04.7 | pyperf warm-up values are close to measured values for this function | observed, not asserted | first warm-up 1,918 to 2,006 ns, median measured 2,014 to 2,036 ns (1.1 to 5.2 percent lower; below the minimum measured value in runs 1 and 3, not in run 2) |
 
 ## Lab claims (S12 to S14)
 
@@ -99,4 +99,4 @@ never compared.
 | Iteration | Change |
 |---|---|
 | r01 | All of examples 00 to 04 verified on `r01-run1..3`; lab claims from S12 to S14; this page written in S26. Ch1 criterion 5 replaced (in-run check). |
-| r01.x S27 | Idiom fixes (S27) applied to the example code; all of examples 00 to 04 re-measured on the bare-metal host with the VM down (`r01-run1..3`, commit c3e4cce, after the S27 validation fixes) and every quoted number in the chapters, READMEs, figures and this page moved to the new runs. Check-prereqs now reports 26 PASS, 1 WARN, 0 FAIL after the libvirt NAT check was replaced by passt and libvirt-ssh-proxy checks. |
+| r01.x S27 | Idiom fixes (S27) applied to the example code; all of examples 00 to 04 re-measured on the bare-metal host with the VM down (`r01-run1..3`, commit c3e4cce, after the S27 validation fixes) and every quoted number in the chapters, READMEs, figures and this page moved to the new runs; example 04 re-measured at 9410287 after verify.sh printed pyperf's true median (it had printed the 13th of 24 sorted values), and its quoted numbers moved to those runs. Check-prereqs now reports 26 PASS, 1 WARN, 0 FAIL after the libvirt NAT check was replaced by passt and libvirt-ssh-proxy checks. |

@@ -82,9 +82,9 @@ executions, which is why pyperf runs warm-up values first, discards them from th
 records them. For this function the effect is small: pyperf's own output reports
 `2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each value covers 64
 calls of the 1,024-prefix function and the interpreter is warm before the first value
-finishes. The first warm-up of the calibration run (a cold interpreter) was 1,890 to 1,902 ns
-per check digit and the median measured value 1,961 to 1,974 ns across r01-run1..3: 3.6 to
-3.7 percent apart, below each run's minimum measured value (1.95 to 1.96 us), and `verify.sh` prints both. A function with a
+finishes. The first warm-up of the calibration run (a cold interpreter) was 1,918 to 2,006 ns
+per check digit and the median measured value 2,014 to 2,036 ns across r01-run1..3: 1.1 to
+5.2 percent lower, and below the minimum measured value in runs 1 and 3 (2,002 and 1,967 ns) but not in run 2 (minimum 1,972 ns, first warm-up 2,006 ns). `verify.sh` prints both. A function with a
 long first call would show more.
 
 ## Host state and the pyperf warning
@@ -124,9 +124,9 @@ Ranges over the three runs:
 
 | Harness | Result |
 |---|---|
-| Google Benchmark (C++) | guarded median 4.73 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 472 to 473x (divisor floored at 0.01 ns, so a lower bound) |
-| JMH SampleTime (Java) | guarded p50 32 ns; eliminated p50 0 ns; ratio 3,200x (floored) |
-| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,959 to 1,974 ns |
+| Google Benchmark (C++) | guarded median 4.76 to 4.81 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 475 to 481x (divisor floored at 0.01 ns, so a lower bound) |
+| JMH SampleTime (Java) | guarded p50 32 to 33 ns; eliminated p50 0 ns; ratio 3,200 to 3,300x (floored) |
+| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,994 to 2,023 ns |
 
 ## Licences
 
