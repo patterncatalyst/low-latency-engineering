@@ -267,7 +267,7 @@ def process_share(
         weights = [
             scan_work(base + worker + j * workers, parallel_iters) for j in range(round_parcels)
         ]
-        if wave:
+        if wave is not None:
             wave.wait()  # nobody commits while anyone is still scanning
         for weight in weights:
             with lock:
@@ -277,7 +277,7 @@ def process_share(
                     in_lock_ns += time.perf_counter_ns() - t0
                 else:
                     update_plan(cell, weight, lock_iters)
-        if wave:
+        if wave is not None:
             wave.wait()  # nobody scans the next wave while anyone is still committing
     return in_lock_ns
 ```
