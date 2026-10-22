@@ -14,7 +14,15 @@
   <artifactId>gc-tails-java</artifactId>
   <name>gc-tails-java (Ch6 collector pauses and tails)</name>
 
+  <properties>
+    <shade.mainClass>io.patterncatalyst.lowlat.gctails.GcTails</shade.mainClass>
+  </properties>
+
   <dependencies>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>lowlat-proto-java</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.patterncatalyst.lowlat</groupId>
       <artifactId>line-consumer-java</artifactId>
@@ -22,6 +30,10 @@
     <dependency>
       <groupId>io.patterncatalyst.lowlat</groupId>
       <artifactId>measure-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
     </dependency>
   </dependencies>
 

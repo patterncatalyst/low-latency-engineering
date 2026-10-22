@@ -1,0 +1,172 @@
+# 06-gc-tails
+
+Chapter 6: the collector decides the tail. The in-flight parcel tracker runs at 10 kHz for 30 s on a
+JVM whose heap holds a 1.9 GB live set (the shift manifest and the parcels on the belt) and whose
+handler allocates about 400 MB/s of scan history. Eight JVM variants run the same bytecode, the same
+seed and the same `-Xms4g -Xmx4g -XX:+AlwaysPreTouch`, and differ only in the collector (or, for two of
+them, in the heap or the flight recorder). A Python lane and a C++ lane show the same question in a
+runtime with a cycle collector and in one with none.
+
+## Technique
+
+A collector bounds the tail in two ways: how long it stops the application, and whether it can keep up
+with the allocation rate. The first is the pause; the second is headroom. When a concurrent collector
+runs out of headroom, an allocating thread waits for it (an allocation stall), and the wait is a pause
+by another name.
+
+| Lane | Variant | What differs |
+|---|---|---|
+| Java | `stop-the-world` | `-XX:+UseParallelGC`: every collection stops every thread; a full collection walks the live set |
+| Java | `g1` | `-XX:+UseG1GC`: region-based, pause-target driven; concurrent marking, stop-the-world evacuation |
+| Java | `zgc` | `-XX:+UseZGC`: generational (the only mode in JDK 25); marking, relocation and reference processing run concurrently |
+| Java | `shenandoah-gen` | `-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational` |
+| Java | `shenandoah` | `-XX:+UseShenandoahGC`, non-generational (observed) |
+| Java | `undersized-heap` | ZGC with the heap at 1.3x the measured live set: no headroom, so allocation stalls |
+| Java | `thp` | ZGC with `-XX:+UseTransparentHugePages` (observed; the host's THP mode is `madvise`) |
+| Java | `jfr-off` | ZGC without the flight recorder (observed: what the recording costs) |
+| Python | `cyclic-garbage` | each parcel's scan history is a reference cycle: only the cyclic collector frees it |
+| Python | `frozen` | no cycles, and `gc.freeze()` after setup: refcounting frees everything and the collector has nothing to walk |
+| C++ | `bulk-free` | the retired wave of manifest entries is destroyed on the hot thread, in the call that closes the wave |
+| C++ | `deferred-free` | the wave is handed to a reclaimer thread, which destroys it |
+| C++ | `no-free` | the control: the wave is kept until after the run |
+
+Every Java variant pre-touches the whole heap (`-XX:+AlwaysPreTouch`), so no variant pays first-touch
+page faults inside the window, and logs through `-Xlog:async`, so the log write is off the application
+threads. `-XX:+UseTransparentHugePages` changes how the same heap is backed; the host is not touched
+(THP mode `madvise` is what the profile records, and hugetlbfs large pages are out of scope for the host).
+
+## Workload
+
+The line simulator sends 300,000 parcels at 10 kHz (30 s). The tracker (`Tracker.java`) keeps three
+kinds of data with three lifetimes.
+
+- **The shift manifest** is a ring of entries, one per parcel scanned this shift. It is full before the
+  first parcel arrives, and each new parcel overwrites the oldest entry. The live set stays constant
+  while the overwritten entries die in the old generation, which is what a rolling manifest does to a
+  generational collector.
+- **The in-flight table** is a `LinkedHashMap` whose eldest entry is removed when a new parcel is
+  scanned: the 480 ms between the scanner and the diverter, at 10 kHz, is 4,800 parcels. Each keeps
+  8 scan samples.
+- **The scan history** is built for every parcel (75 raw samples of 512 B), reduced to a checksum and
+  dropped. This is the allocation rate.
+
+Before the socket is bound the tracker builds the manifest, runs 30,000 synthetic parcels through the
+protobuf decoder and the tracker (so the JIT has compiled the per-parcel path) and forces a collection to
+measure the live set. The flight recording starts after all of that, in the JVM (`Flight.java`), so the
+pauses of the build and the forced collection are not counted. The measured live set and the allocation
+per parcel are in each report.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--live-set-mb` | 1750 | target size of the rolling manifest |
+| `--entry-bytes` | 4096 | label bytes per manifest entry |
+| `--alloc-mb-per-s` | 400 | scan-history allocation rate |
+| `--in-flight-ms` | 480 | time between scanner and diverter |
+| `--rate` | 10000 | parcels per second the simulator sends |
+| `--warmup` | 30000 | synthetic parcels before the bind |
+| `--jfr FILE` | none | record the measured run in the JVM and write the recording here |
+| `--probe` | off | build the live set, print `live_set_bytes=` and exit |
+
+## Layout
+
+| Path | Contents |
+|---|---|
+| `java/` | Maven module `gc-tails-java` (`java -jar target/gc-tails-java.jar`): `Tracker`, `Settings`, `Options`, `Flight`, `GcTails` |
+| `cpp/` | `gc-tails-consumer` (CMake target, auto-discovered) and the `lowlat::gc_tails` tracker library |
+| `gctails-py/` | Python package `lowlat_gctails`, console script `gc-tails-py`, uv workspace member `lowlat-gc-tails` |
+| `verify.sh` | runs the 13 runs and asserts the criteria |
+
+The common line consumer owns the receive path in all three languages (bind, parse, gap tracking,
+latency against the intended emit time). This example supplies the per-parcel handler.
+
+## Run
+
+```bash
+examples/06-gc-tails/verify.sh
+```
+
+The script runs every JVM on its own, one after the other. It needs 4 GB for a heap and refuses to
+start while a `lowlat-*` VM is running; `ALLOW_BUSY=1` measures anyway (the numbers are then noisy and
+the profile says so). `SKIP_BUILD=1`, `RESULTS_DIR` and `LOWLAT_BUILD` are the shared options of
+`examples/_lib/lib.sh`. `RECHECK=results/<run-id>` evaluates the criteria on a committed run without
+running anything.
+
+By hand, the ZGC variant (consumer first, then the simulator):
+
+```bash
+export LOWLAT_PROFILE=/tmp/profile.json && scripts/profile.sh --out "$LOWLAT_PROFILE"
+java -Xms4g -Xmx4g -XX:+AlwaysPreTouch -XX:+UseZGC -jar examples/06-gc-tails/java/target/gc-tails-java.jar \
+    --variant zgc --expect 300000 --report /tmp/zgc.json --jfr /tmp/zgc.jfr &
+examples/build/release/common/line-simulator/line-simulator --rate 10000 --duration 30 --dest 127.0.0.1:47260
+```
+
+Ports: Java 47260, Python 47261, C++ 47262.
+
+### What lands in `results/`
+
+| File | Contents |
+|---|---|
+| `java-<variant>.json` | end-to-end latency report; `build.flags` carries the full JVM command line, `runtime.gc` the collector and heap, `runtime.alloc_bytes_per_parcel` the receive thread's allocation, `notes` the measured live set |
+| `java-<variant>-gc-pause.json` | one sample per stop-the-world GC phase from the flight recording (`jdk.GCPhasePause`); `runtime.alloc_stalls` counts `jdk.ZAllocationStall` events |
+| `<variant>.gc.log.gz` | the unified GC and safepoint log (`-Xlog:gc*,safepoint`), gzip-compressed |
+| `java-<variant>.jfr-summary.txt` | `jfr summary` of the recording: event counts |
+| `python-<variant>.json`, `python-<variant>-gc-pause.json` | end-to-end latency, and one sample per `gc.callbacks` collection; `notes` has the generation-2 count |
+| `cpp-<variant>.json` | end-to-end latency; `notes` has the waves closed and where they were destroyed |
+| `profile.json`, `live-set-bytes.txt`, `*.log` | machine profile, the probe's live set, program output |
+
+The recordings (`*.jfr`) are written to a scratch directory outside the tree and deleted when the script
+ends: they are binary and megabytes each, and everything the chapter quotes is in the derived reports.
+The GC logs are compressed because the unified log is repetitive text that compresses well; a full run's results directory
+is about 0.5 MB, far under the 20 MB budget for the iteration.
+
+## Expected effect and criteria
+
+`verify.sh` runs all of them, prints a line for each, and exits non-zero unless every one holds.
+
+1. **Pauses (JFR).** The `stop-the-world` maximum pause is at least 10 ms and at least 20x the `zgc`
+   maximum; the `zgc` maximum is under 1 ms; the `shenandoah-gen` maximum is at most a fifth of the
+   `stop-the-world` maximum.
+2. **The tail the line sees.** `zgc` p99.9 is at most a third of `stop-the-world` p99.9.
+3. **Headroom.** `undersized-heap` records at least one `jdk.ZAllocationStall` and its p99.9 is at least
+   3x the right-sized `zgc` p99.9.
+4. **Python.** `frozen` runs zero generation-2 collections in the measured window; `cyclic-garbage` runs
+   at least one.
+5. **C++.** The `bulk-free` maximum is at least 10x the `deferred-free` p99.9 (same run);
+   the `deferred-free` maximum is within 3x of the `no-free` control's.
+6. **Every report.** `count = 300000`, `dropped = 0`, `lowlat-report check` passes, and each Java
+   report's `build.flags` names its collector and its heap size.
+
+Observed, not asserted: `shenandoah` (non-generational), `thp` and `jfr-off`. They are printed beside
+`zgc` so a reader sees what the transparent huge pages and the recording cost.
+
+How the Python lane counts: CPython 3.14.8 has the generational cycle collector (3.14.0 to 3.14.4 shipped
+an incremental one that 3.14.5 reverted), so a generation-2 collection walks every tracked object that is
+not frozen. `gc.callbacks` runs on the thread that triggers a collection; the callback here stores two
+timestamps into buffers allocated before the run and does nothing else. The pauses become samples after
+the run. The count in the report's `notes` (`gen2_collections=`) is counted from those callbacks over the
+measured window only.
+
+The C++ lane has no collector; the cost it shows is `free()`. A wave of 10,000 manifest entries owns about
+seventy thousand heap blocks, and destroying them on the hot thread delays every parcel that arrives
+meanwhile. The `no-free` control keeps the dead waves until the run is over, so it contains the hand-off
+cost without the destruction cost.
+
+## Observation surfaces
+
+None by design. The numbers are the reports, `verify.sh`'s printed table and the compressed GC logs;
+there is no dashboard for this chapter. A collector's pauses are better read from a JFR file (`jfr
+print --events jdk.GCPhasePause`) or `-Xlog` than from a panel, and Part 5 owns low-overhead
+observability.
+
+## Licences
+
+Everything on the measured path is open source. The examples are MIT (repository licence).
+Temurin 25 (the JDK, including ZGC, G1, Parallel, Shenandoah and JFR): GPL-2.0 with the Classpath
+exception. protobuf: BSD-3-Clause. HdrHistogram: CC0-1.0 or BSD-2-Clause. GoogleTest: BSD-3-Clause.
+CPython 3.14.8: PSF licence. Versions are pinned in `_plans/dependency-pins.md` and `versions.env`.
+
+## Verification status
+
+Unverified until the iteration's measurement runs (S13). One functional run on a busy host has exercised
+every variant end to end; criteria 3 and 5 (second half) have not held there and are calibrated before
+verification.
