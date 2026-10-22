@@ -22,7 +22,17 @@ for f in "${files[@]}"; do
     printf '%-48s %6s  %s\n' "$(basename "$f")" - "skipped (overview)"
     continue
   fi
-  n=$(python3 -c "import re,sys;t=open(sys.argv[1]).read().split('---',2)[2];t=re.sub(r'\`\`\`.*?\`\`\`','',t,flags=re.S);t=re.sub(r'\{%.*?%\}','',t);t='\n'.join(l for l in t.splitlines() if not l.lstrip().startswith('|'));print(len(re.findall(r'[A-Za-z0-9][\w\'.-]*',t)))" "$f")
+  n=$(python3 -I - "$f" <<'PY'
+import re
+import sys
+
+text = open(sys.argv[1]).read().split('---', 2)[2]
+text = re.sub(r'```.*?```', '', text, flags=re.S)
+text = re.sub(r'\{%.*?%\}', '', text)
+text = '\n'.join(line for line in text.splitlines() if not line.lstrip().startswith('|'))
+print(len(re.findall(r"[A-Za-z0-9][\w'.-]*", text)))
+PY
+  )
   if ((n < MIN || n > MAX)); then
     status="OUTSIDE ${MIN}-${MAX}"
     fail=1

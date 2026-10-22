@@ -20,7 +20,7 @@ for VM in "${LAB_VMS[@]}"; do
 done
 
 echo "waiting up to 60s for graceful shutdown ..."
-for _ in $(seq 1 60); do
+for ((i = 0; i < 60; i++)); do
   running=0
   for VM in "${LAB_VMS[@]}"; do
     [[ "$(virsh domstate "$VM" 2>/dev/null || true)" = "running" ]] && running=1

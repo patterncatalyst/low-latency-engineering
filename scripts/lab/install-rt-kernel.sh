@@ -18,6 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/lib.sh"
 VM="${1:-${TARGET_VM:-${LAB_PREFIX}-target}}"
 guard_name "$VM"
+DEST="$(ssh_dest "$VM")"
 OUT="${LOWLAT_KERNEL_OUT:-$HOME/.cache/lowlat/kernel-rt}"
 
 core="$(find "$OUT" -maxdepth 1 -name 'kernel-rt-core-[0-9]*.rpm' -printf '%f\n')"
@@ -29,14 +30,14 @@ ok "RPMs verified: $rt_nvr (stock counterpart $stock)"
 
 wait_ssh "$VM" || die "cannot reach $VM over vsock"
 step "copying RPMs into $VM"
-ssh "${SSH_OPTS[@]}" "$VM" 'rm -rf ~/kernel-rt && mkdir -p ~/kernel-rt'
-scp -q "${SSH_OPTS[@]}" "$OUT"/kernel-rt*.rpm "$OUT/SHA256SUMS" "$OUT/BUILDINFO" "$VM:kernel-rt/"
+ssh "${SSH_OPTS[@]}" "$DEST" 'rm -rf ~/kernel-rt && mkdir -p ~/kernel-rt'
+scp -q "${SSH_OPTS[@]}" "$OUT"/kernel-rt*.rpm "$OUT/SHA256SUMS" "$OUT/BUILDINFO" "$DEST:kernel-rt/"
 
 step "installing $stock and the RT kernel in $VM"
 # The default boot entry is set by its BLS id: grubby mis-resolves paths when
 # /boot is a btrfs subvolume (Fedora Cloud), so --set-default silently no-ops.
 # shellcheck disable=SC2029  # $stock expands on the client by design
-ssh "${SSH_OPTS[@]}" "$VM" "set -e
+ssh "${SSH_OPTS[@]}" "$DEST" "set -e
   cd ~/kernel-rt && sha256sum --quiet -c SHA256SUMS
   sudo dnf -y -q install $stock ./kernel-rt*.rpm
   id=\$(sudo ls /boot/loader/entries/ | grep -F lowlatrt | sed 's/\\.conf\$//')
@@ -44,18 +45,18 @@ ssh "${SSH_OPTS[@]}" "$VM" "set -e
   sudo grub2-editenv list | grep saved_entry"
 
 step "rebooting $VM into the RT kernel"
-ssh "${SSH_OPTS[@]}" "$VM" 'sudo systemctl reboot' >/dev/null 2>&1 || true
+ssh "${SSH_OPTS[@]}" "$DEST" 'sudo systemctl reboot' >/dev/null 2>&1 || true
 sleep 5
 wait_ssh "$VM" || die "$VM did not come back after reboot: console with virsh console $VM, or revert-vm.sh $VM"
 
 # Mainline PREEMPT_RT has no /sys/kernel/realtime; uname -v and the running
 # kernel's config are the evidence.
-ver="$(ssh "${SSH_OPTS[@]}" "$VM" 'uname -rv')"
-cfg="$(ssh "${SSH_OPTS[@]}" "$VM" 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
+ver="$(ssh "${SSH_OPTS[@]}" "$DEST" 'uname -rv')"
+cfg="$(ssh "${SSH_OPTS[@]}" "$DEST" 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
 [[ "$ver" == *lowlatrt*PREEMPT_RT* && "$cfg" == CONFIG_PREEMPT_RT=y ]] \
   || die "RT kernel is not the running kernel: $ver"
 ok "running: $ver"
-ssh "${SSH_OPTS[@]}" "$VM" 'docker info >/dev/null 2>&1' || die "Docker daemon not up on the RT kernel"
+ssh "${SSH_OPTS[@]}" "$DEST" 'docker info >/dev/null 2>&1' || die "Docker daemon not up on the RT kernel"
 ok "Docker daemon up on the RT kernel"
 
 if [[ -n "${SNAPSHOT:-}" ]]; then

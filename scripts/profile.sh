@@ -45,14 +45,17 @@ collapse() {
 per_cpu() { # per_cpu <relative file under cpuN/>
   local d
   for d in "$SYS"/cpu[0-9]*; do
-    [[ -r $d/$1 ]] && echo "${d##*/} $(read_file "$d/$1")"
+    if [[ -r $d/$1 ]]; then
+      echo "${d##*/} $(read_file "$d/$1")"
+    fi
   done
 }
 
 # Value of key=value (or bare key) from the kernel cmdline, null if absent.
 cmdline_param() {
-  local cmd=$1 key=$2 tok
-  for tok in $cmd; do
+  local cmd=$1 key=$2 tok toks
+  read -ra toks <<<"$cmd"
+  for tok in "${toks[@]}"; do
     case $tok in
       "$key"=*) jstr "${tok#*=}"; return ;;
       "$key") jstr "(set)"; return ;;
@@ -108,8 +111,9 @@ g_tuned() {
 # Keep only latency-relevant cmdline parameters; drop root=UUID, BOOT_IMAGE and
 # anything else that identifies the machine, since profiles are published.
 latency_cmdline() {
-  local tok keep=()
-  for tok in $1; do
+  local tok keep=() toks
+  read -ra toks <<<"$1"
+  for tok in "${toks[@]}"; do
     case ${tok%%=*} in
       isolcpus|nohz|nohz_full|rcu_nocbs|rcu_nocb_poll|irqaffinity|threadirqs|preempt|\
       mitigations|nosmt|idle|intel_idle.max_cstate|processor.max_cstate|intel_pstate|\

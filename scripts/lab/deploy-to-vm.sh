@@ -26,8 +26,9 @@ done
 echo "→ syncing examples/ and scripts/ to ${DEST}:${REMOTE_DIR}"
 # shellcheck disable=SC2029  # REMOTE_DIR is meant to expand on the client
 ssh "${SSH_OPTS[@]}" "$DEST" "mkdir -p '${REMOTE_DIR}'"
+printf -v rsh '%q ' ssh "${SSH_OPTS[@]}"
 rsync -az --delete \
-  -e "ssh ${SSH_OPTS[*]}" \
+  -e "$rsh" \
   --exclude '.git' --exclude 'target/' --exclude 'build/' --exclude '__pycache__' --exclude '.venv' \
   "$REPO_ROOT/examples" "$REPO_ROOT/scripts" \
   "${DEST}:${REMOTE_DIR}/"

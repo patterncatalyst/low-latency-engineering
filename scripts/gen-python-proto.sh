@@ -5,11 +5,14 @@
 # git-ignored: generated at build, not committed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../versions.env
 . "$ROOT/versions.env"
 PREFIX="${LOWLAT_PREFIX:-$HOME/.cache/lowlat/prefix}"
 PROTOC="$PREFIX/bin/protoc"
-[ -x "$PROTOC" ] && [ "$("$PROTOC" --version)" = "libprotoc $PROTOBUF_VERSION" ] || {
-  echo "pinned protoc $PROTOBUF_VERSION missing: run scripts/deps/build-protobuf.sh" >&2; exit 1; }
+if [[ ! -x $PROTOC || "$("$PROTOC" --version)" != "libprotoc $PROTOBUF_VERSION" ]]; then
+  echo "pinned protoc $PROTOBUF_VERSION missing: run scripts/deps/build-protobuf.sh" >&2
+  exit 1
+fi
 OUT="$ROOT/examples/common/proto-py/src"
 rm -rf "$OUT/lowlat"
 mkdir -p "$OUT"

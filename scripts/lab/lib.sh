@@ -9,7 +9,11 @@ export LIBVIRT_DEFAULT_URI="${LIBVIRT_DEFAULT_URI:-qemu:///system}"
 # shellcheck source=lab.env
 . "$LAB_DIR/lab.env"
 
-RED=$'\033[0;31m'; GRN=$'\033[0;32m'; CYN=$'\033[0;36m'; YLW=$'\033[1;33m'; RST=$'\033[0m'
+if [[ -t 1 && -z ${NO_COLOR:-} ]]; then
+  RED=$'\033[0;31m'; GRN=$'\033[0;32m'; CYN=$'\033[0;36m'; YLW=$'\033[1;33m'; RST=$'\033[0m'
+else
+  RED=''; GRN=''; CYN=''; YLW=''; RST=''
+fi
 step() { echo "${CYN}━━ $*${RST}"; }
 ok()   { echo "${GRN}✓ $*${RST}"; }
 warn() { echo "${YLW}⚠ $*${RST}"; }
@@ -72,7 +76,8 @@ ssh_dest() {
 # wait_ssh <name> [tries] — wait until the guest's sshd answers over vsock.
 wait_ssh() {
   local vm="$1" tries="${2:-60}"
-  for _ in $(seq 1 "$tries"); do
+  local i
+  for ((i = 0; i < tries; i++)); do
     ssh "${SSH_OPTS[@]}" -o ConnectTimeout=5 -o BatchMode=yes "$(ssh_dest "$vm")" true 2>/dev/null && return 0
     sleep 3
   done
@@ -87,12 +92,12 @@ forget_host_key() {
 
 # render_user_data <hostname> <pubkey-file> — print the cloud-init user-data.
 render_user_data() {
-  local host="$1" keyfile="$2" key
+  local host="$1" keyfile="$2" key tmpl
   [[ -f "$keyfile" ]] || die "no SSH public key at $keyfile — generate one: ssh-keygen -t ed25519"
   key="$(cat "$keyfile")"
-  sed -e "s|__HOSTNAME__|${host}|g" \
-      -e "s|__SSH_PUBKEY__|${key}|g" \
-      "$LAB_DIR/cloud-init/user-data.tmpl"
+  tmpl="$(<"$LAB_DIR/cloud-init/user-data.tmpl")"
+  tmpl="${tmpl//__HOSTNAME__/$host}"
+  printf '%s\n' "${tmpl//__SSH_PUBKEY__/$key}"
 }
 
 # sha256_of <file> — the bare hex digest.
