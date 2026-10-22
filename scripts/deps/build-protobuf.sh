@@ -35,7 +35,10 @@ fi
 if [ -z "${CXX:-}" ] && command -v clang++ >/dev/null; then
   export CC=clang CXX=clang++
 fi
-command -v cmake >/dev/null && command -v ninja >/dev/null || { echo "cmake and ninja are required" >&2; exit 1; }
+if ! command -v cmake >/dev/null || ! command -v ninja >/dev/null; then
+  echo "cmake and ninja are required" >&2
+  exit 1
+fi
 
 mkdir -p "$PREFIX" "$WORK" "$DL"
 
@@ -48,8 +51,10 @@ fetch() { # name url sha256
   [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$3" ] || { echo "sha256 mismatch for $1" >&2; exit 1; }
 }
 unpack() { # name -> dir
-  rm -rf "$WORK/$1"; mkdir -p "$WORK/$1"
-  tar -C "$WORK/$1" --strip-components=1 -xzf "$DL/$1.tar.gz"
+  local dir="${WORK:?}/${1:?}"
+  rm -rf "$dir"
+  mkdir -p "$dir"
+  tar -C "$dir" --strip-components=1 -xzf "$DL/$1.tar.gz"
 }
 
 common=(-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_STANDARD_REQUIRED=ON
