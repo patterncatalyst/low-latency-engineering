@@ -7,20 +7,20 @@
   "count" : 10,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 78184447,
-    "p90" : 78577663,
-    "p99" : 78643199,
-    "p99_9" : 78643199,
-    "max" : 78643199
+    "p50" : 78512127,
+    "p90" : 78708735,
+    "p99" : 78839807,
+    "p99_9" : 78839807,
+    "max" : 78839807
   },
-  "hdr_histogram" : "HISTFAAAACt4nJNpmSzMwMDAxwABzFCaEch0M9ixgMH+A0Tg+CQmIGBgYWIGEQCfzgXL",
+  "hdr_histogram" : "HISTFAAAAC14nJNpmSzMwMDAxwABzFCaEch0M9ixgMH+A0Tg/CQmJgYmBhYmFhANAKAtBdA=",
   "build" : {
     "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-22T11:46:24Z",
+    "captured_at" : "2026-10-22T12:31:09Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 1953444,
+      "pid" : 2008467,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,9 +69,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.35,
-      "load5" : 0.71,
-      "load15" : 0.49,
+      "load1" : 1.25,
+      "load5" : 0.74,
+      "load15" : 0.6,
       "running" : 1
     },
     "memory" : {
@@ -96,13 +96,13 @@
   "model" : {
     "law" : "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers" : 1,
-    "serial_fraction_modelling_input" : 0.09883674327058327,
+    "serial_fraction_modelling_input" : 0.09807063398072138,
     "serial_fraction_basis" : "time inside the lock / wall time, one worker, instrumented runs",
     "predicted_speedup" : 1.0,
     "measured_speedup_p50" : 1.0,
     "relative_error" : 0.0,
-    "wall_p50_ns_n1" : 78184447,
-    "wall_p50_ns" : 78184447,
+    "wall_p50_ns_n1" : 78512127,
+    "wall_p50_ns" : 78512127,
     "batch_parcels" : 3200,
     "lock" : "synchronized (platform threads)",
     "sync" : "free: no barriers",

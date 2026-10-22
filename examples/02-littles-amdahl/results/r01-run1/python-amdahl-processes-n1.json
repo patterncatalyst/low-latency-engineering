@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 184811519,
-    "p90": 186908671,
-    "p99": 187432959,
-    "p99_9": 187432959,
-    "max": 187432959
+    "p50": 193200127,
+    "p90": 193986559,
+    "p99": 194904063,
+    "p99_9": 194904063,
+    "max": 194904063
   },
-  "hdr_histogram": "HISTFAAAADp4nJNpmSzMwMAgwwABzFCakYGB2c1gxwIG+w8QgddLmZhYmBiZQCQTExuIyc7EysbEwsbKBAD76wZI",
+  "hdr_histogram": "HISTFAAAADp4nJNpmSzMwMAgwwABzFCakYGB2c1gxwIG+w8QgcfLmJiYGCGYmYmJiYmLkYWDhYmFkYmdBQD6wwY8",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T11:46:24Z",
+    "captured_at": "2026-10-22T12:31:09Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 1953444,
+      "pid": 2008467,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.35,
-      "load5": 0.71,
-      "load15": 0.49,
+      "load1": 1.25,
+      "load5": 0.74,
+      "load15": 0.6,
       "running": 1
     },
     "memory": {
@@ -100,17 +100,17 @@
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 1,
     "executor": "ProcessPoolExecutor",
-    "serial_fraction_modelling_input": 0.10503638374161334,
+    "serial_fraction_modelling_input": 0.1043878558642667,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
     "predicted_speedup": 1.0,
     "measured_speedup_p50": 1.0,
     "relative_error": 0.0,
-    "wall_p50_ns_n1": 184811519,
-    "wall_p50_ns": 184811519,
+    "wall_p50_ns_n1": 193200127,
+    "wall_p50_ns": 193200127,
     "batch_parcels": 1200,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 60,
     "lock": "multiprocessing.Lock",
-    "effective_ghz": 3.78
+    "effective_ghz": 3.96
   }
 }
