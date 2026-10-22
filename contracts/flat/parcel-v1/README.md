@@ -43,10 +43,14 @@ Field meanings, units and the clock-domain rule are those of
 
 ## Reading rules
 
-1. The datagram is exactly 80 bytes. Any other length is malformed.
+1. The datagram has at least the 4 header bytes. Fewer is malformed.
 2. `schema_id` must be `1` and `version` must be `1`; otherwise the datagram is
-   malformed (a reader never guesses at a layout it does not know).
-3. Then read fields at the fixed offsets. There is no length prefix, tag or
+   malformed (a reader never guesses at a layout it does not know). A larger
+   record of a later version is reported as an unsupported version, not as a
+   bad size.
+3. For version 1 the datagram is exactly 80 bytes. Any other length is
+   malformed.
+4. Then read fields at the fixed offsets. There is no length prefix, tag or
    varint, so nothing is parsed and nothing is allocated.
 
 ## Evolution rules

@@ -21,8 +21,8 @@
 #include "lowlat/line/fd.hpp"
 #include "lowlat/line/schedule.hpp"
 #include "lowlat/line/sscc.hpp"
-#include "lowlat/line/v1/parcel.pb.h"
-#include "parcel-v1/parcel_v1.hpp"  // generated: contracts/proto/lowlat/line/v1/parcel.proto
+#include "lowlat/line/v1/parcel.pb.h"  // generated: contracts/proto/lowlat/line/v1/parcel.proto
+#include "parcel-v1/parcel_v1.hpp"
 
 namespace lowlat::line {
 namespace {
@@ -106,7 +106,7 @@ flat::parcel_v1::Parcel to_flat(const v1::ParcelEvent& ev) {
   p.scan_confidence_permille = ev.scan_confidence_permille();
   const std::string& barcode = ev.barcode();
   if (barcode.size() != p.barcode.size()) throw std::runtime_error("barcode is not 18 characters");
-  std::copy(barcode.begin(), barcode.end(), p.barcode.begin());
+  std::ranges::copy(barcode, p.barcode.begin());
   return p;
 }
 

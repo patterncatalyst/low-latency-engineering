@@ -2,6 +2,7 @@ package io.patterncatalyst.lowlat.line;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
@@ -83,5 +84,19 @@ class FlatParcelGoldenTest {
         FlatParcel.write(MemorySegment.ofBuffer(wrongVersion), 0, 7, 1, 2, "006141410000000008");
         wrongVersion.put(2, (byte) 2);
         assertThrows(Decoder.MalformedDatagramException.class, () -> decoder.decode(wrongVersion));
+    }
+
+    @Test
+    void aLaterLargerVersionIsUnsupportedNotABadSize() {
+        FlatParcel.FlatDecoder decoder = new FlatParcel.FlatDecoder();
+        ByteBuffer v2 = ByteBuffer.allocateDirect(96);
+        FlatParcel.write(MemorySegment.ofBuffer(v2), 0, 7, 1, 2, "006141410000000008");
+        v2.put(2, (byte) 2);
+        var e = assertThrows(Decoder.MalformedDatagramException.class, () -> decoder.decode(v2));
+        assertTrue(e.getMessage().contains("unsupported parcel-v1 version 2"), e.getMessage());
+        ByteBuffer shortHeader = ByteBuffer.allocateDirect(FlatParcel.SIZE);
+        var h = assertThrows(Decoder.MalformedDatagramException.class,
+                () -> decoder.decode(shortHeader.duplicate().limit(3)));
+        assertTrue(h.getMessage().contains("header"), h.getMessage());
     }
 }

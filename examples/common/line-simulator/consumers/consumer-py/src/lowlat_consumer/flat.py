@@ -24,7 +24,10 @@ SIZE: Final = 80
 #  18s barcode | 6x reserved
 RECORD: Final = struct.Struct("<HHIQqqQIIII18s6x")
 
-assert RECORD.size == SIZE
+if RECORD.size != SIZE:  # not an assert: python -O would strip it
+    raise ImportError(f"parcel-v1 layout is {RECORD.size} bytes, expected {SIZE}")
+
+_HEADER: Final = struct.Struct("<HH")  # schema_id, version
 
 
 class FlatError(ValueError):
@@ -48,12 +51,25 @@ class ParcelV1:
 
 
 def decode(data: bytes | bytearray | memoryview, offset: int = 0) -> ParcelV1:
-    """Decode one record at ``offset``; raises ``FlatError`` on a wrong size, schema or version."""
-    if len(data) - offset != SIZE:
-        raise FlatError(f"parcel-v1 is {SIZE} bytes, got {len(data) - offset}")
+    """Decode the record that starts at ``offset``; bytes after it are ignored.
+
+    The header is checked first (``schema_id``, then ``version``), then the size for that
+    version, so a later and larger version is reported as unsupported, not as a bad size.
+    Raises ``FlatError`` on a short buffer, a wrong schema or an unsupported version.
+    """
+    available = len(data) - offset
+    if available < _HEADER.size:
+        raise FlatError(f"parcel-v1 header is {_HEADER.size} bytes, got {max(available, 0)}")
+    schema_id, version = _HEADER.unpack_from(data, offset)
+    if schema_id != SCHEMA_ID:
+        raise FlatError(f"not parcel-v1: schema_id {schema_id}")
+    if version != VERSION:
+        raise FlatError(f"unsupported parcel-v1 version {version}")
+    if available < SIZE:
+        raise FlatError(f"parcel-v1 is {SIZE} bytes, got {available}")
     (
-        schema_id,
-        version,
+        _schema_id,
+        _version,
         weight_g,
         seq,
         intended,
@@ -65,10 +81,6 @@ def decode(data: bytes | bytearray | memoryview, offset: int = 0) -> ParcelV1:
         conf,
         barcode,
     ) = RECORD.unpack_from(data, offset)
-    if schema_id != SCHEMA_ID:
-        raise FlatError(f"not parcel-v1: schema_id {schema_id}")
-    if version != VERSION:
-        raise FlatError(f"unsupported parcel-v1 version {version}")
     return ParcelV1(
         weight_g=weight_g,
         seq=seq,
@@ -80,9 +92,15 @@ def decode(data: bytes | bytearray | memoryview, offset: int = 0) -> ParcelV1:
         height_mm=height,
         scan_confidence_permille=conf,
         barcode=barcode.decode("ascii"),
-        schema_id=schema_id,
-        version=version,
     )
+
+
+def decode_datagram(data: bytes | bytearray | memoryview) -> ParcelV1:
+    """Decode one UDP payload: exactly one record, so a longer payload is malformed too."""
+    decoded = decode(data)
+    if len(data) != SIZE:
+        raise FlatError(f"parcel-v1 datagram is {SIZE} bytes, got {len(data)}")
+    return decoded
 
 
 def encode(p: ParcelV1) -> bytes:

@@ -78,7 +78,7 @@ using Bytes = std::array<std::byte, kSize>;
 }
 
 enum class DecodeError : std::uint8_t {
-  wrong_size,           ///< Not exactly kSize bytes.
+  wrong_size,           ///< Fewer than 4 header bytes, or not exactly kSize bytes for version 1.
   wrong_schema,         ///< schema_id is not kSchemaId.
   unsupported_version,  ///< version is not kVersion.
 };
@@ -92,14 +92,17 @@ enum class DecodeError : std::uint8_t {
   return "unknown";
 }
 
-/// Checks size and header, then copies the record out (memcpy into a trivially
-/// copyable object: no alignment requirement on `bytes`, no aliasing question).
+/// Checks the header first, then the size for that version, then copies the
+/// record out (memcpy into a trivially copyable object: no alignment requirement
+/// on `bytes`, no aliasing question). A later, larger version is therefore
+/// reported as `unsupported_version`, not as a bad size.
 [[nodiscard]] inline std::expected<Parcel, DecodeError> decode(std::span<const std::byte> bytes) noexcept {
-  if (bytes.size() != kSize) return std::unexpected{DecodeError::wrong_size};
-  std::uint16_t header[2];  // schema_id, version
-  std::memcpy(header, bytes.data(), sizeof header);
+  std::array<std::uint16_t, 2> header{};  // schema_id, version
+  if (bytes.size() < sizeof header) return std::unexpected{DecodeError::wrong_size};
+  std::memcpy(header.data(), bytes.data(), sizeof header);
   if (header[0] != kSchemaId) return std::unexpected{DecodeError::wrong_schema};
   if (header[1] != kVersion) return std::unexpected{DecodeError::unsupported_version};
+  if (bytes.size() != kSize) return std::unexpected{DecodeError::wrong_size};
   Parcel p;
   std::memcpy(&p, bytes.data(), kSize);
   return p;

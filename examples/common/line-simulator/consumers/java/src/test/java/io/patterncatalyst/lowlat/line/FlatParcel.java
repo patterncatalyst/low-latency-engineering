@@ -147,17 +147,24 @@ final class FlatParcel {
 
         @Override
         public FlatParcel decode(ByteBuffer datagram) throws MalformedDatagramException {
-            if (datagram.remaining() != SIZE) {
-                throw new MalformedDatagramException("flat parcel-v1 is " + SIZE + " bytes, got " + datagram.remaining());
+            // Header first, then the size for that version: a later, larger version is
+            // "unsupported", not a bad size.
+            if (datagram.remaining() < 4) {
+                throw new MalformedDatagramException("flat parcel-v1 header is 4 bytes, got " + datagram.remaining());
             }
             if (datagram != cachedBuffer) { // the receiver reuses one buffer: wrap it once
                 cachedBuffer = datagram;
                 cachedSegment = MemorySegment.ofBuffer(datagram.duplicate().clear());
             }
             view.wrap(cachedSegment, datagram.position());
-            if (view.schemaId() != SCHEMA_ID || view.version() != VERSION) {
-                throw new MalformedDatagramException("not parcel-v1: schema " + view.schemaId() + " version "
-                        + view.version());
+            if (view.schemaId() != SCHEMA_ID) {
+                throw new MalformedDatagramException("not parcel-v1: schema " + view.schemaId());
+            }
+            if (view.version() != VERSION) {
+                throw new MalformedDatagramException("unsupported parcel-v1 version " + view.version());
+            }
+            if (datagram.remaining() != SIZE) {
+                throw new MalformedDatagramException("flat parcel-v1 is " + SIZE + " bytes, got " + datagram.remaining());
             }
             return view;
         }

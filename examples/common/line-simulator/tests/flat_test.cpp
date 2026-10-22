@@ -160,6 +160,7 @@ TEST(FlatParcelV1, EncodeForcesHeaderAndZeroReserved) {
 TEST(FlatParcelV1, DecodeRejectsMalformed) {
   const p1::Bytes good = p1::encode(p1::Parcel{});
   EXPECT_EQ(p1::decode(std::span{good}.first(79)).error(), p1::DecodeError::wrong_size);
+  EXPECT_EQ(p1::decode(std::span{good}.first(3)).error(), p1::DecodeError::wrong_size);
   std::vector<std::byte> longer(good.begin(), good.end());
   longer.push_back(std::byte{0});
   EXPECT_EQ(p1::decode(longer).error(), p1::DecodeError::wrong_size);
@@ -169,6 +170,13 @@ TEST(FlatParcelV1, DecodeRejectsMalformed) {
   bad = good;
   bad[2] = std::byte{2};
   EXPECT_EQ(p1::decode(bad).error(), p1::DecodeError::unsupported_version);
+  // A later version is larger: the header says so before the size is checked.
+  std::vector<std::byte> v2(96);
+  v2[0] = std::byte{1};
+  v2[2] = std::byte{2};
+  EXPECT_EQ(p1::decode(v2).error(), p1::DecodeError::unsupported_version);
+  v2[0] = std::byte{9};
+  EXPECT_EQ(p1::decode(v2).error(), p1::DecodeError::wrong_schema);
 }
 
 TEST(FlatParcelV1, GoldenFilesAreRegeneratedOnRequest) {
