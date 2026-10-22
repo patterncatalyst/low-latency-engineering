@@ -1,0 +1,324 @@
+---
+title: "Setup: toolchains, the VM lab and the line simulator"
+order: 0
+part: "Prerequisites & the Lab"
+description: "Fedora 44, three toolchains, Docker Engine, a KVM lab with a PREEMPT_RT guest that never touches the host, and the line simulator that feeds a consumer in C++, Python and Java."
+duration: 60 minutes
+---
+
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Check a Fedora 44 host and the lab guest with `scripts/check-prereqs.sh` and read its PASS, WARN and FAIL lines.
+- Explain why the line simulator sends on its intended schedule and never waits.
+- Read a `lowlat-report/1` file and its embedded machine profile.
+- Provision the `lowlat-target` guest and install the PREEMPT_RT kernel without changing the host.
+- Run `examples/00-prerequisites/verify.sh` and interpret its assertions.
+
+## Why this matters
+
+A parcel passes the scanner and the diverter has 480 ms to be told which lane to open: 1.2 m of belt at 2.5 m/s. Every technique in this book is judged against that scan-to-divert budget, and the belt never waits for a slow controller. A load generator that pauses when the consumer stalls answers a different question from the one the line asks.
+
+This chapter builds the instrument: the toolchains, the pinned dependencies, the workload, the report format and the lab where privileged work happens. Nothing here is a latency result. The percentile columns are a smoke number that shows the pipeline carries data end to end and loses nothing.
+
+The code is in `examples/00-prerequisites/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
+
+## Diagram
+
+{% include excalidraw.html file="00-sortation-line" alt="A conveyor carries parcels past a checkweigher, dimensioner, scanner and labeler to a diverter; the controller must sense, decide and act within the scan-to-divert deadline." caption="Figure 0.1 — The sortation line. Belt speed and the scanner-to-diverter distance set the decision deadline." %}
+
+## The host and its toolchains
+
+The book targets Fedora 44. Three toolchains build the examples.
+
+- **C++20/23** with CMake. The examples tree is one CMake superproject driven by presets; `ctest --preset release` runs the tests and builds land under `examples/build/release`. The host reports GCC 16.2.1, Clang 22.1.8 and CMake 4.3.0; CMake 4.3 is the minimum.
+- **Python 3.14** managed by `uv`, which creates the environment from `examples/pyproject.toml` and runs the consumer with `uv run`.
+- **Java 25** with Maven on the plain JVM. The host reports OpenJDK 25.0.3.
+
+Containers use Docker Engine with the Compose plugin, on the host and in the guest. They suit control-plane work and throwaway builds; they add jitter on a hot path, and a later chapter measures that cost.
+
+Dependencies are pinned to exact upstream releases. `versions.env` is the machine-readable copy: protobuf 36.2 (Java 4.36.2, Python 7.36.2, one release train across all three languages) and its tarball checksum, plus abseil 20250512.1, the release protobuf 36.2 itself requires. The kits record into HdrHistogram_c 0.12.1, `hdrhistogram` 0.10.8 for Python and HdrHistogram 2.2.2 for Java. The protobuf compiler is built from the pinned tarball, never taken from Fedora's package, so the three languages generate code from one `protoc`.
+
+### Checking the host
+
+`scripts/check-prereqs.sh` only checks. It never installs, never uses sudo and never starts a VM. Each check prints one PASS, WARN or FAIL line, every WARN and FAIL carries a one-line install hint, and the exit status is 0 unless something FAILed. It covers the compilers, CMake, JDK, Maven, Python, `uv`, the pinned `protoc`, Docker Engine and libvirt. With `--vm` it runs inside the guest over ssh and checks the PREEMPT_RT kernel, `cyclictest`, `ptp4l`, `tuned`, Docker and the readiness marker. The example runs the host form first and stops if it fails.
+
+### The machine profile
+
+A latency number without the machine behind it is not publishable. `scripts/profile.sh` writes a `lowlat-profile/1` JSON object: CPU model and topology, scaling driver and governor, the tuned profile, kernel release and preemption model, command-line isolation parameters, clocksource, hugepages, whether the system is virtualized, the load average and the tool versions. It needs no root and degrades to `null` where a file is missing, so it runs on the host and in a guest. The measurement kits embed that file verbatim in every report.
+
+Every host number in this chapter carries one profile: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
+
+## The measurement pipeline
+
+{% include excalidraw.html file="00-measurement-pipeline" alt="The C++ line simulator sends UDP datagrams on 127.0.0.1 at 1 kHz to the C++, Python and Java consumers in turn; each records into HdrHistogram and writes a lowlat-report/1 JSON report carrying the machine profile from profile.sh; lowlat-report check validates the schema, decodes the histogram and recomputes the percentiles." caption="Figure 0.3 — Every language records into HdrHistogram and writes the same report format, and the checker recomputes the percentiles instead of trusting them." %}
+
+`examples/common/MEASUREMENT.md` is the contract for the measurement kits. There is one kit per language, `lowlat::measure` for C++, `lowlat_measure` for Python and `measure-java`, and they share three rules.
+
+1. **One histogram shape.** Nanoseconds, one hour as the highest trackable value, three significant digits. Encoded histograms are interchangeable between languages.
+2. **The library's own recording calls.** `hdr_record_value`, `record_value` and `recordValue` for plain samples, and the corrected variants for coordinated-omission correction in Part 1. No percentile code is hand-rolled.
+3. **One report.** A `lowlat-report/1` JSON file holds the example, language, variant, `count`, `dropped`, the p50, p90, p99, p99.9 and max in nanoseconds, the compressed base64 histogram, the build and the embedded profile. It validates against `contracts/measurement/latency-report.schema.json`. The report has no mean field. A time-average may appear only in a separate `model` block, introduced in Chapter 2.
+
+If `LOWLAT_PROFILE` is unset the kits fail rather than write a report. The `lowlat-report` command validates a report, shows it as a table, and with `check` recomputes the percentiles from the histogram.
+
+## The line simulator
+
+The simulator is a C++23 program that emits one UDP datagram per parcel, each a serialized `lowlat.line.v1.ParcelEvent`: a gap-free `seq`, a valid SSCC-18 barcode, weight and dimensions from a seeded generator, an encoder tick for belt position, and two timestamps: `intended_emit_ns`, when the schedule says the parcel is due, and `actual_emit_ns`, when the simulator sent it. Both are nanoseconds on `CLOCK_MONOTONIC` of the machine running the simulator, so producer and consumer must share a host or a VM. Subtracting timestamps across machines is a bug.
+
+The intended time is a pure function of the parcel number, `t0 + seq * 1e9 / rate`. The simulator sleeps to that absolute deadline with `clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME)`. An absolute deadline cannot accumulate error, and after a signal wakes the sleep early the same deadline is used again. If the simulator wakes late it sends at once. It never skips a parcel and never stretches the schedule, because the belt does not.
+
+The send uses `MSG_DONTWAIT` over UDP, so a full socket buffer costs a counted drop and never a stall; TCP flow control would put back the backpressure the line does not have. A consumer computes `done_ns - intended_emit_ns`, never `done_ns - actual_emit_ns`. The first includes the sender's lateness and any queue in front of the consumer. The second hides both, which is how a stalled system produces a flattering distribution.
+
+## How the code works
+
+### The simulator's pacing
+
+Both snippets are from `examples/common/line-simulator/`. The schedule is `include/lowlat/line/schedule.hpp`:
+
+```cpp
+  /// t0 + i / rate, in integer nanoseconds (floor). The schedule is a pure
+  /// function of i: it can never drift, whatever the sender did before.
+  [[nodiscard]] constexpr std::int64_t intended_ns(std::uint64_t i) const noexcept {
+    return t0_ns + static_cast<std::int64_t>(i * 1'000'000'000ULL / rate_hz);
+  }
+```
+
+The loop in `src/simulator.cpp` sleeps to `intended`, stamps `actual`, sends and records its own lateness:
+
+```cpp
+    // Sleep to the absolute deadline. A signal wakes us early: stop if asked to,
+    // otherwise sleep again to the same deadline. If the deadline has passed
+    // this returns at once: the belt does not wait, so neither do we.
+    bool woken = false;
+    while (!(woken = sleep_until_ns(intended)) && !stop.load(std::memory_order_relaxed)) {
+    }
+    if (!woken) {
+      result.interrupted = true;
+      break;
+    }
+
+    const std::int64_t actual = monotonic_ns();
+    ev.set_actual_emit_ns(actual);
+    const std::size_t size = ev.ByteSizeLong();
+    if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
+      throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+    }
+    // MSG_DONTWAIT: a full socket buffer drops this parcel instead of stalling the belt.
+    if (::send(sock.get(), datagram.data(), size, MSG_DONTWAIT) == static_cast<ssize_t>(size)) {
+      ++result.sent;
+    } else {
+      ++result.send_errors;
+    }
+    emit_lateness.record(std::max<std::int64_t>(0, actual - intended));
+  }
+```
+
+The event is built before the sleep, keeping generation cost off the wake-up path. `sleep_until_ns` returns false when a signal interrupts it; the loop then sleeps again to the same deadline unless a stop was requested. `actual - intended` is clamped at zero and recorded as the `emit-lateness` variant, which the simulator prints on exit. On a kernel that is not real-time that figure is the host's wake-up jitter, so it bounds what any consumer can claim. A send that does not return the datagram size is a counted `send_errors`, booked as `dropped`.
+
+### The consumer's receive-and-record loop
+
+Each consumer does the same five things per datagram: receive it, parse the `ParcelEvent`, check `seq` against the last one seen to detect gaps and reordering, do a small amount of work (the barcode picks one of 8 lanes, the stand-in for the real handling that later chapters replace), and record `done_ns - intended_emit_ns`. A negative latency means the clocks differ, and every consumer raises an error. The files are `consumers/cpp/src/consumer.cpp`, `consumers/consumer-py/src/lowlat_consumer/cli.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/LineReceiver.java`.
+
+{% include codetabs.html langs="C++|Python|Java" %}
+
+```cpp
+    const ssize_t n = ::recv(sock.get(), datagram.data(), datagram.size(), 0);
+    if (n < 0) {
+      if (errno == EINTR) continue;  // loop head sees the stop flag
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        const std::int64_t waited_ns = monotonic_ns() - last_rx_ns;
+        if (started && waited_ns >= std::int64_t{cfg.idle_timeout_ms} * 1'000'000) {
+          result.stopped_by = "idle";
+          break;
+        }
+        continue;
+      }
+      throw std::system_error(errno, std::generic_category(), "recv");
+    }
+    started = true;
+
+    // Skipped datagrams still count as activity for the idle timeout.
+    if (!ev.ParseFromArray(datagram.data(), static_cast<int>(n))) {
+      ++result.malformed;
+      last_rx_ns = monotonic_ns();
+      continue;
+    }
+    if (tracker.observe(ev.seq()) == SeqTracker::Kind::reordered) {
+      last_rx_ns = monotonic_ns();
+      continue;
+    }
+
+    ++result.lane_counts[lane_for(ev.barcode())];  // the r01 "work"
+
+    const std::int64_t done_ns = monotonic_ns();
+    last_rx_ns = done_ns;
+    const std::int64_t latency_ns = done_ns - ev.intended_emit_ns();
+    if (latency_ns < 0) {
+      throw std::runtime_error(std::format(
+          "negative latency {} ns at seq {}: the simulator and consumer are not on the same CLOCK_MONOTONIC "
+          "(different host or VM?)",
+          latency_ns, ev.seq()));
+    }
+    latency.record(latency_ns);
+```
+
+```python
+    while not _stop:
+        try:
+            n = sock.recv_into(buf)
+        except TimeoutError:
+            if tracker.received and now() - last_rx_ns >= idle_ns:
+                return
+            continue
+        event.ParseFromString(view[:n])
+        if not tracker.observe(event.seq):
+            continue
+        lane_for(event.barcode)
+        done_ns = now()
+        last_rx_ns = done_ns
+        latency = done_ns - event.intended_emit_ns
+        if latency < 0:
+            raise NegativeLatencyError(
+                f"negative latency {latency} ns for seq {event.seq}: producer and consumer "
+                "are not on the same CLOCK_MONOTONIC (same host or VM required)"
+            )
+        rec.record(latency)
+```
+
+```java
+        while (!stopRequested) {
+            buffer.clear();
+            // Drain first: under load a datagram is already waiting, and this costs one syscall
+            // rather than select + receive.
+            SocketAddress source = channel.receive(buffer);
+            if (source == null) {
+                long timeoutMs = 0; // Selector.select(.., 0) blocks until a wakeup
+                if (seenFirst) {
+                    long idleLeftNs = config.idleTimeoutMs() * 1_000_000L - (System.nanoTime() - lastRxNs);
+                    if (idleLeftNs <= 0) {
+                        return StopReason.IDLE;
+                    }
+                    timeoutMs = Math.max(1, idleLeftNs / 1_000_000L);
+                }
+                selector.select(key -> { }, timeoutMs);
+                continue;
+            }
+            buffer.flip();
+            ParcelEvent event;
+            try {
+                // Direct, non-array buffer: protobuf-java reads it in place (no copy to byte[]).
+                event = ParcelEvent.parseFrom(buffer);
+            } catch (InvalidProtocolBufferException e) {
+                malformed++;
+                continue;
+            }
+            seenFirst = true;
+            lastRxNs = System.nanoTime();
+
+            if (gaps.observe(event.getSeq()) == GapTracker.Arrival.REORDERED) {
+                continue; // reported in notes, not recorded twice
+            }
+            if (gaps.lastGap() > 0) {
+                recorder.addDropped(gaps.lastGap());
+            }
+            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the r01 "handle" step
+            long doneNs = System.nanoTime();
+            long latencyNs = doneNs - event.getIntendedEmitNs();
+            if (latencyNs < 0) {
+                throw new NegativeLatencyException("negative latency " + latencyNs + " ns for seq "
+                        + event.getSeq() + ": intended_emit_ns is ahead of this JVM's System.nanoTime(); "
+                        + "producer and consumer must run on one host (one CLOCK_MONOTONIC)");
+            }
+            recorder.record(latencyNs);
+            received++;
+```
+
+The C++ consumer makes a blocking `recv` into a reused buffer. `EINTR` returns to the loop head, where the stop flag is checked; `EAGAIN` means the receive timeout expired, which is how an idle stream is noticed. A malformed datagram is counted and skipped; a reordered one is not recorded twice. The clock is read once, after the work, so the work is part of the measured latency.
+
+Python reuses the same way: one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent` that `ParseFromString` clears. A 50 ms socket timeout bounds how long a signal or an idle stream goes unnoticed. The interpreter cost per datagram is on the measured path, so the Python column measures the whole consumer, not the network.
+
+Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first, one syscall when a datagram is already waiting, and parks in a `Selector` only when the queue is empty. It parses straight from a direct `ByteBuffer`, which protobuf-java reads in place without copying to a `byte[]`, and it reads `System.nanoTime()`, which on Linux is `CLOCK_MONOTONIC`, the simulator's clock. Each consumer requests a 4 MiB receive buffer and prints what the kernel granted.
+
+The fragile part is the clock-domain rule: the consumers are correct only when producer and consumer share `CLOCK_MONOTONIC`.
+
+## The VM lab
+
+{% include excalidraw.html file="00-lab-topology" alt="A host band holding lab-ssh.sh, libvirt-ssh-proxy, passt and Docker Engine, with a guest band inside it holding cyclictest, linuxptp, the PREEMPT_RT kernel, Docker and the snapshots lab-ready and lab-ready-rt; an amber ssh-over-AF_VSOCK path runs from the proxy to the guest, and guest traffic leaves through passt." caption="Figure 0.2 — The lab guest is reached by ssh over vsock and networked by passt, so the host needs no NAT, bridge or firewall change. VM numbers are never compared with bare-metal numbers." %}
+
+Real-time kernels, `isolcpus`, `tuned` and PTP change a machine in ways nobody should apply to the machine they work on. That happens in a disposable KVM guest; the host only runs unprivileged programs and Docker containers.
+
+Every lab script keys off `LAB_PREFIX`, set to `lowlat`, so the guest is `lowlat-target`. A name guard runs before the first `virsh` call and refuses any domain not named `lowlat-*`, so a typo cannot reach another project's VM. The lifecycle:
+
+```bash
+scripts/lab/provision-vm.sh lowlat-target   # verify image checksum, overlay disk, cloud-init, boot
+scripts/lab/snapshot-vm.sh lowlat-target    # snapshot lab-ready
+scripts/lab/lab-ssh.sh lowlat-target        # ssh as fedora
+scripts/lab/revert-vm.sh lowlat-target      # undo a destructive run
+```
+
+Networking uses QEMU's passt backend. The guest's outbound traffic leaves through ordinary unprivileged sockets that passt opens on the host, so there is no bridge, no NAT, no forwarding and no firewall rule. The guest has no host-reachable address; ssh goes over AF_VSOCK through libvirt's ssh proxy, wrapped by `lab-ssh.sh`. The cost is that guests cannot reach each other, so each measurement runs inside one guest.
+
+The guest carries `realtime-tests` (the package that provides `cyclictest`), `linuxptp`, `tuned`, `perf`, the three toolchains and Docker Engine. The snapshot `lab-ready` is the tooled baseline on Fedora's stock kernel.
+
+Fedora 44 ships no `kernel-rt`, and the stock kernel is built without `CONFIG_PREEMPT_RT`. `scripts/lab/build-rt-kernel.sh` therefore rebuilds Fedora's own kernel SRPM, `kernel-7.2.11-200.fc44`, using the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway `docker run --rm` container from a digest-pinned `fedora:44` image. Nothing is installed on the host and no sudo is used. It fails unless the built config contains `CONFIG_PREEMPT_RT=y`.
+
+Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies the RPMs in over vsock, verifies the checksums, installs the RT kernel beside the stock kernel of the same version, so a stock-versus-RT comparison differs only in preemption model, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for every real-time chapter.
+
+## Measure
+
+Run the example from the repository root:
+
+```bash
+examples/00-prerequisites/verify.sh
+VM=1 ALLOW_BUSY=1 examples/00-prerequisites/verify.sh
+```
+
+The first form is the host smoke test. The script refuses to run while a `lowlat-*` guest is up, because the guest competes for CPU; `ALLOW_BUSY=1` overrides that and `VM=1` needs it. The run script asserts:
+
+1. `check-prereqs.sh` exits 0.
+2. For each consumer in turn (C++ on UDP 47200, Python on 47201, Java on 47202, all on `127.0.0.1`) the simulator emits 1 kHz for 5 s, which is 5,000 parcels.
+3. Each consumer exits 0, its report passes `lowlat-report check`, `count` is 5,000, `dropped` is 0 and the report carries a profile.
+
+`VM=1` adds the guest smoke test. It runs `check-prereqs.sh --vm`, deploys the examples with `deploy-to-vm.sh`, runs `cyclictest -m -p95 -D60 -q` in the guest, captures the guest's profile, asserts that the profile reports a virtual machine, and labels the output directory `vm`.
+
+### Host results
+
+Three runs (`r01-run1` to `r01-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, with 625 parcels on each of the 8 lanes. The ranges are across the three runs.
+
+| Consumer | p50 (µs) | p99 (µs) | p99.9 (µs) |
+|---|---|---|---|
+| C++ | 96.1 to 101.2 | 180.1 to 189.2 | 205.1 to 275.5 |
+| Python | 101.8 to 184.8 | 199.9 to 341.2 | 229.6 to 356.9 |
+| Java | 140.0 to 187.8 | 230.4 to 333.8 | 16,547.8 to 26,755.1 |
+
+These are smoke numbers. The one to read is the Java p99.9, 16.5 to 26.8 ms against a sub-millisecond p99. The Java consumer prints the reason: the JIT is not warmed, so the first thousands of parcels ran interpreted or on the C1 compiler and sit in a 5,000-sample histogram. That tail is JIT warm-up, not the network path, and Part 2 covers it. The point is a valid report from each, not a ranking.
+
+### Guest result
+
+In the guest, `r01-vm-smoke/vm/profile.json` reports virt type `kvm` and kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` with the `PREEMPT_RT` preemption model. The single `cyclictest` thread ran for 60 s at priority 95 with a 1,000 µs interval, 60,000 loops, unpinned and untuned. Its Max was 265 µs. This is VM data. It is a smoke test that shows the RT kernel boots and `cyclictest` runs through the lab's ssh path, not a jitter measurement, and it is not comparable with any bare-metal number. The measured before and after comes in Part 5.
+
+## Cross-check
+
+`lowlat-report check` decodes each report's compressed histogram and recomputes the percentiles with the library, so a summary bug shows up as a mismatch. The consumer's own gap accounting agrees with the report: `received 5000, dropped 0, reordered 0, malformed 0` on the console matches `count` and `dropped` in the JSON.
+
+## What you learned
+
+- The lab has three layers: a Fedora 44 host that only runs unprivileged programs, three pinned toolchains, and a `lowlat-` KVM guest where every privileged change happens, reached over vsock and passt.
+- A report is publishable only with its machine profile, and `check-prereqs.sh` and `profile.sh` are how the host and the guest are described and verified.
+- The simulator sends on `intended_emit_ns` and never waits, and consumers measure from that intended time, so lateness and queueing stay in the distribution.
+- Each consumer is a receive, parse, gap-check, handle and record loop in C++, Python and Java; they diverge in how they wait and avoid copies.
+- A VM number is labelled VM, and the smoke test proves the pipeline, not a latency.
+
+Next, Chapter 1 uses this workload to show that latency is a distribution rather than a number.
+
+## For deeper coverage
+
+- Enberg, *Latency* (Manning), as further reading on measuring and reasoning about latency.
+- Chapter 1, *Latency vs bandwidth*, and Chapter 3, *Measuring correctly*, in Part 1, for what the percentile columns mean and how coordinated omission corrupts them.
+- Chapter 5, *What the JVM costs*, in Part 2, for JIT warm-up, and Part 5 for the `cyclictest` jitter measurement.
+- `examples/common/MEASUREMENT.md` and `scripts/lab/README.md` for the full kit and lab references.
+
+---
+
+*Verification status: <span class="status status--verified">behavioural</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r01-run1` to `r01-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*
