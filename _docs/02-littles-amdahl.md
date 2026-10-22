@@ -38,7 +38,7 @@ For a stable system, the long-run number of items inside equals the arrival rate
 
 Applied to the belt, it gives the 480 parcels in flight. Applied to a handler, `lambda` times the mean service time is the number of busy workers: the model block reports an offered utilisation of 0.60 from a 600 us service-time parameter. One worker suffices on average, with no slack for the tail Chapter 1 measured.
 
-The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.02 to 1.04 ms, p50 is 0.74 to 0.75 ms and p99 is 4.33 to 4.36 ms. The mean describes no parcel, yet only the mean ties queue length to rate.
+The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.02 to 1.04 ms, p50 is 0.74 to 0.75 ms and p99 is 4.33 to 4.36 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
 
 ### Amdahl's Law
 
@@ -118,9 +118,9 @@ Python has no counterpart here: Little's Law runs on the C++ and Java consumers,
 
 `done` is an atomic counter the handler increments after each parcel. `arrivals_by` converts the clock into the number of parcels the schedule has released, in integer arithmetic. The difference is the instantaneous `L`. The sample is taken when the clock is read, not at the nominal tick, so a late wake-up cannot pair a stale instant with a fresh count.
 
-Arrivals are deterministic, one every 1 ms, so a sampler on a 1 ms tick sees the same phase each time, just after an arrival, and over-counts by about half a parcel. The 997 us interval does not divide the arrival period, so the phase drifts through the whole cycle, which is the sampling the law assumes. The origin `t0` comes from the first parcel seen, since parcel `seq` is due at `t0 + seq / lambda`.
+Arrivals are deterministic, one every 1 ms, so a sampler on a 1 ms tick sees the same phase each time, just after an arrival, and over-counts by about half a parcel. The 997 us interval does not divide the arrival period, so the phase drifts through the whole cycle. The origin `t0` comes from the first parcel seen, since parcel `seq` is due at `t0 + seq / lambda`.
 
-The service time is exponential with a 600 us mean, capped at ten times the mean, from a seeded generator. It is spent busy-waiting on the monotonic clock, because a sleep would add timer slack to every parcel. That departs from the idiomatic blocking wait and is confined to `serve`.
+The service time is drawn from an exponential distribution whose mean is a configured model parameter, 600 us (`--service-mean-us`), capped at ten times that, from a generator seeded with 7. It is spent busy-waiting on the monotonic clock, because a sleep would add timer slack to every parcel. That departs from the idiomatic blocking wait and is confined to `serve`.
 
 ### The model block
 
@@ -352,8 +352,10 @@ Python runs the program under two executors. `ThreadPoolExecutor` with `threadin
 
 ## Measure
 
+Run the example from the repository root:
+
 ```bash
-cd examples/02-littles-amdahl && ./verify.sh
+examples/02-littles-amdahl/verify.sh
 ```
 
 The script builds the programs, runs both experiments, asserts the criteria and writes reports with the machine profile. `ALLOW_BUSY=1` measures although a lab VM is running; `SKIP_BUILD=1` reuses builds.
@@ -369,7 +371,7 @@ Each consumer received 10,000 parcels at 1,000 per second over 10 s with none dr
 | C++ | 1.016 to 1.041 | 1.022 to 1.036 ms | -0.6 to +0.7 % | 11 |
 | Java | 1.088 to 1.215 | 1.078 to 1.168 ms | +0.9 to +4.0 % | 19 to 32 |
 
-Both sit inside the 5 % criterion. Offered load is 0.60 of one worker, so the queue is usually short and occasionally holds a burst. Java's error is larger and its tail longer: its p99.9 for `W` is 14.6 to 27.0 ms against 8.4 ms in C++. The Java run does not warm the JIT first. One hypothesis, untested here, is that compilation and collection pauses stretch a burst's residence. The law holds in the managed runtime; the residual is larger.
+Both sit inside the 5 % criterion. Offered load is 0.60 of one worker, so the queue is usually short and occasionally holds a burst. Java's error is larger and its tail longer: its p99.9 for `W` is 14.6 to 27.0 ms against 8.4 ms in C++. The Java run does not warm the JIT first. One hypothesis, untested here, is that compilation and collection pauses stretch a burst's residence.
 
 The report's warehouse sub-block gives the same 480 parcels in flight on 1.20 m of belt. A slow path that stretches `W` grows that count in proportion.
 
@@ -392,7 +394,7 @@ Python threads stay near 1x at N = 2 and fall to 0.59 to 0.87x at N = 4. The CPU
 
 ### An observation: the free-running lock
 
-`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.52 to 3.62x at N = 4 in C++ and 3.49 to 3.53x in Java, over the predicted 3.09 to 3.11x, with 10 repetitions per N. The README's account is that lock sections overlap other workers' scanning; the runs are consistent with that and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
+`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.52 to 3.62x at N = 4 in C++ and 3.49 to 3.53x in Java, over the predicted 3.09 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
 
 ## Cross-check
 
@@ -410,7 +412,7 @@ Chapter 3 returns to measurement itself: clocks, percentiles and coordinated omi
 
 ## For deeper coverage
 
-- Enberg, *Latency* (Manning), as further reading on latency and its measurement. This chapter's examples and text are original.
+- Enberg, *Latency* (Manning), as further reading on latency and its measurement.
 - Chapter 1, *Latency vs bandwidth: latency is a distribution*, in Part 1.
 - Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1: the clocks behind `W`.
 - Chapter 4, *Benchmark harnesses: Google Benchmark, pyperf and JMH*, in Part 1: the idiom behind `keep`.
@@ -419,4 +421,4 @@ Chapter 3 returns to measurement itself: clocks, percentiles and coordinated omi
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts, for the C++ and Java consumers, 10,000 parcels received with none dropped and sampled `L` within 5 % of `lambda x W-bar`. It asserts that the C++ and Java speedups at N = 4 are within 15 % of the prediction, that Python threads reach under 1.3x with the GIL enabled, that Python processes exceed 2x, and that every N reproduces the one-worker table. It validates the report files. All of it held on the three runs, `r01-run1` to `r01-run3`.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts, for the C++ and Java consumers, 10,000 parcels received with none dropped and sampled `L` within 5 % of `lambda x W-bar`. It asserts that the C++ and Java speedups at N = 4 are within 15 % of the prediction, that Python threads stay under 1.3x (the reports record the GIL enabled), that Python processes exceed 2x, and that every N reproduces the one-worker table (the programs exit non-zero on a checksum mismatch). It validates the report files. All of it held on the three runs, `r01-run1` to `r01-run3`.*

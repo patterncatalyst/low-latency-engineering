@@ -50,6 +50,29 @@ A latency number without the machine behind it is not publishable. `scripts/prof
 
 Every host number in this chapter carries one profile: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
 
+## The VM lab
+
+{% include excalidraw.html file="00-lab-topology" alt="A host band holding lab-ssh.sh, libvirt-ssh-proxy, passt and Docker Engine, with a guest band inside it holding cyclictest, linuxptp, the PREEMPT_RT kernel, Docker and the snapshots lab-ready and lab-ready-rt; an amber ssh-over-AF_VSOCK path runs from the proxy to the guest, and guest traffic leaves through passt." caption="Figure 0.2 — The lab guest is reached by ssh over vsock and networked by passt, so the host needs no NAT, bridge or firewall change. VM numbers are never compared with bare-metal numbers." %}
+
+Real-time kernels, `isolcpus`, `tuned` and PTP change a machine in ways nobody should apply to the machine they work on. That happens in a disposable KVM guest; the host only runs unprivileged programs and Docker containers.
+
+Every lab script keys off `LAB_PREFIX`, set to `lowlat`, so the guest is `lowlat-target`. A name guard runs before the first `virsh` call and refuses any domain not named `lowlat-*`, so a typo cannot reach another project's VM. The lifecycle:
+
+```bash
+scripts/lab/provision-vm.sh lowlat-target   # verify image checksum, overlay disk, cloud-init, boot
+scripts/lab/snapshot-vm.sh lowlat-target    # snapshot lab-ready
+scripts/lab/lab-ssh.sh lowlat-target        # ssh as fedora
+scripts/lab/revert-vm.sh lowlat-target      # undo a destructive run
+```
+
+Networking uses QEMU's passt backend. The guest's outbound traffic leaves through ordinary unprivileged sockets that passt opens on the host, so there is no bridge, no NAT, no forwarding and no firewall rule. The guest has no host-reachable address; ssh goes over AF_VSOCK through libvirt's ssh proxy, wrapped by `lab-ssh.sh`. The cost is that guests cannot reach each other, so each measurement runs inside one guest.
+
+The guest carries `realtime-tests` (the package that provides `cyclictest`), `linuxptp`, `tuned`, `perf`, the three toolchains and Docker Engine. The snapshot `lab-ready` is the tooled baseline on Fedora's stock kernel.
+
+Fedora 44 ships no `kernel-rt`, and the stock kernel is built without `CONFIG_PREEMPT_RT`. `scripts/lab/build-rt-kernel.sh` therefore rebuilds Fedora's own kernel SRPM, `kernel-7.2.11-200.fc44`, using the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway `docker run --rm` container from a digest-pinned `fedora:44` image. Nothing is installed on the host and no sudo is used. It fails unless the built config contains `CONFIG_PREEMPT_RT=y`.
+
+Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies the RPMs in over vsock, verifies the checksums, installs the RT kernel beside the stock kernel of the same version, so a stock-versus-RT comparison differs only in preemption model, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for every real-time chapter.
+
 ## The measurement pipeline
 
 {% include excalidraw.html file="00-measurement-pipeline" alt="The C++ line simulator sends UDP datagrams on 127.0.0.1 at 1 kHz to the C++, Python and Java consumers in turn; each records into HdrHistogram and writes a lowlat-report/1 JSON report carrying the machine profile from profile.sh; lowlat-report check validates the schema, decodes the histogram and recomputes the percentiles." caption="Figure 0.3 — Every language records into HdrHistogram and writes the same report format, and the checker recomputes the percentiles instead of trusting them." %}
@@ -240,31 +263,6 @@ Python reuses the same way: one `bytearray`, a `memoryview` slice so the parse d
 
 Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first, one syscall when a datagram is already waiting, and parks in a `Selector` only when the queue is empty. It parses straight from a direct `ByteBuffer`, which protobuf-java reads in place without copying to a `byte[]`, and it reads `System.nanoTime()`, which on Linux is `CLOCK_MONOTONIC`, the simulator's clock. Each consumer requests a 4 MiB receive buffer and prints what the kernel granted.
 
-The fragile part is the clock-domain rule: the consumers are correct only when producer and consumer share `CLOCK_MONOTONIC`.
-
-## The VM lab
-
-{% include excalidraw.html file="00-lab-topology" alt="A host band holding lab-ssh.sh, libvirt-ssh-proxy, passt and Docker Engine, with a guest band inside it holding cyclictest, linuxptp, the PREEMPT_RT kernel, Docker and the snapshots lab-ready and lab-ready-rt; an amber ssh-over-AF_VSOCK path runs from the proxy to the guest, and guest traffic leaves through passt." caption="Figure 0.2 — The lab guest is reached by ssh over vsock and networked by passt, so the host needs no NAT, bridge or firewall change. VM numbers are never compared with bare-metal numbers." %}
-
-Real-time kernels, `isolcpus`, `tuned` and PTP change a machine in ways nobody should apply to the machine they work on. That happens in a disposable KVM guest; the host only runs unprivileged programs and Docker containers.
-
-Every lab script keys off `LAB_PREFIX`, set to `lowlat`, so the guest is `lowlat-target`. A name guard runs before the first `virsh` call and refuses any domain not named `lowlat-*`, so a typo cannot reach another project's VM. The lifecycle:
-
-```bash
-scripts/lab/provision-vm.sh lowlat-target   # verify image checksum, overlay disk, cloud-init, boot
-scripts/lab/snapshot-vm.sh lowlat-target    # snapshot lab-ready
-scripts/lab/lab-ssh.sh lowlat-target        # ssh as fedora
-scripts/lab/revert-vm.sh lowlat-target      # undo a destructive run
-```
-
-Networking uses QEMU's passt backend. The guest's outbound traffic leaves through ordinary unprivileged sockets that passt opens on the host, so there is no bridge, no NAT, no forwarding and no firewall rule. The guest has no host-reachable address; ssh goes over AF_VSOCK through libvirt's ssh proxy, wrapped by `lab-ssh.sh`. The cost is that guests cannot reach each other, so each measurement runs inside one guest.
-
-The guest carries `realtime-tests` (the package that provides `cyclictest`), `linuxptp`, `tuned`, `perf`, the three toolchains and Docker Engine. The snapshot `lab-ready` is the tooled baseline on Fedora's stock kernel.
-
-Fedora 44 ships no `kernel-rt`, and the stock kernel is built without `CONFIG_PREEMPT_RT`. `scripts/lab/build-rt-kernel.sh` therefore rebuilds Fedora's own kernel SRPM, `kernel-7.2.11-200.fc44`, using the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway `docker run --rm` container from a digest-pinned `fedora:44` image. Nothing is installed on the host and no sudo is used. It fails unless the built config contains `CONFIG_PREEMPT_RT=y`.
-
-Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies the RPMs in over vsock, verifies the checksums, installs the RT kernel beside the stock kernel of the same version, so a stock-versus-RT comparison differs only in preemption model, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for every real-time chapter.
-
 ## Measure
 
 Run the example from the repository root:
@@ -284,23 +282,23 @@ The first form is the host smoke test. The script refuses to run while a `lowlat
 
 ### Host results
 
-Three runs (`r01-run1` to `r01-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, with 625 parcels on each of the 8 lanes. The ranges are across the three runs.
+Three runs (`r01-run1` to `r01-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, and the Java consumer's console shows 625 parcels on each of the 8 lanes. The ranges are across the three runs.
 
-| Consumer | p50 (µs) | p99 (µs) | p99.9 (µs) |
+| Consumer | p50 (us) | p99 (us) | p99.9 (us) |
 |---|---|---|---|
 | C++ | 96.1 to 101.2 | 180.1 to 189.2 | 205.1 to 275.5 |
 | Python | 101.8 to 184.8 | 199.9 to 341.2 | 229.6 to 356.9 |
 | Java | 140.0 to 187.8 | 230.4 to 333.8 | 16,547.8 to 26,755.1 |
 
-These are smoke numbers. The one to read is the Java p99.9, 16.5 to 26.8 ms against a sub-millisecond p99. The Java consumer prints the reason: the JIT is not warmed, so the first thousands of parcels ran interpreted or on the C1 compiler and sit in a 5,000-sample histogram. That tail is JIT warm-up, not the network path, and Part 2 covers it. The point is a valid report from each, not a ranking.
+The one to read is the Java p99.9, 16.5 to 26.8 ms against a sub-millisecond p99. The Java consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on the C1 compiler and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.4 ms, which points at the runtime rather than the network. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
 
 ### Guest result
 
-In the guest, `r01-vm-smoke/vm/profile.json` reports virt type `kvm` and kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` with the `PREEMPT_RT` preemption model. The single `cyclictest` thread ran for 60 s at priority 95 with a 1,000 µs interval, 60,000 loops, unpinned and untuned. Its Max was 265 µs. This is VM data. It is a smoke test that shows the RT kernel boots and `cyclictest` runs through the lab's ssh path, not a jitter measurement, and it is not comparable with any bare-metal number. The measured before and after comes in Part 5.
+Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the i7-11800H host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. The single `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It is a smoke test that shows the RT kernel boots and `cyclictest` runs through the lab's ssh path, not a jitter measurement, and it is not comparable with any bare-metal number. The measured before and after comes in Part 5.
 
 ## Cross-check
 
-`lowlat-report check` decodes each report's compressed histogram and recomputes the percentiles with the library, so a summary bug shows up as a mismatch. The consumer's own gap accounting agrees with the report: `received 5000, dropped 0, reordered 0, malformed 0` on the console matches `count` and `dropped` in the JSON.
+`lowlat-report check` decodes each report's compressed histogram and recomputes the percentiles with the library, so a summary bug shows up as a mismatch. The consumer's own gap accounting agrees with the report: `received 5000, dropped 0, reordered 0, malformed 0` on the C++ console matches `count` and `dropped` in the JSON.
 
 ## What you learned
 
@@ -321,4 +319,4 @@ Next, Chapter 1 uses this workload to show that latency is a distribution rather
 
 ---
 
-*Verification status: <span class="status status--verified">behavioural</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r01-run1` to `r01-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r01-run1` to `r01-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*

@@ -20,7 +20,7 @@ By the end of this chapter you can:
 
 A parcel passes the barcode scanner and the controller has until the parcel reaches the diverter to pick a lane. The belt does not wait: at the line's speed the budget is `1.2 m / 2.5 m/s = 480 ms`, minus encoder jitter and actuation time. A parcel whose decision arrives after the diverter has fired goes down the wrong lane. A controller that is fast for most parcels and slow for a few is a controller that mis-sorts those few.
 
-That makes "how fast is it?" incomplete in two ways. A design can raise the parcels handled per second while making each parcel wait longer. A handler can also be fast for 99 parcels and slow for the hundredth, and any one summary number then describes neither group. This chapter shows both effects on the same simulator stream, in C++, Python and Java.
+That makes "how fast is it?" incomplete in two ways. A design can raise the parcels handled per second while making each parcel wait longer. A handler can also be fast for 99 parcels and slow for the hundredth, and any one summary number then describes neither group.
 
 The code is in `examples/01-latency-distribution/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -54,7 +54,7 @@ A run of 10,000 parcels puts only 100 parcels above p99, 10 above p99.9 and exac
 
 ### Why the report never carries a mean
 
-A mean collapses a distribution into a value that may be the latency of no parcel at all. In the bimodal workload it would fall between the two modes, where no parcel finished, and it would move whenever the slow fraction moved. Every report in this book therefore holds percentiles and a maximum. A time-average appears only in Chapter 2, labelled as a modelling input for Little's Law.
+A mean collapses a distribution into one value. In the bimodal workload it would fall between the two modes, describe neither group, and move whenever the slow fraction moved. Every report in this book therefore holds percentiles and a maximum. A time-average appears only in Chapter 2, labelled as a modelling input for Little's Law.
 
 ### The budget is a tail requirement
 
@@ -66,7 +66,7 @@ Each language has one executable with three variants selected by `--variant`: `p
 
 ### Why the consumers copy the receive loop
 
-The shared `line-consumer` has no hook between "received" and "done", and `common/` is not edited from a chapter example. Each language therefore copies the minimal receive loop (bound UDP socket, parse, sequence tracking, `done_ns - intended_emit_ns`) and adds the handling policy. The lane lookup reuses the common code where it is public: `line::lane_for` in C++, and `lowlat_consumer.handle` and `GapTracker` in Python. Java has its own eight-line copy because the common `Lanes` class is package-private.
+The shared `line-consumer` has no hook between "received" and "done", and `common/` is not edited from a chapter example. Each language therefore copies the minimal receive loop (bound UDP socket, parse, sequence tracking, `done_ns - intended_emit_ns`) and adds the handling policy. The lane lookup reuses the common code where it is public: `line::lane_for` in C++, and `lowlat_consumer.handle` and `GapTracker` in Python. Java has its own copy because the common `Lanes` class is package-private.
 
 ### The handlers
 
@@ -140,11 +140,11 @@ The batch path only stores `intended_emit_ns` and the barcode. When the 32nd par
 
 The bimodal path is the per-parcel path plus one test, `seq % 100 == 0`. The sequence number is deterministic, so exactly 100 of 10,000 parcels are slow and every run is comparable. The slow branch calls `spin` before the completion clock is read, so the slow parcel's latency includes its re-lookup, and the parcels that arrive during the spin sit in the socket buffer until the loop returns. Those queued parcels are why more than 1 % of parcels are slow in latency terms.
 
-The lane lookup result is added to `lane_sink` and printed at the end of the run. An optimiser can remove a lookup whose result nothing reads, which would make the per-parcel work free.
+In C++ and Java the lane lookup result is added to `lane_sink` (`laneSink`) and printed at the end of the run, because an optimiser can remove a lookup whose result nothing reads. CPython runs the call regardless, so Python discards the result.
 
 ### The calibrated busy loop
 
-The slow path is a busy CPU loop, not a sleep. A sleep yields the core: the scheduler runs something else, the timer wakes the thread later, and the cost shows up as scheduler noise instead of work. A real re-lookup holds the core, so the parcels behind it queue, and the loop reproduces that.
+The slow path, in `cpp/src/latdist.cpp`, `latdist-py/src/lowlat_latdist/work.py` and `java/src/main/java/io/patterncatalyst/lowlat/latdist/BusyWork.java`, is a busy CPU loop, not a sleep. A sleep yields the core: the scheduler runs something else, the timer wakes the thread later, and the cost shows up as scheduler noise instead of work. A real re-lookup holds the core, so the parcels behind it queue, and the loop reproduces that.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -158,6 +158,9 @@ std::uint64_t spin(std::uint64_t iterations) noexcept {
   return x;
 }
 
+// Iterations of spin() that take `target_us`. Double the count until a run lasts at
+// least 20 ms (long enough to swamp the clock read), then time five more runs and keep
+// the fastest: a run that was preempted on a busy host measures the scheduler, not the loop.
 std::uint64_t calibrate(std::int64_t target_us) {
   std::uint64_t n = 1 << 12;
   double best_iter_per_ns = 0;
@@ -186,6 +189,11 @@ def spin(iterations: int) -> int:
 
 
 def calibrate(target_us: int) -> int:
+    """Iterations of ``spin`` taking ``target_us``.
+
+    Double the count until a run lasts 20 ms, then time five more runs and keep the
+    fastest: a run preempted on a busy host measures the scheduler, not the loop.
+    """
     n = 1 << 12
     best = 0.0  # iterations per ns
     extra = 0
@@ -202,8 +210,13 @@ def calibrate(target_us: int) -> int:
 ```
 
 ```java
+    /** Written by every {@link #spin}; the volatile store makes the loop's result observable to the JIT. */
     private static volatile long sink;
 
+    private BusyWork() {
+    }
+
+    /** A dependent multiply-add chain: each step needs the previous result. */
     static long spin(long iterations) {
         long x = 0x9E3779B97F4A7C15L;
         for (long i = 0; i < iterations; i++) {
@@ -213,6 +226,12 @@ def calibrate(target_us: int) -> int:
         return x;
     }
 
+    /**
+     * Iterations of {@link #spin} that take {@code targetUs}. Doubles the count until a run lasts
+     * 20 ms, then times eight more runs and keeps the fastest: the early runs are interpreted or
+     * C1-compiled (the JIT's C2 code is faster), and a run preempted on a busy host measures the
+     * scheduler, not the loop.
+     */
     static long calibrate(long targetUs) {
         long n = 1 << 12;
         double best = 0; // iterations per ns
@@ -231,7 +250,7 @@ def calibrate(target_us: int) -> int:
     }
 ```
 
-`spin` is a dependent multiply-add chain. Each step needs the previous result, so the CPU cannot vectorise it and the compiler cannot fold it into a closed form. 
+`spin` is a dependent multiply-add chain. Each step needs the previous result, so the CPU cannot vectorise it and the compiler cannot fold it into a closed form.
 
 Keeping the result observable differs by language, and that is the one place the three diverge. C++ uses an empty `asm volatile("" : "+r"(x))` statement, which tells the compiler the register is read and modified, so the loop must run. Java writes the final value to a `volatile` field, which the JIT must honour. Python needs neither, because the interpreter runs every iteration; the `& _MASK` mask keeps the integer at 64 bits so each step costs the same.
 
@@ -253,7 +272,7 @@ All numbers below come from the committed runs `r01-run1..3` in `examples/01-lat
 
 ### A. Equal throughput, different median
 
-Processed throughput stays at about 1,000 parcels per second in every variant: per-parcel runs measure 1,000.1 to 1,003.3 per second and batch-32 runs 1,003.1 to 1,004.1. The batch figure is about 0.3 % higher because its first completion falls 31 ms into the run, which shortens the measured span; the criterion allows 1 %.
+Processed throughput stays at about 1,000 parcels per second in every variant: per-parcel runs measure 1,000.1 to 1,003.3 per second and batch-32 runs 1,003.1 to 1,004.1. The C++ and Python batch figures are about 0.3 % above their per-parcel ones because the first completion falls 31 ms into the run, which shortens the measured span; the criterion allows 1 %.
 
 | Variant | p50 across runs and languages |
 |---|---|
@@ -272,7 +291,7 @@ The C++ bimodal rows of `r01-run1`, as printed by `verify.log`, show the shape:
 |---|---|---|---|---|
 | 153.7 us | 171.1 us | 4,382.7 us | 6,045.7 us | 6,664.2 us |
 
-p50 and p90 differ by 17 us, p90 and p99 by more than 4 ms. A report that quoted either end alone would be accurate for one group and wrong for the other. p99.9 and max extend past the slow-path length because of queueing.
+p50 and p90 differ by 17 us, p90 and p99 by more than 4 ms. p99.9 and max extend past the slow-path length because of queueing.
 
 The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 8.6 to 22.3 ms in `java-per-parcel` while C++ stays below 0.5 ms. Part 2 treats that runtime cause; here p99.9 exposed it and p50 did not.
 
@@ -280,9 +299,9 @@ The Java runs show a second tail effect. Their notes record `JIT not warmed: fir
 
 The per-parcel median is not a constant of the code. On this untuned host it changed between runs of the same binary: C++ per-parcel p50 was 157 us in `r01-run1`, 74 us in `r01-run2` and 80 us in `r01-run3`. Nothing in the program or the stream changed between those runs. The host runs governor `powersave` and tuned profile `balanced`, so the kernel chooses CPU frequency and idle state at run time. The median shifted by a factor of two; the data do not isolate which setting caused it, because the reports record no frequency or idle-state counters. Part 5 covers tuning the frequency governor and idle states as versioned configuration, and measures its effect.
 
-That variation broke an earlier version of `verify.sh`. It compared the bimodal p50 with the per-parcel p50 from a separate run, requiring the bimodal median to stay under twice the per-parcel median. In `r01-run2` the C++ per-parcel run happened to land at 74 us and the bimodal run at 158 us, so the check failed ("got 158335, need < 147838") although both medians were in the fast mode, far below the 2 ms slow path. The check was comparing two measurements taken at different times under different power states.
+That variation decides how a check is written. A check that requires the bimodal median to stay under twice the per-parcel median of a separate run fails on this host: the live `r01-run2` was evaluated that way, and its `verify.log` records the failure ("got 158335, need < 147838"), because the C++ per-parcel run landed at 74 us and the bimodal run at 158 us. Both medians were in the fast mode, far below the 2 ms slow path; the check compared two measurements taken at different times on an untuned host.
 
-The current check compares within one run. The bimodal p50 must be under a quarter of the same run's measured `slow_path_us`, which is a statement about the bimodal run alone: a median under a quarter of the slow path falls in the fast mode. `RECHECK=results/<run-id>` re-evaluates a committed run without running anything, and `recheck.log` in each of `r01-run1..3` records all 12 criteria passing, including the C++ bimodal check in `r01-run2` that had failed.
+`verify.sh` therefore compares within one run: the bimodal p50 must be under a quarter of the same run's measured `slow_path_us`, so the median falls in the fast mode. `RECHECK=results/<run-id>` re-evaluates a committed run without running anything, and `recheck.log` in each of `r01-run1..3` records all 12 criteria passing, including the C++ bimodal check in `r01-run2` that had failed.
 
 ## Cross-check
 
@@ -308,4 +327,4 @@ Chapter 2 models these effects with Little's Law and Amdahl's Law.
 
 ---
 
-*Verification status: <span class="status status--verified">verified</span> (behavioural). `verify.sh` runs all nine consumer runs and asserts, for each of C++, Python and Java: per-parcel and batch-32 throughput within 1 %; batch-32 p50 at least 10x per-parcel p50; bimodal-1pct p99 at least 20x its own p50; bimodal-1pct p50 under a quarter of the same run's measured slow path. All four criteria held on the committed runs `r01-run1..3`, and `RECHECK` re-evaluated each committed run with all checks passing.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` runs all nine consumer runs and asserts `count` 10,000, `dropped` 0 and a passing `lowlat-report check` for every report, and, for each of C++, Python and Java: per-parcel and batch-32 throughput within 1 %; batch-32 p50 at least 10x per-parcel p50; bimodal-1pct p99 at least 20x its own p50; bimodal-1pct p50 under a quarter of the same run's measured slow path. `RECHECK` evaluated these criteria on the committed reports of `r01-run1..3`, and all 12 held in each run (`recheck.log`). The live runs used the earlier cross-run median check, which failed in `r01-run2` as described above.*

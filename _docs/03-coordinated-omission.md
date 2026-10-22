@@ -16,19 +16,19 @@ By the end of this chapter you can:
 - Configure an HdrHistogram with a fixed range and precision, and read its percentiles without computing a mean.
 - Name the one place where the C, Python and Java ports of HdrHistogram can disagree by a bucket.
 
-## Diagram
-
-{% include excalidraw.html file="03-three-clocks" alt="A timeline of intended emit, actual send, dequeue and done, with three bars below ending at done: intended-time (amber) starts at the belt's schedule, closed-loop at the send of its own request, receipt-time at dequeue." caption="Figure 3.1 — Three clocks on one parcel. Only intended-time starts at the belt's schedule, so only it is charged for the wait." %}
-
 ## Why this matters
 
 The belt never waits. The simulator in this book emits a parcel every millisecond at 1 kHz, on a schedule fixed before the run starts, and a consumer that stops for 200 ms does not slow the belt: 200 parcels pile up behind it, and each one reaches the diverter late. Each of those parcels spent part of the scan-to-divert budget waiting in a socket buffer.
 
 A timer that starts when the consumer picks up a parcel cannot see that wait. Neither can a benchmark that sends its next request only after the previous one returns. Both report a healthy service while the line mis-sorts 200 parcels. This is coordinated omission: the measuring system coordinates with the system under test, so the samples the stall would have produced are never taken.
 
-This chapter builds one experiment that makes the effect visible and puts a number on it, and covers the instruments underneath: the clock and the histogram. Chapter 1 (Part 1) showed that latency is a distribution; here the task is to keep the samples of that distribution intact.
+Chapter 1 showed that latency is a distribution; this chapter keeps the samples of that distribution intact, starting with the clock and the histogram underneath.
 
 The code is in `examples/03-coordinated-omission/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
+
+## Diagram
+
+{% include excalidraw.html file="03-three-clocks" alt="A timeline of intended emit, actual send, dequeue and done, with three bars below ending at done: intended-time (amber) starts at the belt's schedule, closed-loop at the send of its own request, receipt-time at dequeue." caption="Figure 3.1 — Three clocks on one parcel. Only intended-time starts at the belt's schedule, so only it is charged for the wait." %}
 
 ## Clocks
 
@@ -111,7 +111,7 @@ The first two variants come from the same datagrams in the same run. Parcel 5000
 
 All percentiles in this book come from HdrHistogram, never from sorting samples or hand-written percentile code. The kits in `examples/common/MEASUREMENT.md` use the same parameters in all three languages: values in nanoseconds, lowest discernible value 1, highest trackable value 3,600,000,000,000 (one hour), 3 significant digits. The range is fixed at construction, so recording never allocates and costs the same on every call. Three significant digits means each recorded value is held to within 0.1 percent, whether it is 100 ns or 100 ms. Because the parameters are identical, a histogram encoded by one kit decodes in the other two.
 
-`record_corrected(value, expected_interval)` in C and Python, and `recordValueWithExpectedInterval` in Java, record the value and then back-fill. If a request took 200 ms and the client was supposed to issue one every 1 ms, the call also records the values 199 ms, 198 ms and so on down to 1 ms: the latencies of the requests that a client on schedule would have issued during the stall and that would have waited behind it. A 200 ms sample becomes 200 samples, which is why the corrected count is 10,199 rather than 10,000.
+Each kit's `record_corrected(value, expected_interval)` calls the library's correction, `hdr_record_corrected_value` in C, `record_corrected_value` in Python and `recordValueWithExpectedInterval` in Java, which records the value and then back-fills. If a request took 200 ms and the client was supposed to issue one every 1 ms, the call also records the values 199 ms, 198 ms and so on down to 1 ms: the latencies of the requests that a client on schedule would have issued during the stall and that would have waited behind it. A 200 ms sample becomes 200 samples, which is why the C and Java corrected count is 10,199 rather than 10,000. The Python port's loop takes one more step: after the last back-filled value of at least one interval it also records the remainder below the interval, 0.12 to 0.24 ms in these runs, so Python counts 10,200. That value sits at the bottom of the ramp, far below p99.
 
 Java also offers `copyCorrectedForCoordinatedOmission` for a finished histogram. Post-hoc correction gives the same total count as inline but may place a percentile one bucket apart, because the copy back-fills from bucketed values. The experiment corrects inline.
 
@@ -282,15 +282,21 @@ The closed loop is the standard benchmark shape: start, work, finish, then issue
         }
 ```
 
-Both recorders receive the same `latency_ns`. The corrected one back-fills with an expected interval of 1 ms, the loop's pacing. The pacing differs by language for a reason worth knowing. C++ sleeps to an absolute deadline with `clock_nanosleep(TIMER_ABSTIME)`, which hands the kernel the deadline and needs no remaining-time bookkeeping after a signal. Python and Java compute the remaining time and sleep for that long, because neither exposes an absolute-deadline sleep in its standard library. The clock starts at the request's own `start_ns`, so no request can be charged for time it spent queued. That is the defect.
+Both recorders receive the same `latency_ns`. The corrected one back-fills with an expected interval of 1 ms, the loop's pacing. The pacing differs by language. C++ sleeps to an absolute deadline with `clock_nanosleep(TIMER_ABSTIME)`, which hands the kernel the deadline and needs no remaining-time bookkeeping after a signal. Python and Java compute the remaining time and sleep for that long, because neither exposes an absolute-deadline sleep in its standard library. The clock starts at the request's own `start_ns`, so no request can be charged for time it spent queued. That is the defect.
 
 ## Measure
 
-Run `./verify.sh` in `examples/03-coordinated-omission/`. It builds the three programs, runs each for 10 s at 1,000 parcels/s with the stall, runs each again as a control with no stall, runs the clock probe, then asserts the criteria below and runs `lowlat-report check` on every report. It exits non-zero if the effect is absent.
+Run the example from the repository root:
+
+```bash
+examples/03-coordinated-omission/verify.sh
+```
+
+It builds the three programs, runs each for 10 s at 1,000 parcels/s with the stall, runs each again as a control with no stall, runs the clock probe, then asserts the criteria below and runs `lowlat-report check` on every report. It exits non-zero if the effect is absent.
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges span the three committed runs, `results/r01-run1` to `r01-run3`. Java and Python run unwarmed.
 
-**Clock read.** `monotonic_ns` through `clock_gettime` costs a p50 of 12 ns in C++ in all three runs, and `std::chrono::steady_clock` costs 13 ns. `System.nanoTime` costs 13 ns. Python is about four times higher: `time.monotonic_ns` 46 to 47 ns and `time.perf_counter_ns` 45 ns. The `tsc` clocksource is read in user space through the vDSO, which is why a read costs tens of nanoseconds and not a syscall. On `acpi_pm`, which this host lists as available, the same read would cost far more. Timing work shorter than a few clock reads measures the clock.
+**Clock read.** `monotonic_ns` through `clock_gettime` costs a p50 of 12 ns in C++ in all three runs, and `std::chrono::steady_clock` costs 13 ns. `System.nanoTime` costs 13 ns. Python is about four times higher: `time.monotonic_ns` 46 to 47 ns and `time.perf_counter_ns` 45 ns. The `tsc` clocksource is read in user space through the vDSO, which is why a read costs tens of nanoseconds and not a syscall. `acpi_pm`, which this host also lists, is not readable through the vDSO, so each read would be a system call. Timing work shorter than a few clock reads measures the clock.
 
 **The stall, four ways (p99).**
 
@@ -301,7 +307,7 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 | closed-loop naive | 0.5 to 0.8 us | 17.3 to 19.9 us | 6.3 to 7.1 us |
 | closed-loop corrected | 98.1 to 98.2 ms | 98.2 ms | 99.2 to 99.3 ms |
 
-Receipt time and the naive closed loop stay in microseconds, while intended time and the corrected loop land near 100 ms. The arithmetic explains that. The 200 stalled parcels are 2 percent of 10,000 samples, and their waits fall linearly from about 200 ms to zero. The p99 sits 1 percent from the top, which is the midpoint of that ramp, about 100 ms. The corrected loop has the same shape: 199 back-filled values from 199 ms down to 1 ms plus the 200 ms sample, so its p99 is also near 100 ms. The corrected count is 10,199 in C++ and Java and 10,200 in Python.
+The receipt-time and closed-loop naive variants stay in microseconds, while intended-time and closed-loop corrected land near 100 ms. The arithmetic explains that. The 200 stalled parcels are 2 percent of 10,000 samples, and their waits fall linearly from about 200 ms to zero. The p99 sits 1 percent from the top, which is the midpoint of that ramp, about 100 ms. The corrected loop has the same shape: 199 back-filled values from 199 ms down to 1 ms plus the 200 ms sample, so its p99 is also near 100 ms.
 
 The maximum cannot separate the methods. Every variant records the stalled sample, so the max is about 200 ms everywhere, including receipt time (C++ 200.3 ms in all three runs) and the naive closed loop (C++ 200.1 ms). The naive methods hold the stall as one sample. The p99 shows that it hurt 200 parcels.
 
@@ -311,7 +317,7 @@ The maximum cannot separate the methods. Every variant records the stalled sampl
 
 ## Cross-check
 
-`lowlat-report check` decodes each report's HdrHistogram, recomputes p50, p90, p99, p99.9 and max from the decoded counts, and asserts they equal the emitted values, using the rank convention of the writing language. The variants also cross-check each other. The corrected loop and the intended-time clock reach their numbers by different mechanisms, a back-filled client and a schedule clock, and still agree within 3 percent: 98.1 ms against 100.4 ms in C++ and 99.2 ms against 100.9 ms in Java, comparing the lowest values of each range. When a repaired closed loop agrees with a clock that starts at the schedule, the repair is doing what it claims.
+`lowlat-report check` decodes each report's HdrHistogram, recomputes p50, p90, p99, p99.9 and max from the decoded counts, and asserts they equal the emitted values, using the rank convention of the writing language. The variants also cross-check each other. The corrected loop and the intended-time clock reach their numbers by different mechanisms, a back-filled client and a schedule clock, and still agree within 3 percent: 98.1 ms against 100.4 ms in C++ and 99.2 ms against 100.9 ms in Java, comparing the lowest values of each range. Two independent mechanisms agreeing confirms the back-fill.
 
 ## What you learned
 
@@ -332,4 +338,4 @@ The next chapter, Benchmark harnesses: Google Benchmark, pyperf and JMH, takes t
 
 ---
 
-*Verification status: <span class="status status--verified">verified</span> (behavioural). `verify.sh` asserts, for each of C++, Python and Java, that intended-time p99 is at least 50 ms, receipt-time p99 is under 1 ms, closed-loop-corrected p99 is within 2x of intended-time p99, closed-loop-naive p99 is under 1 ms, the control run's intended-time p99 is under 1 ms and its corrected p99 is within 2x of naive, and that `lowlat-report check` passes on every report. It held on r01-run1, r01-run2 and r01-run3 on the bare-metal host described above.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts, for each of C++, Python and Java, that intended-time p99 is at least 50 ms, receipt-time p99 is under 1 ms, closed-loop-corrected p99 is within 2x of intended-time p99, closed-loop-naive p99 is under 1 ms, the control run's intended-time p99 is under 1 ms and its corrected p99 is within 2x of naive, and that `lowlat-report check` passes on every report. It held on `r01-run1`, `r01-run2` and `r01-run3` on the bare-metal host described above.*

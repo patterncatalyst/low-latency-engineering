@@ -34,7 +34,7 @@ A microbenchmark has four enemies, and each harness handles them differently.
 
 **One run is one sample of the machine.** Frequency scaling, a neighbouring process, a cold cache or an unlucky memory layout shift a result by more than the effect being measured. The answer is repetition at the right level. Google Benchmark repeats the whole timed loop (`Repetitions`). pyperf starts fresh worker processes, so each gets its own address-space layout and hash seed. JMH starts fresh JVMs (forks), so each gets its own JIT history. Repeating inside one process or JVM cannot reveal variation that lives in the process itself.
 
-**Early iterations are not representative.** A JVM interprets, then compiles with C1, then with C2. CPython specializes hot bytecode after a few executions. JMH and pyperf both run warm-up iterations first and discard them from the result. Google Benchmark has no managed warm-up for a native function with no runtime to warm; it runs each repetition for a minimum time instead.
+**Early iterations are not representative.** A JVM interprets, then compiles with C1, then with C2. CPython specializes hot bytecode after a few executions. JMH and pyperf both run warm-up iterations first and discard them from the result. A native function has no JIT to warm. Google Benchmark's optional warm-up (`MinWarmUpTime`) is not set here; each repetition runs for a minimum time instead.
 
 **The optimizer removes work nobody observes.** A pure function whose result is unused has no observable effect, and a compiler is allowed to delete it. The benchmark then times an empty loop and reports a flattering, meaningless number. A harness cannot prevent this. It supplies tools (`benchmark::DoNotOptimize`, `benchmark::ClobberMemory`, `Blackhole.consume`) and the benchmark author has to use them.
 
@@ -149,7 +149,7 @@ Where the languages diverge, the divergence is the point. C++ and Java can both 
 
 ### The harness invocations
 
-From `verify.sh`:
+Three separate commands from `verify.sh`, each copied verbatim:
 
 ```bash
 "$(cpp_bin check-digit-bench)" --benchmark_out="$OUT/gbench.json" \
@@ -165,11 +165,17 @@ The C++ binary takes its repetition count from the source, so the command only c
 
 ## Measure
 
-Run the example from `examples/04-benchmark-harnesses/` with `./verify.sh`; set `ALLOW_BUSY=1` on a host that is running other work, and accept noisier numbers. The script builds, runs the parity tests, runs the three harnesses and fails unless the effects below appear.
+Run the example from the repository root:
 
-Every number below was measured on a bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, turbo enabled, untuned. Ranges are across the three committed runs `r01-run1` to `r01-run3`.
+```bash
+examples/04-benchmark-harnesses/verify.sh
+```
 
-**C++, Google Benchmark, 30 repetitions.** The guarded median is 4.7 to 4.8 ns per check digit (4.721, 4.767 and 4.766 ns). The custom p99, which is the slowest repetition, is 4.75 to 4.91 ns. That spread of about 0.2 ns across repetitions says the benchmark is stable on this host. It says nothing about the worst single call.
+Set `ALLOW_BUSY=1` on a host that is running other work, and accept noisier numbers. The script builds, runs the parity tests, runs the three harnesses and fails unless the effects below appear.
+
+Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges are across the three committed runs `r01-run1` to `r01-run3`.
+
+**C++, Google Benchmark, 30 repetitions.** The guarded median is 4.7 to 4.8 ns per check digit (4.721, 4.767 and 4.766 ns). The custom p99, which is the slowest repetition, is 4.75 to 4.91 ns, within 0.15 ns of the median in every run. That spread says the benchmark is stable on this host. It says nothing about the worst single call.
 
 **Java, JMH SampleTime, 3 forks.** The guarded p50 is 32 to 33 ns per check digit. The tail widens: p99 is 38 to 49 ns, p99.9 is 50 to 145 ns, and the maximum sampled invocation is 177 to 262 ns per check digit. The shape is a tight body and a tail that moves between runs, which is what a distribution looks like and what a single number hides. Run 1 has the lightest tail and run 2 the heaviest.
 
@@ -181,11 +187,11 @@ Every number below was measured on a bare-metal host, Intel Core i7-11800H, 16 l
 
 The eliminated C++ median is a fraction of a nanosecond (about 1.8e-10 ns in `gbench.json`), and the Java eliminated p50 is 0 ns. `verify.sh` floors the divisor at 0.01 ns so the ratio stays finite, so the ratios are lower bounds, not measurements of how fast nothing is: at least 472x in C++ (472x, 476x, 476x) and at least 3,200x in Java (3,200x, 3,200x, 3,300x). The gap exceeds a factor of 10 by orders of magnitude, and a tool that reports 0 ns for a function that does 17 multiplications has told you the benchmark is broken, not that the function is free.
 
-**Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,895 to 1,930 ns per check, against a median measured value of 1,987 to 2,000 ns. The warm-up value is a few percent lower, not higher, and within the spread of the run. Each pyperf value already averages 64 calls of 1,024 checks, so the interpreter is warm before the first value finishes. A function with a long first call would show a larger difference, and pyperf would keep the evidence in the JSON.
+**Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,895 to 1,930 ns per check, against a median measured value of 1,987 to 2,000 ns. The warm-up value is a few percent lower, not higher, and within the spread of the run. Each pyperf value already times 64 calls of 1,024 checks, so the interpreter is warm before the first value finishes. A function with a long first call would show a larger difference, and pyperf would keep the evidence in the JSON.
 
 **The tuning warning.** pyperf prints that the result may be unstable and advises `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are therefore labelled untuned and are not comparable with a tuned VM later in the book.
 
-**Against the budget.** Even the slowest figure here, about 2 us per check digit in CPython, is microsecond-scale against a 480 ms decision window. The check digit is not where the scan-to-divert budget goes. A microbenchmark answers a narrow question, how much does this function cost in isolation, and it cannot answer how long a parcel waits under load. Chapter 3 covers measuring that, and the two instruments answer different questions.
+**Against the budget.** Even the slowest figure here, under 3 us per check digit in CPython, is microsecond-scale against a 480 ms decision window. The check digit is not where the scan-to-divert budget goes. A microbenchmark answers a narrow question, how much does this function cost in isolation, and it cannot answer how long a parcel waits under load. Chapter 3 covers measuring that, and the two instruments answer different questions.
 
 ## Cross-check
 

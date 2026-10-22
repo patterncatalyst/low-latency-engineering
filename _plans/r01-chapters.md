@@ -88,9 +88,9 @@ requirements" or the PRD. No em-dash runs; plain declarative sentences.
 
 | Step | Status |
 |---|---|
-| S21 Ch0 | todo |
-| S22 Ch1 | todo |
-| S23 Ch2 | todo |
-| S24 Ch3 | todo |
-| S25 Ch4 | todo |
-| Opus validation | todo |
+| S21 Ch0 | done |
+| S22 Ch1 | done |
+| S23 Ch2 | done |
+| S24 Ch3 | done |
+| S25 Ch4 | done |
+| Opus validation | done: 11 criteria met after fixes; every number recomputed from r01-run1..3 |
