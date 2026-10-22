@@ -35,7 +35,7 @@ Usage: check-prereqs.sh [--vm] [-h|--help]
 
   (no flag)   check the host: OS, C++23 toolchain, CMake, JDK 25, Maven,
               Python 3.14, uv, pinned protoc, Docker Engine, KVM/libvirt,
-              perf, jq, rsync, SSH key
+              perf, async-profiler (optional), jq, rsync, SSH key
   --vm        check the lab guest (lowlat-target) over SSH instead: PREEMPT_RT
               kernel, pinned Temurin version, stress-ng, cyclictest, ptp4l, phc2sys,
               tuned, docker, readiness marker; isolation and vcpupin state (info only)
@@ -302,8 +302,19 @@ check_virt() {
   need_tool "cloud-localds" cloud-localds FAIL "sudo dnf install cloud-utils"
 }
 
+# Optional: examples/05-jvm-costs adds an allocation profile when the pinned release is unpacked.
+check_async_profiler() {
+  local lib="$HOME/.cache/lowlat/async-profiler-$ASYNC_PROFILER_VERSION-linux-x64/lib/libasyncProfiler.so"
+  if [[ -f "$lib" ]]; then
+    record PASS "async-profiler $ASYNC_PROFILER_VERSION (info)" "$lib"
+  else
+    record WARN "async-profiler $ASYNC_PROFILER_VERSION (info)" "not unpacked (optional; example 05 skips its allocation profile)" "run scripts/deps/install-async-profiler.sh"
+  fi
+}
+
 check_misc() {
   need_tool "perf" perf WARN "sudo dnf install perf"
+  check_async_profiler
   need_tool "jq" jq FAIL "sudo dnf install jq"
   need_tool "rsync" rsync FAIL "sudo dnf install rsync"
   if [[ -f "$HOME/.ssh/id_ed25519.pub" ]]; then

@@ -167,12 +167,13 @@ flags) and once without them, for the time-to-ready launches, which start a plai
 - The C++ first-window / steady ratio (no JIT).
 - The C++ pmr arena: the heap-allocation counter stays at zero.
 - The `aot-cache` first-window p99 next to `warmed` and `--unwarmed`.
-- With async-profiler 4.6 unpacked under `~/.cache/lowlat`, the allocation event's share
-  by leaf frame for the `escaping` benchmark, against JMH's bytes per operation.
+- With async-profiler 4.6 unpacked under `~/.cache/lowlat` (optional; install it with
+  `scripts/deps/install-async-profiler.sh`, user-local and sha256-verified), the allocation
+  event's share by leaf frame for the `escaping` benchmark, against JMH's bytes per operation.
 
 ## Observation surfaces
 
-JMH `-prof gc` (and `-prof async` when async-profiler is present), JFR events
+JMH `-prof gc` (and `-prof async` when async-profiler is present; `scripts/deps/install-async-profiler.sh`), JFR events
 `jdk.Compilation` and `jdk.Deoptimization`, the unified GC log (`-Xlog:gc*,safepoint`),
 `-Xlog:aot`, and the `runtime` block of each report. No dashboard panel: Part 7 wires the
 off-path telemetry, and there is none by design until then.

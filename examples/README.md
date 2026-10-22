@@ -9,6 +9,7 @@ contract, `contracts/proto`, compiled by one pinned protoc.
 ```
 versions.env                 (repo root) pinned versions read by scripts
 scripts/deps/build-protobuf.sh   builds protobuf + abseil into ~/.cache/lowlat/prefix
+scripts/deps/install-async-profiler.sh   unpacks the pinned async-profiler (optional) under ~/.cache/lowlat
 scripts/gen-python-proto.sh      regenerates the Python protobuf modules
 examples/
   CMakeLists.txt, CMakePresets.json, cmake/deps.cmake    C++ superproject
@@ -31,6 +32,13 @@ never touches system packages):
 
 ```
 scripts/deps/build-protobuf.sh
+```
+
+Optional, for the allocation profile in `05-jvm-costs` (user-local, sha256-verified, no sudo;
+`scripts/check-prereqs.sh` warns when it is absent):
+
+```
+scripts/deps/install-async-profiler.sh
 ```
 
 C++ (from `examples/`):
