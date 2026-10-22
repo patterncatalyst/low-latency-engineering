@@ -9,6 +9,24 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(CTest)
 include(cmake/deps.cmake)
 
+# Warning flags, linked PRIVATE by every first-party target (not by lowlat_proto,
+# which compiles generated code).
+add_library(lowlat_warnings INTERFACE)
+add_library(lowlat::warnings ALIAS lowlat_warnings)
+target_compile_options(lowlat_warnings INTERFACE -Wall -Wextra -Wpedantic)
+
+# -DLOWLAT_SANITIZE=address,undefined (the "sanitize" preset) instruments the
+# first-party targets through the same interface. The generated protobuf code
+# (lowlat_proto) stays uninstrumented on purpose: protobuf's headers switch on
+# extra has-bit checks under ASan that the pinned, unsanitized libprotobuf does
+# not match.
+set(LOWLAT_SANITIZE "" CACHE STRING "Comma-separated -fsanitize= list for first-party targets")
+if(LOWLAT_SANITIZE)
+  target_compile_options(lowlat_warnings INTERFACE
+    -fsanitize=${LOWLAT_SANITIZE} -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
+  target_link_options(lowlat_warnings INTERFACE -fsanitize=${LOWLAT_SANITIZE})
+endif()
+
 # Pinned protobuf from the lowlat prefix (scripts/deps/build-protobuf.sh),
 # never the distro package.
 find_package(Protobuf CONFIG REQUIRED)
