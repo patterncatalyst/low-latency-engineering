@@ -2,7 +2,8 @@ package io.patterncatalyst.lowlat.line;
 
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
-import java.util.concurrent.atomic.AtomicLong;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 
 /**
  * Where a {@link ParcelHandler} reports that a parcel is done. Completing records
@@ -20,15 +21,32 @@ import java.util.concurrent.atomic.AtomicLong;
  * happens-before edge that publishes everything the owner wrote; no lock or volatile is needed
  * on the recording path. Once the handler has handed over, the receive thread must not call
  * {@code complete}, and the owner must use the overloads that carry the sequence number (the
- * receiver's {@code begin} only feeds the error message of the two-argument form).
+ * receiver's {@code begin} sets the seq the two-argument form uses for its error message and
+ * its window).
+ *
+ * <p><b>Cache lines.</b> The receive thread writes the seq for every parcel and the owner writes
+ * the count and the done times for every parcel. The seq lives in a {@link SeqCell} padded on
+ * both sides, so a hand-off to a decide thread does not add a line ping-pong to the path Ch7
+ * measures.
  */
 public final class Completion {
 
+    private static final VarHandle SEQ;
+
+    static {
+        try {
+            SEQ = MethodHandles.lookup().findVarHandle(SeqCell.class, "value", long.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     private final LatencyRecorder recorder;
     private final WindowedRecorders windows; // null when the run has no window
-    // Written by the receive thread per parcel, read by an owner thread only for an error message:
-    // opaque access is race-free without the fence a volatile write costs on the measured path.
-    private final AtomicLong seq = new AtomicLong();
+    // Written by the receive thread per parcel, read by an owner thread for the error message and
+    // the window of the two-argument complete: opaque access is race-free without the fence a
+    // volatile write costs on the measured path.
+    private final SeqCell seq = new SeqCell();
     private long count;
     private long firstDoneNs;
     private long lastDoneNs;
@@ -56,7 +74,7 @@ public final class Completion {
      *     and this JVM are not on one monotonic clock
      */
     public void complete(long intendedEmitNs, long doneNs) {
-        complete(seq.getOpaque(), intendedEmitNs, doneNs);
+        complete((long) SEQ.getOpaque(seq), intendedEmitNs, doneNs);
     }
 
     /**
@@ -95,8 +113,25 @@ public final class Completion {
         return lastDoneNs;
     }
 
-    /** The receiver sets the seq being handled, for the error message. */
+    /** The receiver sets the seq being handled (error message and window of the two-argument form). */
     void begin(long seq) {
-        this.seq.setOpaque(seq);
+        SEQ.setOpaque(this.seq, seq);
+    }
+
+    // Padding by inheritance: HotSpot lays superclass fields out before subclass fields, so
+    // `value` has 64 bytes of padding before it (Lead) and after it (Tail). (@Contended needs
+    // -XX:-RestrictContended for application classes; this works without flags.)
+    @SuppressWarnings("unused")
+    static class Lead {
+        long p01, p02, p03, p04, p05, p06, p07, p08;
+    }
+
+    static class Value extends Lead {
+        long value;
+    }
+
+    @SuppressWarnings("unused")
+    static final class SeqCell extends Value {
+        long q01, q02, q03, q04, q05, q06, q07, q08;
     }
 }

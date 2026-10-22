@@ -438,6 +438,11 @@ static_assert(line::ParcelHandler<DecideThread>);
 
 }  // namespace
 
+TEST(ConsumerOwnership, ReceiveAndOwnerFieldsAreOnSeparateCacheLines) {
+  EXPECT_TRUE(line::Completion::writers_on_separate_lines());
+  EXPECT_GE(alignof(line::Completion), std::hardware_destructive_interference_size);
+}
+
 TEST(ConsumerOwnership, CompletionOnASecondThreadRecordsEveryReceivedParcel) {
   auto cfg = test_config();
   cfg.expect = 400;

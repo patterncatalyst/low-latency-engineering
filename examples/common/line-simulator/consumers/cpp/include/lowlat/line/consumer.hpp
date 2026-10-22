@@ -8,11 +8,13 @@
 #include <array>
 #include <atomic>
 #include <cerrno>
+#include <cstddef>
 #include <concepts>
 #include <cstdint>
 #include <filesystem>
 #include <format>
 #include <functional>
+#include <new>
 #include <optional>
 #include <span>
 #include <string>
@@ -164,7 +166,13 @@ class WindowedRecorders {
 /// publishes the recorder's contents; no lock or atomic is needed on the
 /// recording path. Once the handler has handed over, the receive thread must not
 /// call `complete`, and the owner must use the overloads that take `seq` (the
-/// loop's `begin` only feeds the error message of the two-argument form).
+/// loop's `begin` sets the seq the two-argument form uses for its error message
+/// and its window).
+///
+/// Cache lines. The receive thread writes `seq_` for every parcel and the owner
+/// writes `count_` and the done times for every parcel, so the two groups sit on
+/// separate cache lines: without that, a hand-off to a decide thread would add a
+/// line ping-pong to the very path Ch7 measures.
 class Completion {
  public:
   explicit Completion(measure::Recorder& latency, WindowedRecorders* windows = nullptr) noexcept
@@ -201,13 +209,24 @@ class Completion {
   void begin(std::uint64_t seq) noexcept { seq_.store(seq, std::memory_order_relaxed); }
 
  private:
-  measure::Recorder* latency_;
-  WindowedRecorders* windows_;
-  std::atomic<std::uint64_t> seq_ = 0;
-  std::uint64_t count_ = 0;
+  static constexpr std::size_t kLine = std::hardware_destructive_interference_size;
+
+  measure::Recorder* latency_;   // read-only after construction
+  WindowedRecorders* windows_;   // read-only after construction
+  alignas(kLine) std::atomic<std::uint64_t> seq_ = 0;  // written by the receive thread
+  alignas(kLine) std::uint64_t count_ = 0;             // written by the owner thread
   std::int64_t first_done_ns_ = 0;
   std::int64_t last_done_ns_ = 0;
+
+ public:
+  /// True when the receive-written `seq_` and the owner-written fields are on different
+  /// cache lines (checked by a static_assert below and by the tests).
+  [[nodiscard]] static constexpr bool writers_on_separate_lines() noexcept {
+    return offsetof(Completion, count_) / kLine != offsetof(Completion, seq_) / kLine &&
+           offsetof(Completion, last_done_ns_) / kLine != offsetof(Completion, seq_) / kLine;
+  }
 };
+static_assert(Completion::writers_on_separate_lines());
 
 /// The per-parcel hook: `handler(const v1::ParcelEvent&, Completion&)`, called
 /// once per new (in-order or after a gap) parcel, after the loop has parsed and
