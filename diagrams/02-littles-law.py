@@ -18,7 +18,7 @@ nodes = [
     {"x": 250, "y": 110, "w": 170, "h": 64, "style": "accent",
      "lines": ["Queue: L parcels", "waiting + in service"]},
     {"x": 470, "y": 110, "w": 160, "h": 64, "style": "sub",
-     "lines": ["Handler", "residence time W"]},
+     "lines": ["Handler", "variable service time"]},
     {"x": 690, "y": 110, "w": 160, "h": 64, "style": "sub",
      "lines": ["Departures", "10,000 parcels"]},
     {"x": 250, "y": 268, "w": 170, "h": 60, "style": "user",

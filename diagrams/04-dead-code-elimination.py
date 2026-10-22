@@ -18,19 +18,20 @@ bands = [
 
 nodes = []
 edges = []
-for lang, cy, guard, big in (("C++", 95, "DoNotOptimize(result)", "472-476x lower"),
-                             ("Java", 285, "Blackhole.consume(result)", "3,200-3,300x lower")):
+for lang, cy, guard, stat, big in (
+        ("C++", 95, "DoNotOptimize(result)", "median 4.7-4.8 ns", "at least 472x lower"),
+        ("Java", 285, "Blackhole.consume(result)", "p50 32-33 ns", "at least 3,200x lower")):
     nodes += [
         {"x": 35, "y": cy - 25, "w": 60, "h": 50, "style": "user", "lines": [lang]},
         {"x": 120, "y": cy - 28, "w": 160, "h": 56, "style": "sub", "lines": ["guarded", guard]},
-        {"x": 305, "y": cy - 28, "w": 120, "h": 56, "style": "ink", "lines": ["median", "work measured"]},
-        {"x": 460, "y": cy - 28, "w": 150, "h": 56, "style": "accent", "lines": ["eliminated", "result unused: removed"]},
-        {"x": 655, "y": cy - 28, "w": 195, "h": 56, "style": "ghost", "lines": [big, "median: measured nothing"]},
+        {"x": 305, "y": cy - 28, "w": 140, "h": 56, "style": "ink", "lines": [stat, "work measured"]},
+        {"x": 475, "y": cy - 28, "w": 150, "h": 56, "style": "accent", "lines": ["eliminated", "result unused: removed"]},
+        {"x": 655, "y": cy - 28, "w": 195, "h": 56, "style": "ghost", "lines": ["~0 ns", big]},
     ]
     edges += [
         {"x1": 95, "y1": cy, "x2": 120, "y2": cy},
         {"x1": 280, "y1": cy, "x2": 305, "y2": cy},
-        {"x1": 610, "y1": cy, "x2": 655, "y2": cy, "amber": True, "dashed": True},
+        {"x1": 625, "y1": cy, "x2": 655, "y2": cy, "amber": True, "dashed": True},
     ]
 
 nodes += [

@@ -39,7 +39,7 @@ for i, t in enumerate(labels):
 nodes.append({"x": 260, "y": 300, "w": 364, "h": 46, "style": "accent",
               "lines": ["handle 32 together"]})
 nodes.append({"x": 735, "y": 300, "w": 120, "h": 46, "style": "ink",
-              "lines": ["p50 ~15.2 ms", "C++, Python, Java"]})
+              "lines": ["p50 15.2-16.1 ms", "C++, Python, Java"]})
 edges.append({"x1": 624, "y1": 323, "x2": 735, "y2": 323})
 
 notes = [

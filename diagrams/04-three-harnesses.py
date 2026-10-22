@@ -13,8 +13,8 @@ g.OUT = os.path.join(ROOT, "assets", "diagrams")
 bands = [{"x": 215, "y": 50 + 100 * i, "w": 645, "h": 90} for i in range(3)]
 
 lanes = [
-    ("C++", ["Google Benchmark 1.10.0", "DoNotOptimize, 30 repetitions"], ["median, p99", "across 30 repetitions"]),
-    ("Python", ["pyperf 2.10.0", "6 processes, 3 warm-ups each"], ["median, p99", "24 measured values"]),
+    ("C++", ["Google Benchmark 1.10.0", "DoNotOptimize, 30 repetitions"], ["median, p99", "p99 = slowest of 30 reps"]),
+    ("Python", ["pyperf 2.10.0", "6 processes, 3 warm-ups each"], ["median, p99", "of 24 measured values"]),
     ("Java", ["JMH 1.37 SampleTime", "3 forks, warm-up, Blackhole"], ["p50, p99, p99.9", "every sampled invocation"]),
 ]
 

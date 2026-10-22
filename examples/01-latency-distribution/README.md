@@ -16,8 +16,9 @@ handled. Throughput is equal; p50 is about 15 ms instead of about 0.1 ms.
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
 a scanner no-read) takes a slow re-lookup path of about 2 ms. The median does
 not move. p99 jumps by an order of magnitude, because the slow parcel and the
-one or two parcels queued behind it all land in the tail. A mean would report
-roughly 120 us and describe neither group.
+parcels queued behind it all land in the tail: in r01-run1..3, 2.9 to 5.0 % of
+parcels took 1 ms or more, and p99 was 2.5 to 6.3 ms. A single summary number
+describes neither group.
 
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
 startup to about 2 ms, and not a sleep. A sleep yields the core: the OS runs
@@ -109,7 +110,8 @@ All reports must also have `count = 10000`, `dropped = 0`, and pass
 
 Criterion 3 depends on the 1 % boundary: exactly 100 of 10,000 parcels are slow,
 so p99 sits where the slow parcels and the parcels queued behind them meet
-(about 1 to 2 ms). The ratio therefore also depends on how small the median is.
+(2.5 to 6.3 ms in r01-run1..3). The ratio therefore also depends on how small the
+median is.
 On a loaded host the median grows and the margin shrinks.
 
 ## Verification status

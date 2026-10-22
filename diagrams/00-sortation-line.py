@@ -53,7 +53,7 @@ notes = [
     {"x": 440, "y": 28, "text": "scan-to-divert deadline = distance / belt speed ~ 480 ms",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 850, "y": Y + H + 40, "text": "belt flow ->", "anchor": "end", "size": 12},
-    {"x": 600, "y": 395, "text": "The belt never waits: a late decision is a mis-sort.",
+    {"x": 440, "y": 395, "text": "The belt never waits: a late decision is a mis-sort.",
      "anchor": "middle", "size": 12},
 ]
 

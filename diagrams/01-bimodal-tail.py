@@ -18,14 +18,14 @@ nodes = [
     {"x": 60, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#98"]},
     {"x": 126, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#99"]},
     {"x": 196, "y": 96, "w": 220, "h": 50, "style": "accent",
-     "lines": ["#100 slow path", "busy loop, holds the core"]},
+     "lines": ["#100 slow path ~2 ms", "busy loop, holds the core"]},
     {"x": 426, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#101"]},
     {"x": 492, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#102"]},
     {"x": 558, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#103"]},
     {"x": 624, "y": 96, "w": 56, "h": 50, "style": "sub", "lines": ["#104"]},
-    {"x": 40, "y": 250, "w": 230, "h": 70, "style": "ink", "lines": ["Fast mode", "99 parcels in 100"]},
+    {"x": 40, "y": 250, "w": 230, "h": 70, "style": "ink", "lines": ["Fast mode", "p50 94-190 us"]},
     {"x": 400, "y": 250, "w": 240, "h": 70, "style": "ink",
-     "lines": ["Slow mode ~2 ms", "slow parcel + 1-2 behind"]},
+     "lines": ["Slow mode", "p99 2.5-6.3 ms", "#100 and the parcels behind it"]},
     {"x": 670, "y": 250, "w": 190, "h": 70, "style": "ghost",
      "lines": ["one summary number", "describes neither group"]},
 ]
@@ -37,10 +37,10 @@ edges = [
 ]
 
 notes = [
-    {"x": 440, "y": 28, "text": "p50 stays in the fast mode; p99 lands in the ~2 ms slow mode",
+    {"x": 440, "y": 28, "text": "p50 stays in the fast mode; p99 lands in the millisecond slow mode",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 489, "y": 88, "text": "queued behind it", "anchor": "middle", "size": 11},
-    {"x": 440, "y": 365, "text": "1 parcel in 100 takes the slow path; the median never sees it.",
+    {"x": 440, "y": 365, "text": "1 parcel in 100 takes the slow path and delays the next few; the median never sees it.",
      "anchor": "middle", "size": 12},
 ]
 

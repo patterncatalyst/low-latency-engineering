@@ -43,9 +43,9 @@ by `scripts/generate_diagram.py`. Never hand-edit generated files.
 | Name | Fig | Chapter | Shows |
 |---|---|---|---|
 | `00-sortation-line` | 0.1 | Ch0 | exists |
-| `00-lab-topology` | 0.2 | Ch0 | host (unprivileged user space + Docker Engine; no NAT, bridge or firewall change) and the `lowlat-target` KVM guest (PREEMPT_RT kernel, Docker, cyclictest, linuxptp, ptp_kvm); ssh over AF_VSOCK via libvirt-ssh-proxy; passt user-mode networking; snapshots `lab-ready` and `lab-ready-rt`; "VM numbers and bare-metal numbers are never compared" |
+| `00-lab-topology` | 0.2 | Ch0 | host (unprivileged user space + Docker Engine; no NAT, bridge or firewall change) and the `lowlat-target` KVM guest (PREEMPT_RT kernel, Docker, cyclictest from `realtime-tests`, linuxptp, chrony, tuned); ssh over AF_VSOCK via libvirt-ssh-proxy; passt user-mode networking; snapshots `lab-ready` and `lab-ready-rt`; "VM numbers and bare-metal numbers are never compared" |
 | `00-measurement-pipeline` | 0.3 | Ch0 | line-simulator (C++) -> UDP datagrams on 127.0.0.1 -> three consumers (C++, Python, Java) each recording into HdrHistogram -> `lowlat-report/1` JSON with the embedded machine profile (`profile.sh`) -> `lowlat-report check` (schema + decode + recompute percentiles) |
-| `01-batch-vs-per-parcel` | 1.1 | Ch1 | same 1 kHz arrivals, two designs: per-parcel handles each on arrival; batch-32 holds parcels until 32 arrive, so the first waits ~31 ms; equal throughput (<1 % apart), batch p50 ~15.2 ms vs per-parcel p50 74–186 us |
+| `01-batch-vs-per-parcel` | 1.1 | Ch1 | same 1 kHz arrivals, two designs: per-parcel handles each on arrival; batch-32 holds parcels until 32 arrive, so the first waits ~31 ms; equal throughput (<1 % apart), batch p50 15.2–16.1 ms vs per-parcel p50 74–186 us |
 | `01-bimodal-tail` | 1.2 | Ch1 | 1 parcel in 100 takes a ~2 ms slow path (busy loop, holds the core); the one or two parcels behind it queue; the median stays in the fast mode, p99 lands in the slow mode; a single summary number describes neither group |
 | `02-littles-law` | 2.1 | Ch2 | the consumer as a queue: arrivals lambda = 1000/s in, L parcels in the system, residence W; L = lambda x W; L sampled vs lambda x W-bar agree within 0.4–4.0 % (C++ and Java); W-bar is a modelling input only, never a reported latency |
 | `02-amdahl-phases` | 2.2 | Ch2 | one batch as a serial phase plus a parallel phase split over N workers with barriers, at N = 1, 2, 4; serial fraction s ~0.095–0.099; C++ at N=4 predicted 3.10–3.11x, measured 2.78–2.84x; Java predicted 3.09x, measured 2.70–2.74x; Python threads with the GIL < 1x |
@@ -58,8 +58,8 @@ by `scripts/generate_diagram.py`. Never hand-edit generated files.
 
 From `examples/*/results/r01-run{1,2,3}/` (bare-metal host, `powersave`, `balanced`):
 
-- 01: batch-32 p50 15.19–15.25 ms all languages; per-parcel p50 C++ 74–157 us,
-  Python 144–186 us, Java 104–179 us; slow path 2.00–2.11 ms.
+- 01: batch-32 p50 15.18–16.10 ms all languages; per-parcel p50 C++ 74–157 us,
+  Python 144–186 us, Java 104–179 us; slow path 2.00–2.11 ms; bimodal p50 94–190 us, p99 2.47–6.27 ms; 2.9–5.0 % of bimodal parcels at 1 ms or more.
 - 02: Little's law error C++ −0.6 to +0.7 %, Java +0.9 to +4.0 %; Amdahl as above.
 - 03: closed-loop-naive p99 C++ 0.5–0.8 us, Java 6.3–7.1 us; closed-loop-corrected
   p99 C++ 98.1–98.2 ms, Java 99.2–99.3 ms, count 10,199; intended-time p99 C++
@@ -71,8 +71,8 @@ From `examples/*/results/r01-run{1,2,3}/` (bare-metal host, `powersave`, `balanc
 | Step | Status |
 |---|---|
 | Generator seeded per figure (byte-identical regeneration) | done |
-| Ch0 + Ch1 figures | todo |
-| Ch2 figures | todo |
-| Ch3 + Ch4 figures | todo |
-| `_data/diagrams.yml` + `assets/diagrams/README.md` wiring | todo |
-| Opus validation | todo |
+| Ch0 + Ch1 figures | done |
+| Ch2 figures | done |
+| Ch3 + Ch4 figures | done |
+| `_data/diagrams.yml` + `assets/diagrams/README.md` wiring | done |
+| Opus validation | done: 8/8 criteria met after fixes (numbers, semantics, style roles, geometry) |

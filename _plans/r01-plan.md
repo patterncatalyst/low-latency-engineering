@@ -66,7 +66,7 @@ Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM
 | S17 | `examples/03-coordinated-omission` (A naive / B corrected / C open-loop; 200 ms stall; clock read cost; clocksource) | S9 | sonnet | done (control criterion replaced per user) |
 | S18 | `examples/04-benchmark-harnesses` (GS1 check digit: Google Benchmark, JMH SampleTime + Blackhole, pyperf) | S5–S7 | sonnet | done |
 | S19 | Measurement runs: each verify.sh 3×, serial, VM down; results committed | S14–S18 | MAIN | done 2026-10-21: 14/15 exit 0; 01 run2 failed a cross-run check, since replaced and re-evaluated (see follow-ups); 201/201 reports pass `check` |
-| S20 | ≥2 figures per chapter 0–4, wired into `_data/diagrams.yml` | S14–S18 | sonnet | todo |
+| S20 | ≥2 figures per chapter 0–4, wired into `_data/diagrams.yml` | S14–S18 | sonnet | done 2026-10-21: 11 figures (`_plans/r01-figures.md`), Opus-validated |
 | S21–S25 | Ch0–Ch4 prose with codetabs, quoting only S19 results | S19,S20 | sonnet ×5 | todo |
 | S26 | Wiring: examples table, outline links, plan status, reconciliation, `validate.py`, `wordcount.sh`, CI build job for kits | S21–25 | sonnet | todo |
 | S27 | Idiomatic + voice review, Jekyll build, Opus validation, package, PR | S26 | MAIN | todo |

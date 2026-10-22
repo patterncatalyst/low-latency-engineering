@@ -25,9 +25,9 @@ nodes = [{"x": c - 65, "y": 60, "w": 130, "h": 56, "style": s, "lines": l}
 nodes += [
     {"x": 120, "y": 170, "w": 660, "h": 46, "style": "accent",
      "lines": ["intended-time", "schedule -> done: charged every wait"]},
-    {"x": 340, "y": 228, "w": 440, "h": 46, "style": "ink",
+    {"x": 340, "y": 228, "w": 440, "h": 46, "style": "sub",
      "lines": ["closed-loop", "own request send -> done"]},
-    {"x": 560, "y": 286, "w": 220, "h": 46, "style": "ink",
+    {"x": 560, "y": 286, "w": 220, "h": 46, "style": "sub",
      "lines": ["receipt-time", "dequeue -> done"]},
 ]
 

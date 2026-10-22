@@ -35,6 +35,8 @@ for n, ytop in lanes:
                   "style": "kernel", "lines": [""]})
     nodes.append({"x": bx + 12, "y": y0, "w": SER, "h": RH, "style": "accent",
                   "lines": ["serial"]})
+    nodes.append({"x": bx + 12 + SER + 8, "y": y0, "w": 4, "h": rows * RH + (rows - 1) * GAP,
+                  "style": "kernel", "lines": [""]})
 
 nodes.append({"x": 400, "y": 210, "w": 450, "h": 110, "style": "ink",
               "lines": ["N = 4 speedup, predicted -> measured",
@@ -44,13 +46,13 @@ nodes.append({"x": 400, "y": 210, "w": 450, "h": 110, "style": "ink",
                         "Java             3.09x -> 2.70-2.74x"]})
 
 notes = [
-    {"x": 440, "y": 28, "text": "the serial phase never shrinks, so N workers give less than N times",
+    {"x": 440, "y": 28, "text": "The serial phase never shrinks, so N workers give less than N times",
      "anchor": "middle", "size": 14, "bold": True, "color": "#b8650a"},
     {"x": 560, "y": 148, "text": "serial fraction s ~ 0.095-0.099 (C++, Java),",
      "size": 12},
     {"x": 560, "y": 166, "text": "measured as lock time / wall time at N = 1",
      "size": 12},
-    {"x": 110, "y": 350, "text": "grey bar = barrier; amber = serial phase (one worker holds the lock)",
+    {"x": 110, "y": 350, "text": "grey bar = barrier; amber = serial phase (one worker at a time holds the lock)",
      "size": 12},
     {"x": 850, "y": 350, "text": "time ->", "anchor": "end", "size": 12},
     {"x": 440, "y": 385, "text": "Speedup is capped at 1 / s; the measured value sits under the prediction.",

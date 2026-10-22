@@ -24,12 +24,12 @@ nodes = [
     {"x": 40, "y": 290, "w": 170, "h": 60, "style": "sub",
      "lines": ["passt", "user-mode network"]},
     {"x": 240, "y": 90, "w": 150, "h": 60, "style": "sub", "lines": ["Docker Engine", "host containers"]},
-    {"x": 450, "y": 100, "w": 175, "h": 60, "style": "user", "lines": ["cyclictest", "rt-tests"]},
-    {"x": 645, "y": 100, "w": 175, "h": 60, "style": "sub", "lines": ["linuxptp", "ptp_kvm clock"]},
+    {"x": 450, "y": 100, "w": 175, "h": 60, "style": "user", "lines": ["cyclictest", "realtime-tests"]},
+    {"x": 645, "y": 100, "w": 175, "h": 60, "style": "sub", "lines": ["linuxptp", "chrony, tuned"]},
     {"x": 450, "y": 190, "w": 175, "h": 60, "style": "kernel", "lines": ["Linux kernel", "PREEMPT_RT"]},
     {"x": 645, "y": 190, "w": 175, "h": 60, "style": "sub", "lines": ["Docker", "guest containers"]},
-    {"x": 450, "y": 290, "w": 175, "h": 56, "style": "ink", "lines": ["lab-ready", "tooled baseline"]},
-    {"x": 645, "y": 290, "w": 175, "h": 56, "style": "ink", "lines": ["lab-ready-rt", "RT kernel snapshot"]},
+    {"x": 450, "y": 290, "w": 175, "h": 56, "style": "sub", "lines": ["lab-ready", "tooled baseline"]},
+    {"x": 645, "y": 290, "w": 175, "h": 56, "style": "sub", "lines": ["lab-ready-rt", "RT kernel snapshot"]},
 ]
 
 edges = [
