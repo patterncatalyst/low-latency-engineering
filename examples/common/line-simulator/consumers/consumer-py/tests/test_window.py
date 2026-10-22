@@ -17,7 +17,6 @@ from lowlat_measure import Recorder
 BARCODE = "006141410000000008"
 EXAMPLES = Path(__file__).resolve().parents[5]
 SIM = EXAMPLES / "build/release/common/line-simulator/line-simulator"
-PORT = 47112
 
 pytestmark = pytest.mark.usefixtures("lowlat_profile")
 
@@ -112,14 +111,14 @@ def test_completion_made_on_another_thread_counts_every_parcel():
 
 
 @pytest.mark.skipif(not SIM.is_file(), reason=f"simulator not built: {SIM}")
-def test_cli_window_writes_two_reports_summing_to_the_total(tmp_path):
+def test_cli_window_writes_two_reports_summing_to_the_total(tmp_path, bound_port):
     report = tmp_path / "r.json"
     cmd = [
         sys.executable,
         "-m",
         "lowlat_consumer",
         "--bind",
-        f"127.0.0.1:{PORT}",
+        "127.0.0.1:0",
         "--expect",
         "1000",
         "--window",
@@ -131,7 +130,9 @@ def test_cli_window_writes_two_reports_summing_to_the_total(tmp_path):
     ]
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) as consumer:
         try:
-            assert consumer.stdout.readline().startswith("line-consumer-py: bound")
+            banner = consumer.stdout.readline()
+            assert banner.startswith("line-consumer-py: bound")
+            port = bound_port(banner)
             subprocess.run(
                 [
                     str(SIM),
@@ -141,7 +142,7 @@ def test_cli_window_writes_two_reports_summing_to_the_total(tmp_path):
                     "1",
                     "--quiet",
                     "--dest",
-                    f"127.0.0.1:{PORT}",
+                    f"127.0.0.1:{port}",
                 ],
                 check=True,
                 timeout=30,

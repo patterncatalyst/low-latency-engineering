@@ -14,11 +14,10 @@ import org.junit.jupiter.api.Test;
 /** The handler hook: a handler may hold parcels, complete them later, and drain the rest. */
 class ParcelHandlerTest {
 
-    private static final int PORT = 47104;
     private static final String BARCODE = "006141410000000008";
 
     private static LineReceiver receiverFor(long expect) throws Exception {
-        return new LineReceiver(Config.parse(List.of("--bind", "127.0.0.1:" + PORT, "--expect", Long.toString(expect),
+        return new LineReceiver(Config.parse(List.of("--bind", "127.0.0.1:0", "--expect", Long.toString(expect),
                 "--idle-timeout-ms", "5000")));
     }
 

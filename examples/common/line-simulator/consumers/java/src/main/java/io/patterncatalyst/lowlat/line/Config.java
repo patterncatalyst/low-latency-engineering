@@ -96,14 +96,20 @@ public record Config(
     /** A {@code HOST:PORT} option value. */
     public record HostPort(String host, int port) {
 
-        /** Splits at the last colon and checks the port is 1..65535; {@code flag} names the option in errors. */
+        /** Splits at the last colon and checks the port is 0..65535 (0 binds an ephemeral port); {@code flag} names the option in errors. */
         public static HostPort parse(String flag, String hostPort) {
             int colon = hostPort.lastIndexOf(':');
             if (colon <= 0) {
                 throw new IllegalArgumentException(flag + " needs HOST:PORT, got '" + hostPort + "'");
             }
-            int port = positiveInt(flag + " port", hostPort.substring(colon + 1));
-            if (port > 65535) {
+            String text = hostPort.substring(colon + 1);
+            int port;
+            try {
+                port = Integer.parseInt(text);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(flag + " port must be a number, got " + text);
+            }
+            if (port < 0 || port > 65535) {
                 throw new IllegalArgumentException(flag + " port out of range: " + port);
             }
             return new HostPort(hostPort.substring(0, colon), port);

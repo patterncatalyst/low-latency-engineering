@@ -46,7 +46,7 @@ mkdir -p "$OUT/jmh" "$OUT/cpp" "$OUT/python"
 capture_profile "$OUT"
 
 failures=0
-bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; failures=$((failures + 1)); }
+bad() { say_bad "$*"; failures=$((failures + 1)); }
 # holds EXPR MESSAGE: EXPR is a jq boolean over --argjson inputs given as the remaining arguments.
 holds() {
   local expr=$1 message=$2

@@ -84,7 +84,7 @@ for lang in cpp java python; do
 done
 
 failures=0
-bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; failures=$((failures + 1)); }
+bad() { say_bad "$*"; failures=$((failures + 1)); }
 # expect_ge A B MESSAGE / expect_lt A B MESSAGE / expect_within_2x A B MESSAGE: record, do not stop,
 # so one run reports every criterion.
 expect_ge() { if (($1 >= $2)); then ok "$3 ($1 >= $2)"; else bad "$3 (got $1, need >= $2)"; fi; }

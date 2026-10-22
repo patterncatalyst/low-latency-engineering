@@ -106,7 +106,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     windows = WindowedRecorders(args.example, args.variant, args.window) if args.window else None
     try:
         with sock:
-            host, port = args.bind
+            host, port = sock.getsockname()  # the real port when --bind used port 0
             print(
                 f"line-consumer-py: bound {host}:{port}, SO_RCVBUF requested {args.rcvbuf} "
                 f"granted {granted} (Linux reports double the set value; capped by "

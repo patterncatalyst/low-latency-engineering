@@ -1,6 +1,8 @@
 """Shared pytest fixtures for every Python package under examples/ (this is the rootdir)."""
 
 import importlib.util
+import re
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -38,3 +40,19 @@ def lowlat_profile(monkeypatch: pytest.MonkeyPatch) -> Path:
     path = MEASURE_FIXTURES / "profile.json"
     monkeypatch.setenv("LOWLAT_PROFILE", str(path))
     return path
+
+
+@pytest.fixture
+def bound_port() -> Callable[[str], int]:
+    """Parse the port from a consumer's ``... bound HOST:PORT, ...`` banner.
+
+    Tests bind port 0 so they never clash across runs or workers; the consumer prints the
+    port the kernel chose, and the simulator is then pointed at it.
+    """
+
+    def parse(banner: str) -> int:
+        match = re.search(r"bound \S+:(\d+),", banner)
+        assert match, f"no bound port in consumer banner: {banner!r}"
+        return int(match.group(1))
+
+    return parse

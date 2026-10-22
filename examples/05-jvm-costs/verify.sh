@@ -38,7 +38,7 @@ JVM_ARGS=(-XX:+UseG1GC -Xms256m -Xmx256m)
 JAVA_VARIANTS=(unwarmed warmed aot-cache)
 
 FAILED=0
-bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; FAILED=1; }
+bad() { say_bad "$*"; FAILED=1; }
 
 # verdict DESCRIPTION OP VALUE BOUND: OP is >= or <=; prints one ✓/✗ line with the measured value.
 verdict() {
@@ -189,7 +189,7 @@ if [[ -z ${RECHECK:-} ]]; then
   run_java warmed -- --warm-up "$WARM_UP" # the JIT warms on 20,000 synthetic parcels before the bind
 
   step "AOT caches: two training runs ($TRAIN_SECONDS s at $RATE Hz each); the JVM writes each cache at exit"
-  _scratch
+  scratch_dir
   # Scratch files: a cache names the JDK build and the jar, so it is never committed.
   AOT_PLAIN=$LOWLAT_SCRATCH/jvm-costs.aot # for time to ready: no observation flags, as a service would start
   AOT_OBSERVED=$LOWLAT_SCRATCH/jvm-costs-observed.aot # for the line run: trained with its JFR and log flags
@@ -351,7 +351,7 @@ echo "C++ (no JIT): first-window p99 $(p99_of "$OUT/cpp-tracker-first-$WINDOW.js
 echo "aot-cache first-window p99: $(p99_of "$OUT/java-aot-cache-first-$WINDOW.json") ns (unwarmed $(p99_of "$OUT/java-unwarmed-first-$WINDOW.json") ns, warmed $(p99_of "$OUT/java-warmed-first-$WINDOW.json") ns)"
 
 if ((FAILED)); then
-  printf '%s✗ 05-jvm-costs: at least one criterion missed (see ✗ above); results in %s%s\n' "$_c_bad" "$OUT" "$_c_off" >&2
+  say_bad "05-jvm-costs: at least one criterion missed (see ✗ above); results in $OUT" >&2
   exit 1
 fi
 ok "05-jvm-costs: the first parcel pays the JVM's costs; warm-up and the AOT cache move them out of the line; results in $OUT"

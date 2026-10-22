@@ -12,11 +12,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
-/** Spawns the built C++ line-simulator into a LineReceiver on UDP 47103 (protobuf) or 47106 (flat). */
+/** Spawns the built C++ line-simulator into a LineReceiver on an ephemeral UDP port. */
 class SimulatorIntegrationTest {
-
-    private static final int PORT = 47103;
-    private static final int FLAT_PORT = 47106;
 
     @Test
     void receivesTwoThousandParcelsWithoutLoss() throws Exception {
@@ -25,14 +22,14 @@ class SimulatorIntegrationTest {
         Assumptions.assumeTrue(Files.isExecutable(simulator),
                 "line-simulator not built (" + simulator + "); run cmake --preset release first");
 
-        Config config = Config.parse(List.of("--bind", "127.0.0.1:" + PORT, "--expect", "2000",
+        Config config = Config.parse(List.of("--bind", "127.0.0.1:0", "--expect", "2000",
                 "--idle-timeout-ms", "5000"));
         try (LineReceiver receiver = new LineReceiver(config)) {
             FutureTask<LineReceiver.StopReason> receive = new FutureTask<>(receiver::run);
             Thread loop = Thread.ofPlatform().name("test-consumer").start(receive);
 
             Process sim = new ProcessBuilder(simulator.toString(), "--rate", "1000", "--duration", "2",
-                    "--dest", "127.0.0.1:" + PORT, "--quiet").inheritIO().start();
+                    "--dest", "127.0.0.1:" + receiver.localAddress().getPort(), "--quiet").inheritIO().start();
             assertTrue(sim.waitFor(30, TimeUnit.SECONDS), "simulator did not finish");
             loop.join(TimeUnit.SECONDS.toMillis(15));
             if (loop.isAlive()) {
@@ -58,7 +55,7 @@ class SimulatorIntegrationTest {
         Assumptions.assumeTrue(Files.isExecutable(simulator),
                 "line-simulator not built (" + simulator + "); run cmake --preset release first");
 
-        Config config = Config.parse(List.of("--bind", "127.0.0.1:" + FLAT_PORT, "--expect", "1000",
+        Config config = Config.parse(List.of("--bind", "127.0.0.1:0", "--expect", "1000",
                 "--idle-timeout-ms", "5000", "--window", "500", "--variant", "flat"));
         try (EventReceiver<FlatParcel> receiver = new EventReceiver<>(config, new FlatParcel.FlatDecoder())) {
             FutureTask<EventReceiver.StopReason> receive = new FutureTask<>(() -> receiver.run(
@@ -66,7 +63,7 @@ class SimulatorIntegrationTest {
             Thread loop = Thread.ofPlatform().name("test-flat-consumer").start(receive);
 
             Process sim = new ProcessBuilder(simulator.toString(), "--rate", "1000", "--duration", "1",
-                    "--wire", "flat", "--dest", "127.0.0.1:" + FLAT_PORT, "--quiet").inheritIO().start();
+                    "--wire", "flat", "--dest", "127.0.0.1:" + receiver.localAddress().getPort(), "--quiet").inheritIO().start();
             assertTrue(sim.waitFor(30, TimeUnit.SECONDS), "simulator did not finish");
             loop.join(TimeUnit.SECONDS.toMillis(15));
             if (loop.isAlive()) {

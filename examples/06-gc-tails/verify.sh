@@ -188,7 +188,7 @@ expect() {
   if test "$a" "$op" "$b"; then
     ok "$label ($(fmt "$a" "$unit") $sign $(fmt "$b" "$unit"))"
   else
-    printf '%s✗ %s (%s, need %s %s)%s\n' "$_c_bad" "$label" "$(fmt "$a" "$unit")" "$sign" "$(fmt "$b" "$unit")" "$_c_off"
+    say_bad "$label ($(fmt "$a" "$unit"), need $sign $(fmt "$b" "$unit"))"
     FAILED=1
   fi
 }

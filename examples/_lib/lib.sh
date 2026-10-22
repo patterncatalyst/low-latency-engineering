@@ -16,6 +16,8 @@
 #   SKIP_BUILD=1  reuse existing builds
 #   LOWLAT_BUILD  C++ binary dir (default examples/build/release); set a private
 #                 one when several builds run at once
+#   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
+#                 scratch_dir (a caller-provided value is kept)
 
 set -euo pipefail
 
@@ -31,6 +33,10 @@ fi
 step() { printf '%s━━ %s%s\n' "$_c_step" "$*" "$_c_off"; }
 ok()   { printf '%s✓ %s%s\n' "$_c_ok" "$*" "$_c_off"; }
 die()  { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off" >&2; exit 1; }
+# say_bad MESSAGE...: print a red ✗ line on stdout and carry on (die prints on stderr and exits).
+# Redirect with >&2 for stderr. A verify.sh that counts failures wraps it:
+#   bad() { say_bad "$*"; failures=$((failures + 1)); }
+say_bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; }
 
 # Background consumers: track each one so that a die mid-run (or Ctrl-C) never leaves it holding
 # its UDP port. bg_track PID after starting one, bg_forget PID once it has been waited for.
@@ -171,16 +177,19 @@ simulate() { "$(cpp_bin line-simulator)" "$@"; }
 # Java runtime observation (Part 2): JFR + unified logging, context switches, time to ready.
 # ---------------------------------------------------------------------------------------------
 
-# _scratch: make sure LOWLAT_SCRATCH exists (set in the calling shell, never in a $(...)). A
-# caller-provided LOWLAT_SCRATCH is kept; otherwise a mktemp dir is created and removed by the
-# EXIT trap. Recordings (*.jfr) live here and nowhere in the tree, so they cannot be committed.
-_scratch() {
+# scratch_dir: make sure the per-run scratch dir exists and set LOWLAT_SCRATCH to it. Call it as
+# a plain statement in the calling shell, never inside $(...) (the EXIT trap would not see the
+# dir): `scratch_dir; AOT=$LOWLAT_SCRATCH/x.aot`. A caller-provided LOWLAT_SCRATCH is kept;
+# otherwise a mktemp dir is created and removed by the EXIT trap. Recordings (*.jfr) live here
+# and nowhere in the tree, so they cannot be committed.
+scratch_dir() {
   if [[ -z ${LOWLAT_SCRATCH:-} ]]; then
     LOWLAT_SCRATCH=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-scratch.XXXXXX")
     _LOWLAT_SCRATCH_OWNED=1
   fi
   mkdir -p "$LOWLAT_SCRATCH"
 }
+_scratch() { scratch_dir; }  # earlier name, kept for callers that have not moved
 
 # java_flags VARIANT: prepare the observation flags for one JVM run, without starting it. Sets
 #   JFR_FILE         recording path under the scratch dir (JFR on, dumped on exit)
@@ -191,7 +200,7 @@ _scratch() {
 java_flags() {
   local variant=$1
   : "${OUT:?java_flags needs OUT (the results dir)}"
-  _scratch
+  scratch_dir
   JFR_FILE="$LOWLAT_SCRATCH/$variant.jfr"
   GC_LOG="$OUT/$variant.gc.log"
   JAVA_RUN_FLAGS=(

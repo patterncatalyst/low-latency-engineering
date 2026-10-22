@@ -36,7 +36,7 @@ ok "loadavg at start: $(jq -r .loadavg "$RESULTS/loadavg.json") ($(nproc) CPUs)"
 # check LABEL PASS(0/1) DETAIL: print one criterion outcome; count failures.
 check() {
   if (($2)); then ok "PASS $1: $3"; else
-    printf '%s✗ FAIL %s: %s%s\n' "$_c_bad" "$1" "$3" "$_c_off" >&2
+    say_bad "FAIL $1: $3" >&2
     failures=$((failures + 1))
   fi
 }

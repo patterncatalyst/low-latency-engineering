@@ -26,14 +26,13 @@ import org.junit.jupiter.api.io.TempDir;
 /** {@code --window}, a Completion owned by a decide thread, receive-thread allocation, the Decoder seam. */
 class WindowAndOwnershipTest {
 
-    private static final int PORT = 47105;
     private static final String BARCODE = "006141410000000008";
 
     private static Config config(long expect, long window) {
         List<String> args = window > 0
-                ? List.of("--bind", "127.0.0.1:" + PORT, "--expect", Long.toString(expect), "--idle-timeout-ms", "5000",
+                ? List.of("--bind", "127.0.0.1:0", "--expect", Long.toString(expect), "--idle-timeout-ms", "5000",
                         "--window", Long.toString(window), "--variant", "warmed")
-                : List.of("--bind", "127.0.0.1:" + PORT, "--expect", Long.toString(expect), "--idle-timeout-ms", "5000");
+                : List.of("--bind", "127.0.0.1:0", "--expect", Long.toString(expect), "--idle-timeout-ms", "5000");
         return Config.parse(args);
     }
 
