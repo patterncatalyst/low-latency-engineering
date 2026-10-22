@@ -67,7 +67,11 @@ nlohmann::json load_profile() {
   }
   std::ifstream in{path};
   if (!in) throw std::runtime_error(std::format("LOWLAT_PROFILE={} cannot be opened", path));
-  return nlohmann::json::parse(in);
+  try {
+    return nlohmann::json::parse(in);
+  } catch (const nlohmann::json::parse_error& e) {
+    throw std::runtime_error(std::format("LOWLAT_PROFILE={} is not valid JSON: {}", path, e.what()));
+  }
 }
 
 Recorder::Recorder(std::string example, std::string variant)
@@ -117,6 +121,7 @@ nlohmann::json Recorder::write_report(const std::filesystem::path& path, std::st
   nlohmann::json doc = report(notes, model);
   std::ofstream out{path};
   out << doc.dump(2) << '\n';
+  out.close();  // flush now: a failed flush must not pass as success
   if (!out) throw std::runtime_error(std::format("cannot write report to {}", path.string()));
   return doc;
 }

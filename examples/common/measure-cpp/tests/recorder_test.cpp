@@ -1,11 +1,13 @@
 // Tests of the C++ measurement kit: correction maths, report shape, golden
 // fixture, and cross-decoding of the other kits' golden reports.
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <print>
+#include <stdexcept>
 #include <string>
 
 #include "lowlat/measure/recorder.hpp"
@@ -88,12 +90,19 @@ TEST_F(Measure, MissingProfileFailsClearly) {
   unsetenv("LOWLAT_PROFILE");
   Recorder r{"test", "noprofile"};
   r.record(1);
-  try {
-    (void)r.report();
-    FAIL() << "expected an exception";
-  } catch (const std::runtime_error& e) {
-    EXPECT_NE(std::string{e.what()}.find("LOWLAT_PROFILE"), std::string::npos);
-  }
+  EXPECT_THAT([&] { (void)r.report(); },
+              testing::ThrowsMessage<std::runtime_error>(testing::HasSubstr("LOWLAT_PROFILE")));
+}
+
+TEST_F(Measure, MalformedProfileIsARuntimeErrorNamingTheFile) {
+  const std::string bad = testing::TempDir() + "lowlat-bad-profile.json";
+  { std::ofstream{bad} << "{ not json"; }
+  setenv("LOWLAT_PROFILE", bad.c_str(), 1);
+  Recorder r{"test", "badprofile"};
+  r.record(1);
+  EXPECT_THAT([&] { (void)r.report(); },
+              testing::ThrowsMessage<std::runtime_error>(testing::HasSubstr(bad)));
+  fs::remove(bad);
 }
 
 TEST_F(Measure, OutOfRangeRecordThrows) {
