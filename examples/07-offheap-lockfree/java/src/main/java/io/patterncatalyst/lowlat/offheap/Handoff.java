@@ -30,7 +30,8 @@ public final class Handoff {
 
     /** What a run measured, for the tests; the reports hold the distributions. */
     record Result(long received, long published, long overflow, long handled, long divertReceived,
-            Journal.Readback journal, long manifestHits, long oldGenBaselineBytes, long oldGenAfterGcBytes, String journalFileSystem) {
+            Journal.Readback journal, long manifestHits, long oldGenBaselineBytes, long oldGenAfterGcBytes, String journalFileSystem,
+            long journalBytes, String journalSettings) {
     }
 
     private Handoff() {
@@ -102,9 +103,11 @@ public final class Handoff {
 
             diverter.stop(); // joins the listener: its recorder is safe to read
             String journalFileSystem = journal == null ? null : Files.getFileStore(journalDir).type();
+            long journalBytes = journal == null ? 0 : journal.bytes();
+            String journalSettings = journal == null ? "" : journal.settings();
             Result result = new Result(receiver.received(), handler.published(), handler.overflow(),
                     stage.handled(), diverter.received(), readback, stage.manifestHits(), oldGenBaseline,
-                    oldGenAfter, journalFileSystem);
+                    oldGenAfter, journalFileSystem, journalBytes, journalSettings);
             if (config.report() != null) {
                 writeReports(settings, receiver, stage, diverter, result, out);
             }
@@ -182,6 +185,8 @@ public final class Handoff {
                 .append("; placement=").append(settings.placement().label());
         if (result.journal() != null) {
             notes.append("; journal_fs=").append(result.journalFileSystem())
+                    .append("; journal_bytes=").append(result.journalBytes())
+                    .append(result.journalSettings().isEmpty() ? "" : "; journal_" + result.journalSettings().replace("; ", "; journal_"))
                     .append("; journal_readback_count=").append(result.journal().count())
                     .append("; journal_in_order=").append(result.journal().inOrder());
         }

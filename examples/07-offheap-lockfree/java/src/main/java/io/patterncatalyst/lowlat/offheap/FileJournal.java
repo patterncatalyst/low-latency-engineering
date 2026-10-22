@@ -17,6 +17,7 @@ final class FileJournal implements Journal {
     private static final int RECORD_BYTES = 40;
 
     private final FileChannel channel;
+    private long appended;
     private final ByteBuffer record = ByteBuffer.allocateDirect(RECORD_BYTES);
 
     FileJournal(Path file) throws IOException {
@@ -39,6 +40,7 @@ final class FileJournal implements Journal {
             while (record.hasRemaining()) {
                 channel.write(record);
             }
+            appended += RECORD_BYTES;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -66,6 +68,16 @@ final class FileJournal implements Journal {
             inOrder &= in.getLong() == count;
             count++;
         }
+    }
+
+    @Override
+    public long bytes() {
+        return appended;
+    }
+
+    @Override
+    public String settings() {
+        return "";
     }
 
     @Override

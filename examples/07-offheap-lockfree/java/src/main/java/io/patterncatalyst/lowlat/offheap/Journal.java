@@ -13,6 +13,12 @@ public interface Journal extends AutoCloseable {
     record Readback(long count, boolean inOrder) {
     }
 
+    /** Bytes of journal the appended records occupy (the file's length for a plain file). Call after {@link #readBack}. */
+    long bytes();
+
+    /** The journal's own settings as {@code key=value} pairs for the report notes; empty if it has none. */
+    String settings();
+
     /** Called on the decide thread before the first {@link #append}; some journals bind a writer to it. */
     void bindToDecideThread();
 

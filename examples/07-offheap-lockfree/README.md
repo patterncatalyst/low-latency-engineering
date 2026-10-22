@@ -194,15 +194,46 @@ usage analytics unless `-Dchronicle.analytics.disable=true` is set; the scripts 
    `blocking-queue`, in the same run.
 3. JMH `gc.alloc.rate.norm`: Disruptor and Agrona publish at most 1 B/op; `linked-queue` at least
    16 B/op (a node per element, before the `Scan` record).
-4. The journal tailer reads back exactly 200,000 events in sequence order, and the
-   `chronicle-journal` append p99 in the steady window is at most one fifth of `write-per-parcel`.
-   The mechanism is asserted beside it: the decide thread makes no write system call under
-   `chronicle-journal` (at most 1 % of the events) and at least one per event under
-   `write-per-parcel`, read from `syscw` in `/proc/P/task/T/io`.
+4. The journal tailer reads back exactly 200,000 events in sequence order. The decide thread makes no
+   write system call under `chronicle-journal` (at most 1 % of the events) and at least one per event
+   under `write-per-parcel` (exact), read from `syscw` in `/proc/P/task/T/io`. The decide thread's
+   minor faults show the first touch of the mapped file: under `chronicle-journal` they are at least
+   the journal's bytes / (4096 x 16), the floor even if every fault mapped 16 pages, and at least 5x
+   the `write-per-parcel` count, which sits near the thread's baseline. The append p50, p99 and p99.9
+   of both are reported as observed, with the faults, the journal bytes, `journal_fs`, the block size
+   and the roll cycle; the p99 ratio is not asserted.
 5. Old generation after a full GC: `chronicle-map-manifest` at most one quarter of
    `on-heap-manifest`.
 6. Every run: `count` = 200,000, `dropped` = 0, no hand-off overflow, every divert command received,
    every report passes `lowlat-report check`, the steady window holds 180,000 parcels.
+
+### What the memory-mapped append removes
+
+It removes the system call, not the first-touch page fault. The appender copies a record into a
+`MAP_SHARED` mapping of the cycle file (`blockSize` 64 MiB, roll cycle `FAST_DAILY`, one 80 MiB file for
+the whole run); the first write to each new 4 KiB page takes a minor fault, about 1.9 us for the
+faulting append against a median of 0.3 us. Records are about 75 bytes, so on tmpfs a fault falls on roughly
+every 55th append (1.9 % of appends, more than the 1 % that a p99 looks at: there the Chronicle p99 is the
+fault); on btrfs it is 0.7 % and the p99 drops below the fault.
+How often it happens depends on the file system under the journal:
+
+| `journal_fs` | Decide-thread minor faults, 200,000 appends (15.0 MB, 3,662 pages) | Per page | Chronicle p50 / p99 / p99.9 | `write-per-parcel` p50 / p99 / p99.9 |
+|---|---|---|---|---|
+| tmpfs | 3,767 | 1.03 | 324 / 1,957 / 4,371 ns | 387 / 1,151 / 2,601 ns |
+| btrfs (zstd) | 1,459, 1,457, 1,426 | 0.39 | 318 / 913 / 5,783, 313 / 823 / 5,267, 314 / 819 / 4,951 ns | 1,073 / 2,685 / 6,059, 1,075 / 2,589 / 5,855, 1,064 / 2,499 / 5,919 ns |
+
+tmpfs takes one fault per page. On btrfs and ext4 the kernel's fault-around maps several neighbouring
+pages already in the page cache on one fault, so there are fewer (about 2.5 pages per fault here, below
+the 16-page ceiling), and `write-per-parcel` pays a full system call to a compressing file system on
+every event, which is why the p99 ratio swings from 0.6x (tmpfs: Chronicle slower) to about 3x
+(btrfs: Chronicle faster). Observed on the development host, 2026-10-22, three runs on btrfs and one on
+tmpfs; the `write-per-parcel` thread takes 66 to 81 faults over the window with no journal pages
+involved. The Chronicle OSS jar offers no way to avoid the first-touch fault: `ExcerptAppender.pretouch()`
+and `ChronicleQueue.createPretoucher()` are the pre-toucher hook, and pretouching is a Chronicle Enterprise
+feature. In the 2026.7 OSS jar `PretouchFactoryEmpty.createPretoucher(q)` calls `q.createPretoucher()`,
+which is the default method that dispatches back to the same factory, so the call recurses until
+`StackOverflowError`; `ExcerptAppender.pretouch()` on a `StoreAppender` reaches the same method. Do not
+call it. A larger `blockSize` does not help either (faults are per page touched, not per chunk map).
 
 Observed, not asserted: `agrona-spsc-backoff` (the park phase of the idle strategy returns the
 context switches), `disruptor-blocking-wait` against `disruptor`, the manifest lookup cost of the
@@ -326,8 +357,6 @@ Unverified. The host part builds, its unit tests pass and `verify.sh` runs end t
 (`VM=1`) ran once functionally in the lab guest; the `r02-run1..3` and `r02-vm-run1..3`
 measurements are still to come.
 
-First dry run on the development host (busy, untuned, journal on btrfs): criteria 1, 2, 3, 5 and 6
-held with wide margins. The criterion 4 latency ratio did not: the steady-window append p99 of
-`chronicle-journal` was about one half to one third of `write-per-parcel`, not one fifth. The
-mechanism did hold (no write system call against one per event). The ratio moves with the file
-system under the journal, so the bound is pending calibration.
+Calibrated on a quiet host on 2026-10-22 (three dry runs on tmpfs, three more on btrfs, one more on tmpfs
+for the fault bound). The former criterion 4 p99 ratio was replaced by the fault mechanism above,
+because the ratio is set by the journal's file system and not by the technique.

@@ -5,8 +5,11 @@
 #      blocking-queue >= 25 %.
 #   2. hand-off p99 (steady window): agrona-spsc and disruptor <= 1/5 of blocking-queue.
 #   3. JMH -prof gc: Disruptor and Agrona publish <= 1 B/op, linked-queue >= 16 B/op.
-#   4. the journal tailer reads back exactly N events in sequence order; chronicle-journal append
-#      p99 <= 1/5 of write-per-parcel.
+#   4. the journal tailer reads back exactly N events in sequence order; the chronicle-journal
+#      decide thread makes no write system calls (<= 1 % of N) where write-per-parcel makes one per
+#      event (exact); the decide-thread minor faults show the first touch of the mapped file's pages
+#      (chronicle >= journal bytes / (4096 x 16) and >= 5x write-per-parcel). Append p50/p99/p99.9
+#      are observed, not asserted.
 #   5. old generation after a full GC: chronicle-map-manifest <= 1/4 of on-heap-manifest.
 #   6. every run: count = N, dropped = 0, every divert command arrived, every report passes check.
 # Java runs 10 variants and the C++ lane 2, each at 10 kHz x 20 s (N = 200,000). Ports: data
@@ -230,20 +233,36 @@ for v in chronicle-journal write-per-parcel; do
     "append p50 / p99 / p99.9, steady window = $(jget "$OUT/java-$v-journal-append-steady.json" '"\(.percentiles.p50) / \(.percentiles.p99) / \(.percentiles.p99_9)"') ns;" \
     "whole run p99 = $(p99_of "$OUT/java-$v-journal-append.json") ns"
 done
-expect_ge "$(p99_of "$OUT/java-write-per-parcel-journal-append-steady.json")" $((5 * $(p99_of "$OUT/java-chronicle-journal-journal-append-steady.json"))) \
-  "4: chronicle-journal append p99, steady window ($(p99_of "$OUT/java-chronicle-journal-journal-append-steady.json") ns) <= 1/5 of write-per-parcel ($(p99_of "$OUT/java-write-per-parcel-journal-append-steady.json") ns)"
-
-# The latency ratio above depends on the file system under the journal (journal_fs in the notes:
-# a write() to tmpfs is far cheaper than to btrfs) and on first-touch page faults of the mapped
-# file. The mechanism, a system call per event or none, does not: it shows in the write-syscall count.
+# The append latency ratio is not asserted: it is the product of two costs that depend on the file
+# system under the journal (journal_fs in the notes). A write() to tmpfs is far cheaper than one to
+# btrfs, and the mapped append pays a minor fault on the first touch of each new page, which the
+# kernel's fault-around spreads over several pages on btrfs and ext4 but not on tmpfs. The mechanism
+# does not depend on the file system: no system call per event, and a page fault per new page.
 for v in chronicle-journal write-per-parcel; do
   echo "  $v: decide-thread write syscalls $(note_of "$OUT/java-$v.json" decide_write_syscalls)," \
-    "minor faults $(note_of "$OUT/java-$v.json" decide_minor_faults)"
+    "minor faults $(note_of "$OUT/java-$v.json" decide_minor_faults)," \
+    "journal $(note_of "$OUT/java-$v.json" journal_bytes) B on $(note_of "$OUT/java-$v.json" journal_fs)"
 done
+echo "  chronicle-journal: block size $(note_of "$OUT/java-chronicle-journal.json" journal_block_size) B," \
+  "roll cycle $(note_of "$OUT/java-chronicle-journal.json" journal_roll_cycle)"
 expect_lt "$(note_of "$OUT/java-chronicle-journal.json" decide_write_syscalls)" $((COUNT / 100 + 1)) \
   "4: chronicle-journal appends without a write system call (<= 1 % of events)"
 expect_ge "$(note_of "$OUT/java-write-per-parcel.json" decide_write_syscalls)" "$COUNT" \
-  "4: write-per-parcel makes at least one write system call per event"
+  "4: write-per-parcel makes at least one write system call per event (exact)"
+
+# The first touch of a mapped page is a minor fault. The kernel maps at most fault_around_bytes
+# (64 KiB, 16 pages) per file-backed read fault, so the journal's pages cannot cost fewer than
+# bytes / (4096 x 16) faults; on tmpfs there is no fault-around and it is one per page. The bound is
+# that floor, and the write-per-parcel journal (a write() copies into the page cache and touches no
+# mapped page) sits near zero.
+chron_faults=$(note_of "$OUT/java-chronicle-journal.json" decide_minor_faults)
+file_faults=$(note_of "$OUT/java-write-per-parcel.json" decide_minor_faults)
+journal_pages=$(($(note_of "$OUT/java-chronicle-journal.json" journal_bytes) / 4096))
+expect_ge "$chron_faults" $((journal_pages / 16)) \
+  "4: chronicle-journal decide-thread minor faults >= first touch of its $journal_pages pages / 16 (fault-around)"
+expect_ge "$chron_faults" $((5 * (file_faults + 1))) \
+  "4: chronicle-journal decide-thread minor faults >= 5x write-per-parcel's ($file_faults)"
+echo "  chronicle-journal faults per journal page: $((chron_faults * 100 / journal_pages)) %"
 
 step "criteria 5: old generation after a full GC, 1,000,000-entry manifest"
 cmap_old=$(jget "$OUT/java-chronicle-map-manifest.json" .runtime.gc.old_gen_used_bytes)

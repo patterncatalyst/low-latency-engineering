@@ -5,6 +5,7 @@ import net.openhft.chronicle.queue.BufferMode;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 import net.openhft.chronicle.wire.DocumentContext;
 import net.openhft.chronicle.wire.Wire;
 
@@ -25,7 +26,8 @@ final class ChronicleJournal implements Journal {
         ChronicleAnalytics.disable(); // before Chronicle builds its first queue
     }
 
-    private final ChronicleQueue queue;
+    private final SingleChronicleQueue queue;
+    private long bytes;
     private ExcerptAppender appender;
 
     ChronicleJournal(Path directory) {
@@ -63,9 +65,20 @@ final class ChronicleJournal implements Journal {
                     return new Readback(count, inOrder);
                 }
                 inOrder &= document.wire().read("seq").int64() == count;
+                bytes = document.wire().bytes().readLimit();
                 count++;
             }
         }
+    }
+
+    @Override
+    public long bytes() {
+        return bytes;
+    }
+
+    @Override
+    public String settings() {
+        return "block_size=" + queue.blockSize() + "; roll_cycle=" + queue.rollCycle();
     }
 
     @Override
