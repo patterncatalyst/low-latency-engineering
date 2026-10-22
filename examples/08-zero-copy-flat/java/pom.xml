@@ -21,17 +21,42 @@
     </dependency>
     <dependency>
       <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>lowlat-proto-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
       <artifactId>line-consumer-java</artifactId>
     </dependency>
     <dependency>
       <groupId>io.patterncatalyst.lowlat</groupId>
       <artifactId>measure-java</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <!-- Object layout and footprint of the compact-headers variant (GPL-2.0 with Classpath Exception). -->
+    <dependency>
+      <groupId>org.openjdk.jol</groupId>
+      <artifactId>jol-core</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
     <finalName>benchmarks</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- FFM downcalls are restricted methods: without this JDK 25 prints a warning per run. -->
+          <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
