@@ -71,7 +71,7 @@ Each language has one executable with three variants selected by `--variant`: `p
 
 The common line consumer owns the receive path: it binds a UDP socket, parses each `ParcelEvent`, tracks sequence gaps and records latency. Between "received" and "done" it calls one function, the handler, for every new parcel. The handler does the variant's work and reports the parcel done through a `Completion`, which records `done - intended_emit` when called. The simulator stamps `intended_emit_ns` with the scheduled time, so a late send does not hide a late handling.
 
-A handler may report a parcel done inside the call or later. That is the whole contract: one loop serves a consumer that handles parcels one by one and one that holds them. The listings are `consumer.hpp`, `loop.py`, `ParcelHandler.java` and `LineReceiver.java` under `examples/common/line-simulator/consumers/`.
+A handler may report a parcel done inside the call or later. That is the whole contract: one loop serves a consumer that handles parcels one by one and one that holds them. The listings are `consumer.hpp`, `loop.py`, `EventHandler.java` and `EventReceiver.java` under `examples/common/line-simulator/consumers/`.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -95,26 +95,16 @@ type Drain = Callable[[Completion], None]
 ```
 
 ```java
-@FunctionalInterface
-public interface ParcelHandler {
-
-    /**
-     * Called once for each new parcel (in order, or after a gap) on the receive thread. The
-     * event is parsed fresh for each call and may be kept. Must complete the parcel, now or
-     * later, via {@code done}.
-     */
-    void onParcel(ParcelEvent event, Completion done);
-
-    /**
-     * Called once when the run ends, to complete the parcels the handler still holds (a
-     * partial last batch). The default holds nothing.
-     */
+public interface EventHandler<E> {
+    // ...
+    void onParcel(E event, Completion done);
+    // ...
     default void drain(Completion done) {
     }
 }
 ```
 
-C++ states the contract as the `ParcelHandler` concept, Python as the `Handler` and `Drain` type aliases, Java as a functional interface whose `drain` default holds nothing. The end-of-run hook is for a handler still holding parcels.
+C++ states the contract as the `ParcelHandler` concept, Python as the `Handler` and `Drain` type aliases, Java as `ParcelHandler`, which extends `EventHandler<ParcelEvent>`, whose `drain` default holds nothing. The end-of-run hook serves a handler holding parcels.
 
 The loop calls the handler right after it parses the datagram and checks the sequence number:
 
@@ -135,7 +125,7 @@ The loop calls the handler right after it parses the datagram and checks the seq
 ```
 
 ```java
-            completion.begin(event.getSeq());
+            completion.begin(seq);
             handler.onParcel(event, completion);
 ```
 

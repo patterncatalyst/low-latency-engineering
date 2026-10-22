@@ -46,7 +46,7 @@ completes a partial last batch.
 |---|---|
 | C++ | `line::consume_with(cfg, stop, recorder, handler)`; the handler is a template parameter satisfying `line::ParcelHandler` (`handler(const ParcelEvent&, line::Completion&)`, optional `drain(Completion&)`), so the call is inlined into the loop |
 | Python | `lowlat_consumer.run(sock, rec, tracker, handler, expect, idle_ns, drain)`; the handler is a callable `(ParcelEvent, Completion) -> None` |
-| Java | `LineReceiver.run(ParcelHandler)`; `ParcelHandler.onParcel(ParcelEvent, Completion)` and a default `drain(Completion)` |
+| Java | `LineReceiver.run(ParcelHandler)`; `ParcelHandler` (an `EventHandler<ParcelEvent>`) has `onParcel(ParcelEvent, Completion)` and a default `drain(Completion)` |
 
 Each language reuses the common CLI parser and adds only `--slow-us`; the lane
 lookup is the common `lane_for` / `Lanes.laneOf`.

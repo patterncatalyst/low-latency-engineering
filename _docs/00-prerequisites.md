@@ -123,9 +123,16 @@ The loop in `src/simulator.cpp` sleeps to `intended`, stamps `actual`, sends and
 
     const std::int64_t actual = monotonic_ns();
     ev.set_actual_emit_ns(actual);
-    const std::size_t size = ev.ByteSizeLong();
-    if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
-      throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+    std::size_t size = 0;
+    if (cfg.wire == Wire::flat) {
+      const auto bytes = flat::parcel_v1::encode(to_flat(ev));
+      size = bytes.size();
+      std::memcpy(datagram.data(), bytes.data(), size);
+    } else {
+      size = ev.ByteSizeLong();
+      if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
+        throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+      }
     }
     // MSG_DONTWAIT: a full socket buffer drops this parcel instead of stalling the belt.
     if (::send(sock.get(), datagram.data(), size, MSG_DONTWAIT) == static_cast<ssize_t>(size)) {
@@ -141,7 +148,7 @@ The event is built before the sleep, off the wake-up path. `sleep_until_ns` retu
 
 ### The consumer's receive loop and handler hook
 
-Each consumer is split in two. The loop owns what every example shares: bind, receive, parse, check `seq` against the last one seen to detect gaps and reordering, and book the gaps. What an example does with a parcel is a handler that the loop calls once per new parcel. The handler reports the parcel done through a `Completion`, which records `done_ns - intended_emit_ns` and raises an error on a negative latency, because that means the clocks differ. Later chapters swap the handler and keep the loop. The files are `consumers/cpp/include/lowlat/line/consumer.hpp`, `consumers/consumer-py/src/lowlat_consumer/loop.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/LineReceiver.java`.
+Each consumer is split in two. The loop owns what every example shares: bind, receive, parse, check `seq` against the last one seen to detect gaps and reordering, and book the gaps. What an example does with a parcel is a handler that the loop calls once per new parcel. The handler reports the parcel done through a `Completion`, which records `done_ns - intended_emit_ns` and raises an error on a negative latency, because that means the clocks differ. Later chapters swap the handler and keep the loop. The files are `consumers/cpp/include/lowlat/line/consumer.hpp`, `consumers/consumer-py/src/lowlat_consumer/loop.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/EventReceiver.java`.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -228,11 +235,10 @@ Each consumer is split in two. The loop owns what every example shares: bind, re
                 continue;
             }
             buffer.flip();
-            ParcelEvent event;
+            E event;
             try {
-                // Direct, non-array buffer: protobuf-java reads it in place (no copy to byte[]).
-                event = ParcelEvent.parseFrom(buffer);
-            } catch (InvalidProtocolBufferException e) {
+                event = decoder.decode(buffer);
+            } catch (Decoder.MalformedDatagramException e) {
                 malformed++;
                 continue;
             }
@@ -240,14 +246,15 @@ Each consumer is split in two. The loop owns what every example shares: bind, re
             // Stamped on receipt, not on completion: a handler may hold parcels for a while.
             lastRxNs = System.nanoTime();
 
-            if (gaps.observe(event.getSeq()) == GapTracker.Arrival.REORDERED) {
+            long seq = decoder.seq(event);
+            if (gaps.observe(seq) == GapTracker.Arrival.REORDERED) {
                 continue; // reported in notes, not recorded twice
             }
             if (gaps.lastGap() > 0) {
                 recorder.addDropped(gaps.lastGap());
             }
             received++;
-            completion.begin(event.getSeq());
+            completion.begin(seq);
             handler.onParcel(event, completion);
         }
 ```
@@ -256,9 +263,9 @@ The C++ loop makes a blocking `recv` into a reused buffer. `EINTR` returns to th
 
 The hook is a template parameter, not a `std::function` or a virtual interface. The call resolves at compile time and inlines into the loop, so the hook adds no indirect call or allocation to the measured path, for the same reason `std::sort` takes its comparator as a template argument. A handler may also define `drain`, which the loop calls once at the end to complete parcels it still holds.
 
-Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal or idle stream goes unnoticed. The interpreter cost per datagram is on the measured path, so the Python column measures the whole consumer.
+Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal or idle stream goes unnoticed. The interpreter cost per datagram is on the measured path.
 
-Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first, one syscall when a datagram is waiting, and parks in a `Selector` only when the queue is empty. It parses from a direct `ByteBuffer`, which protobuf-java reads in place, and reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is the `ParcelHandler` interface; the receiver calls one instance, so the call site is monomorphic and the JIT can inline it. All three request a 4 MiB receive buffer and print what the kernel granted.
+Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first and parks in a `Selector` only when the queue is empty. The loop lives in `EventReceiver<E>`, which hands each direct `ByteBuffer` to a `Decoder<E>`; the default is protobuf, read in place, and `LineReceiver` is the protobuf specialisation. It reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is `EventHandler<E>`, which `ParcelHandler` fixes to `ParcelEvent`; the receiver calls one instance, so the JIT can inline it. All three request a 4 MiB receive buffer and print what the kernel granted.
 
 Example 00's handler (`consumer.cpp`, `loop.py`, `LineReceiver.java`) is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the measured latency.
 
