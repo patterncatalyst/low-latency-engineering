@@ -1,11 +1,11 @@
 ✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
 ━━ building C++ (release preset) latdist-consumer line-simulator
-[1/21] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
-[2/18] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[1/21] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[2/19] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
 [3/16] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
-[4/12] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
-[5/10] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
-[6/8] Generating CXX dyndep file 01-latency-distribution/cpp/CMakeFiles/latdist-consumer.dir/CXX.dd
+[4/12] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[5/10] Generating CXX dyndep file 01-latency-distribution/cpp/CMakeFiles/latdist-consumer.dir/CXX.dd
+[6/9] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
 ━━ building Java module /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/java
 WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
@@ -32,17 +32,29 @@ ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/r
 ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/java-batch-32.json
 ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r01-run2/java-bimodal-1pct.json
 example                  language  variant       count  dropped      p50      p90      p99    p99.9      max
-01-latency-distribution  cpp       per-parcel    10000        0     73.9    156.5    293.1    314.9    415.7
-01-latency-distribution  cpp       batch-32      10000        0  15188.0  28180.5  31162.4  31195.1  31211.5
-01-latency-distribution  cpp       bimodal-1pct  10000        0    158.3    183.4   5136.4   6131.7   6828.0
-01-latency-distribution  python    per-parcel    10000        0    186.4    320.0    347.9    360.7    492.0
-01-latency-distribution  python    batch-32      10000        0  15245.3  28229.6  31227.9  31244.3  31277.1
-01-latency-distribution  python    bimodal-1pct  10000        0    190.1    208.3   4837.4   6053.9   7110.7
-01-latency-distribution  java      per-parcel    10000        0    178.8    200.7    287.0  22298.6  31998.0
-01-latency-distribution  java      batch-32      10000        0  15220.7  28196.9  31195.1  31227.9  31801.3
-01-latency-distribution  java      bimodal-1pct  10000        0    164.4    408.3   6271.0  30572.5  40304.6
+01-latency-distribution  cpp       per-parcel    10000        0    156.4    167.8    185.5    237.7    305.9
+01-latency-distribution  cpp       batch-32      10000        0  15188.0  28164.1  31096.8  31195.1  31195.1
+01-latency-distribution  cpp       bimodal-1pct  10000        0    157.8    173.3   4943.9   5992.4   7008.3
+01-latency-distribution  python    per-parcel    10000        0     84.7    201.2    345.6    360.4    382.0
+01-latency-distribution  python    batch-32      10000        0  15204.4  28164.1  31129.6  31211.5  31227.9
+01-latency-distribution  python    bimodal-1pct  10000        0     78.5    174.8   2242.6   6303.7   7151.6
+01-latency-distribution  java      per-parcel    10000        0    192.1    409.6    490.8  22986.8  32702.5
+01-latency-distribution  java      batch-32      10000        0  15351.8  28147.7  31129.6  31326.2  31440.9
+01-latency-distribution  java      bimodal-1pct  10000        0    183.4    216.6   5894.1  22675.5  32391.2
 ━━ criteria: cpp
-✓ cpp A: throughput per-parcel=1000135 mHz vs batch-32=1003218 mHz differs < 1 % (308300 < 1000135)
-✓ cpp A: batch-32 p50 >= 10x per-parcel p50 (73919 ns) (15187967 >= 739190)
-✓ cpp B: bimodal p99 >= 20x its own p50 (158335 ns) (5136383 >= 3166700)
-✗ cpp B: bimodal p50 stays under 2x per-parcel p50 (73919 ns) (got 158335, need < 147838)
+✓ cpp A: throughput per-parcel=1000107 mHz vs batch-32=1003210 mHz differs < 1 % (310300 < 1000107)
+✓ cpp A: batch-32 p50 >= 10x per-parcel p50 (156415 ns) (15187967 >= 1564150)
+✓ cpp B: bimodal p99 >= 20x its own p50 (157823 ns) (4943871 >= 3156460)
+✓ cpp B: bimodal p50 stays under 1/4 of its slow path (2001000 ns) (157823 < 500250)
+━━ criteria: python
+✓ python A: throughput per-parcel=1000110 mHz vs batch-32=1003221 mHz differs < 1 % (311100 < 1000110)
+✓ python A: batch-32 p50 >= 10x per-parcel p50 (84671 ns) (15204351 >= 846710)
+✓ python B: bimodal p99 >= 20x its own p50 (78463 ns) (2242559 >= 1569260)
+✓ python B: bimodal p50 stays under 1/4 of its slow path (2163000 ns) (78463 < 540750)
+━━ criteria: java
+✓ java A: throughput per-parcel=1003363 mHz vs batch-32=1003191 mHz differs < 1 % (17200 < 1003363)
+✓ java A: batch-32 p50 >= 10x per-parcel p50 (192127 ns) (15351807 >= 1921270)
+✓ java B: bimodal p99 >= 20x its own p50 (183423 ns) (5894143 >= 3668460)
+✓ java B: bimodal p50 stays under 1/4 of its slow path (2020000 ns) (183423 < 505000)
+✓ 01-latency-distribution: the distribution, not one number, is the result
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=1.06

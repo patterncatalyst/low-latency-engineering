@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 45055999,
-    "p90": 45350911,
-    "p99": 49020927,
-    "p99_9": 49020927,
-    "max": 49020927
+    "p50": 44859391,
+    "p90": 45252607,
+    "p99": 46301183,
+    "p99_9": 46301183,
+    "max": 46301183
   },
-  "hdr_histogram": "HISTFAAAAD14nJNpmSzMwMAgzwABzFCaEch0M9ixgMH+A0RgaSsTEwMTExcQszAxMXGwMLAB+QxMwky7GZk4mQAHJAaq",
+  "hdr_histogram": "HISTFAAAAD14nJNpmSzMwMAgywABzFCaEch0M9ixgMH+A0RgeisTEwMTCzMLEwsLMwcTC5DDysTBxMQkzyTJBAD2RAYF",
   "build": {
     "compiler": "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled": null
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T02:21:48Z",
+    "captured_at": "2026-10-22T11:46:24Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 1844089,
+      "pid": 1953444,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.24,
-      "load5": 0.23,
-      "load15": 0.15,
+      "load1": 0.35,
+      "load5": 0.71,
+      "load15": 0.49,
       "running": 1
     },
     "memory": {
@@ -99,13 +99,13 @@
   "model": {
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 2,
-    "serial_fraction_modelling_input": 0.09864285166557862,
+    "serial_fraction_modelling_input": 0.09879755016193209,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "predicted_speedup": 1.820427809608859,
-    "measured_speedup_p50": 1.7512727439469271,
-    "relative_error": -0.03798835927297264,
+    "predicted_speedup": 1.8201715135834218,
+    "measured_speedup_p50": 1.7589481542448937,
+    "relative_error": -0.03363603862692915,
     "wall_p50_ns_n1": 78905343,
-    "wall_p50_ns": 45055999,
+    "wall_p50_ns": 44859391,
     "batch_parcels": 3200,
     "lock": "synchronized (platform threads)",
     "sync": "phased: barriers between the parallel and serial parts of a wave",

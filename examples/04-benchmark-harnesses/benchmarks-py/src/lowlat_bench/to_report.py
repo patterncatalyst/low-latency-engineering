@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from lowlat_measure.recorder import Recorder
+from lowlat_measure.recorder import Recorder, percentiles_of
 
 EXAMPLE = "04-benchmark-harnesses"
 
@@ -30,6 +30,10 @@ def _finish(
 ) -> dict[str, Any]:
     report = rec.build_report(notes)
     report["language"] = language
+    # The report speaks for `language`, so its percentiles follow that language's
+    # HdrHistogram rank convention (Java rounds the rank up); `lowlat-report check`
+    # recomputes them the same way.
+    report["percentiles"] = percentiles_of(rec.histogram, language)
     report["build"] = build
     out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report

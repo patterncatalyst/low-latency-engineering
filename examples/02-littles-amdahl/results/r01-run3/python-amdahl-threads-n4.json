@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 206962687,
-    "p90": 357564415,
-    "p99": 398196735,
-    "p99_9": 398196735,
-    "max": 398196735
+    "p50": 349175807,
+    "p90": 396099583,
+    "p99": 428343295,
+    "p99_9": 428343295,
+    "max": 428343295
   },
-  "hdr_histogram": "HISTFAAAAGF4nC3IsQpAYBRA4XvPT9KfQSaljAYDRpMyeDEWs1mRPIJSHsDreAQDZ/nqJMMUiUgrX+ZXRUxXnos0zzfmHVJcx3IoFksNFR6WGKWgIiCn4ILekHErIasygrKBzwuLkAyE",
+  "hdr_histogram": "HISTFAAAAGB4nJNpmSzMwMBgywABzFCakYGB2c1gxwIG+w8QgftLmJhYrJlcmWSZrJlSmZg+MzJZM9kyTedgmsnI1MnIxGTN5M/Ey8TKxMjEycTNJMkky2TLJM8UzaTPlMwEAKTaDOU=",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T02:36:58Z",
+    "captured_at": "2026-10-22T11:53:54Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 1859816,
+      "pid": 1961715,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.49,
-      "load5": 0.61,
-      "load15": 0.46,
+      "load1": 0.45,
+      "load5": 0.79,
+      "load15": 0.65,
       "running": 1
     },
     "memory": {
@@ -100,17 +100,17 @@
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 4,
     "executor": "ThreadPoolExecutor",
-    "serial_fraction_modelling_input": 0.09977731513284553,
+    "serial_fraction_modelling_input": 0.10044912776334652,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "predicted_speedup": 3.0785050842208785,
-    "measured_speedup_p50": 0.8695376814468977,
-    "relative_error": -0.7175454781920673,
-    "wall_p50_ns_n1": 179961855,
-    "wall_p50_ns": 206962687,
+    "predicted_speedup": 3.0737373059353934,
+    "measured_speedup_p50": 0.4992492478151558,
+    "relative_error": -0.8375758244365566,
+    "wall_p50_ns_n1": 174325759,
+    "wall_p50_ns": 349175807,
     "batch_parcels": 1200,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 60,
     "lock": "threading.Lock",
-    "effective_ghz": 4.09
+    "effective_ghz": 3.91
   }
 }

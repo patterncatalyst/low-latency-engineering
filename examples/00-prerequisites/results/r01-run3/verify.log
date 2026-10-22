@@ -47,18 +47,18 @@ WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
 line-consumer: listening on 127.0.0.1:47200, SO_RCVBUF requested 4194304 B
 SO_RCVBUF granted: 8388608 B
 received 5000, dropped 0, reordered 0, malformed 0 (stopped: expect)
-00-prerequisites         cpp  baseline         count=     5000 dropped=     0 p50=    101.2us p90=    167.0us p99=    189.2us p99.9=    275.5us max=     305.9us
-report: /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites//results/r01-run3/cpp.json
+00-prerequisites         cpp  baseline         count=     5000 dropped=     0 p50=    157.6us p90=    166.7us p99=    182.7us p99.9=    226.4us max=     342.3us
+report: /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run3/cpp.json
 ✓ cpp consumer exited 0
 ━━ python consumer on 127.0.0.1:47201
 line-consumer-py: bound 127.0.0.1:47201, SO_RCVBUF requested 4194304 granted 8388608 (Linux reports double the set value; capped by net.core.rmem_max)
 line-consumer-py: received 5000 dropped 0 reordered 0
-00-prerequisites  python  baseline  5000  0  170.8  243.6  341.2  356.9  403.7
+00-prerequisites  python  baseline  5000  0  168.7  190.2  207.5  269.6  378.4
 ✓ python consumer exited 0
 ━━ java consumer on 127.0.0.1:47202
 listening on /127.0.0.1:47202, SO_RCVBUF requested 4194304, granted 4194304
 stopped: EXPECTED
-00-prerequisites           java   baseline                 5000        0      140.0      200.7      333.8    26755.1    31572.0
+00-prerequisites           java   baseline                 5000        0      185.6      207.7      325.1    24707.1    29540.4
 received=5000 dropped=0 reordered=0 malformed=0 lanes=[625, 625, 625, 625, 625, 625, 625, 625] rcvbuf_granted=4194304; JIT not warmed: the first thousands of parcels ran interpreted/C1 and are included
 report: /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run3/java.json
 ✓ java consumer exited 0
@@ -67,11 +67,11 @@ ok   /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/
 ok   /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run3/python.json
 ok   /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run3/java.json
 example           language  variant   count  dropped    p50    p90    p99    p99.9      max
-00-prerequisites  cpp       baseline   5000        0  101.2  167.0  189.2    275.5    305.9
-00-prerequisites  python    baseline   5000        0  170.8  243.6  341.2    356.9    403.7
-00-prerequisites  java      baseline   5000        0  140.0  200.7  333.8  26755.1  31572.0
-✓ cpp: count=5000 dropped=0 p99=189183 ns
-✓ python: count=5000 dropped=0 p99=341247 ns
-✓ java: count=5000 dropped=0 p99=333823 ns
+00-prerequisites  cpp       baseline   5000        0  157.6  166.7  182.7    226.4    342.3
+00-prerequisites  python    baseline   5000        0  168.7  190.2  207.5    269.6    378.4
+00-prerequisites  java      baseline   5000        0  185.6  207.7  325.1  24707.1  29540.4
+✓ cpp: count=5000 dropped=0 p99=182655 ns
+✓ python: count=5000 dropped=0 p99=207487 ns
+✓ java: count=5000 dropped=0 p99=325119 ns
 ✓ 00-prerequisites: all three languages received 5000/5000 with 0 dropped
 profile: bare-metal-host virt=none governor=powersave tuned=balanced
