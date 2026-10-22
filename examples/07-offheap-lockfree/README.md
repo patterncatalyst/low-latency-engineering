@@ -169,8 +169,9 @@ usage analytics unless `-Dchronicle.analytics.disable=true` is set; the scripts 
   `HandOff.publish` with a draining consumer: `gc.alloc.rate.norm` is bytes per publish across all
   threads. The throughput score is not a latency and is not quoted.
 - **Old generation.** After the run, `System.gc()` and the old-generation `MemoryPoolMXBean`
-  usage, once, off the hot path (`OldGen`). Written to the end-to-end report's notes as
-  `old_gen_bytes_after_gc`, with the figure before the manifest was loaded as the baseline.
+  usage, once, off the hot path (`OldGen`). Written to the end-to-end and window reports as
+  `runtime.gc.old_gen_used_bytes`, with the figure before the manifest was loaded as
+  `old_gen_baseline_bytes` in the notes.
 - **GC and safepoint log.** `-Xlog:gc*,safepoint` through `-Xlog:async` to
   `results/<run>/java-<variant>.gc.log`. A JFR recording is not taken: its sampler is another
   thread on a measured path.
@@ -241,6 +242,24 @@ queue and map replication, queue encryption and timezone roll-over. `BufferMode.
 buffer mode the open-source queue offers, and it is the one set here. Agrona and Chronicle call
 `sun.misc.Unsafe`, which JDK 25 warns about at first use; the warnings stay on (JEP 471 and 498).
 Versions are pinned in `_plans/dependency-pins.md`.
+
+Chronicle Core posts usage analytics by default. Chronicle Queue and Chronicle Map each hold an
+`AnalyticsHolder` whose static initializer runs when the first queue or map is built; it calls
+`AnalyticsFacade.isEnabled()`, which reads the system property `chronicle.analytics.disable`
+(through `Jvm.getBoolean`, so the property is the only switch: there is no environment variable,
+though a `system.properties` file on the classpath or in the working directory can set it). Unless
+it is `true`, a Google Analytics 4 client posts a `started` event to
+`https://www.google-analytics.com/mp/collect` with a random client id kept in
+`~/.chronicle.analytics.client.id`, the JDK, OS and architecture, time zone, processor count,
+maximum heap and direct memory, the caller's package name and the queue's wire type and roll
+cycle. This example never allows it, in four places: `ChronicleAnalytics.disable()` in the static
+initializer of every class that touches Chronicle (`ChronicleJournal`, `ChronicleMapManifest`)
+and in `Handoff.main`; `-Dchronicle.analytics.disable=true` in the surefire `argLine` and the
+`exec:exec` arguments of `java/pom.xml`; the same flag in the `PublishBenchmark` fork and in
+`verify.sh`; and `ChronicleAnalyticsTest`, which fails if the forked test JVM was not started with
+it. `scripts/validate.py` (check `chronicle`) fails any pom or Java source that uses Chronicle
+without one of them. If you write your own program on these classes, set the property before
+the first queue or map is built.
 
 ## Verification status
 

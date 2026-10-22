@@ -31,8 +31,10 @@ import org.openjdk.jmh.annotations.Warmup;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 3, time = 1)
 @Measurement(iterations = 5, time = 1)
-// Agrona reaches jdk.internal.misc.Unsafe, which JDK 25 does not export by default.
-@Fork(value = 1, jvmArgsAppend = "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED")
+// Agrona reaches jdk.internal.misc.Unsafe, which JDK 25 does not export by default. The
+// analytics switch keeps the fork off the network should a Chronicle class ever load in it.
+@Fork(value = 1, jvmArgsAppend = {"--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
+        "-Dchronicle.analytics.disable=true"})
 @State(Scope.Benchmark)
 public class PublishBenchmark {
 

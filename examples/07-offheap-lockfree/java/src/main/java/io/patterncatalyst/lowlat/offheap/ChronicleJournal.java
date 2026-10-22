@@ -21,6 +21,10 @@ import net.openhft.chronicle.wire.Wire;
  */
 final class ChronicleJournal implements Journal {
 
+    static {
+        ChronicleAnalytics.disable(); // before Chronicle builds its first queue
+    }
+
     private final ChronicleQueue queue;
     private ExcerptAppender appender;
 

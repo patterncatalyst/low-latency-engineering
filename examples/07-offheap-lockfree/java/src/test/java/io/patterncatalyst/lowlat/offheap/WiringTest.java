@@ -19,6 +19,10 @@ import org.junit.jupiter.api.io.TempDir;
  * the surefire argLine that carries its --add-opens/--add-exports list.
  */
 class WiringTest {
+    static {
+        ChronicleAnalytics.disable();
+    }
+
     @Test
     void dependenciesLoad() throws Exception {
         assertNotNull(RingBuffer.class);

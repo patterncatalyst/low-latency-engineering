@@ -17,6 +17,9 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
   diagrams-yml   every _data/diagrams.yml name has both files; chapters 0-4 have >= 2 entries
   codetabs       `langs` count equals the number of fenced blocks that follow the tag
   shell-syntax   `bash -n` on every *.sh under scripts/ and examples/ (not .venv/build/target)
+  chronicle      a pom.xml depending on net.openhft chronicle-* passes
+                 -Dchronicle.analytics.disable=true to surefire (argLine) and to exec;
+                 a Java source naming net.openhft.chronicle disables analytics itself
   means          "mean latency"/"average latency" fail (unless the sentence negates it);
                  every other use of mean/average in _docs is printed for review
 """
@@ -229,7 +232,7 @@ def check_codetabs(pages: Pages) -> None:
 
 
 # ---------------------------------------------------------------- shell syntax
-SKIP_DIRS = {".venv", "build", "target", "node_modules", ".git", "__pycache__"}
+SKIP_DIRS = {".claude", "_site", ".venv", "build", "target", "node_modules", ".git", "__pycache__"}
 
 
 def check_shell_syntax() -> None:
@@ -245,6 +248,48 @@ def check_shell_syntax() -> None:
             detail = res.stderr.strip().splitlines()[0] if res.stderr else "bash -n failed"
             fail("shell-syntax", f"{rel(p)}: {detail}")
     print(f"shell-syntax: {len(sh_files)} scripts")
+
+
+# ---------------------------------------------------------------- chronicle analytics
+# Chronicle Queue and Map post usage analytics (Google Analytics 4) unless the system
+# property chronicle.analytics.disable is "true" when the first queue or map is built.
+ANALYTICS_FLAG = "-Dchronicle.analytics.disable=true"
+XML_COMMENT = re.compile(r"<!--.*?-->", re.S)
+JAVA_COMMENT = re.compile(r"/\*.*?\*/|(?<![:\"])//[^\n]*", re.S)
+DEP_MGMT = re.compile(r"<dependencyManagement>.*?</dependencyManagement>", re.S)
+CHRONICLE_DEP = re.compile(r"<artifactId>\s*chronicle-[a-z-]+\s*</artifactId>")
+ARG_LINE = re.compile(r"<argLine>[^<]*" + re.escape(ANALYTICS_FLAG))
+EXEC_ARG = re.compile(r"<argument>\s*" + re.escape(ANALYTICS_FLAG) + r"\s*</argument>")
+JAVA_GUARD = ("ChronicleAnalytics.disable(", "chronicle.analytics.disable")
+
+
+def check_chronicle() -> None:
+    poms = javas = 0
+    for p in sorted(ROOT.rglob("pom.xml")):
+        if SKIP_DIRS & set(p.relative_to(ROOT).parts):
+            continue
+        text = XML_COMMENT.sub("", p.read_text(encoding="utf-8"))
+        if not CHRONICLE_DEP.search(DEP_MGMT.sub("", text)):
+            continue
+        poms += 1
+        if not ARG_LINE.search(text):
+            fail("chronicle", f"{rel(p)}: surefire <argLine> lacks {ANALYTICS_FLAG}")
+        if "exec-maven-plugin" in text and not EXEC_ARG.search(text):
+            fail("chronicle", f"{rel(p)}: exec <argument> lacks {ANALYTICS_FLAG}")
+    for p in sorted(ROOT.rglob("*.java")):
+        if SKIP_DIRS & set(p.relative_to(ROOT).parts):
+            continue
+        raw = p.read_text(encoding="utf-8")
+        if "net.openhft.chronicle" not in JAVA_COMMENT.sub("", raw):
+            continue
+        javas += 1
+        if not any(g in raw for g in JAVA_GUARD):
+            fail(
+                "chronicle",
+                f"{rel(p)}: names net.openhft.chronicle but never calls "
+                "ChronicleAnalytics.disable() or sets chronicle.analytics.disable",
+            )
+    print(f"chronicle: {poms} pom(s), {javas} source file(s) checked")
 
 
 # ---------------------------------------------------------------- no mean latency
@@ -279,6 +324,7 @@ def main() -> int:
     check_figures(pages)
     check_codetabs(pages)
     check_shell_syntax()
+    check_chronicle()
     check_means(pages)
     if failures:
         print()

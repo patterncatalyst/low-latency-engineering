@@ -13,6 +13,10 @@ import net.openhft.chronicle.map.ChronicleMap;
  */
 final class ChronicleMapManifest implements Manifest {
 
+    static {
+        ChronicleAnalytics.disable(); // before Chronicle builds its first map
+    }
+
     private final ChronicleMap<Long, String> entries;
 
     ChronicleMapManifest(int count) {
