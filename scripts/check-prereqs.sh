@@ -323,6 +323,7 @@ run_vm() {
   uv="$(vm uname -v || true)"
   # Mainline PREEMPT_RT has no /sys/kernel/realtime (that file came from the
   # out-of-tree RT patch set); the running kernel's own config is the evidence.
+  # shellcheck disable=SC2016 # $(uname -r) must expand in the guest
   rt="$(vm 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
   if [[ "$uv" == *PREEMPT_RT* && "$rt" == CONFIG_PREEMPT_RT=y ]]; then
     record PASS "guest RT kernel" "PREEMPT_RT in uname -v and the running kernel's config"
@@ -338,7 +339,7 @@ run_vm() {
   else
     record FAIL "guest: docker" "daemon not reachable" "in the guest: sudo systemctl enable --now docker"
   fi
-  ready="$(vm cat /var/log/lab-ready || true)"
+  ready="$(vm head -n1 /var/log/lab-ready || true)"
   if [[ "$ready" == *ok* ]]; then
     record PASS "guest lab-ready" "$ready"
   else

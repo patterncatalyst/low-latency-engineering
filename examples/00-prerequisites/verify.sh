@@ -83,7 +83,7 @@ for lang in cpp python java; do
   ok "$lang: count=$EXPECT dropped=0 p99=$(jget "$f" .percentiles.p99) ns"
 done
 
-# --- VM=1: lab-guest smoke test (implemented, not yet run) -------------------
+# --- VM=1: lab-guest smoke test (needs the guest running: ALLOW_BUSY=1) -----
 if [[ ${VM:-0} == 1 ]]; then
   step "lab guest smoke test (VM=1)"
   VMDIR=$RESULTS/vm
