@@ -49,6 +49,14 @@ Config parse_args(std::span<const std::string_view> args) {
     } else if (opt == "--dest") {
       if (val.find(':') == std::string_view::npos) fail("--dest must be host:port");
       c.dest = val;
+    } else if (opt == "--wire") {
+      if (val == "protobuf") {
+        c.wire = Wire::protobuf;
+      } else if (val == "flat") {
+        c.wire = Wire::flat;
+      } else {
+        fail("--wire must be protobuf or flat");
+      }
     } else if (opt == "--report") {
       if (val.empty()) fail("--report needs a file name");
       c.report = std::filesystem::path{val};
@@ -69,6 +77,7 @@ std::string_view usage() noexcept {
   --encoder-ppm N        encoder pulses per metre of belt        [1000]
   --seed N               seed of the parcel generator            [42]
   --dest HOST:PORT       UDP destination (IPv4)                  [127.0.0.1:47000]
+  --wire protobuf|flat   datagram format (flat: contracts/flat/parcel-v1) [protobuf]
   --report FILE          write the emit-lateness report (needs $LOWLAT_PROFILE)
   --quiet                print only the final summary line
   -h, --help             this text
