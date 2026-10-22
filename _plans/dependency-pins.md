@@ -113,9 +113,65 @@ Distro packages, resolved on this Fedora 44 host. These float with the distro an
 
 PREEMPT_RT: mainline since 6.12, and the 7.2 tree's `kernel/Kconfig.preempt` defines `config PREEMPT_RT` with `depends on EXPERT && ARCH_SUPPORTS_RT && !COMPILE_TEST`; `arch/x86/Kconfig` at v7.2 has `select ARCH_SUPPORTS_RT`. So it is selectable on x86_64 with no out-of-tree patches. However the stock Fedora kernel does not enable it: `/boot/config-7.2.11-200.fc44.x86_64` has `# CONFIG_PREEMPT_RT is not set` (with `CONFIG_PREEMPT_DYNAMIC=y`, `CONFIG_EXPERT=y`, `CONFIG_ARCH_SUPPORTS_RT=y`), Fedora's `kernel-x86_64-fedora.config` on f44 likewise, and `dnf repoquery kernel-rt` returns nothing. The r01 VM lab therefore needs a locally built RT kernel (a Fedora kernel with `CONFIG_PREEMPT_RT=y`) or a third-party build; this is not determined here and is a plan decision.
 
+## r02 pins (surveyed 2026-10-22)
+
+Sources: `api.adoptium.net`, Maven Central `maven-metadata.xml` and resolved POMs, `gh api repos/.../releases`, Fedora `dnf repoquery` (read-only), python.org docs, jdk.java.net, graalvm.org. No prerelease is pinned. Machine-readable: `TEMURIN_*` and `ASYNC_PROFILER_*` in `versions.env`; the Maven pins go into `examples/pom.xml` properties in S6.
+
+| Component | Pinned version | Licence | Source queried | Surveyed (2026-10-22) | Notes |
+|---|---|---|---|---|---|
+| Temurin JDK (linux x64) | 25.0.5+8 (LTS) | GPL-2.0-only WITH Classpath-exception-2.0 | `api.adoptium.net/v3/assets/latest/25/hotspot?architecture=x64&image_type=jdk&os=linux&vendor=eclipse` | yes | Built 2026-10-22. URL `https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jdk_x64_linux_hotspot_25.0.5_8.tar.gz`, SHA256 `68982529869257d0ee6b824ec5aa270ff8b118bb438670da0b97ebdab178d7fb` (API value; matches the downloaded file). 141341188 bytes. |
+| Fedora 44 `java-25-openjdk` | 25.0.4.1.1-1.1.fc44 (updates) | GPL-2.0-only WITH Classpath-exception-2.0 | `dnf repoquery --latest-limit=1 java-25-openjdk-devel` | yes | Lags Temurin by one update (25.0.5 not yet in Fedora). Recorded, not pinned; the guest and CI use the Temurin tarball (Q12). |
+| org.openjdk.jmh:jmh-core, jmh-generator-annprocess | 1.37 | GPL-2.0-only WITH Classpath-exception-2.0 | Maven Central `maven-metadata.xml` (latest/release 1.37, lastUpdated 2023-08-03) | yes | Unchanged since r01. |
+| org.agrona:agrona | 2.7.0 | Apache-2.0 | Maven Central metadata (lastUpdated 2026-10-12); `gh api repos/real-logic/agrona/releases/latest` | yes | Released 2026-10-12. Uses `sun.misc.Unsafe` and warns on JDK 25 (Q6). |
+| com.lmax:disruptor | 4.0.0 | Apache-2.0 | Maven Central metadata (lastUpdated 2023-09-29); GitHub latest release 4.0.0 | yes | Still the latest; `4.0.0.RC1` is a prerelease, not used. Java 11+ line. |
+| net.openhft:chronicle-bom | 2026.26 | Apache-2.0 | Maven Central metadata (release 2026.26, 2026-10-06) | yes | Imported in `dependencyManagement`; pins the versions below. See Chronicle section. |
+| net.openhft:chronicle-queue | 2026.7 | Apache-2.0 | resolved by the BOM; GitHub release `chronicle-queue-2026.7`, prerelease=false, 2026-10-06 | yes | |
+| net.openhft:chronicle-map | 2026.1 | Apache-2.0 | resolved by the BOM; GitHub release `chronicle-map-2026.1`, prerelease=false, 2026-01-29 | yes | `3.26ea*`/`3.27ea*` are early access, not used. |
+| net.openhft:chronicle-bytes | 2026.4 | Apache-2.0 | resolved by the BOM; GitHub release `chronicle-bytes-2026.4`, prerelease=false, 2026-06-04 | yes | `2.27ea*` are early access, not used. |
+| net.openhft:affinity | 2026.2 | Apache-2.0 | BOM entry; Maven Central metadata (2026-01-28); GitHub release `Java-Thread-Affinity-2026.2` | yes | Licence from the repo `LICENSE.adoc` (Apache 2.0; GitHub reports NOASSERTION) and the SPDX header in the POM. `3.26ea*`/`3.27ea*` early access, not used. |
+| async-profiler (linux x64) | 4.6 | Apache-2.0 | `gh api repos/async-profiler/async-profiler/releases/tags/v4.6` (prerelease=false, 2026-10-19) | yes | URL `https://github.com/async-profiler/async-profiler/releases/download/v4.6/async-profiler-4.6-linux-x64.tar.gz`, SHA256 `1e79ed54d8952889a2e74f993d22ee925e3322460d4f37a2ed95bfb88585da36` (GitHub asset digest). The `nightly` release is a prerelease, not used. |
+| org.openjdk.jol:jol-core | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | Maven Central metadata (lastUpdated 2023-02-27); openjdk/jol `LICENSE` | yes | Latest; used for object layout in Ch5/Ch8 prose and compact-header footprint. |
+| stress-ng (guest) | 0.22.01-1.fc44 (updates) | GPL-2.0-or-later | `dnf repoquery --latest-limit=1 stress-ng` | yes | Distro package in the guest; floats with Fedora, recorded not pinned. |
+| CPython | 3.14.8 | PSF-2.0 | `python3.14 -V`; docs.python.org/3.14 | yes | Unchanged; hold on 3.14.9 stays (see Holds). GC mode below. |
+
+### Chronicle: the 2026.x calendar line is the public open-source line
+
+- Maven Central lists `chronicle-bom` 2026.0 to 2026.26 as plain release versions (no `ea`, `RC` suffix); `chronicle-queue` 2026.0 to 2026.7, `chronicle-map` 2026.0, 2026.1, `chronicle-bytes` 2026.1 to 2026.4, `affinity` 2026.1, 2026.2. The BOM POM (2026.26) is Apache-2.0 (SPDX header). The GitHub repos (Chronicle-Queue, -Map, -Bytes, Java-Thread-Affinity) are Apache-2.0 and their `2026.x` releases have `prerelease=false`. Early-access lines (`3.26ea*`, `3.27ea*`, `2.27ea*`, `5.27ea*`) are on Central under older numbering and are excluded.
+- `5.26.x` and `5.25.x` GitHub releases (for example `chronicle-queue-5.26.17`, 2026-07-27) are older-numbering maintenance lines; the 2026.x line supersedes them. Not used.
+- `mvn dependency:tree` of the BOM with queue, map, bytes and affinity resolves: `chronicle-queue` 2026.7, `chronicle-core` 2026.6, `chronicle-wire` 2026.10, `chronicle-threads` 2026.4, `chronicle-bytes` 2026.4, `chronicle-map` 2026.1, `posix` 2026.2, `chronicle-values` 2026.2, `chronicle-algorithms` 2026.2, `affinity` 2026.2, plus `net.java.dev.jna` 5.5.0, `jnr-ffi` 2.2.15, `asm` 9.2, `slf4j-api` 2.0.17, `commons-cli` 1.5.0. These transitives (old asm and jna) are the ones S6 `dependencyConvergence` must reconcile.
+- Enterprise-only (excluded, from the Chronicle Queue and Map READMEs): queue encryption (and the `Copy` buffer mode paired with it), TCP/UDP replication of queues and of Chronicle Map, timezone rollover, async mode (`BufferMode.Asynchronous`), the Pre-toucher. The BOM also lists Enterprise and supported-client artifacts (`chronicle-queue-enterprise`, `chronicle-wire-enterprise`, FIX, matching engine and similar); none is imported. OSS Chronicle Queue provides `BufferMode.None` only and does not `fsync` per append.
+
+### JDK status (not used)
+
+- JDK 27: GA 2026-09-15 (openjdk.org/projects/jdk/27), non-LTS; `api.adoptium.net/v3/info/available_releases` reports `most_recent_feature_release` 27, `most_recent_lts` 25; Temurin `27.0.0+35` exists. OpenJDK GA build page: https://jdk.java.net/27/ (27.0.1.0.2). Not used: non-LTS (Q1).
+- JDK 28: early access only, build 20 (2026-10-15), https://jdk.java.net/28/ ; Adoptium EA `jdk-28+20-ea-beta`. JEP 401 Value Objects (Preview) shows Status Integrated, Release 28 (https://openjdk.org/jeps/401, updated 2026-08-07). Valhalla EA build `27-jep401ea3+1-1` (2026-03-11): https://jdk.java.net/valhalla/ . Hold: no EA/preview in measured runs (Q2). Re-check at JDK 28 GA (about March 2027).
+- jextract: early-access builds only (https://jdk.java.net/jextract/). Not used; Ch8 writes the `FunctionDescriptor` by hand. Re-check when a GA jextract ships.
+
+### GraalVM CE (prose only, Q3; not pinned)
+
+- Current release: GraalVM Community `graal-25.4.4.1.1` "25 Innovation 4" (JDK 25.0.4.1.1), GitHub release 2026-09-22, prerelease=false. graalvm.org release notes call it "an innovation release". The tag pattern is `graal-25.N.x`: a monthly-ish Innovation release on JDK 25, not a separate LTS line; release notes do not define the term further.
+- Native Image GC in CE: Serial GC is the default; Epsilon is available; G1 is documented as "Not available in GraalVM Community Edition" (graalvm.org JDK 25 Memory Management reference). G1, and the better throughput it brings, is Oracle GraalVM only. Ch5/Ch6 say native-image on CE means Serial or Epsilon, which does not apply to the hot path.
+
+### `std::start_lifetime_as` (test-compiled 2026-10-22, `-std=c++23`)
+
+Probe: `std::start_lifetime_as<P>(buf)` on an `alignas(P) std::byte[8]`, `#include <memory>`. Clang 22.1.8 (Fedora 22.1.8-4.fc44) and GCC 16.2.1 20260819 both compile it; both report `__cpp_lib_start_lifetime_as 202207L` through the host libstdc++. Ch8 may use it. Not tested: clang with libc++.
+
+### CPython 3.14 cycle GC
+
+Python 3.14.0 to 3.14.4 shipped an incremental cycle GC; 3.14.5 and later (including the pinned 3.14.8) use the generational collector again ("Forward-port the generational cycle garbage collector", gh-142516). Sources: https://docs.python.org/3.14/whatsnew/3.14.html (Incremental garbage collection: "Python 3.14.0-3.14.4 shipped with a new incremental garbage collector"), the 3.14 changelog, and `gc` docs. Checked on the host's 3.14.8: `gc.get_threshold()` is `(2000, 10, 10)`, three generations. Ch6 Python lane describes generations and `gc.freeze()`.
+
+### Findings that change r02-plan §0
+
+- Fedora's `java-25-openjdk` is 25.0.4.1.1, one update behind Temurin 25.0.5; consistent with Q12 (pinned tarball), no plan change.
+- `chronicle-bom` is at 2026.26 and resolves queue 2026.7, map 2026.1, bytes 2026.4, affinity 2026.2 (consistent with §0). Chronicle Map replication is Enterprise too.
+- `check-prereqs.sh` still checks only "java 25"; the "warn below the pin" idea needs a `TEMURIN_VERSION` comparison, added where S5/S6 touch the script.
+
 ## Holds
 
 | Component | Held at | Latest stable | Reason | Re-check |
 |---|---|---|---|---|
 | CPython | 3.14.8 | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | No python-build-standalone build of 3.14.9 yet (latest `20261020` ships 3.14.8), so uv cannot provide it; Fedora 44 ships 3.14.8. Promote when a uv-managed 3.14.9 is available; pin it in `examples/.python-version`. | next iteration |
 | uv | 0.13.0 on this host | 0.13.4 | User-local tool, not changed by the build; r01 uses no 0.13.4-only feature. `uv self update` is the user's call. | next iteration |
+| JDK 27 (non-LTS) | not used | 27.0.1 GA (2026-09-15) | Base is LTS 25 (Q1); libraries certify LTS | JDK 28 GA, or next LTS (JDK 29) |
+| JDK 28 / Valhalla EA, jextract EA | not used | EA only | Prerelease policy (Q2) | JDK 28 GA (~2027-03); GA jextract |
+| GraalVM CE 25 Innovation | not pinned | graal-25.4.4.1.1 | Prose only (Q3) | only if native-image is ever run in an example |
