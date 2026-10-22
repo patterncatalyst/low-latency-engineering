@@ -15,7 +15,8 @@ target_compile_definitions(lowlat_measure PRIVATE LOWLAT_MEASURE_BUILD_FLAGS="${
 if(BUILD_TESTING)
   add_executable(measure-test tests/recorder_test.cpp)
   target_link_libraries(measure-test PRIVATE lowlat::measure GTest::gtest_main GTest::gmock lowlat::warnings)
-  # Absolute source path, so the golden report lands in the tree whatever the cwd.
+  # Absolute source path: the committed goldens are read from here (and rewritten
+  # only with LOWLAT_REGEN_GOLDEN=1), whatever the cwd.
   target_compile_definitions(measure-test PRIVATE
     LOWLAT_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../measure-fixtures")
   include(GoogleTest)

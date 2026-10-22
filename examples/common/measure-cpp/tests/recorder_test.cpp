@@ -1,14 +1,20 @@
 // Tests of the C++ measurement kit: correction maths, report shape, golden
 // fixture, and cross-decoding of the other kits' golden reports.
+//
+// The golden round trip writes to a temporary file. Setting LOWLAT_REGEN_GOLDEN=1
+// rewrites the committed measure-fixtures/cpp-golden.json instead.
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <unistd.h>
 
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <print>
+#include <format>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 #include "lowlat/measure/recorder.hpp"
 
@@ -33,6 +39,18 @@ bool has_no_mean(const json& j) {
     }
   }
   return true;
+}
+
+// The golden dataset: i * 1000 ns for i = 1..10000.
+Recorder golden_recorder() {
+  Recorder r{"measure-fixtures", "golden"};
+  for (std::int64_t i = 1; i <= 10'000; ++i) r.record(i * 1000);
+  return r;
+}
+
+bool regen_golden() {
+  const char* v = std::getenv("LOWLAT_REGEN_GOLDEN");
+  return v != nullptr && std::string_view{v} == "1";
 }
 
 }  // namespace
@@ -111,14 +129,19 @@ TEST_F(Measure, OutOfRangeRecordThrows) {
   EXPECT_THROW(r.record(-1), std::out_of_range);
 }
 
-// Golden fixture: i * 1000 ns for i = 1..10000, written into the source tree.
+// Golden fixture round trip. The report goes to a per-process temporary file, or
+// to the committed fixture when LOWLAT_REGEN_GOLDEN=1.
 TEST_F(Measure, GoldenFixtureRoundTrip) {
-  Recorder r{"measure-fixtures", "golden"};
-  for (std::int64_t i = 1; i <= 10'000; ++i) r.record(i * 1000);
-  const json doc = r.write_report(kFixtures / "cpp-golden.json");
+  const fs::path out = regen_golden() ? kFixtures / "cpp-golden.json"
+                                      : fs::path{testing::TempDir()} /
+                                            std::format("cpp-golden-{}.json", ::getpid());
+  Recorder r = golden_recorder();
+  const json doc = r.write_report(out);
 
-  std::ifstream in{kFixtures / "cpp-golden.json"};
+  std::ifstream in{out};
   const json written = json::parse(in);
+  in.close();
+  if (!regen_golden()) fs::remove(out);
   EXPECT_EQ(written, doc);
 
   const auto decoded = lowlat::measure::decode(written["hdr_histogram"].get<std::string>());
@@ -133,33 +156,27 @@ TEST_F(Measure, DecodeRejectsGarbage) {
   EXPECT_THROW((void)lowlat::measure::decode("not a histogram"), std::runtime_error);
 }
 
-// Cross-kit check: the Java and Python goldens must decode to the same
-// percentiles as the C++ one, within HdrHistogram's equivalent-value range.
-TEST_F(Measure, OtherKitsGoldensAgree) {
-  std::ifstream cpp_in{kFixtures / "cpp-golden.json"};
-  if (!cpp_in) GTEST_SKIP() << "cpp-golden.json not written yet (run GoldenFixtureRoundTrip first)";
-  const json cpp = json::parse(cpp_in);
-  const auto cpp_h = lowlat::measure::decode(cpp["hdr_histogram"].get<std::string>());
+// Cross-kit check: the committed Java and Python goldens (and the committed C++
+// one) must decode to the same percentiles as a report recorded here from the same
+// dataset, within HdrHistogram's equivalent-value range. The reference is built in
+// the test, so the result does not depend on test order or on a fixture being rewritten.
+TEST_F(Measure, CommittedGoldensAgreeWithFreshReport) {
+  const Recorder fresh = golden_recorder();
+  const hdr_histogram* ref = &fresh.histogram();
 
-  int compared = 0;
-  for (const char* name : {"java-golden.json", "python-golden.json"}) {
+  for (const char* name : {"cpp-golden.json", "java-golden.json", "python-golden.json"}) {
     std::ifstream in{kFixtures / name};
-    if (!in) {
-      std::println("[  SKIPPED ] {} absent", name);
-      continue;
-    }
+    ASSERT_TRUE(in) << name << " is a committed fixture and must exist";
     const json other = json::parse(in);
     const auto h = lowlat::measure::decode(other["hdr_histogram"].get<std::string>());
-    EXPECT_EQ(hdr_total_count(h.get()), hdr_total_count(cpp_h.get())) << name;
+    EXPECT_EQ(hdr_total_count(h.get()), hdr_total_count(ref)) << name;
     for (const double pct : {50.0, 90.0, 99.0, 99.9}) {
-      EXPECT_TRUE(hdr_values_are_equivalent(cpp_h.get(), hdr_value_at_percentile(cpp_h.get(), pct),
+      EXPECT_TRUE(hdr_values_are_equivalent(ref, hdr_value_at_percentile(ref, pct),
                                             hdr_value_at_percentile(h.get(), pct)))
           << name << " p" << pct;
     }
-    EXPECT_TRUE(hdr_values_are_equivalent(cpp_h.get(), hdr_max(cpp_h.get()), hdr_max(h.get()))) << name;
-    ++compared;
+    EXPECT_TRUE(hdr_values_are_equivalent(ref, hdr_max(ref), hdr_max(h.get()))) << name;
   }
-  if (compared == 0) GTEST_SKIP() << "no java-golden.json or python-golden.json present yet";
 }
 
 TEST_F(Measure, NotesAppearOnlyWhenGiven) {

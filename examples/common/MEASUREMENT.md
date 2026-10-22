@@ -84,8 +84,11 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
 
 ## Shared fixtures
 
-Each kit's tests write a golden report from one fixed dataset to
-`common/measure-fixtures/<language>-golden.json`, with `LOWLAT_PROFILE` pointing
+Each kit's tests produce a golden report from one fixed dataset. They write it to a
+temporary directory; the committed `common/measure-fixtures/<language>-golden.json` is
+rewritten only on request: `LOWLAT_REGEN_GOLDEN=1` for the C++ and Java tests,
+`pytest --regen-golden` for Python. Cross-language checks read the committed files. The
+tests point `LOWLAT_PROFILE`
 at `common/measure-fixtures/profile.json` (a committed sample profile):
 
 - dataset: values 1,000 ns to 10,000,000 ns, i.e. `i * 1000` for i = 1..10,000,

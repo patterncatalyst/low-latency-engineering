@@ -75,13 +75,24 @@ class LatencyRecorderTest {
         return h.valuesAreEquivalent(lo, hi) || h.valuesAreEquivalent(h.nextNonEquivalentValue(lo), hi);
     }
 
-    @Test
-    void goldenReportRoundTripsAndValidatesShape() throws IOException {
+    /** Set LOWLAT_REGEN_GOLDEN=1 to rewrite the committed java-golden.json instead of a temp file. */
+    private static boolean regenGolden() {
+        return "1".equals(System.getenv("LOWLAT_REGEN_GOLDEN"));
+    }
+
+    /** The golden dataset: i * 1000 ns for i = 1..10000. */
+    private static LatencyRecorder goldenRecorder() {
         LatencyRecorder rec = LatencyRecorder.singleThreaded("measure-fixtures", "golden");
         for (int i = 1; i <= 10_000; i++) {
             rec.record(i * 1000L);
         }
-        Path out = fixtures.resolve("java-golden.json");
+        return rec;
+    }
+
+    @Test
+    void goldenReportRoundTripsAndValidatesShape(@TempDir Path dir) throws IOException {
+        LatencyRecorder rec = goldenRecorder();
+        Path out = regenGolden() ? fixtures.resolve("java-golden.json") : dir.resolve("java-golden.json");
         Report report = rec.writeReport(out);
 
         assertEquals(10_000, report.count());
@@ -119,15 +130,17 @@ class LatencyRecorderTest {
         assertEquals(5, tree.get("percentiles").size());
     }
 
-    /** Needs java-golden.json from {@link #goldenReportRoundTripsAndValidatesShape}; skipped if absent. */
+    /**
+     * The committed goldens of every kit must decode to the same percentiles as a report recorded
+     * here from the same dataset. The reference is built in the test, so the check is independent
+     * of test order and of any fixture being rewritten.
+     */
     @ParameterizedTest
-    @ValueSource(strings = {"cpp-golden.json", "python-golden.json"})
-    void crossDecodeOtherLanguages(String name) throws IOException {
-        Path java = fixtures.resolve("java-golden.json");
-        assumeTrue(Files.exists(java), "java-golden.json not yet written");
+    @ValueSource(strings = {"cpp-golden.json", "java-golden.json", "python-golden.json"})
+    void crossDecodeCommittedGoldens(String name) throws IOException {
         Path other = fixtures.resolve(name);
-        assumeTrue(Files.exists(other), name + " not present; nothing to cross-decode");
-        Histogram ref = LatencyRecorder.decode(JSON.readTree(java).get("hdr_histogram").asString());
+        assertTrue(Files.exists(other), name + " is a committed fixture and must exist");
+        Histogram ref = goldenRecorder().histogram();
         Histogram h = LatencyRecorder.decode(JSON.readTree(other).get("hdr_histogram").asString());
         assertEquals(ref.getTotalCount(), h.getTotalCount(), name);
         for (double p : new double[] {50, 90, 99, 99.9}) {
