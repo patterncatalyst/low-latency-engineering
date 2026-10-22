@@ -1,6 +1,7 @@
 package io.patterncatalyst.lowlat.co;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.patterncatalyst.lowlat.line.Lanes;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -73,7 +74,7 @@ final class Experiment {
             nextSeq = event.getSeq() + 1;
             received++;
 
-            sink = Handle.laneOf(event.getBarcode());
+            sink = Lanes.laneOf(event.getBarcode());
             if (o.stallMs() > 0 && event.getSeq() == o.stallSeq()) {
                 stall(o.stallMs());
             }
@@ -94,7 +95,7 @@ final class Experiment {
         String barcode = "006141410000000134";
         for (long i = 0; i < requests; i++) {
             long startNs = System.nanoTime();
-            sink = Handle.laneOf(barcode);
+            sink = Lanes.laneOf(barcode);
             if (o.stallMs() > 0 && i == o.stallSeq()) {
                 stall(o.stallMs());
             }

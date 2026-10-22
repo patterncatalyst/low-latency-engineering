@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -21,18 +24,11 @@ class SimulatorIntegrationTest {
         Assumptions.assumeTrue(Files.isExecutable(simulator),
                 "line-simulator not built (" + simulator + "); run cmake --preset release first");
 
-        Config config = Config.parse(java.util.List.of("--bind", "127.0.0.1:" + PORT, "--expect", "2000",
+        Config config = Config.parse(List.of("--bind", "127.0.0.1:" + PORT, "--expect", "2000",
                 "--idle-timeout-ms", "5000"));
         try (LineReceiver receiver = new LineReceiver(config)) {
-            LineReceiver.StopReason[] reason = new LineReceiver.StopReason[1];
-            Throwable[] failure = new Throwable[1];
-            Thread loop = Thread.ofPlatform().name("test-consumer").start(() -> {
-                try {
-                    reason[0] = receiver.run();
-                } catch (Throwable t) {
-                    failure[0] = t;
-                }
-            });
+            FutureTask<LineReceiver.StopReason> receive = new FutureTask<>(receiver::run);
+            Thread loop = Thread.ofPlatform().name("test-consumer").start(receive);
 
             Process sim = new ProcessBuilder(simulator.toString(), "--rate", "1000", "--duration", "2",
                     "--dest", "127.0.0.1:" + PORT, "--quiet").inheritIO().start();
@@ -43,8 +39,8 @@ class SimulatorIntegrationTest {
                 loop.join();
             }
 
-            assertEquals(null, failure[0], "consumer failed (negative latency?)");
-            assertEquals(LineReceiver.StopReason.EXPECTED, reason[0]);
+            assertEquals(Future.State.SUCCESS, receive.state(), "consumer failed (negative latency?)");
+            assertEquals(LineReceiver.StopReason.EXPECTED, receive.resultNow());
             assertEquals(2000, receiver.received());
             assertEquals(0, receiver.gaps().dropped());
             assertEquals(0, receiver.gaps().reordered());

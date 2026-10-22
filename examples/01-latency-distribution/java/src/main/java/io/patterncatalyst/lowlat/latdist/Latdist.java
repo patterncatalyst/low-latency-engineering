@@ -8,6 +8,7 @@ import io.patterncatalyst.lowlat.line.ParcelHandler;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,38 +33,43 @@ public final class Latdist {
     }
 
     public static void main(String[] args) throws IOException {
-        // --slow-us is the only flag the common parser does not know; the rest go to it, over
-        // this example's defaults.
-        long slowUs = 2000;
-        List<String> rest = new ArrayList<>();
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("--slow-us") && i + 1 < args.length) {
-                slowUs = Long.parseLong(args[++i]);
-            } else {
-                rest.add(args[i]);
-            }
-        }
-        Config base = Config.parse(List.of("--bind", "127.0.0.1:47210", "--example", "01-latency-distribution",
-                "--variant", "per-parcel"));
         Config config;
+        Policy policy;
         try {
+            // --slow-us is the only flag the common parser does not know; the rest go to it, over
+            // this example's defaults.
+            long slowUs = 2000;
+            List<String> rest = new ArrayList<>();
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("--slow-us") && i + 1 < args.length) {
+                    slowUs = Long.parseLong(args[++i]);
+                } else {
+                    rest.add(args[i]);
+                }
+            }
+            Config base = Config.parse(List.of("--bind", "127.0.0.1:47210", "--example", "01-latency-distribution",
+                    "--variant", "per-parcel"));
             config = Config.parse(rest, base);
+            policy = switch (config.variant()) {
+                case "per-parcel" -> new PerParcel();
+                case "batch-32" -> new Batch(BATCH);
+                case "bimodal-1pct" -> new Bimodal(SLOW_EVERY, slowUs);
+                default -> throw new IllegalArgumentException("--variant: per-parcel | batch-32 | bimodal-1pct");
+            };
         } catch (Config.HelpRequested e) {
             System.out.println("usage: latdist-java [--variant per-parcel|batch-32|bimodal-1pct] [--bind HOST:PORT]"
                     + " [--expect N] [--idle-timeout-ms MS] [--slow-us US] [--rcvbuf BYTES] [--report FILE]"
                     + " [--example NAME]");
             return;
+        } catch (IllegalArgumentException e) { // includes NumberFormatException
+            System.err.println("latdist-java: " + e.getMessage());
+            System.exit(2);
+            return;
         }
-        if (config.report() != null && System.getenv(LatencyRecorder.PROFILE_ENV) == null) {
-            throw new IllegalStateException(LatencyRecorder.PROFILE_ENV + " is required with --report");
+        if (config.report() != null && !LatencyRecorder.profileConfigured()) {
+            System.err.println("latdist-java: --report needs " + LatencyRecorder.PROFILE_ENV);
+            System.exit(2);
         }
-
-        Policy policy = switch (config.variant()) {
-            case "per-parcel" -> new PerParcel();
-            case "batch-32" -> new Batch(BATCH);
-            case "bimodal-1pct" -> new Bimodal(SLOW_EVERY, slowUs);
-            default -> throw new IllegalArgumentException("--variant: per-parcel | batch-32 | bimodal-1pct");
-        };
 
         try (LineReceiver receiver = new LineReceiver(config)) {
             System.out.println("latdist-java: variant " + config.variant() + " on " + config.bindHost() + ":"
@@ -81,8 +87,13 @@ public final class Latdist {
                     policy.laneSink & 1);
             Completion done = receiver.completion();
             long span = done.lastDoneNs() - done.firstDoneNs();
-            String notes = "throughput_mhz=%d; done_span_ns=%d; reordered=%d; JIT not warmed: first parcels included"
-                    .formatted(done.count() * 1_000_000_000_000L / span, span, receiver.reordered())
+            // Completions per second x 1000, exact; one completion (or none) spans no time.
+            String throughputMhz = span > 0
+                    ? BigInteger.valueOf(done.count()).multiply(BigInteger.TEN.pow(12))
+                            .divide(BigInteger.valueOf(span)).toString()
+                    : "n/a";
+            String notes = "throughput_mhz=%s; done_span_ns=%d; reordered=%d; JIT not warmed: first parcels included"
+                    .formatted(throughputMhz, span, receiver.reordered())
                     + policy.notes();
             LatencyRecorder rec = receiver.recorder();
             rec.printSummary();

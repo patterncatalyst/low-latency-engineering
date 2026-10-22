@@ -32,9 +32,12 @@ class ExperimentTest {
     }
 
     @Test
-    void laneIsSerialModuloEight() {
-        assertEquals(13 % 8, Handle.laneOf("006141410000000134"));
-        assertEquals(0, Handle.laneOf("006141410000000008"));
+    void bindIsCheckedLikeTheOtherConsumers() {
+        Options o = Options.parse(List.of("--bind", "0.0.0.0:47300"));
+        assertEquals("0.0.0.0", o.bindHost());
+        assertEquals(47300, o.bindPort());
+        assertThrows(IllegalArgumentException.class, () -> Options.parse(List.of("--bind", "127.0.0.1:70000")));
+        assertThrows(IllegalArgumentException.class, () -> Options.parse(List.of("--bind", ":47300")));
     }
 
     /** The correction is the point: the same closed-loop stall, recorded two ways. */

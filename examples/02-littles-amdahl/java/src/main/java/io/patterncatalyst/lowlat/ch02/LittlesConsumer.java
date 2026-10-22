@@ -1,20 +1,18 @@
 package io.patterncatalyst.lowlat.ch02;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import io.patterncatalyst.lowlat.line.Completion;
+import io.patterncatalyst.lowlat.line.Config;
+import io.patterncatalyst.lowlat.line.LineReceiver;
+import io.patterncatalyst.lowlat.line.ParcelHandler;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
-import java.nio.channels.Selector;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.random.RandomGenerator;
@@ -27,6 +25,9 @@ import java.util.random.RandomGeneratorFactory;
  * recorded per parcel (done minus intended emit time) with the measurement kit; L is sampled at a
  * fixed interval as parcels due by the schedule minus parcels done. The time-average L, lambda
  * and the mean W go into the report's {@code model} block, with the prediction lambda * W.
+ *
+ * <p>The common {@link LineReceiver} binds, parses, tracks gaps and records W; this class supplies
+ * the {@link ParcelHandler} (the service time, the sampler) and the model block.
  */
 public final class LittlesConsumer {
 
@@ -36,15 +37,12 @@ public final class LittlesConsumer {
                            long seed, double budgetMs, double beltMps, Path report, String example,
                            String variant) {
 
+        private static final Set<String> KEYS = Set.of("--port", "--rate", "--duration", "--service-mean-us",
+                "--sample-us", "--seed", "--budget-ms", "--belt-mps", "--report", "--example", "--variant");
+
         static Options parse(String[] args) {
-            Map<String, String> kv = new HashMap<>();
-            for (int i = 0; i < args.length; i += 2) {
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException(args[i] + " needs a value");
-                }
-                kv.put(args[i], args[i + 1]);
-            }
-            Options o = new Options(
+            Map<String, String> kv = Cli.pairs(args, KEYS);
+            return new Options(
                     Integer.parseInt(kv.getOrDefault("--port", "47221")),
                     Long.parseLong(kv.getOrDefault("--rate", "1000")),
                     Integer.parseInt(kv.getOrDefault("--duration", "10")),
@@ -56,18 +54,10 @@ public final class LittlesConsumer {
                     kv.containsKey("--report") ? Path.of(kv.get("--report")) : null,
                     kv.getOrDefault("--example", "02-littles-amdahl"),
                     kv.getOrDefault("--variant", "littles-law"));
-            for (String key : kv.keySet()) {
-                if (!List.of("--port", "--rate", "--duration", "--service-mean-us", "--sample-us",
-                        "--seed", "--budget-ms", "--belt-mps", "--report", "--example", "--variant")
-                        .contains(key)) {
-                    throw new IllegalArgumentException("unknown option " + key);
-                }
-            }
-            return o;
         }
     }
 
-    /** What the sampler thread hands back through join(). */
+    /** What the sampler thread hands back through its FutureTask. */
     private static final class Sampled {
         long sumInSystem;
         long samples;
@@ -109,7 +99,46 @@ public final class LittlesConsumer {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * The per-parcel hook: serve for an exponential time, then complete. Starts the sampler on the
+     * first parcel; the receive thread owns everything but {@code done}, which the sampler reads.
+     */
+    private static final class Service implements ParcelHandler {
+        private final Options o;
+        private final RandomGenerator rng;
+        private final double capUs;
+        private final AtomicLong done = new AtomicLong();
+        private FutureTask<Sampled> sampler;
+        private double wSumNs; // input to the model block only, never reported as a latency
+
+        Service(Options o) {
+            this.o = o;
+            this.rng = RandomGeneratorFactory.of("Xoshiro256PlusPlus").create(o.seed());
+            this.capUs = 10.0 * o.serviceMeanUs();
+        }
+
+        @Override
+        public void onParcel(ParcelEvent event, Completion completion) {
+            if (sampler == null) {
+                // Parcel `seq` is due at t0 + seq / lambda, so t0 follows from any first parcel.
+                long t0 = event.getIntendedEmitNs() - event.getSeq() * NS / o.rateHz();
+                sampler = new FutureTask<>(() -> sample(done, t0, o));
+                Thread.ofPlatform().name("sampler").start(sampler);
+            }
+            serve((long) (Math.min(rng.nextExponential() * o.serviceMeanUs(), capUs) * 1000.0));
+            long doneNs = System.nanoTime();
+            done.incrementAndGet();
+            completion.complete(event.getIntendedEmitNs(), doneNs);
+            wSumNs += doneNs - event.getIntendedEmitNs();
+        }
+
+        /** Waits for the sampler (it ends at t0 + duration); null when no parcel arrived. */
+        Sampled sampled() throws InterruptedException, ExecutionException {
+            return sampler == null ? null : sampler.get();
+        }
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
         Options o;
         try {
             o = Options.parse(args);
@@ -118,89 +147,37 @@ public final class LittlesConsumer {
             System.exit(2);
             return;
         }
-        if (o.report() != null && System.getenv(LatencyRecorder.PROFILE_ENV) == null) {
+        if (o.report() != null && !LatencyRecorder.profileConfigured()) {
             System.err.println("littles-consumer-java: --report needs " + LatencyRecorder.PROFILE_ENV);
             System.exit(2);
         }
-        long expect = o.rateHz() * o.durationS();
-        LatencyRecorder latency = LatencyRecorder.singleThreaded(o.example(), o.variant());
-        RandomGenerator rng = RandomGeneratorFactory.<RandomGenerator>of("Xoshiro256PlusPlus").create(o.seed());
-        double capUs = 10.0 * o.serviceMeanUs();
-        AtomicLong done = new AtomicLong();
-        Sampled[] sampled = new Sampled[1];
-        Thread sampler = null;
-        long received = 0;
-        long dropped = 0;
-        long nextSeq = 0;
-        long lastRxNs = 0;
-        double wSumNs = 0; // input to the model block only, never reported as a latency
+        Config config = new Config("127.0.0.1", o.port(), 4 << 20, o.rateHz() * o.durationS(), 2000, null,
+                o.example(), o.variant());
+        Service service = new Service(o);
 
         System.out.printf("littles-consumer-java: 127.0.0.1:%d, lambda=%d /s, service mean %.0f us "
                 + "(offered utilisation %.2f)%n", o.port(), o.rateHz(), o.serviceMeanUs(),
                 o.rateHz() * o.serviceMeanUs() / 1e6);
 
-        try (DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET);
-             Selector selector = Selector.open()) {
-            ch.setOption(StandardSocketOptions.SO_RCVBUF, 4 * 1024 * 1024);
-            ch.bind(new InetSocketAddress("127.0.0.1", o.port()));
-            ch.configureBlocking(false);
-            ch.register(selector, java.nio.channels.SelectionKey.OP_READ);
-            ByteBuffer buf = ByteBuffer.allocateDirect(2048);
-
-            while (received + dropped < expect) {
-                buf.clear();
-                if (ch.receive(buf) == null) {
-                    if (lastRxNs != 0 && System.nanoTime() - lastRxNs > 2 * NS) {
-                        break; // idle: the run is over
-                    }
-                    selector.select(key -> { }, 100);
-                    continue;
-                }
-                buf.flip();
-                ParcelEvent ev;
-                try {
-                    ev = ParcelEvent.parseFrom(buf);
-                } catch (InvalidProtocolBufferException e) {
-                    continue;
-                }
-                long seq = ev.getSeq();
-                if (seq < nextSeq) {
-                    continue; // reordered
-                }
-                dropped += seq - nextSeq;
-                nextSeq = seq + 1;
-                if (sampler == null) {
-                    // Parcel `seq` is due at t0 + seq / lambda, so t0 follows from any first parcel.
-                    long t0 = ev.getIntendedEmitNs() - seq * NS / o.rateHz();
-                    Options opts = o;
-                    sampler = Thread.ofPlatform().name("sampler").start(() -> sampled[0] = sample(done, t0, opts));
-                }
-                serve((long) (Math.min(rng.nextExponential() * o.serviceMeanUs(), capUs) * 1000.0));
-                long doneNs = System.nanoTime();
-                lastRxNs = doneNs;
-                done.incrementAndGet();
-                received++;
-                long wNs = doneNs - ev.getIntendedEmitNs();
-                if (wNs < 0) {
-                    throw new IllegalStateException("negative latency: producer and consumer not on one clock");
-                }
-                latency.record(wNs);
-                wSumNs += wNs;
-            }
+        LatencyRecorder latency;
+        long received;
+        long dropped;
+        Sampled s;
+        try (LineReceiver receiver = new LineReceiver(config)) {
+            receiver.run(service); // returns on the expected count or 2 s idle
+            latency = receiver.recorder();
+            received = receiver.received();
+            dropped = receiver.dropped();
+            s = service.sampled(); // the sampler's get() is also the happens-before edge to its result
         }
-        latency.addDropped(dropped);
-        if (sampler != null) {
-            sampler.join(); // ends at t0 + duration; join also publishes `sampled`
-        }
-        if (received == 0 || sampled[0] == null || sampled[0].samples == 0) {
+        if (received == 0 || s == null || s.samples == 0) {
             System.err.println("littles-consumer-java: no parcels received");
             System.exit(1);
         }
 
         // --- the model block: the only place a mean appears ---------------------------------
-        Sampled s = sampled[0];
         double lambda = o.rateHz();
-        double wMeanS = wSumNs / received / 1e9;
+        double wMeanS = service.wSumNs / received / 1e9;
         double lSampled = (double) s.sumInSystem / s.samples;
         double lPredicted = Model.littlesL(lambda, wMeanS);
         double relErr = (lSampled - lPredicted) / lPredicted;

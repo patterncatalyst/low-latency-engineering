@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
+import java.util.zip.DataFormatException;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import tools.jackson.databind.JsonNode;
@@ -181,7 +182,7 @@ public final class LatencyRecorder {
         ByteBuffer buffer = ByteBuffer.wrap(Base64.getDecoder().decode(base64));
         try {
             return Histogram.decodeFromCompressedByteBuffer(buffer, 0);
-        } catch (java.util.zip.DataFormatException e) {
+        } catch (DataFormatException e) {
             throw new IllegalArgumentException("not a compressed HdrHistogram", e);
         }
     }
@@ -194,9 +195,18 @@ public final class LatencyRecorder {
         return ns / 1000.0;
     }
 
+    /**
+     * Whether {@link #PROFILE_ENV} is set to something other than blank: the same rule
+     * {@link #writeReport} applies, for a CLI to check before it starts a long run.
+     */
+    public static boolean profileConfigured() {
+        String env = System.getenv(PROFILE_ENV);
+        return env != null && !env.isBlank();
+    }
+
     private static JsonNode loadProfile() {
         String env = System.getenv(PROFILE_ENV);
-        if (env == null || env.isBlank()) {
+        if (!profileConfigured()) {
             throw new IllegalStateException(PROFILE_ENV + " is not set: a number without a machine "
                     + "profile is not publishable. Run scripts/profile.sh --out FILE and export "
                     + PROFILE_ENV + "=FILE.");
@@ -205,6 +215,6 @@ public final class LatencyRecorder {
         if (!Files.isRegularFile(file)) {
             throw new IllegalStateException(PROFILE_ENV + " names a missing file: " + file);
         }
-        return READER.readTree(file.toFile());
+        return READER.readTree(file);
     }
 }

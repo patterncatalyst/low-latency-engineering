@@ -1,6 +1,7 @@
 package io.patterncatalyst.lowlat.co;
 
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.StandardSocketOptions;
 import java.nio.file.Files;
@@ -32,7 +33,7 @@ public final class Main {
             System.exit(2);
             return;
         }
-        if (System.getenv(LatencyRecorder.PROFILE_ENV) == null) {
+        if (!LatencyRecorder.profileConfigured()) {
             System.err.println("co-experiment-java: " + LatencyRecorder.PROFILE_ENV
                     + " is not set (scripts/profile.sh --out FILE): a number without a profile is not publishable");
             System.exit(2);
@@ -48,7 +49,7 @@ public final class Main {
         }
     }
 
-    private static void run(Options o) throws Exception {
+    private static void run(Options o) throws IOException {
         Recorders rec = Recorders.create(o.suffix());
         try (DatagramSocket socket = new DatagramSocket(null)) {
             socket.setOption(StandardSocketOptions.SO_RCVBUF, o.rcvbuf());

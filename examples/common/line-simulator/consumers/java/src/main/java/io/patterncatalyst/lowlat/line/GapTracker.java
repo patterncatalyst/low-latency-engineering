@@ -13,6 +13,7 @@ final class GapTracker {
     private long highest = -1; // before the first datagram, "seq -1" has been seen
     private long dropped;
     private long reordered;
+    private long lastGap;
 
     /** Observe one {@code seq}; the number of newly missing parcels is {@link #lastGap()}. */
     Arrival observe(long seq) {
@@ -26,8 +27,6 @@ final class GapTracker {
         highest = seq;
         return Arrival.NEW;
     }
-
-    private long lastGap;
 
     /** Parcels newly counted missing by the most recent {@link #observe}. */
     long lastGap() {

@@ -1,8 +1,8 @@
 package io.patterncatalyst.lowlat.line;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -54,18 +54,33 @@ public final class LineReceiver implements AutoCloseable {
         this.recorder = LatencyRecorder.singleThreaded(config.example(), config.variant());
         this.completion = new Completion(recorder);
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET);
+        Selector sel = null;
         try {
             ch.setOption(StandardSocketOptions.SO_RCVBUF, config.rcvbuf());
             ch.bind(config.bindAddress());
             ch.configureBlocking(false);
-            this.selector = Selector.open();
-            ch.register(selector, SelectionKey.OP_READ);
+            sel = Selector.open();
+            ch.register(sel, SelectionKey.OP_READ);
         } catch (IOException | RuntimeException e) {
-            ch.close();
+            closeAfter(e, sel);
+            closeAfter(e, ch);
             throw e;
         }
         this.channel = ch;
+        this.selector = sel;
         this.grantedRcvbuf = ch.getOption(StandardSocketOptions.SO_RCVBUF);
+    }
+
+    /** Closes {@code resource} (if opened) on the constructor's failure path; a close failure rides on {@code cause}. */
+    private static void closeAfter(Throwable cause, AutoCloseable resource) {
+        if (resource == null) {
+            return;
+        }
+        try {
+            resource.close();
+        } catch (Exception closeFailure) {
+            cause.addSuppressed(closeFailure);
+        }
     }
 
     public int grantedRcvbuf() {
@@ -200,7 +215,8 @@ public final class LineReceiver implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        selector.close();
-        channel.close();
+        try (channel; selector) { // closes the selector first, then the channel, even if one throws
+            // nothing else to release
+        }
     }
 }

@@ -10,10 +10,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
 import org.HdrHistogram.Histogram;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -21,8 +26,15 @@ class LatencyRecorderTest {
 
     private static final long MS = 1_000_000L;
     private static final JsonMapper JSON = JsonMapper.builder().build();
-    private static final Path FIXTURES =
-            Path.of(System.getenv(LatencyRecorder.PROFILE_ENV)).toAbsolutePath().normalize().getParent();
+    private static Path fixtures;
+
+    /** The measure-fixtures directory, found through the profile surefire points LOWLAT_PROFILE at. */
+    @BeforeAll
+    static void locateFixtures() {
+        String profile = System.getenv(LatencyRecorder.PROFILE_ENV);
+        assumeTrue(profile != null && !profile.isBlank(), LatencyRecorder.PROFILE_ENV + " not set (run through Maven)");
+        fixtures = Path.of(profile).toAbsolutePath().normalize().getParent();
+    }
 
     @Test
     void correctionBackfillsAndRaisesP99() {
@@ -69,14 +81,14 @@ class LatencyRecorderTest {
         for (int i = 1; i <= 10_000; i++) {
             rec.record(i * 1000L);
         }
-        Path out = FIXTURES.resolve("java-golden.json");
+        Path out = fixtures.resolve("java-golden.json");
         Report report = rec.writeReport(out);
 
         assertEquals(10_000, report.count());
         Histogram decoded = LatencyRecorder.decode(report.hdrHistogram());
         assertEquals(rec.histogram(), decoded);
 
-        JsonNode tree = JSON.readTree(out.toFile());
+        JsonNode tree = JSON.readTree(out);
         for (String field : List.of("schema", "example", "language", "variant", "unit", "count",
                 "dropped", "percentiles", "hdr_histogram", "build", "profile")) {
             assertTrue(tree.has(field), "missing " + field);
@@ -91,49 +103,38 @@ class LatencyRecorderTest {
     }
 
     @Test
-    void noMeanAnywhereInReport() throws IOException {
+    void noMeanAnywhereInReport(@TempDir Path dir) throws IOException {
         LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "v");
         rec.record(5_000);
-        Path out = Files.createTempFile("report", ".json");
-        try {
-            rec.writeReport(out);
-            String text = Files.readString(out);
-            // the embedded profile is excluded: scan only the report-owned keys
-            JsonNode tree = JSON.readTree(text);
-            for (String key : tree.propertyNames()) {
-                assertFalse(key.toLowerCase().contains("mean"), key);
-            }
-            for (String key : tree.get("percentiles").propertyNames()) {
-                assertFalse(key.toLowerCase().contains("mean"), key);
-            }
-            assertEquals(5, tree.get("percentiles").size());
-        } finally {
-            Files.deleteIfExists(out);
+        Path out = dir.resolve("report.json");
+        rec.writeReport(out);
+        // the embedded profile is excluded: scan only the report-owned keys
+        JsonNode tree = JSON.readTree(out);
+        for (String key : tree.propertyNames()) {
+            assertFalse(key.toLowerCase().contains("mean"), key);
         }
+        for (String key : tree.get("percentiles").propertyNames()) {
+            assertFalse(key.toLowerCase().contains("mean"), key);
+        }
+        assertEquals(5, tree.get("percentiles").size());
     }
 
-    @Test
-    void crossDecodeOtherLanguages() throws IOException {
-        Path java = FIXTURES.resolve("java-golden.json");
+    /** Needs java-golden.json from {@link #goldenReportRoundTripsAndValidatesShape}; skipped if absent. */
+    @ParameterizedTest
+    @ValueSource(strings = {"cpp-golden.json", "python-golden.json"})
+    void crossDecodeOtherLanguages(String name) throws IOException {
+        Path java = fixtures.resolve("java-golden.json");
         assumeTrue(Files.exists(java), "java-golden.json not yet written");
-        Histogram ref = LatencyRecorder.decode(JSON.readTree(java.toFile()).get("hdr_histogram").asString());
-        boolean any = false;
-        for (String name : List.of("cpp-golden.json", "python-golden.json")) {
-            Path other = FIXTURES.resolve(name);
-            if (!Files.exists(other)) {
-                System.out.println("skipping " + name + ": not present");
-                continue;
-            }
-            any = true;
-            Histogram h = LatencyRecorder.decode(JSON.readTree(other.toFile()).get("hdr_histogram").asString());
-            assertEquals(ref.getTotalCount(), h.getTotalCount(), name);
-            for (double p : new double[] {50, 90, 99, 99.9}) {
-                assertTrue(ref.valuesAreEquivalent(ref.getValueAtPercentile(p), h.getValueAtPercentile(p)),
-                        name + " p" + p);
-            }
-            assertTrue(ref.valuesAreEquivalent(ref.getMaxValue(), h.getMaxValue()), name + " max");
+        Path other = fixtures.resolve(name);
+        assumeTrue(Files.exists(other), name + " not present; nothing to cross-decode");
+        Histogram ref = LatencyRecorder.decode(JSON.readTree(java).get("hdr_histogram").asString());
+        Histogram h = LatencyRecorder.decode(JSON.readTree(other).get("hdr_histogram").asString());
+        assertEquals(ref.getTotalCount(), h.getTotalCount(), name);
+        for (double p : new double[] {50, 90, 99, 99.9}) {
+            assertTrue(ref.valuesAreEquivalent(ref.getValueAtPercentile(p), h.getValueAtPercentile(p)),
+                    name + " p" + p);
         }
-        assumeTrue(any, "no cpp-golden.json or python-golden.json present; nothing to cross-decode");
+        assertTrue(ref.valuesAreEquivalent(ref.getMaxValue(), h.getMaxValue()), name + " max");
     }
 
     @Test
@@ -167,7 +168,7 @@ class LatencyRecorderTest {
     }
 
     @Test
-    void notesAppearOnlyWhenGiven(@org.junit.jupiter.api.io.TempDir Path dir) throws IOException {
+    void notesAppearOnlyWhenGiven(@TempDir Path dir) throws IOException {
         LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "notes");
         rec.record(MS);
         Path plain = dir.resolve("plain.json");
@@ -176,23 +177,23 @@ class LatencyRecorderTest {
         rec.writeReport(plain);
         rec.writeReport(noted, "reordered=0; rcvbuf_requested=1; rcvbuf_granted=2");
         rec.writeReport(empty, "");
-        assertFalse(JSON.readTree(plain.toFile()).has("notes"));
-        assertFalse(JSON.readTree(empty.toFile()).has("notes"));
+        assertFalse(JSON.readTree(plain).has("notes"));
+        assertFalse(JSON.readTree(empty).has("notes"));
         assertEquals("reordered=0; rcvbuf_requested=1; rcvbuf_granted=2",
-                JSON.readTree(noted.toFile()).get("notes").asString());
+                JSON.readTree(noted).get("notes").asString());
     }
 
     @Test
-    void modelBlockIsCarriedAndOmittedWhenAbsent(@org.junit.jupiter.api.io.TempDir Path dir) throws IOException {
+    void modelBlockIsCarriedAndOmittedWhenAbsent(@TempDir Path dir) throws IOException {
         LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "model");
         rec.record(MS);
         Path plain = dir.resolve("plain.json");
         Path modelled = dir.resolve("modelled.json");
         rec.writeReport(plain);
-        rec.writeReport(modelled, "n", java.util.Map.of("predicted_L", 2.5,
-                "warehouse", java.util.Map.of("belt_mps", 2)));
-        assertFalse(JSON.readTree(plain.toFile()).has("model"));
-        JsonNode tree = JSON.readTree(modelled.toFile());
+        rec.writeReport(modelled, "n", Map.of("predicted_L", 2.5,
+                "warehouse", Map.of("belt_mps", 2)));
+        assertFalse(JSON.readTree(plain).has("model"));
+        JsonNode tree = JSON.readTree(modelled);
         assertEquals(2.5, tree.get("model").get("predicted_L").asDouble(), 1e-12);
         assertEquals(2, tree.get("model").get("warehouse").get("belt_mps").asInt());
         assertEquals("n", tree.get("notes").asString());

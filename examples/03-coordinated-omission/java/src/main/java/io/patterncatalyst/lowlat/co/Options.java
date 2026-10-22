@@ -1,5 +1,6 @@
 package io.patterncatalyst.lowlat.co;
 
+import io.patterncatalyst.lowlat.line.Config;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.List;
@@ -35,14 +36,11 @@ record Options(String bindHost, int bindPort, int rcvbuf, long expect, int idleT
                 default -> throw new IllegalArgumentException("unknown option '" + opt + "'");
             }
         }
-        int colon = bind.lastIndexOf(':');
-        if (colon < 0) {
-            throw new IllegalArgumentException("--bind must be host:port");
-        }
+        Config.HostPort hostPort = Config.HostPort.parse("--bind", bind);
         if (expect <= 0 || stallMs < 0) {
             throw new IllegalArgumentException("--expect must be > 0 and --stall-ms >= 0");
         }
-        return new Options(bind.substring(0, colon), Integer.parseInt(bind.substring(colon + 1)), rcvbuf,
+        return new Options(hostPort.host(), hostPort.port(), rcvbuf,
                 expect, 2000, stallMs, stallSeq, suffix, out);
     }
 

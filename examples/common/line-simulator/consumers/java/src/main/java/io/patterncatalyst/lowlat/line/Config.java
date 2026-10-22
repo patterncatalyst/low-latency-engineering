@@ -47,7 +47,14 @@ public record Config(
      * variant) and still gets the common flags and their validation.
      */
     public static Config parse(List<String> args, Config base) {
-        Config c = base;
+        String bindHost = base.bindHost;
+        int bindPort = base.bindPort;
+        int rcvbuf = base.rcvbuf;
+        long expect = base.expect;
+        long idleTimeoutMs = base.idleTimeoutMs;
+        Path report = base.report;
+        String example = base.example;
+        String variant = base.variant;
         for (int i = 0; i < args.size(); i++) {
             String flag = args.get(i);
             if (flag.equals("-h") || flag.equals("--help")) {
@@ -57,37 +64,39 @@ public record Config(
                 throw new IllegalArgumentException("option " + flag + " needs a value");
             }
             String value = args.get(++i);
-            c = switch (flag) {
-                case "--bind" -> c.withBind(value);
-                case "--rcvbuf" -> new Config(c.bindHost, c.bindPort, positiveInt(flag, value), c.expect,
-                        c.idleTimeoutMs, c.report, c.example, c.variant);
-                case "--expect" -> new Config(c.bindHost, c.bindPort, c.rcvbuf, positiveLong(flag, value),
-                        c.idleTimeoutMs, c.report, c.example, c.variant);
-                case "--idle-timeout-ms" -> new Config(c.bindHost, c.bindPort, c.rcvbuf, c.expect,
-                        positiveLong(flag, value), c.report, c.example, c.variant);
-                case "--report" -> new Config(c.bindHost, c.bindPort, c.rcvbuf, c.expect, c.idleTimeoutMs,
-                        Path.of(value), c.example, c.variant);
-                case "--example" -> new Config(c.bindHost, c.bindPort, c.rcvbuf, c.expect, c.idleTimeoutMs,
-                        c.report, value, c.variant);
-                case "--variant" -> new Config(c.bindHost, c.bindPort, c.rcvbuf, c.expect, c.idleTimeoutMs,
-                        c.report, c.example, value);
+            switch (flag) {
+                case "--bind" -> {
+                    HostPort bind = HostPort.parse("--bind", value);
+                    bindHost = bind.host();
+                    bindPort = bind.port();
+                }
+                case "--rcvbuf" -> rcvbuf = positiveInt(flag, value);
+                case "--expect" -> expect = positiveLong(flag, value);
+                case "--idle-timeout-ms" -> idleTimeoutMs = positiveLong(flag, value);
+                case "--report" -> report = Path.of(value);
+                case "--example" -> example = value;
+                case "--variant" -> variant = value;
                 default -> throw new IllegalArgumentException("unknown option " + flag);
-            };
+            }
         }
-        return c;
+        return new Config(bindHost, bindPort, rcvbuf, expect, idleTimeoutMs, report, example, variant);
     }
 
-    private Config withBind(String hostPort) {
-        int colon = hostPort.lastIndexOf(':');
-        if (colon <= 0) {
-            throw new IllegalArgumentException("--bind needs HOST:PORT, got '" + hostPort + "'");
+    /** A {@code HOST:PORT} option value. */
+    public record HostPort(String host, int port) {
+
+        /** Splits at the last colon and checks the port is 1..65535; {@code flag} names the option in errors. */
+        public static HostPort parse(String flag, String hostPort) {
+            int colon = hostPort.lastIndexOf(':');
+            if (colon <= 0) {
+                throw new IllegalArgumentException(flag + " needs HOST:PORT, got '" + hostPort + "'");
+            }
+            int port = positiveInt(flag + " port", hostPort.substring(colon + 1));
+            if (port > 65535) {
+                throw new IllegalArgumentException(flag + " port out of range: " + port);
+            }
+            return new HostPort(hostPort.substring(0, colon), port);
         }
-        int port = positiveInt("--bind port", hostPort.substring(colon + 1));
-        if (port > 65535) {
-            throw new IllegalArgumentException("--bind port out of range: " + port);
-        }
-        return new Config(hostPort.substring(0, colon), port, rcvbuf, expect, idleTimeoutMs, report,
-                example, variant);
     }
 
     private static int positiveInt(String flag, String value) {

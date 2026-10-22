@@ -5,10 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -31,18 +32,17 @@ public final class Amdahl {
 
     private static final int CELLS = 64;
 
+    /** Worker counts of the speedup curve. */
+    private static final int[] WORKERS = {1, 2, 4};
+
     private record Options(long batch, long roundParcels, boolean phased, long parallelIters, long lockIters,
-                           int reps, int warmup, int calibrationRuns, int[] workers, Path reportDir,
-                           String example) {
+                           int reps, int warmup, int calibrationRuns, Path reportDir, String example) {
+        private static final Set<String> KEYS = Set.of("--batch", "--round-parcels", "--sync",
+                "--parallel-iters", "--lock-iters", "--reps", "--warmup", "--report-dir", "--example");
+
         static Options parse(String[] args) {
-            Map<String, String> kv = new HashMap<>();
-            for (int i = 0; i < args.length; i += 2) {
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException(args[i] + " needs a value");
-                }
-                kv.put(args[i], args[i + 1]);
-            }
-            Options o = new Options(
+            Map<String, String> kv = Cli.pairs(args, KEYS);
+            return new Options(
                     Long.parseLong(kv.getOrDefault("--batch", "3200")),
                     Long.parseLong(kv.getOrDefault("--round-parcels", "160")),
                     phased(kv.getOrDefault("--sync", "phased")),
@@ -50,16 +50,9 @@ public final class Amdahl {
                     Long.parseLong(kv.getOrDefault("--lock-iters", "2400")),
                     Integer.parseInt(kv.getOrDefault("--reps", "30")),
                     Integer.parseInt(kv.getOrDefault("--warmup", "10")),
-                    5, new int[] {1, 2, 4},
+                    5,
                     Path.of(kv.getOrDefault("--report-dir", ".")),
                     kv.getOrDefault("--example", "02-littles-amdahl"));
-            for (String key : kv.keySet()) {
-                if (!List.of("--batch", "--round-parcels", "--sync", "--parallel-iters", "--lock-iters", "--reps", "--warmup",
-                        "--report-dir", "--example").contains(key)) {
-                    throw new IllegalArgumentException("unknown option " + key);
-                }
-            }
-            return o;
         }
 
         private static boolean phased(String sync) {
@@ -78,7 +71,7 @@ public final class Amdahl {
         private final long[] cell = new long[CELLS];
 
         void reset() {
-            java.util.Arrays.fill(cell, 0);
+            Arrays.fill(cell, 0);
         }
 
         long checksum() {
@@ -190,11 +183,11 @@ public final class Amdahl {
             System.exit(2);
             return;
         }
-        if (System.getenv(LatencyRecorder.PROFILE_ENV) == null) {
+        if (!LatencyRecorder.profileConfigured()) {
             System.err.println("amdahl-java: " + LatencyRecorder.PROFILE_ENV + " is not set");
             System.exit(2);
         }
-        for (int n : o.workers()) {
+        for (int n : WORKERS) {
             if (o.batch() % (n * o.roundParcels()) != 0) {
                 System.err.println("amdahl-java: --batch must be a multiple of N x --round-parcels for N=" + n);
                 System.exit(2);
@@ -206,7 +199,7 @@ public final class Amdahl {
 
         // JIT warm-up (not recorded): enough batches that scanWork and update run compiled.
         for (int i = 0; i < o.warmup(); i++) {
-            for (int n : o.workers()) {
+            for (int n : WORKERS) {
                 runBatch(plan, o, n, false);
             }
             runBatch(plan, o, 1, true);
@@ -228,7 +221,7 @@ public final class Amdahl {
 
         // Repetitions are interleaved (N=1, 2, 4, N=1, 2, 4, ...) so a change in background load
         // during the run lands on every N alike.
-        int[] ws = o.workers();
+        int[] ws = WORKERS;
         List<LatencyRecorder> recs = new ArrayList<>();
         for (int n : ws) {
             recs.add(LatencyRecorder.singleThreaded(o.example(), tag + "-n" + n));

@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 /** Java line consumer: see {@code examples/common/line-simulator/consumers/README.md}. */
 public final class Consumer {
@@ -26,7 +27,7 @@ public final class Consumer {
             System.exit(2);
             return;
         }
-        if (config.report() != null && isBlank(System.getenv(LatencyRecorder.PROFILE_ENV))) {
+        if (config.report() != null && !LatencyRecorder.profileConfigured()) {
             System.err.println("line-consumer-java: --report needs " + LatencyRecorder.PROFILE_ENV
                     + " (run scripts/profile.sh --out FILE): a number without a profile is not publishable");
             System.exit(2);
@@ -45,23 +46,18 @@ public final class Consumer {
                 receiver.localAddress(), config.rcvbuf(), receiver.grantedRcvbuf());
         System.out.flush(); // bound: a script reading a redirected stdout waits on this line
 
-        AtomicReference<Throwable> failure = new AtomicReference<>();
-        AtomicReference<LineReceiver.StopReason> reason = new AtomicReference<>();
-        Thread loop = Thread.ofPlatform().name("line-consumer").unstarted(() -> {
-            try {
-                reason.set(receiver.run());
-            } catch (Throwable t) { // reported and turned into an exit status below
-                failure.set(t);
-            }
-        });
+        // The task holds the stop reason or the failure; its state is reported and turned into an
+        // exit status below.
+        FutureTask<LineReceiver.StopReason> receive = new FutureTask<>(receiver::run);
+        Thread loop = Thread.ofPlatform().name("line-consumer").unstarted(receive);
         // Runs on SIGINT/SIGTERM and on System.exit: stop the loop, wait for it (the join is also
         // the happens-before edge to the single-threaded recorder), then write the report.
         Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("line-consumer-shutdown").unstarted(() -> {
             receiver.stop();
             try {
                 loop.join();
-                if (failure.get() == null) {
-                    finish(config, receiver, reason.get());
+                if (receive.state() != Future.State.FAILED) {
+                    finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -72,8 +68,8 @@ public final class Consumer {
 
         loop.start();
         loop.join();
-        Throwable t = failure.get();
-        if (t != null) {
+        if (receive.state() == Future.State.FAILED) {
+            Throwable t = receive.exceptionNow();
             System.err.println("line-consumer-java: " + (t instanceof LineReceiver.NegativeLatencyException
                     ? "aborting: " + t.getMessage() : t));
             if (!(t instanceof LineReceiver.NegativeLatencyException)) {
@@ -95,9 +91,5 @@ public final class Consumer {
             recorder.writeReport(report, receiver.reportNotes());
             System.out.println("report: " + report);
         }
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
     }
 }
