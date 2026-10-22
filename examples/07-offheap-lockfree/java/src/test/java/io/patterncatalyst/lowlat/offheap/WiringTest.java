@@ -15,19 +15,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Wiring proof: every 07 dependency loads, and Chronicle Queue opens, appends and tails
- * under the surefire argLine that carries its --add-opens/--add-exports list.
+ * Wiring proof: every 07 dependency loads, and Chronicle Queue opens, appends and tails under
+ * the surefire argLine that carries its --add-opens/--add-exports list.
  */
-class SkeletonTest {
+class WiringTest {
     @Test
     void dependenciesLoad() throws Exception {
-        assertEquals("offheap-lockfree", Skeleton.NAME);
         assertNotNull(RingBuffer.class);
         assertEquals(8, new UnsafeBuffer(new byte[8]).capacity());
         assertNotNull(Class.forName("net.openhft.chronicle.map.ChronicleMap"));
         assertNotNull(Class.forName("net.openhft.affinity.Affinity"));
         assertNotNull(Class.forName("io.patterncatalyst.lowlat.line.Consumer"));
-        assertNotNull(SkeletonTest.class.getResource("/META-INF/BenchmarkList"), "JMH annotation processor ran");
+        assertNotNull(WiringTest.class.getResource("/META-INF/BenchmarkList"), "JMH annotation processor ran");
     }
 
     /** Affinity reaches the OS through JNA 5.5.0 (the BOM's pin); prove it loads and answers on this JDK. */

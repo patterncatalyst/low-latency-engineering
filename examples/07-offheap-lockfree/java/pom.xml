@@ -26,7 +26,9 @@
          for `java -jar`), so run scripts pass the same list.
          The last line is not Chronicle's: JNA 5.5.0 (the BOM's pin, used by Affinity) calls
          System::load, which JDK 25 reports as a restricted-method warning unless native
-         access is enabled. -->
+         access is enabled.
+         Chronicle Core also posts usage analytics unless -Dchronicle.analytics.disable=true; the
+         surefire and exec arguments below, and verify.sh, add it after this list. -->
     <chronicle.jvmArgs>
       --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
       --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED
@@ -70,7 +72,19 @@
     </dependency>
     <dependency>
       <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>lowlat-proto-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>measure-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
       <artifactId>line-consumer-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
     </dependency>
   </dependencies>
 
@@ -82,7 +96,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- Chronicle's add-opens and add-exports arguments (see the chronicle.jvmArgs property). -->
-          <argLine>${chronicle.jvmArgs}</argLine>
+          <argLine>${chronicle.jvmArgs} -Dchronicle.analytics.disable=true</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -93,6 +107,7 @@
           <executable>java</executable>
           <arguments>
             <argument>${chronicle.jvmArgs}</argument>
+            <argument>-Dchronicle.analytics.disable=true</argument>
             <argument>-classpath</argument>
             <classpath/>
             <argument>${exec.mainClass}</argument>
