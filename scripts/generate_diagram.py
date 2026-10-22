@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Tiny diagram compiler for the ebpf-with-aya site.
+"""Tiny diagram compiler for the low-latency-engineering site.
 
 Each diagram is a spec of bands (background lanes), nodes (rounded boxes with a
 bold title line + smaller grey detail lines), edges (arrows with optional
 labels), and free notes. emit() writes a clean themed SVG (what the site embeds)
 and a valid Excalidraw source (editable companion) into assets/diagrams/.
 """
-import json, random, html
+import html
+import json
+import random
+import xml.dom.minidom
+from pathlib import Path
 
-OUT = "."  # output dir; callers set: generate_diagram.OUT = "assets/diagrams"
+OUT: str | Path = "."  # output dir; callers set: generate_diagram.OUT = "assets/diagrams"
 
 # ---- palette --------------------------------------------------------------
 STYLES = {
@@ -20,7 +24,9 @@ STYLES = {
     "ghost":  ("#ffffff", "#999999"),  # dashed
     "ink":    ("#f1f5f9", "#64748b"),  # light slate fill, slate border, dark text
 }
-INK = "#111111"; GREY = "#555555"; AMBER = "#b8650a"
+INK = "#111111"
+GREY = "#555555"
+AMBER = "#b8650a"
 
 # Seeded per figure in emit(), so a spec regenerates byte-identical files.
 _RNG = random.Random()
@@ -50,7 +56,8 @@ def _svg(width, height, bands, nodes, edges, notes):
         sw = 2 if n.get("style") in ("box","accent","user","ink") else 1.5
         x,y,w,h = n["x"],n["y"],n["w"],n["h"]
         o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"{dash}/>')
-        lines = n["lines"]; cx = x+w/2
+        lines = n["lines"]
+        cx = x+w/2
         tcol = INK
         scol = GREY
         n_extra = len(lines)-1
@@ -121,11 +128,16 @@ def _exc(bands, nodes, edges, notes):
             "appState":{"viewBackgroundColor":"#ffffff","gridSize":None},"files":{}}
 
 def emit(name, width, height, bands=None, nodes=None, edges=None, notes=None):
-    bands=bands or []; nodes=nodes or []; edges=edges or []; notes=notes or []
+    bands = bands or []
+    nodes = nodes or []
+    edges = edges or []
+    notes = notes or []
     _RNG.seed(name)
-    open(f"{OUT}/{name}.svg","w").write(_svg(width,height,bands,nodes,edges,notes))
-    json.dump(_exc(bands,nodes,edges,notes), open(f"{OUT}/{name}.excalidraw","w"), indent=1)
+    svg = Path(OUT) / f"{name}.svg"
+    exc = Path(OUT) / f"{name}.excalidraw"
+    svg.write_text(_svg(width, height, bands, nodes, edges, notes), encoding="utf-8")
+    exc.write_text(json.dumps(_exc(bands, nodes, edges, notes), indent=1), encoding="utf-8")
     # validate
-    import xml.dom.minidom as m; m.parseString(open(f"{OUT}/{name}.svg").read())
-    json.load(open(f"{OUT}/{name}.excalidraw"))
+    xml.dom.minidom.parseString(svg.read_text(encoding="utf-8"))
+    json.loads(exc.read_text(encoding="utf-8"))
     print("emit", name)
