@@ -1,7 +1,5 @@
 // line-consumer: receives the simulator's ParcelEvent datagrams and records
 // latency against the belt's schedule. See ../README.md.
-#include <atomic>
-#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
@@ -10,25 +8,7 @@
 #include <vector>
 
 #include "lowlat/line/consumer.hpp"
-
-namespace {
-
-// Set from the signal handler, polled by the receive loop. A lock-free atomic
-// store is async-signal-safe.
-std::atomic<bool> g_stop{false};
-static_assert(std::atomic<bool>::is_always_lock_free);
-
-extern "C" void on_signal(int) { g_stop.store(true, std::memory_order_relaxed); }
-
-void install_signal_handlers() {
-  struct sigaction sa {};
-  sa.sa_handler = on_signal;  // no SA_RESTART: recv must return EINTR
-  sigemptyset(&sa.sa_mask);
-  sigaction(SIGINT, &sa, nullptr);
-  sigaction(SIGTERM, &sa, nullptr);
-}
-
-}  // namespace
+#include "lowlat/line/signals.hpp"
 
 int main(int argc, char** argv) {
   using namespace lowlat;
@@ -44,11 +24,11 @@ int main(int argc, char** argv) {
     // Fail before the run, not after it, if the report cannot be written.
     if (cfg.report) (void)measure::load_profile();
 
-    install_signal_handlers();
+    line::install_stop_handlers();
     measure::Recorder latency{cfg.example, cfg.variant};
     std::println("line-consumer: listening on {}, SO_RCVBUF requested {} B", cfg.bind, cfg.rcvbuf);
     const line::ConsumerResult result = line::consume(
-        cfg, g_stop, latency, [](int, int granted) {
+        cfg, line::g_stop, latency, [](int, int granted) {
           std::println("SO_RCVBUF granted: {} B", granted);
           // The socket is bound: flush so a script reading a redirected stdout can wait on this line.
           std::fflush(stdout);

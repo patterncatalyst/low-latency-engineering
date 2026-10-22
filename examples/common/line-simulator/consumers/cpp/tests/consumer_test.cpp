@@ -16,6 +16,7 @@
 #include "lowlat/line/consumer.hpp"
 #include "lowlat/line/fd.hpp"
 #include "lowlat/line/simulator.hpp"
+#include "lowlat/line/sscc.hpp"
 
 namespace line = lowlat::line;
 using namespace std::chrono_literals;
@@ -70,6 +71,27 @@ TEST(Lane, SerialModuloEight) {
   EXPECT_EQ(line::lane_for("006141410000000008"), 0u);
   EXPECT_EQ(line::lane_for("006141419999999997"), 999'999'999u % 8);
   EXPECT_EQ(line::lane_for("906141410000000070"), 7u);  // the extension digit does not matter
+}
+
+// The shared sscc_serial helper must give the lane the original hand-written
+// digit loop gave, for every barcode the simulator can emit.
+TEST(Lane, MatchesHandParsedSerialForSimulatorBarcodes) {
+  const auto by_hand = [](std::string_view sscc) {
+    std::uint64_t serial = 0;
+    for (const char c : sscc.substr(8, 9)) serial = serial * 10 + static_cast<unsigned>(c - '0');
+    return static_cast<unsigned>(serial % line::kLanes);
+  };
+  for (int extension = 0; extension <= 9; extension += 3) {
+    for (std::uint64_t serial : {0ULL, 1ULL, 7ULL, 8ULL, 13ULL, 999ULL, 123'456'789ULL, 999'999'999ULL}) {
+      const std::string sscc = line::make_sscc(extension, "0614141", serial);
+      EXPECT_EQ(line::lane_for(sscc), by_hand(sscc)) << sscc;
+    }
+  }
+  for (std::uint64_t serial = 0; serial < 5000; ++serial) {
+    const std::string sscc = line::make_sscc(0, "0614141", serial);
+    EXPECT_EQ(line::lane_for(sscc), by_hand(sscc)) << sscc;
+    EXPECT_EQ(line::sscc_serial(sscc), serial) << sscc;
+  }
 }
 
 TEST(Lane, RejectsNonSscc) {

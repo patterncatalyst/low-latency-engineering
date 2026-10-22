@@ -1,6 +1,6 @@
 // Builds a ParcelEvent, serializes, parses it back and prints the wire size.
 #include <cstdlib>
-#include <iostream>
+#include <print>
 #include <string>
 
 #include "lowlat/line/v1/parcel.pb.h"
@@ -26,6 +26,6 @@ int main() {
   if (!out.ParseFromString(wire) || out.seq() != in.seq() || out.barcode() != in.barcode())
     return EXIT_FAILURE;
 
-  std::cout << "serialized " << wire.size() << " bytes\n";
+  std::println("serialized {} bytes", wire.size());
   return EXIT_SUCCESS;
 }

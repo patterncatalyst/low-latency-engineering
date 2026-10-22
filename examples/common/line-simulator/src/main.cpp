@@ -1,6 +1,4 @@
 // line-simulator: open-loop parcel emitter. See README.md.
-#include <atomic>
-#include <csignal>
 #include <cstdlib>
 #include <exception>
 #include <print>
@@ -9,27 +7,9 @@
 
 #include "lowlat/line/config.hpp"
 #include "lowlat/line/schedule.hpp"
+#include "lowlat/line/signals.hpp"
 #include "lowlat/line/simulator.hpp"
 #include "lowlat/measure/recorder.hpp"
-
-namespace {
-
-// Set from the signal handler, polled between parcels. A lock-free atomic
-// store is async-signal-safe.
-std::atomic<bool> g_stop{false};
-static_assert(std::atomic<bool>::is_always_lock_free);
-
-extern "C" void on_signal(int) { g_stop.store(true, std::memory_order_relaxed); }
-
-void install_signal_handlers() {
-  struct sigaction sa {};
-  sa.sa_handler = on_signal;  // no SA_RESTART: the sleep must return early
-  sigemptyset(&sa.sa_mask);
-  sigaction(SIGINT, &sa, nullptr);
-  sigaction(SIGTERM, &sa, nullptr);
-}
-
-}  // namespace
 
 int main(int argc, char** argv) {
   using namespace lowlat;
@@ -53,9 +33,9 @@ int main(int argc, char** argv) {
                    cfg.belt_speed_mps);
     }
 
-    install_signal_handlers();
+    line::install_stop_handlers();
     measure::Recorder lateness{"line-simulator", "emit-lateness"};
-    const line::RunResult result = line::run(cfg, g_stop, lateness);
+    const line::RunResult result = line::run(cfg, line::g_stop, lateness);
 
     if (!cfg.quiet) {
       std::println("sent {} datagrams, {} send errors{}", result.sent, result.send_errors,

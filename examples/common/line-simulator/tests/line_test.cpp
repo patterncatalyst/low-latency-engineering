@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "lowlat/line/config.hpp"
+#include "lowlat/line/fd.hpp"
 #include "lowlat/line/schedule.hpp"
 #include "lowlat/line/simulator.hpp"
 #include "lowlat/line/sscc.hpp"
@@ -112,40 +113,34 @@ namespace {
 class Receiver {
  public:
   Receiver() {
-    fd_ = ::socket(AF_INET, SOCK_DGRAM, 0);
-    EXPECT_GE(fd_, 0);
+    EXPECT_GE(fd_.get(), 0);
     const int rcvbuf = 4 << 20;
-    ::setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof rcvbuf);
-    const timeval timeout{.tv_sec = 0, .tv_usec = 50'000};  // lets the thread notice `stop_`
-    ::setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
+    EXPECT_EQ(::setsockopt(fd_.get(), SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof rcvbuf), 0);
+    const timeval timeout{.tv_sec = 0, .tv_usec = 50'000};  // lets the thread notice the stop request
+    EXPECT_EQ(::setsockopt(fd_.get(), SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout), 0);
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    EXPECT_EQ(::bind(fd_, reinterpret_cast<sockaddr*>(&addr), sizeof addr), 0);
+    EXPECT_EQ(::bind(fd_.get(), reinterpret_cast<sockaddr*>(&addr), sizeof addr), 0);
     socklen_t len = sizeof addr;
-    ::getsockname(fd_, reinterpret_cast<sockaddr*>(&addr), &len);
+    EXPECT_EQ(::getsockname(fd_.get(), reinterpret_cast<sockaddr*>(&addr), &len), 0);
     port_ = ntohs(addr.sin_port);
-    thread_ = std::jthread([this] { drain(); });
-  }
-  ~Receiver() {
-    stop_ = true;
-    if (thread_.joinable()) thread_.join();
-    ::close(fd_);
+    thread_ = std::jthread{[this](std::stop_token st) { drain(st); }};
   }
   [[nodiscard]] std::uint16_t port() const { return port_; }
   [[nodiscard]] std::size_t received() const { return received_.load(); }
   // Valid once the receiver has been stopped (join gives the happens-before).
   std::vector<lowlat::line::v1::ParcelEvent> take() {
-    stop_ = true;
+    thread_.request_stop();
     if (thread_.joinable()) thread_.join();
     return std::move(events_);
   }
 
  private:
-  void drain() {
+  void drain(std::stop_token st) {
     char buf[2048];
-    while (!stop_) {
-      const ssize_t n = ::recv(fd_, buf, sizeof buf, 0);
+    while (!st.stop_requested()) {
+      const ssize_t n = ::recv(fd_.get(), buf, sizeof buf, 0);
       if (n < 0) continue;  // timeout
       lowlat::line::v1::ParcelEvent ev;
       if (ev.ParseFromArray(buf, static_cast<int>(n))) events_.push_back(std::move(ev));
@@ -154,13 +149,12 @@ class Receiver {
     }
   }
 
-  int fd_ = -1;
+  lowlat::line::Fd fd_{::socket(AF_INET, SOCK_DGRAM, 0)};  // before thread_: closed after the thread is joined
   std::uint16_t port_ = 0;
-  std::atomic<bool> stop_{false};
   std::atomic<std::size_t> received_{0};
   std::size_t unparsable_ = 0;
   std::vector<lowlat::line::v1::ParcelEvent> events_;
-  std::jthread thread_;
+  std::jthread thread_;  // last member: destroyed (stop + join) before fd_ closes
 };
 
 }  // namespace

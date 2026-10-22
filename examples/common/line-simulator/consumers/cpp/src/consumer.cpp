@@ -17,6 +17,7 @@
 #include "lowlat/line/cli.hpp"
 #include "lowlat/line/clock.hpp"
 #include "lowlat/line/fd.hpp"
+#include "lowlat/line/sscc.hpp"
 
 namespace lowlat::line {
 
@@ -146,14 +147,7 @@ SeqTracker::Kind SeqTracker::observe(std::uint64_t seq) noexcept {
   return gap ? Kind::gap : Kind::in_order;
 }
 
-unsigned lane_for(std::string_view sscc) {
-  constexpr std::size_t kSerialAt = 8, kSerialLen = 9;  // extension + 7-digit prefix come first
-  const bool digits = std::ranges::all_of(sscc, [](char c) { return c >= '0' && c <= '9'; });
-  if (sscc.size() != 18 || !digits) throw std::invalid_argument("SSCC must be 18 ASCII digits");
-  std::uint64_t serial = 0;
-  for (const char c : sscc.substr(kSerialAt, kSerialLen)) serial = serial * 10 + static_cast<unsigned>(c - '0');
-  return static_cast<unsigned>(serial % kLanes);
-}
+unsigned lane_for(std::string_view sscc) { return static_cast<unsigned>(sscc_serial(sscc) % kLanes); }
 
 // --- Receive loop -----------------------------------------------------------
 
@@ -175,7 +169,7 @@ ConsumerResult consume(const ConsumerConfig& cfg, const std::atomic<bool>& stop,
                        const ReadyFn& on_ready) {
   LaneHandler handler;
   ConsumerResult result = consume_with(cfg, stop, latency, handler, on_ready);
-  std::ranges::copy(handler.counts, std::begin(result.lane_counts));
+  result.lane_counts = handler.counts;
   return result;
 }
 

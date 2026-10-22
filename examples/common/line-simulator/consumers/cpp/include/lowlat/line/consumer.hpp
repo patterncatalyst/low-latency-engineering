@@ -75,7 +75,7 @@ struct ConsumerResult {
   std::uint64_t malformed = 0;
   int granted_rcvbuf = 0;  ///< What getsockopt(SO_RCVBUF) reports (Linux doubles the request).
   std::string stopped_by;  ///< "expect", "idle", "signal".
-  std::uint64_t lane_counts[kLanes]{};  ///< Filled by consume(); a custom handler keeps its own counts.
+  std::array<std::uint64_t, kLanes> lane_counts{};  ///< Filled by consume(); a custom handler keeps its own counts.
   std::uint64_t completed = 0;          ///< Parcels a handler completed (and so recorded).
   std::int64_t first_done_ns = 0;       ///< done_ns of the first completion (0 when none).
   std::int64_t last_done_ns = 0;        ///< done_ns of the latest completion.
