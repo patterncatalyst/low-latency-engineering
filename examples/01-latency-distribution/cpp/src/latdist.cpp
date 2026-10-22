@@ -80,13 +80,11 @@ class Batch {
   explicit Batch(std::size_t size) : size_(size) { pending_.reserve(size); }
 
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
-    pending_.push_back({ev.intended_emit_ns(), {}});
     const std::string& barcode = ev.barcode();
-    if (barcode.size() != pending_.back().barcode.size()) {
-      pending_.pop_back();
-      throw std::invalid_argument("SSCC must be 18 ASCII digits");
-    }
-    std::ranges::copy(barcode, pending_.back().barcode.begin());  // fixed buffer: no allocation per parcel
+    Pending p{.intended_ns = ev.intended_emit_ns(), .barcode = {}};
+    if (barcode.size() != p.barcode.size()) throw std::invalid_argument("SSCC must be 18 ASCII digits");
+    std::ranges::copy(barcode, p.barcode.begin());  // fixed buffer: no allocation per parcel
+    pending_.push_back(p);
     if (pending_.size() >= size_) flush(done);
   }
   void drain(line::Completion& done) { flush(done); }  // a partial last batch still gets handled
@@ -101,7 +99,7 @@ class Batch {
   };
 
   void flush(line::Completion& done) {
-    for (const auto& p : pending_) lane_sink += line::lane_for(std::string_view{p.barcode.data(), p.barcode.size()});
+    for (const auto& p : pending_) lane_sink += line::lane_for(std::string_view{p.barcode});
     const auto done_ns = monotonic_ns();  // one completion time for the whole batch
     for (const auto& p : pending_) done.complete(p.intended_ns, done_ns);
     pending_.clear();
