@@ -22,14 +22,13 @@ socket with a short timeout is the shortest path; the timeout is also what makes
 idle timeout and signal-driven shutdown work without a second thread.
 """
 
-from __future__ import annotations
-
 import signal
 import socket
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from types import FrameType
+from typing import Literal
 
 from lowlat.line.v1.parcel_pb2 import ParcelEvent
 from lowlat_measure import Recorder
@@ -103,7 +102,7 @@ type Drain = Callable[[Completion], None]
 
 @dataclass(frozen=True, slots=True)
 class RunResult:
-    stopped: str  # "expect", "idle" or "signal"
+    stopped: Literal["expect", "idle", "signal"]
     completed: int
     first_done_ns: int
     last_done_ns: int
@@ -118,10 +117,14 @@ def lane_handler(event: ParcelEvent, complete: Completion) -> None:
 def open_socket(bind: tuple[str, int], rcvbuf: int) -> tuple[socket.socket, int]:
     """Bind the UDP socket; return it with the receive buffer the kernel granted."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, rcvbuf)
-    granted = sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
-    sock.bind(bind)
-    sock.settimeout(POLL_S)
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, rcvbuf)
+        granted = sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
+        sock.bind(bind)
+        sock.settimeout(POLL_S)
+    except BaseException:
+        sock.close()
+        raise
     return sock, granted
 
 
@@ -144,7 +147,7 @@ def run(
     done = Completion(rec)
     now = time.monotonic_ns
     last_rx_ns = 0
-    stopped = "signal"
+    stopped: Literal["expect", "idle", "signal"] = "signal"
     while not _stop:
         if expect is not None and tracker.accounted >= expect:
             stopped = "expect"

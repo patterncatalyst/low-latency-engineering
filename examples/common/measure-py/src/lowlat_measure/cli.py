@@ -5,8 +5,6 @@ The JSON Schema is the single copy in ``contracts/measurement/``. It is found vi
 computed from the package location (valid for the editable workspace install).
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import os

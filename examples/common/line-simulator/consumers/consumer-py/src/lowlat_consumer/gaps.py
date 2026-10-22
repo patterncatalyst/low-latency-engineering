@@ -1,7 +1,5 @@
 """Sequence-gap accounting for the datagram stream."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 

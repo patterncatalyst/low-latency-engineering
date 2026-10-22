@@ -1,13 +1,11 @@
 """Command line of the line consumer (the receive loop is in ``loop``)."""
 
-from __future__ import annotations
-
 import argparse
 import sys
 from collections.abc import Sequence
 
 from lowlat_measure import Recorder
-from lowlat_measure.recorder import load_profile
+from lowlat_measure.recorder import require_profile
 from lowlat_measure.table import format_rows
 
 from lowlat_consumer.gaps import GapTracker
@@ -31,7 +29,8 @@ def parse_hostport(text: str) -> tuple[str, int]:
     return host, int(port)
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(variants: Sequence[str] | None = None) -> argparse.ArgumentParser:
+    """The consumer's flags; ``variants`` restricts ``--variant`` to a fixed set."""
     p = argparse.ArgumentParser(
         prog="line-consumer-py",
         description="Receive ParcelEvent datagrams and record latency against the schedule.",
@@ -70,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="write the lowlat-report/1 JSON here (needs LOWLAT_PROFILE)",
     )
     p.add_argument("--example", default="00-line-consumer", help="report example name")
-    p.add_argument("--variant", default="baseline", help="report variant name")
+    p.add_argument("--variant", default="baseline", choices=variants, help="report variant name")
     return p
 
 
@@ -78,25 +77,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     install_signal_handlers()
 
-    try:
-        load_profile()  # fail before the run, not after it
-    except RuntimeError as exc:
-        print(f"line-consumer-py: {exc}", file=sys.stderr)
+    if not require_profile("line-consumer-py"):  # fail before the run, not after it
         return 2
 
     sock, granted = open_socket(args.bind, args.rcvbuf)
-    host, port = args.bind
-    print(
-        f"line-consumer-py: bound {host}:{port}, SO_RCVBUF requested {args.rcvbuf} "
-        f"granted {granted} (Linux reports double the set value; capped by "
-        "net.core.rmem_max)",
-        flush=True,
-    )
-
     rec = Recorder(args.example, args.variant)
     tracker = GapTracker()
     try:
         with sock:
+            host, port = args.bind
+            print(
+                f"line-consumer-py: bound {host}:{port}, SO_RCVBUF requested {args.rcvbuf} "
+                f"granted {granted} (Linux reports double the set value; capped by "
+                "net.core.rmem_max)",
+                flush=True,
+            )
             run(sock, rec, tracker, lane_handler, args.expect, args.idle_timeout_ms * 1_000_000)
     except NegativeLatencyError as exc:
         print(f"line-consumer-py: ABORT: {exc}", file=sys.stderr)

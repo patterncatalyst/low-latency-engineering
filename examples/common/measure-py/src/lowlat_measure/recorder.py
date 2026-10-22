@@ -1,7 +1,5 @@
 """HdrHistogram recorder that writes a ``lowlat-report/1`` JSON report."""
 
-from __future__ import annotations
-
 import json
 import math
 import os
@@ -11,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from hdrh.histogram import HdrHistogram
+
+from lowlat_measure.table import format_rows
 
 LOWEST_DISCERNIBLE_NS = 1
 HIGHEST_TRACKABLE_NS = 3_600_000_000_000  # one hour
@@ -70,6 +70,20 @@ def load_profile() -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def require_profile(prog: str) -> bool:
+    """Check the machine profile before a run; on failure print ``prog: reason`` to stderr.
+
+    A CLI ``main`` returns exit code 2 when this is false, so a run fails before it
+    measures anything rather than after.
+    """
+    try:
+        load_profile()
+    except RuntimeError as exc:
+        print(f"{prog}: {exc}", file=sys.stderr)
+        return False
+    return True
+
+
 class Recorder:
     """Records latencies in nanoseconds and reports percentiles, never a mean."""
 
@@ -79,8 +93,9 @@ class Recorder:
         self.dropped = 0
         self.histogram = new_histogram()
 
-    def record(self, latency_ns: int) -> None:
-        self.histogram.record_value(latency_ns)
+    def record(self, latency_ns: int, count: int = 1) -> None:
+        """Record ``latency_ns`` ``count`` times."""
+        self.histogram.record_value(latency_ns, count)
 
     def record_corrected(self, latency_ns: int, expected_interval_ns: int) -> None:
         """Record and back-fill the samples a stalled sender failed to take."""
@@ -93,20 +108,32 @@ class Recorder:
         return percentiles_of(self.histogram)
 
     def build_report(
-        self, notes: str | None = None, model: Mapping[str, Any] | None = None
+        self,
+        notes: str | None = None,
+        model: Mapping[str, Any] | None = None,
+        *,
+        language: str = LANGUAGE,
+        build: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """The ``lowlat-report/1`` document. ``model`` is the optional ``model`` block."""
+        """The ``lowlat-report/1`` document. ``model`` is the optional ``model`` block.
+
+        ``language`` and ``build`` are for a report that speaks for another language than
+        this kit (converted harness output); the percentiles then follow that language's
+        HdrHistogram rank convention.
+        """
         report: dict[str, Any] = {
             "schema": SCHEMA_ID,
             "example": self.example,
-            "language": LANGUAGE,
+            "language": language,
             "variant": self.variant,
             "unit": "ns",
             "count": int(self.histogram.get_total_count()),
             "dropped": self.dropped,
-            "percentiles": self.percentiles(),
+            "percentiles": percentiles_of(self.histogram, language),
             "hdr_histogram": self.histogram.encode().decode("ascii"),
-            "build": {"compiler": sys.version, "gil_enabled": sys._is_gil_enabled()},
+            "build": dict(build)
+            if build is not None
+            else {"compiler": sys.version, "gil_enabled": sys._is_gil_enabled()},
             "profile": load_profile(),
         }
         if notes:
@@ -120,12 +147,13 @@ class Recorder:
         path: str | Path,
         notes: str | None = None,
         model: Mapping[str, Any] | None = None,
+        *,
+        language: str = LANGUAGE,
+        build: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        report = self.build_report(notes, model)
+        report = self.build_report(notes, model, language=language, build=build)
         Path(path).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         return report
 
     def print_summary(self) -> None:
-        from lowlat_measure.table import format_rows
-
         print(format_rows([self.build_report()]))

@@ -3,8 +3,6 @@
 Later chapters replace this with real work; the work is part of the measured latency.
 """
 
-from __future__ import annotations
-
 LANES = 8
 
 # SSCC-18 layout (GS1): extension digit (1), company prefix (7), serial reference (9),

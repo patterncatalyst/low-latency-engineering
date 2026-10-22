@@ -1,7 +1,5 @@
 """Aligned percentile table in microseconds (no mean, by design)."""
 
-from __future__ import annotations
-
 from typing import Any
 
 HEADERS = (

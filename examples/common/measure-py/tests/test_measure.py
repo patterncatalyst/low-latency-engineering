@@ -1,7 +1,5 @@
 """Measurement kit tests: correction, golden fixture, schema, CLI, cross-language."""
 
-from __future__ import annotations
-
 import json
 import time
 from pathlib import Path
@@ -18,13 +16,7 @@ INVALID_MEAN = (
 MS = 1_000_000
 
 
-@pytest.fixture
-def profile(monkeypatch: pytest.MonkeyPatch) -> Path:
-    monkeypatch.setenv("LOWLAT_PROFILE", str(FIXTURES / "profile.json"))
-    return FIXTURES / "profile.json"
-
-
-def test_correction(profile: Path) -> None:
+def test_correction(lowlat_profile: Path) -> None:
     corrected = Recorder("correction", "corrected")
     plain = Recorder("correction", "plain")
     for _ in range(1000):
@@ -46,7 +38,7 @@ def test_profile_required(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
         rec.write_report(tmp_path / "r.json")
 
 
-def test_golden_fixture(golden_report: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_golden_fixture(golden_report: Path) -> None:
     report = json.loads(golden_report.read_text(encoding="utf-8"))
     assert report["count"] == 10_000
     assert decode(report["hdr_histogram"]).get_total_count() == 10_000
@@ -54,7 +46,7 @@ def test_golden_fixture(golden_report: Path, capsys: pytest.CaptureFixture[str])
     assert main(["check", str(golden_report)]) == 0
 
 
-def test_print_summary(profile: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_print_summary(lowlat_profile: Path, capsys: pytest.CaptureFixture[str]) -> None:
     rec = Recorder("measure-fixtures", "golden")
     rec.record(1000)
     rec.print_summary()
@@ -66,7 +58,7 @@ def test_schema_rejects_mean(capsys: pytest.CaptureFixture[str]) -> None:
     assert "mean" in capsys.readouterr().err
 
 
-def test_check_detects_tampering(profile: Path, tmp_path: Path) -> None:
+def test_check_detects_tampering(lowlat_profile: Path, tmp_path: Path) -> None:
     rec = Recorder("t", "v")
     for i in range(1, 1001):
         rec.record(i * 1000)
@@ -96,9 +88,9 @@ def test_cross_language(language: str, golden_report: Path) -> None:
 
 
 def test_different_workloads_are_not_cross_compared(
-    golden_report: Path, profile: Path, tmp_path: Path
+    golden_report: Path, lowlat_profile: Path, tmp_path: Path
 ) -> None:
-    report = json.loads(golden_report.read_text())
+    report = json.loads(golden_report.read_text(encoding="utf-8"))
     rec = Recorder(report["example"], report["variant"])
     for v in (5_000, 6_000, 7_000):
         rec.record(v)
@@ -108,14 +100,16 @@ def test_different_workloads_are_not_cross_compared(
     assert main(["check", "--same-dataset", str(golden_report), str(other)]) == 1
 
 
-def test_record_cost(profile: Path) -> None:
+def test_record_cost(lowlat_profile: Path, capsys: pytest.CaptureFixture[str]) -> None:
     rec = Recorder("cost", "record")
     n = 100_000
     t0 = time.perf_counter_ns()
     for i in range(n):
         rec.record(1000 + i)
     per_call = (time.perf_counter_ns() - t0) / n
-    print(f"\nRecorder.record cost: {per_call:.0f} ns per call over {n} records")
+    with capsys.disabled():
+        print(f"\nRecorder.record cost: {per_call:.0f} ns per call over {n} records")
+    assert per_call < 100_000  # a loose bound: a call costs microseconds, not 100 us
 
 
 def test_java_rank_convention_sparse_tail() -> None:
@@ -126,7 +120,7 @@ def test_java_rank_convention_sparse_tail() -> None:
     assert main(["check", str(report)]) == 0
 
 
-def test_model_block_only_when_given(profile: Path, tmp_path: Path) -> None:
+def test_model_block_only_when_given(lowlat_profile: Path, tmp_path: Path) -> None:
     rec = Recorder("t", "v")
     rec.record(1000)
     assert "model" not in rec.build_report()

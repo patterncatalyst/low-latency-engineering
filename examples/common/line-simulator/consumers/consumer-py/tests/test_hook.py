@@ -2,20 +2,15 @@
 
 import socket
 import time
-from pathlib import Path
 
 import pytest
 from lowlat.line.v1.parcel_pb2 import ParcelEvent
 from lowlat_consumer import Completion, GapTracker, run
 from lowlat_measure import Recorder
 
-PROFILE = Path(__file__).resolve().parents[5] / "common/measure-fixtures/profile.json"
 BARCODE = "006141410000000008"
 
-
-@pytest.fixture(autouse=True)
-def _profile(monkeypatch):
-    monkeypatch.setenv("LOWLAT_PROFILE", str(PROFILE))
+pytestmark = pytest.mark.usefixtures("lowlat_profile")
 
 
 def _send(port: int, seqs: list[int]) -> None:
@@ -26,10 +21,9 @@ def _send(port: int, seqs: list[int]) -> None:
 
 
 def _run(seqs: list[int], handler, drain, expect: int):
-    rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    rx.bind(("127.0.0.1", 0))
-    rx.settimeout(0.05)
-    with rx:
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as rx:
+        rx.bind(("127.0.0.1", 0))
+        rx.settimeout(0.05)
         _send(rx.getsockname()[1], seqs)
         rec = Recorder("hook-test", "hook")
         tracker = GapTracker()
