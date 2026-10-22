@@ -27,7 +27,7 @@ STALL_SEQ=5000
 
 require_quiet_host
 OUT="$(results_dir)"
-rm -f "$OUT"/*.json "$OUT"/*.log
+rm -f "${OUT:?}"/{cpp,java,python}-*.json "${OUT:?}"/{cpp,java,python}*.log
 capture_profile "$OUT"
 
 build_cpp co-experiment line-simulator
