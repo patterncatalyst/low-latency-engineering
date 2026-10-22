@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 190447615,
-    "p90": 192675839,
-    "p99": 193069055,
-    "p99_9": 193069055,
-    "max": 193069055
+    "p50": 190578687,
+    "p90": 195690495,
+    "p99": 197394431,
+    "p99_9": 197394431,
+    "max": 197394431
   },
-  "hdr_histogram": "HISTFAAAAEF4nJNpmSzMwMAgzwABzFCakYGB2c1gxwIG+w8Qgd3LmJiY2JgY2ViYmJkYmRiZWJiYWJiZWBiZuFkYWZgACeEGHw==",
+  "hdr_histogram": "HISTFAAAAEZ4nJNpmSzMwMCgzQABzFCakYGB2c1gxwIG+w8QgdnLmJj4mUCAkYWRiZOJiZWFiZGJiUmQiZGNlYkdxOZnAjF4WQBVKAZc",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T12:32:33Z",
+    "captured_at": "2026-10-22T14:53:13Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2010350,
+      "pid": 2078882,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.37,
-      "load5": 0.93,
-      "load15": 0.68,
+      "load1": 0.65,
+      "load5": 0.97,
+      "load15": 1.09,
       "running": 1
     },
     "memory": {
@@ -100,17 +100,17 @@
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 1,
     "executor": "ProcessPoolExecutor",
-    "serial_fraction_modelling_input": 0.10637595413385947,
+    "serial_fraction_modelling_input": 0.10457926876748695,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
     "predicted_speedup": 1.0,
     "measured_speedup_p50": 1.0,
     "relative_error": 0.0,
-    "wall_p50_ns_n1": 190447615,
-    "wall_p50_ns": 190447615,
+    "wall_p50_ns_n1": 190578687,
+    "wall_p50_ns": 190578687,
     "batch_parcels": 1200,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 60,
     "lock": "multiprocessing.Lock",
-    "effective_ghz": 3.92
+    "effective_ghz": 3.96
   }
 }

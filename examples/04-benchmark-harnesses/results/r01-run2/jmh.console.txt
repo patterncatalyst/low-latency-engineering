@@ -20,10 +20,30 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 0.375 ±(99.9%) 0.347 ns/op
-# Warmup Iteration   2: 0.001 ±(99.9%) 0.002 ns/op
-# Warmup Iteration   3: 0.001 ±(99.9%) 0.003 ns/op
-Iteration   1: 0.001 ±(99.9%) 0.002 ns/op
+# Warmup Iteration   1: 0.314 ±(99.9%) 0.321 ns/op
+# Warmup Iteration   2: 0.002 ±(99.9%) 0.006 ns/op
+# Warmup Iteration   3: 0.001 ±(99.9%) 0.002 ns/op
+Iteration   1: ≈ 0 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: ≈ 0 ns/op
+                 p1.00:   ≈ 0 ns/op
+
+Iteration   2: ≈ 10⁻³ ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 2.000 ns/op
+                 p1.00:   2.000 ns/op
+
+Iteration   3: 0.001 ±(99.9%) 0.001 ns/op
                  p0.00:   ≈ 0 ns/op
                  p0.50:   ≈ 0 ns/op
                  p0.90:   ≈ 0 ns/op
@@ -32,6 +52,106 @@ Iteration   1: 0.001 ±(99.9%) 0.002 ns/op
                  p0.999:  ≈ 0 ns/op
                  p0.9999: 4.000 ns/op
                  p1.00:   4.000 ns/op
+
+Iteration   4: 0.001 ±(99.9%) 0.003 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 7.000 ns/op
+                 p1.00:   7.000 ns/op
+
+Iteration   5: ≈ 0 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: ≈ 0 ns/op
+                 p1.00:   ≈ 0 ns/op
+
+
+# Run progress: 16.67% complete, ETA 00:00:11
+# Fork: 2 of 3
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 0.307 ±(99.9%) 0.334 ns/op
+# Warmup Iteration   2: 0.001 ±(99.9%) 0.003 ns/op
+# Warmup Iteration   3: 0.003 ±(99.9%) 0.006 ns/op
+Iteration   1: 0.001 ±(99.9%) 0.002 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 6.000 ns/op
+                 p1.00:   6.000 ns/op
+
+Iteration   2: 0.002 ±(99.9%) 0.004 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 11.000 ns/op
+                 p1.00:   11.000 ns/op
+
+Iteration   3: 0.002 ±(99.9%) 0.003 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 7.000 ns/op
+                 p1.00:   7.000 ns/op
+
+Iteration   4: 0.006 ±(99.9%) 0.009 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 20.000 ns/op
+                 p1.00:   20.000 ns/op
+
+Iteration   5: 0.002 ±(99.9%) 0.004 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 10.000 ns/op
+                 p1.00:   10.000 ns/op
+
+
+# Run progress: 33.33% complete, ETA 00:00:09
+# Fork: 3 of 3
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 0.340 ±(99.9%) 0.351 ns/op
+# Warmup Iteration   2: 0.006 ±(99.9%) 0.011 ns/op
+# Warmup Iteration   3: ≈ 10⁻³ ns/op
+Iteration   1: ≈ 10⁻⁴ ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 1.000 ns/op
+                 p1.00:   1.000 ns/op
 
 Iteration   2: 0.001 ±(99.9%) 0.002 ns/op
                  p0.00:   ≈ 0 ns/op
@@ -43,77 +163,27 @@ Iteration   2: 0.001 ±(99.9%) 0.002 ns/op
                  p0.9999: 4.000 ns/op
                  p1.00:   4.000 ns/op
 
-Iteration   3: 0.003 ±(99.9%) 0.006 ns/op
+Iteration   3: ≈ 10⁻⁴ ns/op
                  p0.00:   ≈ 0 ns/op
                  p0.50:   ≈ 0 ns/op
                  p0.90:   ≈ 0 ns/op
                  p0.95:   ≈ 0 ns/op
                  p0.99:   ≈ 0 ns/op
                  p0.999:  ≈ 0 ns/op
-                 p0.9999: 13.000 ns/op
-                 p1.00:   13.000 ns/op
+                 p0.9999: 1.000 ns/op
+                 p1.00:   1.000 ns/op
 
-Iteration   4: 0.002 ±(99.9%) 0.005 ns/op
+Iteration   4: ≈ 10⁻³ ns/op
                  p0.00:   ≈ 0 ns/op
                  p0.50:   ≈ 0 ns/op
                  p0.90:   ≈ 0 ns/op
                  p0.95:   ≈ 0 ns/op
                  p0.99:   ≈ 0 ns/op
                  p0.999:  ≈ 0 ns/op
-                 p0.9999: 12.000 ns/op
-                 p1.00:   12.000 ns/op
+                 p0.9999: 3.000 ns/op
+                 p1.00:   3.000 ns/op
 
-Iteration   5: 0.003 ±(99.9%) 0.006 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 13.000 ns/op
-                 p1.00:   13.000 ns/op
-
-
-# Run progress: 16.67% complete, ETA 00:00:11
-# Fork: 2 of 3
-WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
-WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
-WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
-WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 0.303 ±(99.9%) 0.345 ns/op
-# Warmup Iteration   2: 0.007 ±(99.9%) 0.010 ns/op
-# Warmup Iteration   3: ≈ 10⁻³ ns/op
-Iteration   1: 0.003 ±(99.9%) 0.005 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 12.000 ns/op
-                 p1.00:   12.000 ns/op
-
-Iteration   2: 0.063 ±(99.9%) 0.207 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 577.000 ns/op
-                 p1.00:   577.000 ns/op
-
-Iteration   3: 0.001 ±(99.9%) 0.003 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 8.000 ns/op
-                 p1.00:   8.000 ns/op
-
-Iteration   4: ≈ 0 ns/op
+Iteration   5: ≈ 0 ns/op
                  p0.00:   ≈ 0 ns/op
                  p0.50:   ≈ 0 ns/op
                  p0.90:   ≈ 0 ns/op
@@ -123,94 +193,28 @@ Iteration   4: ≈ 0 ns/op
                  p0.9999: ≈ 0 ns/op
                  p1.00:   ≈ 0 ns/op
 
-Iteration   5: 0.001 ±(99.9%) 0.001 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 4.000 ns/op
-                 p1.00:   4.000 ns/op
-
-
-# Run progress: 33.33% complete, ETA 00:00:09
-# Fork: 3 of 3
-WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
-WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
-WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
-WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 0.497 ±(99.9%) 0.453 ns/op
-# Warmup Iteration   2: 0.008 ±(99.9%) 0.011 ns/op
-# Warmup Iteration   3: 0.002 ±(99.9%) 0.003 ns/op
-Iteration   1: ≈ 10⁻⁴ ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 1.000 ns/op
-                 p1.00:   1.000 ns/op
-
-Iteration   2: ≈ 10⁻⁴ ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 1.000 ns/op
-                 p1.00:   1.000 ns/op
-
-Iteration   3: 0.001 ±(99.9%) 0.002 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 5.000 ns/op
-                 p1.00:   5.000 ns/op
-
-Iteration   4: 0.002 ±(99.9%) 0.004 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 8.000 ns/op
-                 p1.00:   8.000 ns/op
-
-Iteration   5: 0.005 ±(99.9%) 0.007 ns/op
-                 p0.00:   ≈ 0 ns/op
-                 p0.50:   ≈ 0 ns/op
-                 p0.90:   ≈ 0 ns/op
-                 p0.95:   ≈ 0 ns/op
-                 p0.99:   ≈ 0 ns/op
-                 p0.999:  ≈ 0 ns/op
-                 p0.9999: 11.000 ns/op
-                 p1.00:   11.000 ns/op
-
 
 
 Result "io.patterncatalyst.lowlat.bench.CheckDigitBenchmark.eliminated":
-  N = 134152
-  mean =      0.006 ±(99.9%) 0.014 ns/op
+  N = 139138
+  mean =      0.001 ±(99.9%) 0.001 ns/op
 
   Histogram, ns/op:
-    [  0.000,  50.000) = 134151 
-    [ 50.000, 100.000) = 0 
-    [100.000, 150.000) = 0 
-    [150.000, 200.000) = 0 
-    [200.000, 250.000) = 0 
-    [250.000, 300.000) = 0 
-    [300.000, 350.000) = 0 
-    [350.000, 400.000) = 0 
-    [400.000, 450.000) = 0 
-    [450.000, 500.000) = 0 
-    [500.000, 550.000) = 0 
+    [ 0.000,  1.250) = 139117 
+    [ 1.250,  2.500) = 3 
+    [ 2.500,  3.750) = 2 
+    [ 3.750,  5.000) = 5 
+    [ 5.000,  6.250) = 3 
+    [ 6.250,  7.500) = 3 
+    [ 7.500,  8.750) = 0 
+    [ 8.750, 10.000) = 0 
+    [10.000, 11.250) = 4 
+    [11.250, 12.500) = 0 
+    [12.500, 13.750) = 0 
+    [13.750, 15.000) = 0 
+    [15.000, 16.250) = 0 
+    [16.250, 17.500) = 0 
+    [17.500, 18.750) = 0 
 
   Percentiles, ns/op:
       p(0.0000) =        ≈ 0 ns/op
@@ -219,10 +223,10 @@ Result "io.patterncatalyst.lowlat.bench.CheckDigitBenchmark.eliminated":
      p(95.0000) =        ≈ 0 ns/op
      p(99.0000) =        ≈ 0 ns/op
      p(99.9000) =        ≈ 0 ns/op
-     p(99.9900) =      6.000 ns/op
-     p(99.9990) =    384.377 ns/op
-     p(99.9999) =    577.000 ns/op
-    p(100.0000) =    577.000 ns/op
+     p(99.9900) =      4.000 ns/op
+     p(99.9990) =     16.477 ns/op
+     p(99.9999) =     20.000 ns/op
+    p(100.0000) =     20.000 ns/op
 
 
 # JMH version: 1.37
@@ -243,58 +247,58 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 15.554 ±(99.9%) 0.613 ns/op
-# Warmup Iteration   2: 15.074 ±(99.9%) 0.085 ns/op
-# Warmup Iteration   3: 14.902 ±(99.9%) 0.106 ns/op
-Iteration   1: 15.489 ±(99.9%) 0.161 ns/op
+# Warmup Iteration   1: 15.378 ±(99.9%) 0.604 ns/op
+# Warmup Iteration   2: 14.888 ±(99.9%) 0.100 ns/op
+# Warmup Iteration   3: 14.810 ±(99.9%) 0.061 ns/op
+Iteration   1: 14.813 ±(99.9%) 0.052 ns/op
                  p0.00:   14.000 ns/op
-                 p0.50:   15.000 ns/op
+                 p0.50:   14.000 ns/op
                  p0.90:   16.000 ns/op
-                 p0.95:   22.000 ns/op
-                 p0.99:   31.000 ns/op
-                 p0.999:  33.417 ns/op
-                 p0.9999: 48.000 ns/op
-                 p1.00:   48.000 ns/op
+                 p0.95:   16.000 ns/op
+                 p0.99:   17.000 ns/op
+                 p0.999:  25.374 ns/op
+                 p0.9999: 39.000 ns/op
+                 p1.00:   39.000 ns/op
 
-Iteration   2: 33.352 ±(99.9%) 0.185 ns/op
-                 p0.00:   24.000 ns/op
-                 p0.50:   33.000 ns/op
-                 p0.90:   36.000 ns/op
+Iteration   2: 33.143 ±(99.9%) 0.192 ns/op
+                 p0.00:   27.000 ns/op
+                 p0.50:   32.000 ns/op
+                 p0.90:   38.000 ns/op
                  p0.95:   38.000 ns/op
-                 p0.99:   39.630 ns/op
-                 p0.999:  67.652 ns/op
-                 p0.9999: 190.000 ns/op
-                 p1.00:   190.000 ns/op
+                 p0.99:   39.000 ns/op
+                 p0.999:  42.656 ns/op
+                 p0.9999: 86.000 ns/op
+                 p1.00:   86.000 ns/op
 
-Iteration   3: 33.805 ±(99.9%) 0.154 ns/op
-                 p0.00:   23.000 ns/op
-                 p0.50:   34.000 ns/op
-                 p0.90:   35.000 ns/op
+Iteration   3: 31.847 ±(99.9%) 0.209 ns/op
+                 p0.00:   26.000 ns/op
+                 p0.50:   30.000 ns/op
+                 p0.90:   38.000 ns/op
                  p0.95:   38.000 ns/op
-                 p0.99:   45.380 ns/op
-                 p0.999:  60.000 ns/op
-                 p0.9999: 63.000 ns/op
-                 p1.00:   63.000 ns/op
+                 p0.99:   39.000 ns/op
+                 p0.999:  41.475 ns/op
+                 p0.9999: 53.000 ns/op
+                 p1.00:   53.000 ns/op
 
-Iteration   4: 34.217 ±(99.9%) 0.151 ns/op
-                 p0.00:   24.000 ns/op
-                 p0.50:   34.000 ns/op
-                 p0.90:   36.000 ns/op
+Iteration   4: 32.496 ±(99.9%) 0.177 ns/op
+                 p0.00:   28.000 ns/op
+                 p0.50:   31.000 ns/op
+                 p0.90:   38.000 ns/op
                  p0.95:   39.000 ns/op
-                 p0.99:   45.000 ns/op
-                 p0.999:  62.777 ns/op
-                 p0.9999: 70.000 ns/op
-                 p1.00:   70.000 ns/op
+                 p0.99:   39.000 ns/op
+                 p0.999:  40.000 ns/op
+                 p0.9999: 49.000 ns/op
+                 p1.00:   49.000 ns/op
 
-Iteration   5: 34.409 ±(99.9%) 0.149 ns/op
-                 p0.00:   24.000 ns/op
-                 p0.50:   34.000 ns/op
-                 p0.90:   36.000 ns/op
-                 p0.95:   38.000 ns/op
-                 p0.99:   46.030 ns/op
-                 p0.999:  61.000 ns/op
-                 p0.9999: 66.000 ns/op
-                 p1.00:   66.000 ns/op
+Iteration   5: 37.114 ±(99.9%) 0.118 ns/op
+                 p0.00:   28.000 ns/op
+                 p0.50:   38.000 ns/op
+                 p0.90:   38.000 ns/op
+                 p0.95:   39.000 ns/op
+                 p0.99:   41.000 ns/op
+                 p0.999:  44.000 ns/op
+                 p0.9999: 54.000 ns/op
+                 p1.00:   54.000 ns/op
 
 
 # Run progress: 66.67% complete, ETA 00:00:04
@@ -303,58 +307,58 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 15.710 ±(99.9%) 0.632 ns/op
-# Warmup Iteration   2: 15.006 ±(99.9%) 0.108 ns/op
-# Warmup Iteration   3: 14.852 ±(99.9%) 0.090 ns/op
-Iteration   1: 14.814 ±(99.9%) 0.109 ns/op
+# Warmup Iteration   1: 15.607 ±(99.9%) 0.588 ns/op
+# Warmup Iteration   2: 14.991 ±(99.9%) 0.107 ns/op
+# Warmup Iteration   3: 15.047 ±(99.9%) 0.094 ns/op
+Iteration   1: 16.154 ±(99.9%) 0.085 ns/op
                  p0.00:   14.000 ns/op
-                 p0.50:   14.000 ns/op
-                 p0.90:   16.000 ns/op
-                 p0.95:   16.000 ns/op
-                 p0.99:   18.000 ns/op
-                 p0.999:  52.420 ns/op
-                 p0.9999: 115.000 ns/op
-                 p1.00:   115.000 ns/op
+                 p0.50:   16.000 ns/op
+                 p0.90:   20.000 ns/op
+                 p0.95:   20.000 ns/op
+                 p0.99:   21.000 ns/op
+                 p0.999:  26.000 ns/op
+                 p0.9999: 53.000 ns/op
+                 p1.00:   53.000 ns/op
 
-Iteration   2: 33.478 ±(99.9%) 0.114 ns/op
+Iteration   2: 32.922 ±(99.9%) 0.144 ns/op
                  p0.00:   24.000 ns/op
-                 p0.50:   34.000 ns/op
+                 p0.50:   33.000 ns/op
+                 p0.90:   36.000 ns/op
+                 p0.95:   38.000 ns/op
+                 p0.99:   39.000 ns/op
+                 p0.999:  55.617 ns/op
+                 p0.9999: 70.000 ns/op
+                 p1.00:   70.000 ns/op
+
+Iteration   3: 33.031 ±(99.9%) 0.125 ns/op
+                 p0.00:   24.000 ns/op
+                 p0.50:   33.000 ns/op
+                 p0.90:   35.000 ns/op
+                 p0.95:   37.000 ns/op
+                 p0.99:   39.000 ns/op
+                 p0.999:  53.630 ns/op
+                 p0.9999: 63.000 ns/op
+                 p1.00:   63.000 ns/op
+
+Iteration   4: 33.177 ±(99.9%) 0.108 ns/op
+                 p0.00:   24.000 ns/op
+                 p0.50:   33.000 ns/op
                  p0.90:   35.000 ns/op
                  p0.95:   36.000 ns/op
-                 p0.99:   38.870 ns/op
-                 p0.999:  50.374 ns/op
-                 p0.9999: 96.000 ns/op
-                 p1.00:   96.000 ns/op
+                 p0.99:   38.000 ns/op
+                 p0.999:  54.648 ns/op
+                 p0.9999: 63.000 ns/op
+                 p1.00:   63.000 ns/op
 
-Iteration   3: 33.462 ±(99.9%) 0.115 ns/op
+Iteration   5: 33.266 ±(99.9%) 0.104 ns/op
                  p0.00:   24.000 ns/op
-                 p0.50:   34.000 ns/op
+                 p0.50:   33.000 ns/op
                  p0.90:   35.000 ns/op
                  p0.95:   36.000 ns/op
                  p0.99:   39.000 ns/op
-                 p0.999:  52.362 ns/op
-                 p0.9999: 80.000 ns/op
-                 p1.00:   80.000 ns/op
-
-Iteration   4: 33.456 ±(99.9%) 0.174 ns/op
-                 p0.00:   24.000 ns/op
-                 p0.50:   34.000 ns/op
-                 p0.90:   35.000 ns/op
-                 p0.95:   36.000 ns/op
-                 p0.99:   39.000 ns/op
-                 p0.999:  86.352 ns/op
-                 p0.9999: 99.000 ns/op
-                 p1.00:   99.000 ns/op
-
-Iteration   5: 33.292 ±(99.9%) 0.186 ns/op
-                 p0.00:   24.000 ns/op
-                 p0.50:   34.000 ns/op
-                 p0.90:   35.000 ns/op
-                 p0.95:   36.000 ns/op
-                 p0.99:   39.000 ns/op
-                 p0.999:  81.476 ns/op
-                 p0.9999: 166.000 ns/op
-                 p1.00:   166.000 ns/op
+                 p0.999:  50.324 ns/op
+                 p0.9999: 90.000 ns/op
+                 p1.00:   90.000 ns/op
 
 
 # Run progress: 83.33% complete, ETA 00:00:02
@@ -363,93 +367,95 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 16.054 ±(99.9%) 0.763 ns/op
-# Warmup Iteration   2: 15.097 ±(99.9%) 0.088 ns/op
-# Warmup Iteration   3: 15.495 ±(99.9%) 0.148 ns/op
-Iteration   1: 15.734 ±(99.9%) 0.131 ns/op
+# Warmup Iteration   1: 15.470 ±(99.9%) 0.593 ns/op
+# Warmup Iteration   2: 14.988 ±(99.9%) 0.078 ns/op
+# Warmup Iteration   3: 14.747 ±(99.9%) 0.057 ns/op
+Iteration   1: 14.696 ±(99.9%) 0.048 ns/op
                  p0.00:   14.000 ns/op
-                 p0.50:   15.000 ns/op
-                 p0.90:   20.000 ns/op
-                 p0.95:   21.000 ns/op
-                 p0.99:   21.000 ns/op
-                 p0.999:  46.140 ns/op
-                 p0.9999: 67.000 ns/op
-                 p1.00:   67.000 ns/op
+                 p0.50:   14.000 ns/op
+                 p0.90:   16.000 ns/op
+                 p0.95:   16.000 ns/op
+                 p0.99:   17.000 ns/op
+                 p0.999:  24.492 ns/op
+                 p0.9999: 35.000 ns/op
+                 p1.00:   35.000 ns/op
 
-Iteration   2: 18.473 ±(99.9%) 0.169 ns/op
-                 p0.00:   14.000 ns/op
-                 p0.50:   16.000 ns/op
-                 p0.90:   23.000 ns/op
-                 p0.95:   24.000 ns/op
-                 p0.99:   30.000 ns/op
-                 p0.999:  33.312 ns/op
-                 p0.9999: 68.000 ns/op
-                 p1.00:   68.000 ns/op
-
-Iteration   3: 32.476 ±(99.9%) 0.155 ns/op
+Iteration   2: 32.427 ±(99.9%) 0.141 ns/op
                  p0.00:   23.000 ns/op
                  p0.50:   33.000 ns/op
                  p0.90:   35.000 ns/op
                  p0.95:   37.000 ns/op
-                 p0.99:   44.000 ns/op
-                 p0.999:  60.118 ns/op
-                 p0.9999: 65.000 ns/op
-                 p1.00:   65.000 ns/op
+                 p0.99:   38.000 ns/op
+                 p0.999:  49.547 ns/op
+                 p0.9999: 70.000 ns/op
+                 p1.00:   70.000 ns/op
 
-Iteration   4: 32.960 ±(99.9%) 0.145 ns/op
-                 p0.00:   23.000 ns/op
+Iteration   3: 32.130 ±(99.9%) 0.103 ns/op
+                 p0.00:   24.000 ns/op
                  p0.50:   33.000 ns/op
                  p0.90:   34.000 ns/op
                  p0.95:   35.000 ns/op
-                 p0.99:   43.000 ns/op
-                 p0.999:  64.623 ns/op
-                 p0.9999: 98.000 ns/op
-                 p1.00:   98.000 ns/op
+                 p0.99:   37.000 ns/op
+                 p0.999:  39.000 ns/op
+                 p0.9999: 40.000 ns/op
+                 p1.00:   40.000 ns/op
 
-Iteration   5: 33.278 ±(99.9%) 0.106 ns/op
+Iteration   4: 32.756 ±(99.9%) 0.090 ns/op
                  p0.00:   23.000 ns/op
                  p0.50:   33.000 ns/op
                  p0.90:   35.000 ns/op
-                 p0.95:   36.000 ns/op
-                 p0.99:   39.000 ns/op
-                 p0.999:  42.661 ns/op
-                 p0.9999: 88.000 ns/op
-                 p1.00:   88.000 ns/op
+                 p0.95:   35.000 ns/op
+                 p0.99:   37.000 ns/op
+                 p0.999:  42.000 ns/op
+                 p0.9999: 47.000 ns/op
+                 p1.00:   47.000 ns/op
+
+Iteration   5: 32.090 ±(99.9%) 0.107 ns/op
+                 p0.00:   23.000 ns/op
+                 p0.50:   32.000 ns/op
+                 p0.90:   33.000 ns/op
+                 p0.95:   34.000 ns/op
+                 p0.99:   38.000 ns/op
+                 p0.999:  45.000 ns/op
+                 p0.9999: 97.000 ns/op
+                 p1.00:   97.000 ns/op
 
 
 
 Result "io.patterncatalyst.lowlat.bench.CheckDigitBenchmark.guarded":
-  N = 69012
-  mean =     28.153 ±(99.9%) 0.107 ns/op
+  N = 70947
+  mean =     28.413 ±(99.9%) 0.101 ns/op
 
   Histogram, ns/op:
-    [  0.000,  12.500) = 0 
-    [ 12.500,  25.000) = 21029 
-    [ 25.000,  37.500) = 46274 
-    [ 37.500,  50.000) = 1537 
-    [ 50.000,  62.500) = 122 
-    [ 62.500,  75.000) = 29 
-    [ 75.000,  87.500) = 10 
-    [ 87.500, 100.000) = 6 
-    [100.000, 112.500) = 2 
-    [112.500, 125.000) = 1 
-    [125.000, 137.500) = 0 
-    [137.500, 150.000) = 0 
-    [150.000, 162.500) = 0 
-    [162.500, 175.000) = 1 
-    [175.000, 187.500) = 0 
+    [ 10.000,  15.000) = 8689 
+    [ 15.000,  20.000) = 8081 
+    [ 20.000,  25.000) = 1755 
+    [ 25.000,  30.000) = 6288 
+    [ 30.000,  35.000) = 33332 
+    [ 35.000,  40.000) = 12466 
+    [ 40.000,  45.000) = 261 
+    [ 45.000,  50.000) = 39 
+    [ 50.000,  55.000) = 18 
+    [ 55.000,  60.000) = 8 
+    [ 60.000,  65.000) = 5 
+    [ 65.000,  70.000) = 0 
+    [ 70.000,  75.000) = 2 
+    [ 75.000,  80.000) = 0 
+    [ 80.000,  85.000) = 0 
+    [ 85.000,  90.000) = 1 
+    [ 90.000,  95.000) = 1 
 
   Percentiles, ns/op:
       p(0.0000) =     14.000 ns/op
-     p(50.0000) =     33.000 ns/op
-     p(90.0000) =     35.000 ns/op
-     p(95.0000) =     36.000 ns/op
-     p(99.0000) =     40.000 ns/op
-     p(99.9000) =     60.000 ns/op
-     p(99.9900) =     98.099 ns/op
-     p(99.9990) =    190.000 ns/op
-     p(99.9999) =    190.000 ns/op
-    p(100.0000) =    190.000 ns/op
+     p(50.0000) =     32.000 ns/op
+     p(90.0000) =     37.000 ns/op
+     p(95.0000) =     38.000 ns/op
+     p(99.0000) =     39.000 ns/op
+     p(99.9000) =     45.000 ns/op
+     p(99.9900) =     62.810 ns/op
+     p(99.9990) =     97.000 ns/op
+     p(99.9999) =     97.000 ns/op
+    p(100.0000) =     97.000 ns/op
 
 
 # Run complete. Total time: 00:00:13
@@ -466,24 +472,24 @@ works, and factor in a small probability of new VM bugs. Additionally, while com
 different JVMs are already problematic, the performance difference caused by different Blackhole
 modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
 
-Benchmark                                 Mode     Cnt    Score   Error  Units
-CheckDigitBenchmark.eliminated          sample  134152    0.006 ± 0.014  ns/op
-CheckDigitBenchmark.eliminated:p0.00    sample              ≈ 0          ns/op
-CheckDigitBenchmark.eliminated:p0.50    sample              ≈ 0          ns/op
-CheckDigitBenchmark.eliminated:p0.90    sample              ≈ 0          ns/op
-CheckDigitBenchmark.eliminated:p0.95    sample              ≈ 0          ns/op
-CheckDigitBenchmark.eliminated:p0.99    sample              ≈ 0          ns/op
-CheckDigitBenchmark.eliminated:p0.999   sample              ≈ 0          ns/op
-CheckDigitBenchmark.eliminated:p0.9999  sample            6.000          ns/op
-CheckDigitBenchmark.eliminated:p1.00    sample          577.000          ns/op
-CheckDigitBenchmark.guarded             sample   69012   28.153 ± 0.107  ns/op
-CheckDigitBenchmark.guarded:p0.00       sample           14.000          ns/op
-CheckDigitBenchmark.guarded:p0.50       sample           33.000          ns/op
-CheckDigitBenchmark.guarded:p0.90       sample           35.000          ns/op
-CheckDigitBenchmark.guarded:p0.95       sample           36.000          ns/op
-CheckDigitBenchmark.guarded:p0.99       sample           40.000          ns/op
-CheckDigitBenchmark.guarded:p0.999      sample           60.000          ns/op
-CheckDigitBenchmark.guarded:p0.9999     sample           98.099          ns/op
-CheckDigitBenchmark.guarded:p1.00       sample          190.000          ns/op
+Benchmark                                 Mode     Cnt   Score   Error  Units
+CheckDigitBenchmark.eliminated          sample  139138   0.001 ± 0.001  ns/op
+CheckDigitBenchmark.eliminated:p0.00    sample             ≈ 0          ns/op
+CheckDigitBenchmark.eliminated:p0.50    sample             ≈ 0          ns/op
+CheckDigitBenchmark.eliminated:p0.90    sample             ≈ 0          ns/op
+CheckDigitBenchmark.eliminated:p0.95    sample             ≈ 0          ns/op
+CheckDigitBenchmark.eliminated:p0.99    sample             ≈ 0          ns/op
+CheckDigitBenchmark.eliminated:p0.999   sample             ≈ 0          ns/op
+CheckDigitBenchmark.eliminated:p0.9999  sample           4.000          ns/op
+CheckDigitBenchmark.eliminated:p1.00    sample          20.000          ns/op
+CheckDigitBenchmark.guarded             sample   70947  28.413 ± 0.101  ns/op
+CheckDigitBenchmark.guarded:p0.00       sample          14.000          ns/op
+CheckDigitBenchmark.guarded:p0.50       sample          32.000          ns/op
+CheckDigitBenchmark.guarded:p0.90       sample          37.000          ns/op
+CheckDigitBenchmark.guarded:p0.95       sample          38.000          ns/op
+CheckDigitBenchmark.guarded:p0.99       sample          39.000          ns/op
+CheckDigitBenchmark.guarded:p0.999      sample          45.000          ns/op
+CheckDigitBenchmark.guarded:p0.9999     sample          62.810          ns/op
+CheckDigitBenchmark.guarded:p1.00       sample          97.000          ns/op
 
 Benchmark result is saved to /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/results/r01-run2/jmh.json

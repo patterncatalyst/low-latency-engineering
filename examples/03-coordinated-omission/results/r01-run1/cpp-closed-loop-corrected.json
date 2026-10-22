@@ -7,18 +7,18 @@
   "count": 10199,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAph4nJ1TQYsdRRB+9c336lVqy7bTDs3wMu6Oj8eyLI/lsYhEhAgSPHjUi0cv/gavggoeRf9AyFHUk0IQcsxRheDJi17Em0TUixelZxVDBBPtmaruqqmvqqv7m/HtD55YLPjt4mJ0f86yWHQv7m/dWDx/78JxVD6Rr+XamVIoAMmOHQQAseIBjapWjCTDS3jUMtYp6DQiEJ4F2vebW3JX3l39grv5R9zTj1Y39f2DD/Elv5Hv8Bvew+e4/qlcfe2lfO1wvz4+L/vhrJZX61mMu9PTup3OToZ93aXa89TCSsmFpaREj97MdUQMcZ6H0r9crtsL0/5wveXoHtrTNAz0cCNV3Z3uEUazMFVzJSNSjCxGo7llT8nzmMY6nA59zicxRo4WnbTm7e78/Ond5uo4rXfDeuhTHyUiZ01Rta95qOs+H5fecy45b9bbw+1U1yVPHqkvXjSYc6rjUKdhmKbqaUgl9U6d95cU6iamriEkzKgW1s7TwpJ6RLI+l3FTsllouxIhPYfVcpLyesz7flNHayjNtFJq2U2b8WT9TD1O2z7DrXpOvWW2/tnOT50ORJSUIteUw5MnEhBQAy4QVVVKeKiKNdtUVChUwMSY4EgErX2AA0KA2g5UvJGhNQOBmROmSsoFj0yAlgNA11DWqjaO8QArdOi0iUAxIxoL0UbXCDkbXaskbTXXvKQtwxLCS2zhSxAdOSdvO2o+mZujoLPGasCIDtqBTV2eG2fjOJa6bEVmjMwBXKGbBR2WWLY/gysscYSncBmfCV7HW4J3jnD7TcGvCV+s8NUKv3f4vsMPs/4Y+En+fn/+a3FH8MZDnlfwHJ59QP7p+Xe5git48j79X+f/h3oQ/TgO8Ngs9+uH2Y8W9aioPwAloGWm",
+  "hdr_histogram": "HISTFAAAAqN4nKVSO6sdVRQ+65tv1qyzzj47c3eGYZycTIbD4XKrQ5A0PlBJIRZicdEmlWlCEAsR8QGS6mIZJGIjiKKghSDaqY0gFkJ8IRYiFhbaBJHoL5A9J5VEuMH9XGvt71uPvffq6LWTsxlvzHatuLXLbFY8fPaTt2cP3twZzqyeexU38CE+k6fO7x+s19v10I99rKPVbrUqxZWqNHVPqU1d17fdpk2deYhNCqGLfT2Mq027vvvcpSsXnj88kivP/iAvflv8KEfF3/gI31df4iav4hqv8Sf8wq/lq+JX+Rl/yBvyJy7/hnfkPXkFz1zF9uXLF76Qh54czh8+cKl/ZPv42fawe2yzvb9/Ot17bv/RdBAOxnaj65g627cDiym13htrJ4OZMlhwc7pqUDOaqRrdCCZSBdpAAx1iiGZCBOYSSYU73FwNHowWY2Ssm9G7OvSrWMfYDG0Yu3HcjOtx6NfD/ip1K9/WbdM0bWia5HWzSkNaDVlbd2NX17133dC3XWzqpnZTakruLWi1RzJpTk9jsmhqjEHr6NrWZp7PnNPVB3VXhSFDPCBD1SgATJwgpiYUCBRGI80EzPXQACjEBJLdwXPJAQUIy88LIQ2ZCtg0tSCVyPdFAadAJEotqCDzCSRnhyw6QoGdcxiFPpEzhgqouOVIZqJi+SFynhQi54f8u0wFIFQ1e8lW0QJTPruSFlkWYjIKUHIBzJmjZhtLCEugBOaoJsgccxQULHecCguc4SQIcBf2QOES2MMcJU8iu8lShQoTt6KgRIFTOIEKJSbsaQj2sOQeLuJ6iY9rfGB4a4F3gc8T3r+IN0/guwrfVHid+L24NT4F/pLbjOuCF/6zvzStT+A+3HOH89+W0zg19ePtd4Y+PmuJJRa3Xf+vfnzWPwcZckM=",
   "language": "cpp",
   "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; record_corrected, expected interval 1 ms",
   "percentiles": {
     "max": 200146943,
-    "p50": 107,
-    "p90": 462,
-    "p99": 98172927,
+    "p50": 113,
+    "p90": 354,
+    "p99": 98107391,
     "p99_9": 190185471
   },
   "profile": {
-    "captured_at": "2026-10-22T02:23:14Z",
+    "captured_at": "2026-10-22T14:48:35Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.5,
-      "load15": 0.28,
-      "load5": 0.58,
+      "load1": 0.9,
+      "load15": 1.15,
+      "load5": 1.03,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 1845867,
+      "pid": 2075506,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

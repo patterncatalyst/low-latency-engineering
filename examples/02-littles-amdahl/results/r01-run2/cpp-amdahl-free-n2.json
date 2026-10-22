@@ -7,33 +7,33 @@
   "count": 10,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAADR4nJNpmSzMwMAgxAABzFCakYGB2c1gxwIG+w8QgcdNTEzsTEyMTNwsTOxMvEziTAC5zQYW",
+  "hdr_histogram": "HISTFAAAADd4nJNpmSzMwMAgygABzFCakYGB2c1gxwIG+w8Qgc9NTEzsTKJMTNxMnEyMTKpMvkzcTADQjQaZ",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "lock": "std::mutex",
-    "measured_speedup_p50": 1.9540230124092544,
+    "measured_speedup_p50": 1.9708738103792212,
     "parcels_per_worker_per_wave": 160,
-    "predicted_speedup": 1.826356849785023,
-    "relative_error": 0.06990209095186331,
+    "predicted_speedup": 1.8245645422108392,
+    "relative_error": 0.08018859557091791,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.09507624440175327,
+    "serial_fraction_modelling_input": 0.09615196049824817,
     "sync": "free: no barriers",
-    "wall_p50_ns": 39911423,
-    "wall_p50_ns_n1": 77987839,
+    "wall_p50_ns": 40501247,
+    "wall_p50_ns_n1": 79822847,
     "workers": 2
   },
   "notes": "10 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
   "percentiles": {
-    "max": 40796159,
-    "p50": 39911423,
-    "p90": 40370175,
-    "p99": 40796159,
-    "p99_9": 40796159
+    "max": 42958847,
+    "p50": 40501247,
+    "p90": 42729471,
+    "p99": 42958847,
+    "p99_9": 42958847
   },
   "profile": {
-    "captured_at": "2026-10-22T12:32:33Z",
+    "captured_at": "2026-10-22T14:53:13Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -69,9 +69,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.37,
-      "load15": 0.68,
-      "load5": 0.93,
+      "load1": 0.65,
+      "load15": 1.09,
+      "load5": 0.97,
       "running": 1
     },
     "memory": {
@@ -92,7 +92,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2010350,
+      "pid": 2078882,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

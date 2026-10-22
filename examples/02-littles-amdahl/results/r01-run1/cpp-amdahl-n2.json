@@ -7,34 +7,34 @@
   "count": 30,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAAD54nJNpmSzMwMAgxwABzFCakYGB2c1gxwIG+w8Qgd8tTEycTIwsTCwcLExMTIwsLExMzEwgzMuiyAIACDsGZQ==",
+  "hdr_histogram": "HISTFAAAADt4nJNpmSzMwMAgyQABzFCakYGB2c1gxwIG+w8QgfZWJiZeJhYWFjY2RiYOJmYWNhZmJl4mRiYA3YgF0A==",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "lock": "std::mutex",
-    "measured_speedup_p50": 1.7715549178673453,
+    "measured_speedup_p50": 1.7668621872454375,
     "parcels_per_worker_per_wave": 160,
-    "predicted_speedup": 1.826352649875203,
-    "relative_error": -0.03000391628177726,
+    "predicted_speedup": 1.8265356707552238,
+    "relative_error": -0.032670308313832656,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.09507876265663304,
+    "serial_fraction_modelling_input": 0.09496903456205322,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
-    "wall_p50_ns": 44466175,
-    "wall_p50_ns_n1": 78774271,
+    "wall_p50_ns": 44695551,
+    "wall_p50_ns_n1": 78970879,
     "workers": 2,
-    "effective_ghz": 4.31
+    "effective_ghz": 4.30
   },
   "notes": "30 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=phased",
   "percentiles": {
-    "max": 45776895,
-    "p50": 44466175,
-    "p90": 45187071,
-    "p99": 45776895,
-    "p99_9": 45776895
+    "max": 45350911,
+    "p50": 44695551,
+    "p90": 44924927,
+    "p99": 45350911,
+    "p99_9": 45350911
   },
   "profile": {
-    "captured_at": "2026-10-22T12:31:09Z",
+    "captured_at": "2026-10-22T14:47:09Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -70,9 +70,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.25,
-      "load15": 0.6,
-      "load5": 0.74,
+      "load1": 0.38,
+      "load15": 1.15,
+      "load5": 0.99,
       "running": 1
     },
     "memory": {
@@ -93,7 +93,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2008467,
+      "pid": 2073568,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

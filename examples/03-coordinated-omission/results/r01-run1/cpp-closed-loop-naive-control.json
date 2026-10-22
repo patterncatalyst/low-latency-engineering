@@ -7,18 +7,18 @@
   "count": 10000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAmZ4nC1SP6tfRRD9zbnnzm9+k2Fd12W53FyvLyE84fESHg+JYqGpHhLUSlJIEBs/gSBWEoJYWAn5AumTXgs/QEpBsLBMLcFCQcRC9r7swC7MnzNz5uzy7aPXdrvhy93lGV6+stsNF2c/Pd69/+el4xrUTEiBkDACKoCA3AOHeufzrx7IRQtXtTCP8FpStlw00rSc3b/3zWd3z9+99eHdi9/kmfzHh3h25Rf8M/48/sB/98/lu+F3fD/+MT4d/hqey4vx66dyf/2grtmnOM9TlPe8Rl3rYq0uuSYr2SrfSkvOp+vqx1GMUWtmMCySp5jLcm/9tH18dvpJudPeKdORmzVaYiFVEtxShdEYgFEAgAwjxaCkmQI0GqBhmk0dlB4GrSpLuHrWiJI0wiLCp9bmnD1Ky1Y9t6PlxrQut6d1Pj4/u36y5HWZbrRl9uvTrVzn+XQ5abWd1OO5lqlMtURKEXGULHInoSYe2V01mXs4VVVJDbMJ1VNWwNVsm3MLCggdVIxKUYKdB03FoT3BCHV1L+JM3ivBTS96Vk8leyB7zRGVWXNbYi6V7hGaskV2DSB1shGttjrNOpfI85LmFEoC1A3T+57MTWgVpn1FpbX+LzQVN0tQDbWUCp2e6NXZmQgU7POPHQZiIezKWKdCjtgrASFGCiE4QNCl27IGbL59L5CXtu+qSjcdthQMoEDHLQfQfhPYd2+vHoHBRsrGY1NbsPVE3xZgo8n27zscBigHIyjamxyU2LO3uMQfNhYqHPWAPQYcgFeIA/gG8BFu4hq+wK+v4yp+FLyNqxjx5ApexZv4u+F/wo8/+A==",
+  "hdr_histogram": "HISTFAAAAn94nD1TwaodRRC9deZMvXqVtjJph2aYDDfPS3g8QgjXTVZiJIsg4ieIC79A/IAgIesQ1A+QrIwLEVdZ5ANCEuLGhcsEXIuQXVZSc59WQ1dNVdeZ01XVy/3v399suhebg3TnWjab7s7+yY+bW/8cHFduPpd38rM8lC92N65qm0tlqNGNio5CAYFeVSAeZWCM7mZuEWbmxWAoETFFPdktz/GH/MaX+Buv9QnuHb+Te/y1e4BH/S9yv/tO/pTX8kBe4u4jfIu/8AwP5VV39xm++UF+ki+fyulX++tfTx+P125/8lm7vdw5XT6qny7Lvn4+n7VxX/dl2sXcZix1WTB70zK4Bgcq3Fi1eDEXuoRxAGnViAIDVaiionkdQKFKqlJN06meN4VRbd1RglrQWbGiWtDGMnoMg2lxM6tefdAI9TaXeWrTMm5343aJafI6thZzuzqMw9JO2q5O25N52p6cbds0WHhtU4zbcdptt9fi7LS2ZYn0TLYsOtQy6mhjmcPD1ajefHSne3ML6mBWMJhrEbiGVhYWmpoSCC/JHcydJMxcc5FGM6ComtOZAoKmVEemMmuUOBlSpWMQNzrL4SzNdK2J1EQWXWXQjBZTTUzLQqorIFWTjZgyzGguulY1StGsq2qydDHE6DTQI2cKZgq4ao6WMrKr6oQPpcRoEaS4q1uhiuf0EUbD2j6ouTNZZYcF2dD3gA6qPaxbXThCB8lZPl/ssEZ6kGmQRxBcTGePSzg/BVmDYM+OCSLAOSB6ojtE0eEY/f85B80V/EhTr7y4vijmnwUdj9Po0a/cDokX/gO5sNJN+/hA9ghX8uuDPPpY8PYyLgMfAm8EvxP/AtSQROU=",
   "language": "cpp",
   "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep",
   "percentiles": {
-    "max": 20191,
-    "p50": 109,
-    "p90": 489,
-    "p99": 809,
-    "p99_9": 1076
+    "max": 5407,
+    "p50": 114,
+    "p90": 451,
+    "p99": 860,
+    "p99_9": 1066
   },
   "profile": {
-    "captured_at": "2026-10-22T02:23:14Z",
+    "captured_at": "2026-10-22T14:48:35Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.5,
-      "load15": 0.28,
-      "load5": 0.58,
+      "load1": 0.9,
+      "load15": 1.15,
+      "load5": 1.03,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 1845867,
+      "pid": 2075506,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

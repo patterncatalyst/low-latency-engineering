@@ -7,18 +7,18 @@
   "count": 10199,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAml4nJ1RO4gUQRDdfl1bW1vX19fXDuPcOLcOy7oMx7Essgh+0MPAyEgTQxXBRMRENBZNjARBDE0UDC4QDIwFQzExMvTDqYgoniYGSu8Z+AF/XV2f9+rTBV1dvLqp1aJjrY1jv3nTatkD43s3WvvebRBbcf6evUCX6TFOHT+4Mi6HTa8/XJ6UoSrKYlDk0TlxKp7KTAfL46W8jLHu15GzOluu670Hjhxq+k05rPpViOqLzIVMT1RvzROzbt/Yu7jvXtpbcs1eaa/Ta7yla+YTLuMpnpvT17FyZrzr+OhouSOvj9aTMJiMtsueYnvMl8JS3svcqOgHP4r9GH2VUUa5lyKUUvVi7fqx3B93xPFksreauJVer+9LX/l8IJlKLo7VlcqBvUrlCw6Fz7Pchyg+llU5GjZLg9rXvYFvNGRZVjdNM2yaQV5HH3IJsZdnUWJeBReDV+ecBh+DxkDsoEF85omYVSVXIhUSVjCpEpEwqQRVFiFmFi9spgwJMSkzAQpKQmQAqGEYMglCWZUg4hXkIRKYgwizYYUKgR07kBphEJicI1Aaz4429nAMEhFDhpjSxPRMKk5lABmijiCFKW6nhEUClgCLtFDCXVgYoA2LLmYwm8LNgKUu2oDBDNroooOps/iGZ9GluWmnmU4xNJPSZNEmS7OYg6U2TPLoYg4dGMxjAfPT+kVgK7ZhARafgZsGlyJWBWdxx2AR7xm3CWsGzzgRa4RXJ/HR42EHjzr4YvFietcsVoH35of7YWofGJz7gxzGbuz8SX9lfq9bsAWL39l/9f/X9XP33PTXkn5v/4T/rupvu74CNVZwLQ==",
+  "hdr_histogram": "HISTFAAAArh4nJ1Sv6tdRRC+8+135sybt9m3bz0cHydHvVxuEZ5NFAmIQW3MXyDaCNpplTbYSZBUdoJFwJAmQSysLbQQbMUfpLYTHiIYO2Mlc8+tVNRkz86ZHzszu/PNzO9/+Nhq1b21Wlbac1mt0pWLn99evXR/MTyF9+SL9FH6WW7Ia8+NF56tYyluWZUEjUbEUoEm7GQ3tlwsj1PJY1a4qZmZ56pNtZzkst7+KNflendfztK97ga/O/ws/dB9kr7uzniGm7wtd3kX9/CH3JRf8OoHuHr1U7n4u5y+8+LLt2R72jZzGeqFvLm0vrJ5Y758Wi7XeayX8rbWuU7Zrak3b1S3oVTDwAKHVRCFUCHj8YAAqlBQUXZVQMOYlKJIREclxQTLcoBQCIjIwJ2zLZKSppQgVSdVXVUdpqjWnDTPxU1BN2+tWBtKa6X4kH30aRiVdShjHfVkmuZt2eRxnievm0FrGUobnsx5WJ+0WodpHsdpO/japqHVsVZvWnNupdQ61XziVnMrXrIWK1aLNbp48UwWKIqq5uwRAmVyOosrTN2jaBMyigK5IENkUwdzMtWATaNomCuK2AJjND5kjRilGROC6x7UnYcmtQiGUQyy+AqZzfcpArhA0+KR0SN3U89og2HISxuUWXNRaFFY9pYrcilDyaUOY60NcImeOHIMJdUkxlS5QB9dySSSiScKBMKeEByAfbwaCcGEgsQD9KDgOMpjD3QQHIbLnoXesUfCEdGjDxUdhYkpkiaknTGydZE2AigEl7tjfuJEsM+m7AKIDv0ynpFBZRcWGkU7djsRCedwhGN0cTueQYdjvIKn8T3x4HG8jQN8ucaDN/HxEX7t8U2PO8RPab+/An6Tf9jfCq79y/curuF1vIDnH5L+ankC53d0/j/5//N6tOgjnMPhnv7+f1j90aL+BH+/aOE=",
   "language": "cpp",
   "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; record_corrected, expected interval 1 ms",
   "percentiles": {
     "max": 200146943,
-    "p50": 108,
-    "p90": 285,
-    "p99": 98172927,
+    "p50": 111,
+    "p90": 500,
+    "p99": 98107391,
     "p99_9": 190185471
   },
   "profile": {
-    "captured_at": "2026-10-22T02:38:18Z",
+    "captured_at": "2026-10-22T15:00:44Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.37,
-      "load15": 0.58,
-      "load5": 0.91,
+      "load1": 1.33,
+      "load15": 1.03,
+      "load5": 0.97,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 1861604,
+      "pid": 2086157,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

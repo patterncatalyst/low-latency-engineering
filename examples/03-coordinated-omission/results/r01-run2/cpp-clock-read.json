@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAK14nC2MsQnCQBiF7//ucskJmsSUCXYpBEHBwkIkneAADuAA7hAwG7iAhQvY2Yg4haWxt3ABQWJ8zYPH972s2idKqaNqo/8tSunl5HxQxbsdknL2uiR1vSqr7DWyxkigcUbAQ0AjaGI0Q4QuQorDxzeOlDldGwmdvthBYINeJEHPCI3NlinEJiT8aY68eWv+foBGGixnw4I1J8fdUDCGj2EnPDyulqfj5vEFdykXGg==",
+  "hdr_histogram": "HISTFAAAANh4nC2OoU4DURRE3z33vbuv20K72bahgYDBgSAVtQgSKmvqSeAT+IWa6gaB4wNIRRWKBIfAEFzT1BMgVACqgizLiJlkMpOZndEkd849uxL6r+Kcnh7d3bjjVWnk8976euv96uRn3Xm6vJfz/aYH1FP1CEhjKbdxsf14OO9+Daf91dlsd1qLZkAdAr6ghAodlIQNMmiVXgshIRTBaN7am7HRjBbTWkwtNUFNY2BAILBHnZzAQVHtk1CMq+G9eAzk7xXCA4yNT3gVLlAycl7grcJHxrfyC+mVIxI=",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); value = second - first",
   "percentiles": {
-    "max": 6367,
+    "max": 5923,
     "p50": 12,
     "p90": 13,
-    "p99": 13,
-    "p99_9": 14
+    "p99": 46,
+    "p99_9": 48
   },
   "profile": {
-    "captured_at": "2026-10-22T02:30:49Z",
+    "captured_at": "2026-10-22T14:54:40Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,10 +54,10 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.27,
-      "load15": 0.41,
-      "load5": 0.7,
-      "running": 1
+      "load1": 1.66,
+      "load15": 1.16,
+      "load5": 1.21,
+      "running": 2
     },
     "memory": {
       "hugepages_free": 0,
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 1852854,
+      "pid": 2080855,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

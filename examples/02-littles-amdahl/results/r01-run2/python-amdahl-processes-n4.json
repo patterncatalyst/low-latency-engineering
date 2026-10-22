@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 67633151,
-    "p90": 92012543,
-    "p99": 102498303,
-    "p99_9": 102498303,
-    "max": 102498303
+    "p50": 65077247,
+    "p90": 79364095,
+    "p99": 92012543,
+    "p99_9": 92012543,
+    "max": 92012543
   },
-  "hdr_histogram": "HISTFAAAAGB4nJNpmSzMwMDgwAABzFCakYGB2c1gxwIG+w8Qgeu9TEycTLFMtkzcTOxM7Ey8TIxMzEyMTIJMvEzcTKJMTOJgIWEmeaZAplCmp4xMnkysTFMZmf4zMikyiTMBAEaiCzg=",
+  "hdr_histogram": "HISTFAAAAFd4nC2IIQqAQBAAd2dvOQ6DQa5p8Admi82XWU0Gq8/wJz5Dm1VQB4aBqaelEpFePuyvitjY7ZsM1zfuGSIGTsIxEpFMBsODUgYaIv7acsKhrErBA+XICXs=",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T12:32:33Z",
+    "captured_at": "2026-10-22T14:53:13Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2010350,
+      "pid": 2078882,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.37,
-      "load5": 0.93,
-      "load15": 0.68,
+      "load1": 0.65,
+      "load5": 0.97,
+      "load15": 1.09,
       "running": 1
     },
     "memory": {
@@ -100,17 +100,17 @@
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 4,
     "executor": "ProcessPoolExecutor",
-    "serial_fraction_modelling_input": 0.10637595413385947,
+    "serial_fraction_modelling_input": 0.10457926876748695,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "predicted_speedup": 3.0323065064501615,
-    "measured_speedup_p50": 2.8158914997173503,
-    "relative_error": -0.07136976630576912,
-    "wall_p50_ns_n1": 190447615,
-    "wall_p50_ns": 67633151,
+    "predicted_speedup": 3.044747575056908,
+    "measured_speedup_p50": 2.928499526109333,
+    "relative_error": -0.03817986420283208,
+    "wall_p50_ns_n1": 190578687,
+    "wall_p50_ns": 65077247,
     "batch_parcels": 1200,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 60,
     "lock": "multiprocessing.Lock",
-    "effective_ghz": 3.92
+    "effective_ghz": 3.96
   }
 }

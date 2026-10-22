@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 79298559,
-    "p90": 80543743,
-    "p99": 81526783,
-    "p99_9": 81526783,
-    "max": 81526783
+    "p50": 79233023,
+    "p90": 80084991,
+    "p99": 83755007,
+    "p99_9": 83755007,
+    "max": 83755007
   },
-  "hdr_histogram": "HISTFAAAAD94nJNpmSzMwMCgzAABzFCaEch0M9ixgMH+A0Tg6iQmJiZWJmYmFiY2FhYmZhYgl4kBiDmBmJ2JGygDACTGBjw=",
+  "hdr_histogram": "HISTFAAAAD54nJNpmSzMwMAgxwABzFCaEch0M9ixgMH+A0Tg+iQmJlYWBhYWJgY2JiBkYWJiYGJiZ2FgEmQKZQIABbwGgg==",
   "build": {
     "compiler": "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled": null
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T12:32:33Z",
+    "captured_at": "2026-10-22T14:53:13Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2010350,
+      "pid": 2078882,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.37,
-      "load5": 0.93,
-      "load15": 0.68,
+      "load1": 0.65,
+      "load5": 0.97,
+      "load15": 1.09,
       "running": 1
     },
     "memory": {
@@ -99,17 +99,17 @@
   "model": {
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 1,
-    "serial_fraction_modelling_input": 0.09933612596029326,
+    "serial_fraction_modelling_input": 0.0989158284609461,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
     "predicted_speedup": 1.0,
     "measured_speedup_p50": 1.0,
     "relative_error": 0.0,
-    "wall_p50_ns_n1": 79298559,
-    "wall_p50_ns": 79298559,
+    "wall_p50_ns_n1": 79233023,
+    "wall_p50_ns": 79233023,
     "batch_parcels": 3200,
     "lock": "synchronized (platform threads)",
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 160,
-    "effective_ghz": 4.33
+    "effective_ghz": 4.34
   }
 }

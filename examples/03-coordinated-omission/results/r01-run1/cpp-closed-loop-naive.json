@@ -7,18 +7,18 @@
   "count": 10000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAkV4nC1TvYocRxDe+ubb2lJd0bTaTTMMw914WY7jWI7lMEaRhIRw4NCRQyd+Ekmg0NgvYBwa48gCoYdQIBw58hMYBcYgRabnVFDdXdX131/Pz3/6bLMZHm/uaPi0y2YzfHV6/fPm0fs7xUX5Xf6UhzdKoQAkBw4QAMSOZzSqWjGSDC/h0crclqDTiEB4Fmit+9fyTl7u/sW7/A/e62+7X/THs1/xln/J3/iIH/AGT/+QB999nR+en6bL23Iab1r5tt3EfLy+bofl5mo8tWNqldcWVkouLCUlelQz1xkxxm0eS/2mPLUny+l8OnB2D600DQM93EhVd6d7hNEsTNVcyYgUM4vRaG7ZU/I8p7mN12PN+SrmyNGtk7Z8ON7efnHcP5iX6ThOY001SkTOmqJpbXlsU82XpXrOJef9dDg/LG0qefFItXjRYM6pzWNbxnFZmqcxlVSdutaXFOompq4hJMyoFtbnaWFJPSJZzWXel2wW2p9ESM9hrVylPM35VPdttu6lmVZKK8dlP19NX7bLdKgZbs1zqpbZ+2efnzodiCgpRW4phydPJCCgBlwgqqqU8FAV67KpqFCogIkxwZEIWr+AA0KA2gcq3sHQm4HAzAlTJeUORyZAjwFg6F7Ws3aM8Qw7DBi0s0CxenQUotPQAbkKQ88k/bTmvKc9whbCe+zmWxADuQbvFXWdrM1RMFhHNWDEAB3AvtxfG2fHOLa67UlWH1kNuMOwMgZsse0/gztscYHPcR+vBN/jmeDFBT78J/gfxoE8Eg==",
+  "hdr_histogram": "HISTFAAAAmV4nC1SMatVRxC+853vzJ07b9+6bz0cjifX4+FyebzqImIlYoJFsEgsHlZW2oiEFCGEkCJYPSwlmC5NQgQbQbQQQhohpAgkhBBSiKRIYSUi4i8Ie64Dy87OfDPzzcwuj749PptVH8+2Ur27ZTarPjz90w+z999sDaeWX3yDl3iIn+WTi/sHq9VmNfRjH1O05JZUKa5Upal7zm3uur7t1m3uzENscghd7NMwLtft6szZG7eufnl4JLc+/1u++rP6R46qt3iEv+a/4g3v4C7v8hn+5R/yW/WfPMcr+U5e4+YL/Cj35TY+u4PN1zev/iIfXBsuHl640V/aXDndHnaX15vz/af53Nn9j/JBOBjbta5i7mzfDizm3HpvTE4GM2Ww4OZ01aBmNFM1uhHMpAq0gQY6xBDNhAgsLZIKd7i5GjwYLcbImJrRuxT6ZUwxNkMbxm4c1+NqHPrVsL/M3dI3qW2apg1Nkz01yzzk5VBeq27sUuq964a+7WKTmuSm1JzdW9CSRzJroacxWzQ1xqApurbJzIvPOY0+qLsqDAXiAQWqRgFg4gQxiVAgUBiNNBOw9EMDoBATSEkHLy0HVCCsrBdCGkooYNPRilSizIsCToVI1FpRQRYPpLBDUR2hwjY5jEKfgguGCqi4lUpmomJlEYUnhSj8UH6XqQCEqpYsxSpaYeKzbWmn6EJMRgFq7gALlqrFxhrCGqiBBeYTZIEFKgp2tzFz7OAUJ0WAE9gDhbvAHhaoeRwlTdHmmGOKnVNQo8J7OIY5akzYkxDsYZd7uI7fazxOeGD4fgf3gKcZT54J/geG5Ekw",
   "language": "cpp",
   "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep",
   "percentiles": {
     "max": 200146943,
-    "p50": 106,
-    "p90": 442,
-    "p99": 759,
-    "p99_9": 875
+    "p50": 112,
+    "p90": 333,
+    "p99": 675,
+    "p99_9": 1025
   },
   "profile": {
-    "captured_at": "2026-10-22T02:23:14Z",
+    "captured_at": "2026-10-22T14:48:35Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.5,
-      "load15": 0.28,
-      "load5": 0.58,
+      "load1": 0.9,
+      "load15": 1.15,
+      "load5": 1.03,
       "running": 1
     },
     "memory": {
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 1845867,
+      "pid": 2075506,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

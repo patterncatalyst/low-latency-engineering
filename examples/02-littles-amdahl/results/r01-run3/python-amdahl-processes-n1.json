@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 189923327,
-    "p90": 191365119,
-    "p99": 194772991,
-    "p99_9": 194772991,
-    "max": 194772991
+    "p50": 186777599,
+    "p90": 189530111,
+    "p99": 191365119,
+    "p99_9": 191365119,
+    "max": 191365119
   },
-  "hdr_histogram": "HISTFAAAAEJ4nJNpmSzMwMCgwgABzFCakYGB2c1gxwIG+w8QgfnLmJiYWJnYQQQTMxMLCyMLEzMTEwsTiMHCysTIpMoEACacBjY=",
+  "hdr_histogram": "HISTFAAAAEN4nJNpmSzMwMCgzAABzFCakYGB2c1gxwIG+w8Qgb9LmVi4mViYGJmYGFmYWFjYmJhBHEYmViZGJnYWViZBJgAtYQaD",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T12:33:57Z",
+    "captured_at": "2026-10-22T14:59:17Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2012278,
+      "pid": 2084178,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.6,
-      "load5": 1.09,
-      "load15": 0.76,
+      "load1": 0.21,
+      "load5": 0.69,
+      "load15": 0.95,
       "running": 1
     },
     "memory": {
@@ -100,17 +100,17 @@
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 1,
     "executor": "ProcessPoolExecutor",
-    "serial_fraction_modelling_input": 0.10774441764329172,
+    "serial_fraction_modelling_input": 0.10421275879653087,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
     "predicted_speedup": 1.0,
     "measured_speedup_p50": 1.0,
     "relative_error": 0.0,
-    "wall_p50_ns_n1": 189923327,
-    "wall_p50_ns": 189923327,
+    "wall_p50_ns_n1": 186777599,
+    "wall_p50_ns": 186777599,
     "batch_parcels": 1200,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 60,
     "lock": "multiprocessing.Lock",
-    "effective_ghz": 3.80
+    "effective_ghz": 3.92
   }
 }

@@ -7,18 +7,18 @@
   "count": 10000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAjR4nC1SwapcNwwdnavR6Pm5wlGMcczlct8wPC7DUMLwCCmEJIWQHwh02W8JIcvuui+hq+66zTd0nUIp+YFCAl2WLkrwnQpbwucszpGl8e2P9zeb4cHmEsP/lTab4eXD9+82z/6+ADfqRXiLKxCw62krAxOYGAThfsVyFhOOJilGMSVmRXSVIK18/Qd9pJ/03fD+/ofhz90P+lp+0//oH/xMn+gNfqHXePEvPf3+3B5aS76PdzZLPcZbq6fyvLa8H9uj6WxLq495yT6GqiFx4qwhhBJUQ5I5nXx5cvju8Ph0d5fP6ZhKiRZDSiV7NCiTgkWSJI/dHTQoS7CkwgAYyqpACB5DCjpayZYsp+SGoEEjOHmK1Q9pfzy08XisbmPwWIJOtdaxpCkt2ZO7p9CSTXV0j3f7pZ33j5ZTHud2atPt7b7EYlZK8FRCdI02mbZoqSQd3TSFCImmUWJQE9UIZSPrJthzajnEJmF9wkWKuuXgpSUzIdeSYgi1Wjksy2H02aeWJ0lmoeRQZs+5uJ3b1FKZ85yrj2ZuYc6HaTkv463nlmo1D1H6ADW4HWqZa45QAUSEVSDov9bXABACQRkYlDCAr4GrdVV4QKcw4B6AG2xxAb66LA8I2zVJJ65w3eFhZXDNO2yZQTyoDkwyMMA89EnteAtRgHQV73OlzpAwsZCAWMC8GmPiHhcbjFU1dB3dYUW7JAiDrhQTE+712nvo0Df8LT4TXuEvwu8NA36lfm7wBfQRPNE=",
+  "hdr_histogram": "HISTFAAAAqB4nDVTv8odRRS/5zdnzz05OR7GcV2WZVk2l/BxCSIfaWKnWOQBLETwFXwEC9HUNvoAKVKmloCQIoWFSEhhpdYiViLfA8iZ+zmwM7uzM3N+/2Z98t07hwPPh0srtyMdDuXx9Yunhw//uUzcY2GAQEDBgCP4iLe4cAFUxMOn0SLcmdlEUcCmquJ7fU1f00v8i1/w7XBDr45/0Wv+G7/Sy+EHelK+p5/pOd7QTfnyq/IHfivPyk/0dHhBN+UZvaHn+OJPTJ89vv5kv96Wq/HT6YP1wXm81o/303n+aF/Gea/3MddYzbmqVq2AkQqYlY1ZHRBiYiEtLBhUCkQYTGDBESBOWgV8tw+C5HkEsRQUEHOSBpgU4JRBzcAcxJ27qIAMdVQW35pp7G2t2pbms4fXxcet1XqKdX3vtO1XV++v28PzvJ2X5cF52+/vp7rOW9Tdx3Hy2tZxG5fp4e6r+zyP4xTbafHQmPYadfLRvGpYdVerIcJi7qwCSSwqsHxY1FVE3ZSEkowoE4wLQxgCBiT9ZFbNrcoonPyOki8gSOk9iSgxCfe/xEopQ5dNshdkAWg/lrvY2YsbhFnBYJWG0I6IocIizYPNR7emLmxRwyJMuWqIhmuE1qg+tWmZxnNr2mJ1t7HF3pqtc52bumu1qDY1c/cWm43e1LYY14ip1T3r1dpMJ5UIcVMXZTUVZWamRNNNtWAyrSwZEhYTIJdIEtVkCJEuWeHe0COSkeoDMlcMxuWzXxHCwP2qpOBDJqiHLOe4h6sAF0ExpIr/7+5e4VJAU/OSQe0xzPl0LkWG3FYSwFDYeoYzpyTpBkRKT2x6pMqaTsqQFHAJc4LrK9Fx0eXIrDNgQMGdW8B3cA9v49EFHe7ic3xDeBc/LniE3wn/AZOcQvk=",
   "language": "cpp",
   "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep; record_corrected, expected interval 1 ms",
   "percentiles": {
-    "max": 4343,
-    "p50": 107,
-    "p90": 466,
-    "p99": 783,
-    "p99_9": 911
+    "max": 4287,
+    "p50": 118,
+    "p90": 666,
+    "p99": 992,
+    "p99_9": 1145
   },
   "profile": {
-    "captured_at": "2026-10-22T02:30:49Z",
+    "captured_at": "2026-10-22T14:54:40Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,10 +54,10 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.27,
-      "load15": 0.41,
-      "load5": 0.7,
-      "running": 1
+      "load1": 1.66,
+      "load15": 1.16,
+      "load5": 1.21,
+      "running": 2
     },
     "memory": {
       "hugepages_free": 0,
@@ -77,7 +77,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 1852854,
+      "pid": 2080855,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",
