@@ -93,6 +93,7 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
     (`{"first-1000": {...}, "steady": {...}}`)
   - `aot`: `cache` (string), `mode` (string), `used` (boolean)
   - `ctx_switches`: `voluntary`, `involuntary` (integers)
+  - `alloc_stalls`: `count`, `max_ns` (integers; `jdk.ZAllocationStall` events, written by `JfrPauses`)
 
   No key anywhere inside `runtime` may be named `mean` or end in `_mean` or `mean_ns`; the
   schema rejects it, so `lowlat-report validate` and `check` both fail. Key order is the
@@ -141,3 +142,15 @@ Record 1,000 values of 1 ms, then one value of 1 s with an expected interval of
   sharing example and variant agree across languages; use it only for reports
   recorded from one fixed dataset (the goldens), because languages measuring a
   live workload are expected to differ. Exit non-zero on any mismatch.
+
+## Scratch files and JFR (Part 2)
+
+Nothing bulky or machine-specific is committed. `*.jfr` recordings, `.scratch/` directories
+and Chronicle Queue data (`examples/*/results/**/queue/`) are git-ignored. `lib.sh`
+`java_run` writes the JFR recording to a `mktemp` directory outside the tree (removed on
+exit; set `LOWLAT_SCRATCH` to keep it) and the unified GC and safepoint log to
+`$OUT/<variant>.gc.log` (committed, small). `jfr_pauses JFR EXAMPLE VARIANT` runs the
+`JfrPauses` CLI (shaded `measure-java/target/measure-java-cli.jar`) and writes
+`$OUT/java-<variant>-gc-pause.json`: one sample per `jdk.GCPhasePause` event (duration in
+ns; nested `GCPhasePauseLevel*` phases are not counted), `runtime.gc` from
+`jdk.GCConfiguration` and `runtime.alloc_stalls` from `jdk.ZAllocationStall`.

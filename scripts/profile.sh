@@ -192,12 +192,15 @@ g_memory() {
   local mi=/proc/meminfo thp
   # shellcheck disable=SC2016  # awk program, not shell
   mem() { jnum "$(try awk -v k="$1:" '$1 == k {print $2}' "$mi")"; }
-  thp=$(read_file /sys/kernel/mm/transparent_hugepage/enabled | sed -n 's/.*\[\(.*\)\].*/\1/p')
+  # bracketed (active) word of a THP knob such as "always [madvise] never"
+  thp_mode() { read_file "/sys/kernel/mm/transparent_hugepage/$1" | sed -n 's/.*\[\(.*\)\].*/\1/p'; }
+  thp=$(thp_mode enabled)
   jq -nc --argjson t "$(mem MemTotal)" --argjson ht "$(mem HugePages_Total)" \
      --argjson hf "$(mem HugePages_Free)" --argjson hs "$(mem Hugepagesize)" \
-     --argjson thp "$(jstr "$thp")" \
+     --argjson thp "$(jstr "$thp")" --argjson defrag "$(jstr "$(thp_mode defrag)")" \
      '{mem_total_kb: $t, hugepages_total: $ht, hugepages_free: $hf,
-       hugepagesize_kb: $hs, transparent_hugepage: $thp}'
+       hugepagesize_kb: $hs, transparent_hugepage: $thp,
+       thp_enabled: $thp, thp_defrag: $defrag}'
 }
 
 g_lab() {
@@ -209,16 +212,22 @@ g_lab() {
 }
 
 g_tools() {
-  local gcc clang java py cmake
+  local gcc clang java javafull py cmake paranoid memlock
   gcc=$(have gcc && try gcc --version | head -n1 || true)
   clang=$(have clang && try clang --version | head -n1 || true)
   java=$(have java && { java -version 2>&1 | head -n1; } || true)
+  # Runtime + VM lines carry vendor and build, e.g. "Temurin-25.0.5+8 (build 25.0.5+8-LTS)".
+  javafull=$(have java && { java -version 2>&1 | sed -n '2,3p' | paste -sd'|' | sed 's/|/ | /'; } || true)
   py=$(have python3 && try python3 --version || true)
   cmake=$(have cmake && try cmake --version | head -n1 || true)
+  paranoid=$(read_file /proc/sys/kernel/perf_event_paranoid)
+  memlock=$(ulimit -l 2>/dev/null || true) # KiB, or "unlimited"
   jq -nc --argjson gcc "$(jstr "$gcc")" --argjson clang "$(jstr "$clang")" \
-     --argjson java "$(jstr "$java")" --argjson py "$(jstr "$py")" \
-     --argjson cmake "$(jstr "$cmake")" \
-     '{gcc: $gcc, clang: $clang, java: $java, python3: $py, cmake: $cmake}'
+     --argjson java "$(jstr "$java")" --argjson jfull "$(jstr "$javafull")" \
+     --argjson py "$(jstr "$py")" --argjson cmake "$(jstr "$cmake")" \
+     --argjson para "$(jnum "$paranoid")" --argjson ml "$(jstr "$memlock")" \
+     '{gcc: $gcc, clang: $clang, java: $java, java_full: $jfull, python3: $py, cmake: $cmake,
+       perf_event_paranoid: $para, memlock_kb: $ml}'
 }
 
 # Publishable label instead of the real hostname: the lab VM's name inside a

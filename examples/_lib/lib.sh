@@ -48,6 +48,8 @@ _bg_cleanup() {
   for p in "${BG_PIDS[@]}"; do
     kill "$p" 2>/dev/null || true
   done
+  # Scratch (JFR recordings, FIFOs) is ours only when lib.sh created it.
+  [[ -z ${_LOWLAT_SCRATCH_OWNED:-} ]] || rm -rf "${LOWLAT_SCRATCH:?}"
 }
 trap _bg_cleanup EXIT
 
@@ -164,3 +166,123 @@ assert_lt() {
 
 # simulate ARGS...: run the reference line simulator (C++).
 simulate() { "$(cpp_bin line-simulator)" "$@"; }
+
+# ---------------------------------------------------------------------------------------------
+# Java runtime observation (Part 2): JFR + unified logging, context switches, time to ready.
+# ---------------------------------------------------------------------------------------------
+
+# _scratch: make sure LOWLAT_SCRATCH exists (set in the calling shell, never in a $(...)). A
+# caller-provided LOWLAT_SCRATCH is kept; otherwise a mktemp dir is created and removed by the
+# EXIT trap. Recordings (*.jfr) live here and nowhere in the tree, so they cannot be committed.
+_scratch() {
+  if [[ -z ${LOWLAT_SCRATCH:-} ]]; then
+    LOWLAT_SCRATCH=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-scratch.XXXXXX")
+    _LOWLAT_SCRATCH_OWNED=1
+  fi
+  mkdir -p "$LOWLAT_SCRATCH"
+}
+
+# java_flags VARIANT: prepare the observation flags for one JVM run, without starting it. Sets
+#   JFR_FILE         recording path under the scratch dir (JFR on, dumped on exit)
+#   GC_LOG           $OUT/VARIANT.gc.log (unified -Xlog gc* + safepoint, async)
+#   JAVA_RUN_FLAGS   array to put before -jar / the main class
+# For a background JVM:  java_flags v; java "${JAVA_RUN_FLAGS[@]}" -jar x.jar & bg_track $!
+# Needs $OUT (the results dir). -Xlog:async keeps the log writes off the application threads.
+java_flags() {
+  local variant=$1
+  : "${OUT:?java_flags needs OUT (the results dir)}"
+  _scratch
+  JFR_FILE="$LOWLAT_SCRATCH/$variant.jfr"
+  GC_LOG="$OUT/$variant.gc.log"
+  JAVA_RUN_FLAGS=(
+    -Xlog:async
+    "-Xlog:gc*,safepoint:file=$GC_LOG:uptime,level,tags"
+    "-XX:StartFlightRecording:filename=$JFR_FILE,dumponexit=true,settings=default"
+  )
+}
+
+# java_run VARIANT JAVA_ARGS...: run java in the foreground with the observation flags first,
+# echoing the full command line (that is the evidence of which flags ran). JAVA_ARGS are the
+# JVM flags, then -jar JAR or a class, then the program arguments:
+#   java_run zgc -XX:+UseZGC -Xmx512m -jar "$JAR" --duration 5
+# Leaves JFR_FILE and GC_LOG set; the exit status is java's.
+java_run() {
+  local variant=$1
+  shift
+  java_flags "$variant"
+  printf 'java:'
+  printf ' %q' java "${JAVA_RUN_FLAGS[@]}" "$@"
+  printf '\n'
+  java "${JAVA_RUN_FLAGS[@]}" "$@"
+}
+
+# jfr_pauses JFR EXAMPLE VARIANT: write $OUT/java-VARIANT-gc-pause.json, a gc-pause report with
+# one sample per jdk.GCPhasePause event (see JfrPauses). Needs LOWLAT_PROFILE (capture_profile).
+jfr_pauses() {
+  local jfr=$1 example=$2 variant=$3
+  local jar="$LOWLAT_EXAMPLES/common/measure-java/target/measure-java-cli.jar"
+  : "${OUT:?jfr_pauses needs OUT (the results dir)}"
+  [[ -f $jar ]] || build_java "$LOWLAT_EXAMPLES/common/measure-java"
+  [[ -f $jfr ]] || die "no recording at $jfr"
+  [[ -f $jar ]] || die "missing $jar (build_java common/measure-java first)"
+  java -jar "$jar" --jfr "$jfr" --example "$example" --variant "$variant" \
+    --out "$OUT/java-$variant-gc-pause.json"
+}
+
+# task_ctx_switches PID TID: print "VOLUNTARY INVOLUNTARY" for one thread, from
+# /proc/PID/task/TID/status. Read before and after a window and subtract.
+#   read -r vol invol < <(task_ctx_switches "$pid" "$tid")
+task_ctx_switches() {
+  local f=/proc/$1/task/$2/status
+  [[ -r $f ]] || die "no such thread: $f"
+  awk '/^voluntary_ctxt_switches:/ {v = $2} /^nonvoluntary_ctxt_switches:/ {n = $2} END {print v, n}' "$f"
+}
+
+# time_to_ready CMD...: launch CMD, wait for a line containing $READY_PATTERN (default "ready")
+# on its stdout/stderr, print the nanoseconds from launch to that line, then terminate CMD.
+# READY_TIMEOUT seconds (default 60) bounds the wait; the output is printed if CMD dies first
+# or never gets ready. A FIFO delivers the line the moment it is written, so there is no
+# polling granularity in the number.
+time_to_ready() {
+  local pattern=${READY_PATTERN:-ready} timeout=${READY_TIMEOUT:-60}
+  local fdir fifo fd pid line seen='' t0 t1 deadline
+  # Own temp dir, removed on every path: the call is normally inside $(...), where the EXIT
+  # trap of the calling script does not run.
+  fdir=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-ready.XXXXXX")
+  fifo=$fdir/fifo
+  mkfifo "$fifo"
+  exec {fd}<>"$fifo"
+  t0=${EPOCHREALTIME/./}
+  "$@" >&"$fd" 2>&1 &
+  pid=$!
+  bg_track "$pid"
+  deadline=$((SECONDS + timeout))
+  while :; do
+    if IFS= read -r -t 1 -u "$fd" line; then
+      seen+="$line"$'\n'
+      if [[ $line == *"$pattern"* ]]; then
+        t1=${EPOCHREALTIME/./}
+        break
+      fi
+    elif ! kill -0 "$pid" 2>/dev/null; then
+      exec {fd}<&-
+      rm -rf "$fdir"
+      bg_forget "$pid"
+      printf '%s' "$seen" >&2
+      die "time_to_ready: '$*' exited before printing '$pattern'"
+    elif ((SECONDS >= deadline)); then
+      kill "$pid" 2>/dev/null || true
+      exec {fd}<&-
+      rm -rf "$fdir"
+      bg_forget "$pid"
+      printf '%s' "$seen" >&2
+      die "time_to_ready: '$*' not ready within ${timeout} s"
+    fi
+  done
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  bg_forget "$pid"
+  exec {fd}<&-
+  rm -rf "$fdir"
+  echo $(((t1 - t0) * 1000))
+}

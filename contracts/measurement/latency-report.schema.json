@@ -92,6 +92,15 @@
             "voluntary": { "type": "integer", "minimum": 0 },
             "involuntary": { "type": "integer", "minimum": 0 }
           }
+        },
+        "alloc_stalls": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Allocation stalls (jdk.ZAllocationStall) during the run: the mutator waited for the collector to free memory.",
+          "properties": {
+            "count": { "type": "integer", "minimum": 0 },
+            "max_ns": { "type": "integer", "minimum": 0 }
+          }
         }
       }
     },
