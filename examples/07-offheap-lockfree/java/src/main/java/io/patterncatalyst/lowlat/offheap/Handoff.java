@@ -179,7 +179,7 @@ public final class Handoff {
                 .append("; reordered=").append(receiver.reordered())
                 .append("; rcvbuf_granted=").append(receiver.grantedRcvbuf())
                 .append("; slots=").append(settings.slots())
-                .append("; placement=unpinned");
+                .append("; placement=").append(settings.placement().label());
         if (result.journal() != null) {
             notes.append("; journal_fs=").append(result.journalFileSystem())
                     .append("; journal_readback_count=").append(result.journal().count())

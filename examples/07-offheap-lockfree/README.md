@@ -78,9 +78,9 @@ stages, so `--variant agrona-spsc --journal chronicle --manifest chronicle-map` 
 pipeline. The verified variants isolate one stage each, so a difference belongs to the stage
 that changed.
 
-The decide thread's placement is a seam, `ThreadPlacement`, with one host implementation
-(`unpinned`). The affinity variants of the VM part wrap the thread body in an OpenHFT Affinity
-lock through the same seam.
+The decide thread's placement is a seam, `ThreadPlacement`: `unpinned` (the scheduler's choice, the
+only placement the host part uses) and `pinned-isolated`, which wraps the thread body in an OpenHFT
+Affinity lock (`AffinityLock.acquireLock(3)`) held until the thread ends. See the VM part below.
 
 ## C++ lane
 
@@ -149,7 +149,7 @@ subdirectory and removes it when the run ends.
 | `--window N` | 20000 | split the reports at parcel N |
 | `--journal-dir DIR` | `.scratch/offheap-lockfree` | where journal files live during the run |
 | `--sample-hold-ms MS` | 0 | keep the decide thread alive this long after the last parcel |
-| `--placement` | `unpinned` | decide-thread placement |
+| `--placement` | `unpinned` | decide-thread placement: `unpinned` or `pinned-isolated` (guest CPU 3, VM part) |
 | `--expect`, `--idle-timeout-ms`, `--rcvbuf`, `--report`, `--example` | | common consumer options |
 
 The Chronicle JVM flags are required for the journal and manifest stages. Chronicle Core posts
@@ -213,6 +213,63 @@ The Chronicle Queue journal is not a durability mechanism. The open-source queue
 `fsync` on append: a record survives a process crash because it sits in the page cache, and a
 power loss can take the pages that were not yet written back. No claim here depends on durability.
 
+## VM part: pinning to an isolated CPU
+
+```bash
+scripts/lab/revert-vm.sh lowlat-target lab-ready-iso && scripts/lab/lab-up.sh
+VM=1 examples/07-offheap-lockfree/verify.sh        # about 5 minutes
+scripts/lab/lab-down.sh
+```
+
+The spin hand-off (`agrona-spsc`) holds a core at 100 %, so it only behaves where it owns one. The
+lab guest `lowlat-target`, restored from the snapshot `lab-ready-iso`, boots the PREEMPT_RT kernel
+with `isolcpus=3 nohz_full=3 rcu_nocbs=3` (`scripts/lab/guest-profiles/isolate-cpu3.conf`, applied
+by `scripts/lab/apply-guest-profile.sh`) and libvirt pins its vCPU 3 to host CPU 13
+(`scripts/lab/pin-vcpu.sh`). `stress-ng --cpu 3` runs under `taskset` on guest CPUs 0-2 as the noise.
+The same 10 kHz x 20 s run (N = 200,000) then goes twice, alternated three times inside one boot
+(unpinned, pinned, unpinned, pinned, ...):
+
+| Placement | Decide thread |
+|---|---|
+| `unpinned` | wherever the guest scheduler puts it, among the noise on CPUs 0-2 |
+| `pinned-isolated` | `AffinityLock.acquireLock(3)` before its first parcel, released when the thread ends |
+
+`pinned-isolated` fails loudly instead of measuring something else: the program refuses to start
+when the guest's `/proc/cmdline` has no `isolcpus=3`, and the decide thread throws when the lock
+does not leave `Affinity.getCpu()` at 3. The script also reads `Cpus_allowed_list` and the CPU of
+the decide thread from `/proc` and requires CPU 3 alone.
+
+Criteria (S12 calibrates the bounds):
+
+1. decide-thread involuntary context switches per run, from `/proc/PID/task/TID/status` between the
+   thread's id line and the end of the window: pinned <= 10, unpinned >= 100, in every run.
+2. hand-off p99.9 (steady window): pinned <= 1/2 of unpinned, the median of the three alternations
+   of each.
+3. every run: count = N, dropped = 0, no overflow, every divert command arrived, the pinned thread
+   confined to CPU 3, every report passes `lowlat-report check` (run on the host).
+
+Reports land in `results/latest/vm/` as `rK-PLACEMENT/java-agrona-spsc*.json`, with the guest's own
+`profile.json` (`virt.type` is `kvm`), `check-prereqs.txt`, `vcpupin.txt` and a `LABEL` file saying `vm`.
+The script requires the guest to run exactly the pinned Temurin, the isolation on its command line
+and `stress-ng` confined to CPUs 0-2, and removes `stress-ng` and any JVM it started when it ends or
+fails. The host-built `benchmarks.jar` and `line-simulator` are copied into the guest; nothing is
+built there and nothing system-level changes on the host.
+
+What isolation and the pin promise, and what they do not:
+
+- **Inside the guest**, `isolcpus` takes CPU 3 out of the scheduler's balancing and `nohz_full` and
+  `rcu_nocbs` take the tick and RCU callbacks off it, so once the decide thread owns it nothing else
+  is scheduled there: no other task to preempt it, and the stress workers stay on CPUs 0-2.
+- **The host is not partitioned.** The libvirt pin sends vCPU 3 to host CPU 13 and nowhere else, but
+  the host kernel may still schedule other work on CPU 13 and on its hyperthread sibling CPU 5, and
+  any host interrupt can still land there. The guest sees such a stall as a pause it cannot explain.
+  The pin narrows the tail; it does not remove the host's share of it.
+- **A VM number is a `vm` number.** It carries the hypervisor's timing, the virtual clock and the
+  noise of whatever the host is doing. It is never compared with a host (bare-metal) number in this
+  book, and the unpinned/pinned comparison holds only inside one boot of one guest.
+- Isolation is deployment configuration (kernel arguments and a domain pin, both versioned in
+  `scripts/lab/`), not a tweak: Chapters 15 and 18 own it as such. This part previews it.
+
 ## Files
 
 | Path | Contents |
@@ -225,7 +282,9 @@ power loss can take the pages that were not yet written back. No claim here depe
 | `java/.../OnHeapManifest.java`, `ChronicleMapManifest.java` | the two manifests behind `Manifest` |
 | `java/.../PublishBenchmark.java` | JMH publish-path allocation |
 | `cpp/` | `spsc_ring.hpp`, `offheap-handoff`, GoogleTest for the ring |
-| `verify.sh` | runs everything and asserts the criteria |
+| `java/.../ThreadPlacement.java` | the placement seam: `unpinned`, `pinned-isolated` (Affinity lock on guest CPU 3) |
+| `vm/run.sh`, `vm/guest-run.sh` | the VM part: host-side orchestration and the guest-side run |
+| `verify.sh` | runs everything and asserts the criteria; `VM=1` runs `vm/run.sh` |
 
 ## Licences
 
@@ -263,8 +322,9 @@ the first queue or map is built.
 
 ## Verification status
 
-Unverified. The host part builds, its unit tests pass and `verify.sh` runs end to end; the
-`r02-run1..3` measurements and the VM part are still to come.
+Unverified. The host part builds, its unit tests pass and `verify.sh` runs end to end; the VM part
+(`VM=1`) ran once functionally in the lab guest; the `r02-run1..3` and `r02-vm-run1..3`
+measurements are still to come.
 
 First dry run on the development host (busy, untuned, journal on btrfs): criteria 1, 2, 3, 5 and 6
 held with wide margins. The criterion 4 latency ratio did not: the steady-window append p99 of

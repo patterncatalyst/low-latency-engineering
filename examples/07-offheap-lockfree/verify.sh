@@ -11,7 +11,7 @@
 #   6. every run: count = N, dropped = 0, every divert command arrived, every report passes check.
 # Java runs 10 variants and the C++ lane 2, each at 10 kHz x 20 s (N = 200,000). Ports: data
 # 47270, commands 47271, C++ 47274. See README.md.
-#   VM=1          the affinity part (lab VM): not built yet, exits with a message
+#   VM=1          the affinity part (lab VM), vm/run.sh: unpinned vs pinned-isolated, see README.md
 #   RECHECK=DIR   evaluate the criteria on the reports already in DIR (no build, no run)
 set -euo pipefail
 # shellcheck source=../_lib/lib.sh
@@ -31,12 +31,12 @@ HOLD_MS=1500 # how long the decide thread stays alive after the last parcel, for
 JAVA_VARIANTS=(blocking-queue linked-queue agrona-spsc agrona-spsc-backoff disruptor disruptor-blocking-wait
   chronicle-journal write-per-parcel chronicle-map-manifest on-heap-manifest)
 CPP_VARIANTS=(atomic-spsc atomic-wait)
-# S10 hook: the VM part adds the decide-thread placements here (pinned-isolated) and runs the
-# unpinned/pinned pair alternately; the host part has the scheduler's choice only.
+# The host part has the scheduler's choice only; the VM part (vm/run.sh, VM=1) runs the
+# unpinned/pinned-isolated pair alternately in the lab guest.
 PLACEMENTS=(unpinned)
 
 if [[ ${VM:-0} == 1 ]]; then
-  die "VM part: S10"
+  exec "$DIR/vm/run.sh"
 fi
 
 # RECHECK=DIR: evaluate the criteria on the reports already in DIR (no build, no run).
@@ -69,22 +69,6 @@ mapfile -t CHRONICLE_ARGS < <(sed -n '/<chronicle.jvmArgs>/,/<\/chronicle.jvmArg
 # Chronicle Core posts usage analytics unless told not to; a measurement run makes no network
 # call, so the property switches it off.
 JVM_FLAGS=(-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true)
-
-# wait_log_line PATTERN LOG PID [TRIES]: print the first line of LOG matching the regexp,
-# polling every 20 ms; dies if PID exits first.
-wait_log_line() {
-  local pattern=$1 log=$2 pid=$3 tries=${4:-4500} i line
-  for ((i = 0; i < tries; i++)); do
-    line=$(grep -m1 -E -- "$pattern" "$log" || true)
-    if [[ -n $line ]]; then
-      printf '%s' "$line"
-      return 0
-    fi
-    kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "process exited before printing /$pattern/"; }
-    sleep 0.02
-  done
-  die "no /$pattern/ line within $((tries / 50)) s"
-}
 
 # run_variant LANG VARIANT: one 10 kHz x 20 s run. Reports land in $OUT as LANG-VARIANT*.json.
 # The decide thread prints "decide-thread pid=P tid=T"; this script reads that thread's context

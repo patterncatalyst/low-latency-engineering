@@ -72,6 +72,22 @@ wait_udp_bound() {
   die "consumer never bound UDP $port within $((tries / 10)) s"
 }
 
+# wait_log_line PATTERN LOG PID [TRIES]: print the first line of LOG matching the regexp,
+# polling every 20 ms; dies if PID exits first.
+wait_log_line() {
+  local pattern=$1 log=$2 pid=$3 tries=${4:-4500} i line
+  for ((i = 0; i < tries; i++)); do
+    line=$(grep -m1 -E -- "$pattern" "$log" || true)
+    if [[ -n $line ]]; then
+      printf '%s' "$line"
+      return 0
+    fi
+    kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "process exited before printing /$pattern/"; }
+    sleep 0.02
+  done
+  die "no /$pattern/ line within $((tries / 50)) s"
+}
+
 # redact_host JSON...: replace the machine's hostname with the profile's
 # host_label in third-party output (Google Benchmark, pyperf record it), so a
 # committed result never names the machine.

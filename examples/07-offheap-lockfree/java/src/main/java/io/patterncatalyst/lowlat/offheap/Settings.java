@@ -25,7 +25,8 @@ record Settings(
                                     [--report FILE] [--journal none|chronicle|file]
                                     [--manifest none|on-heap|chronicle-map] [--journal-dir DIR]
                                     [--command-bind HOST:PORT] [--manifest-entries N] [--slots N]
-                                    [--sample-hold-ms MS] [--placement unpinned]
+                                    [--sample-hold-ms MS]
+                                    [--placement unpinned|pinned-isolated]
               --variant         blocking-queue | linked-queue | agrona-spsc | agrona-spsc-backoff |
                                 disruptor | disruptor-blocking-wait | chronicle-journal |
                                 write-per-parcel | chronicle-map-manifest | on-heap-manifest
@@ -38,7 +39,8 @@ record Settings(
               --slots           hand-off capacity in records, a power of two (default 65536)
               --sample-hold-ms  after the last parcel, keep the decide thread alive this long so a
                                 script can read its context switches (default 0)
-              --placement       decide-thread placement (default unpinned)
+              --placement       decide-thread placement: unpinned (default), or pinned-isolated: an
+                                Affinity lock on guest CPU 3, which needs isolcpus=3 (the VM part)
               the common consumer options (--rcvbuf, --idle-timeout-ms, --example) also apply
             """;
 
