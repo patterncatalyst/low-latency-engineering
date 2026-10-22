@@ -89,11 +89,15 @@ cpp_bin() {
   printf '%s' "$bin"
 }
 
-# build_java MODULE_DIR: package one Maven module (its parent is examples/pom.xml).
+# build_java MODULE_DIR: package one Maven module and the sibling modules it
+# depends on (-am), through the examples/pom.xml aggregator, so a clean machine
+# needs no earlier `mvn install`.
 build_java() {
   [[ ${SKIP_BUILD:-0} == 1 ]] && return 0
-  step "building Java module $1"
-  mvn -B -q -f "$1/pom.xml" -DskipTests package
+  local rel
+  rel=$(realpath --relative-to="$LOWLAT_EXAMPLES" "$1")
+  step "building Java module $rel"
+  mvn -B -q -f "$LOWLAT_EXAMPLES/pom.xml" -pl "$rel" -am -DskipTests package
 }
 
 # py_sync: make sure the uv workspace is installed.

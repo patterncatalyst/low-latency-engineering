@@ -11,13 +11,13 @@ they process the same number of parcels per second. The batch variant holds
 parcels until 32 have arrived and then handles them together, the
 "throughput-friendly" design. Each parcel's latency is `done - intended_emit`,
 so a parcel that arrives first waits for 31 more (31 ms at 1 kHz) before it is
-handled. Throughput is equal; p50 is about 15 ms instead of about 0.1 ms.
+handled. Throughput is equal; p50 is 15.2 to 15.5 ms instead of 0.08 to 0.19 ms (r01-run1..3).
 
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
 a scanner no-read) takes a slow re-lookup path of about 2 ms. The median does
 not move. p99 jumps by an order of magnitude, because the slow parcel and the
-parcels queued behind it all land in the tail: in r01-run1..3, 2.9 to 5.0 % of
-parcels took 1 ms or more, and p99 was 2.5 to 6.3 ms. A single summary number
+parcels queued behind it all land in the tail: in r01-run1..3, 2.7 to 5.7 % of
+parcels took 1 ms or more, and p99 was 2,242,559 to 5,894,143 ns. A single summary number
 describes neither group.
 
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
@@ -112,27 +112,41 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
 4. `bimodal-1pct` p50 is under a quarter of the same run's measured slow-path
    duration (`slow_path_us` in `notes`): the median stays in the fast mode. An
    earlier version compared it with the `per-parcel` run's p50 and failed in one
-   of three quiet-host runs (r01-run2), because on an untuned host the median
-   itself moves between runs (C++ per-parcel p50 157, 74 and 80 us across
-   r01-run1..3). Comparing within one run removes that dependence.
+   in a quiet-host run, because on an untuned host the median itself moves between
+   runs (C++ per-parcel p50 152, 156 and 94 us across r01-run1..3). Comparing within one run removes that dependence.
 
 All reports must also have `count = 10000`, `dropped = 0`, and pass
 `lowlat-report check`.
 
 Criterion 3 depends on the 1 % boundary: exactly 100 of 10,000 parcels are slow,
 so p99 sits where the slow parcels and the parcels queued behind them meet
-(2.5 to 6.3 ms in r01-run1..3). The ratio therefore also depends on how small the
+(2.2 to 5.9 ms in r01-run1..3). The ratio therefore also depends on how small the
 median is.
 On a loaded host the median grows and the margin shrinks.
 
 ## Verification status
 
-Behavioural: `verify.sh` runs the nine runs end to end and asserts the observable
-effect (equal throughput, batch median at least 10x, bimodal tail at least 20x
-the median). Run on a busy host (`ALLOW_BUSY=1`, load average about 20) all
-criteria held; criterion 3 held by a margin of about 10 % (22x against 20x). The
-figures are unverified on a quiet host until the S19 measurement run; the
-chapter quotes only the committed S19 result files.
+Behavioural. `verify.sh` runs the nine runs (three variants in each of C++, Python
+and Java, 1 kHz x 10 s) and asserts, per language: every report has `count = 10000`,
+`dropped = 0` and passes `lowlat-report check`; per-parcel and batch-32 throughput
+differ by less than 1 %; batch-32 p50 is at least 10x the per-parcel p50; bimodal
+p99 is at least 20x its own p50; and the bimodal p50 stays under a quarter of that
+run's measured slow-path duration.
+
+All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor
+`powersave`, tuned `balanced`, kernel 7.2.11-200.fc44); each run's `verify.log`
+ends with every criterion passing. Across the
+three runs, in nanoseconds:
+
+| Variant | p50 | p99 |
+|---|---|---|
+| per-parcel (all languages) | 84,671 to 192,127 | 177,663 to 490,751 |
+| batch-32 (all languages) | 15,187,967 to 15,458,303 | 31,096,831 to 31,227,903 |
+| bimodal-1pct (all languages) | 78,463 to 183,423 | 2,242,559 to 5,894,143 |
+
+The per-parcel median itself moves between runs on this untuned host (C++ 151,679,
+156,415 and 93,823 ns across runs 1 to 3), which is why no criterion compares
+medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU
 governor, tuned profile, virtualisation, load.

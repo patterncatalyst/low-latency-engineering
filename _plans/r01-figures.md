@@ -40,6 +40,8 @@ by `scripts/generate_diagram.py`. Never hand-edit generated files.
 
 ## Figures
 
+The "Shows" column is the brief each figure was drawn from (2026-10-21); measured values in it are from the first S19 runs. The current values are in each figure and its chapter.
+
 | Name | Fig | Chapter | Shows |
 |---|---|---|---|
 | `00-sortation-line` | 0.1 | Ch0 | exists |
@@ -54,17 +56,14 @@ by `scripts/generate_diagram.py`. Never hand-edit generated files.
 | `04-three-harnesses` | 4.1 | Ch4 | the same check-digit workload in Google Benchmark (C++, `DoNotOptimize`, repetitions), pyperf (Python, worker processes + warm-ups) and JMH (Java, forks, warm-up iterations, `Blackhole`), each emitting percentiles (median, p99) rather than a single number |
 | `04-dead-code-elimination` | 4.2 | Ch4 | guarded variant (result consumed by `DoNotOptimize` / `Blackhole`) vs eliminated variant (result unused, the compiler or JIT removes the work); the eliminated median is 472–476x lower in C++ and 3,200–3,300x lower in Java: the benchmark measured nothing |
 
-## S19 values the figures may quote
+## Values the figures may quote
 
-From `examples/*/results/r01-run{1,2,3}/` (bare-metal host, `powersave`, `balanced`):
-
-- 01: batch-32 p50 15.18–16.10 ms all languages; per-parcel p50 C++ 74–157 us,
-  Python 144–186 us, Java 104–179 us; slow path 2.00–2.11 ms; bimodal p50 94–190 us, p99 2.47–6.27 ms; 2.9–5.0 % of bimodal parcels at 1 ms or more.
-- 02: Little's law error C++ −0.6 to +0.7 %, Java +0.9 to +4.0 %; Amdahl as above.
-- 03: closed-loop-naive p99 C++ 0.5–0.8 us, Java 6.3–7.1 us; closed-loop-corrected
-  p99 C++ 98.1–98.2 ms, Java 99.2–99.3 ms, count 10,199; intended-time p99 C++
-  100.4–100.5 ms, Java 100.9–101.6 ms; receipt-time p99 C++ 5.1–13.7 us.
-- 04: eliminated vs guarded: C++ 472–476x, Java 3,200–3,300x.
+Measured values come only from the committed runs
+`examples/*/results/r01-run{1,2,3}/` (bare-metal host, `powersave`, `balanced`),
+quoted as ranges across the three runs. Examples 00, 01, 02 and 04 were
+re-measured on 2026-10-22 after code fixes (commits `759c56d`, `26a547c`) and
+their figures were updated to the new ranges; 03 keeps its 2026-10-21 runs.
+This page lists no numbers, so it cannot drift from the results.
 
 ## Status
 

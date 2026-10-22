@@ -81,19 +81,19 @@ meet again. That is the strictly serial structure the formula describes, and it 
 a wave-picked sortation plan whose next wave depends on the committed table.
 
 `--sync free` (C++ and Java) removes the barriers. verify.sh runs it as an observation, not a
-criterion: the same work then lands at about 3.5x at N = 4 against a predicted 3.1x, because
-the lock sections overlap the other workers' scanning. The honest bound for a free-running
+criterion: the same work then lands at 3.5 to 3.6x at N = 4 (r01-run1..3) against a predicted 3.1x, because
+the lock sections overlap the other workers' scanning. The bound for a free-running
 lock is not Amdahl's curve but `min(N, 1 / s)`. The lesson for the code: fine-grained locking
 buys back part of what Amdahl charges, and it still cannot pass 1 / s.
 
-Under phased synchronisation the measured speedup sits 10 to 12 % under the prediction at N = 4
-in C++ and Java: contended lock hand-off, cache-line movement of the shared table and the barriers
+Under phased synchronisation the measured speedup sits under the prediction at N = 4: 8.6 to
+8.9 % in C++ and 10.7 to 11.6 % in Java (r01-run1..3): contended lock hand-off, cache-line movement of the shared table and the barriers
 are costs the formula does not have. Amdahl is an upper bound that is already generous.
 
 ### What the Python pair shows
 
-Threads stay at about 1.0x (the CPU-bound loop holds the GIL, `build.gil_enabled` is `true` in the
-report) and can drop under 1x with more threads, because every barrier and lock hand-off also pays
+Threads stay under 1x (0.49 to 0.67x at N = 4 in r01-run1..3; the CPU-bound loop holds the GIL,
+`build.gil_enabled` is `true` in the report) because every barrier and lock hand-off also pays
 GIL hand-off. Processes track the prediction. The prediction for threads covers only the lock; the
 GIL is not in the model, which is the point of the comparison. Free-threaded Python is Appendix E.
 
@@ -124,21 +124,28 @@ examples/.venv/bin/amdahl-py --modes processes --report-dir /tmp/amdahl
 
 ## Verification status
 
-Run on the development host (bare metal, Fedora 44, `powersave` governor, `tuned balanced`, no
-pinning or isolation) on 2026-10-21 with `ALLOW_BUSY=1`. The host was shared with other builds;
-the 1-minute load average was 0.6 at the start of the final run but ranged from 0.6 to above 20
-during development, and the first runs under load are what moved the design (see the 997 us
-sampler and the waves above). **Quiet-host measurement runs are pending (S19): these numbers
-are provisional.**
+Behavioural. `verify.sh` runs both experiments and exits 0 only when every criterion holds:
 
-| Criterion | Result |
+- A, C++ and Java: `count = 10000`, `dropped = 0`, and sampled L within 5 % of lambda x W-bar.
+- B, C++ and Java: speedup at N = 4 within 15 % of the Amdahl prediction from the measured serial
+  fraction.
+- B, Python: threads under 1.3x at N = 4, processes over 2x.
+- The unit tests (C++ model test, Java JUnit, Python pytest) pass, and the reports pass
+  `lowlat-report check`.
+
+All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor `powersave`, tuned
+`balanced`, kernel 7.2.11-200.fc44, no pinning or isolation; load average at the start 0.35 to
+0.45 on 16 CPUs). The values below are ranges over the three runs.
+
+| Criterion | Result (r01-run1..3) |
 |---|---|
-| A, C++: L within 5 % of lambda x W | PASS: L = 1.021, lambda x W-bar = 1.012 (+0.9 %); count 10,000, dropped 0 |
-| A, Java: L within 5 % of lambda x W | PASS: L = 1.124, lambda x W-bar = 1.097 (+2.4 %); count 10,000, dropped 0 |
-| B, C++ N = 4 within 15 % | PASS: s = 0.095, predicted 3.11x, measured 2.79x (-10.6 %) |
-| B, Java N = 4 within 15 % | PASS: s = 0.099, predicted 3.09x, measured 2.72x (-12.0 %) |
-| B, Python threads < 1.3x | PASS: 1.01x (GIL enabled) |
-| B, Python processes > 2x | PASS: 2.84x (predicted 3.05x) |
-| Effective GHz (user cycles / task-clock) | C++ 4.18, Java 4.17, Python 4.12 (`perf_event_paranoid=2`, user-space events work) |
+| A, C++: L within 5 % of lambda x W-bar | PASS: error +0.46 to +0.63 % (L 1.025 to 1.047 against 1.019 to 1.042) |
+| A, Java: L within 5 % of lambda x W-bar | PASS: error +2.04 to +4.44 % (L 1.151 to 1.238 against 1.124 to 1.190) |
+| B, C++ N = 4 within 15 % | PASS: s = 0.0951 to 0.0952, predicted 3.11x, measured 2.84 to 2.85x (-8.6 to -8.9 %) |
+| B, Java N = 4 within 15 % | PASS: s = 0.0987 to 0.0988, predicted 3.09x, measured 2.73 to 2.76x (-10.7 to -11.6 %) |
+| B, Python threads < 1.3x | PASS: 0.49 to 0.67x (GIL enabled) |
+| B, Python processes > 2x | PASS: 2.84 to 2.94x |
+| Effective GHz (user cycles / task-clock) | C++ 4.35 to 4.36, Java 4.34 to 4.35, Python 3.78 to 3.97 (`perf stat`, no root) |
 
-Status: **unverified for publication** until S19 re-runs this on a quiet host three times.
+The W-bar in the Little's Law rows is the labelled modelling input in the report's `model` block.
+Reported latencies are percentiles.

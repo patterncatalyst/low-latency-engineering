@@ -43,14 +43,26 @@ stdout is block-buffered when redirected to a file.
 | `PORT_BASE` | first UDP port (default 47200) |
 | `VM=1` | run the guest smoke test after the host one |
 
-## VM mode (`VM=1`) - implemented, not yet run
+## VM mode (`VM=1`)
 
-Runs `scripts/check-prereqs.sh --vm`, deploys `examples/` and `scripts/` with
+`VM=1` needs `ALLOW_BUSY=1` as well: the guest must be running, and `verify.sh`
+otherwise refuses to measure while a `lowlat-*` VM is up. The host smoke test
+then runs while the guest competes for the CPUs, so its numbers are noisy.
+
+It runs `scripts/check-prereqs.sh --vm`, deploys `examples/` and `scripts/` with
 `scripts/lab/deploy-to-vm.sh`, then through `scripts/lab/lab-ssh.sh lowlat-target`
 runs `cyclictest -m -p95 -D60 -q` (via `sudo` inside the guest, which has
 passwordless sudo; the host is untouched) and the guest's `scripts/profile.sh`.
 Outputs go to `results/latest/vm/` with a `LABEL` file containing `vm`, and the
 script asserts the guest profile reports a virtual machine.
+
+It has run once: `ALLOW_BUSY=1 VM=1 ./verify.sh` on 2026-10-21 against the
+PREEMPT_RT guest (snapshot `lab-ready-rt`). The output is committed in
+`results/r01-vm-smoke/`, with the guest results in `vm/` labelled `vm`.
+`check-prereqs.sh --vm` reported 8 PASS, 0 WARN, 0 FAIL, and `cyclictest` ran one
+unpinned, untuned 60 s thread. This is a smoke test of the lab path, not a
+measurement. The host reports in that directory were taken with the guest running
+and are never quoted (see `NOTES.md` there).
 
 **Labelling rule:** every number from the guest is labelled `vm` and is never
 compared with a bare-metal number. The guest shows what the lab can do (real-time
@@ -63,8 +75,17 @@ load and are not asserted.
 
 ## Verification status
 
-Behavioural. Last run (host busy: a kernel build and other compiles, `ALLOW_BUSY=1`):
-exit 0; all three reports valid with count 5000 and dropped 0 (p99 about 6.0 ms
-C++, 4.9 ms Python, 83 ms Java including interpreter warm-up). Unverified on a
-quiet host until the S19 measurement run. The `VM=1` path has passed `bash -n` and
-shellcheck only; it has not been run because the guest is not provisioned yet.
+Behavioural. `verify.sh` asserts that `check-prereqs.sh` exits 0; that the C++,
+Python and Java consumers each receive all 5,000 parcels from the 1 kHz x 5 s
+simulator run with `dropped = 0`; and that each report validates, carries the
+machine profile and matches `lowlat-report check`. Exit 0 requires all of it.
+
+It held on all three quiet-host runs, `r01-run1..3` (bare-metal host, governor
+`powersave`, tuned `balanced`, kernel 7.2.11-200.fc44, `virt: none`): every report
+had `count = 5000` and `dropped = 0`. The p99 smoke values were not asserted; across
+the runs they were 176,255 to 195,711 ns (C++), 202,239 to 450,815 ns (Python) and
+317,439 to 325,119 ns (Java, which includes JIT warm-up).
+
+The `VM=1` path ran once (`results/r01-vm-smoke/`, labelled VM): 8 of 8 guest
+checks passed and `cyclictest` produced its output. Those values are VM numbers and
+are not compared with the host runs.

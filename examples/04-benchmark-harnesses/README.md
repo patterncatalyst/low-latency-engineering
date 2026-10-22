@@ -1,7 +1,7 @@
 # 04-benchmark-harnesses
 
 Chapter 4 example: three benchmark harnesses on one small function, and what each does
-to keep the measurement honest. The function is the GS1 mod-10 check digit of an SSCC-18
+to keep the measurement valid. The function is the GS1 mod-10 check digit of an SSCC-18
 (the same algorithm as `common/line-simulator`), run over a fixed set of 1,024 17-digit
 prefixes that all three languages build identically.
 
@@ -79,11 +79,13 @@ read prefixes from a container the compiler cannot see through.
 
 CPython does not remove the call. What it does is specialize hot bytecode after a few
 executions, which is why pyperf runs warm-up values first, discards them from the result and
-records them. For this function the effect is small: each pyperf value already averages 32
-calls of 1,024 check digits, so the interpreter is warm before the first value finishes. The
-calibration run's first warm-up (a cold interpreter) and the median measured value differ by
-by a few percent in either direction, within the spread of the run, and `verify.sh` prints both. A function
-with a long first call would show more.
+records them. For this function the effect is small: pyperf's own output reports
+`2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each value covers 64
+calls of the 1,024-prefix function and the interpreter is warm before the first value
+finishes. The first warm-up of the calibration run (a cold interpreter) was 1,909 to 1,957 ns
+per check digit and the median measured value 2,016 to 2,071 ns across r01-run1..3: a few
+percent apart, inside the spread of the run, and `verify.sh` prints both. A function with a
+long first call would show more.
 
 ## Host state and the pyperf warning
 
@@ -106,6 +108,25 @@ Reports are whole nanoseconds, the report unit. A value under 0.5 ns is recorded
 for the eliminated variants is the point. The `lowlat-report show` table prints microseconds
 with one decimal and so shows 0.0 for the C++ and Java rows; `verify.sh` also prints the
 nanosecond values.
+
+## Verification status
+
+Behavioural. `verify.sh` builds, runs the check-digit parity tests (GoogleTest, JUnit during
+`package`, pytest), runs the three harnesses and asserts: the C++ eliminated median is at least
+10x lower than the guarded median; the Java eliminated p50 is at least 10x lower than the
+guarded p50 and the JMH console and JSON include p0.99 and p0.999; the pyperf JSON holds at
+least 20 values from at least 3 worker processes; the six converted reports pass
+`lowlat-report check` with the profile embedded.
+
+All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor `powersave`,
+tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning).
+Ranges over the three runs:
+
+| Harness | Result |
+|---|---|
+| Google Benchmark (C++) | guarded median 4.74 to 4.76 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 474 to 475x (divisor floored at 0.01 ns, so a lower bound) |
+| JMH SampleTime (Java) | guarded p50 32 to 33 ns; eliminated p50 0 ns; ratio 3,200 to 3,300x (floored) |
+| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 2,011 to 2,071 ns |
 
 ## Licences
 

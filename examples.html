@@ -1,0 +1,40 @@
+---
+layout: plan
+title: "Examples"
+permalink: /examples/
+description: "Every runnable example in this repo, mapped to the chapter it supports."
+---
+{%- comment -%}
+  Driven by the _example_pages collection (one page per example under
+  _example_pages/), so the list and the example pages never drift. The runnable
+  code itself lives in examples/ and is excluded from the Jekyll build.
+{%- endcomment -%}
+<p>
+  Every hands-on chapter has a matching runnable example under
+  <a href="https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples" rel="noopener"><code>examples/</code></a>,
+  laid out as <code>examples/NN-name/{cpp,python,java}/</code> with a <code>README.md</code> and a
+  <code>verify.sh</code> that asserts the observable effect. Each example drives the shared line
+  simulator, reports a latency distribution (p50 / p99 / p99.9) and records the machine or VM
+  profile next to every number.
+</p>
+
+{% assign example_list = site.example_pages | sort: "order" %}
+{% if example_list.size > 0 %}
+<div class="cards">
+  {% for ex in example_list %}
+  <a class="card" href="{{ ex.url | relative_url }}">
+    <div class="card__eyebrow">{{ ex.card_eyebrow }}</div>
+    <h3 class="card__title">{{ ex.card_title }}</h3>
+    {% if ex.card_blurb %}
+    <p class="card__desc">{{ ex.card_blurb }}</p>
+    {% endif %}
+    <div class="card__meta">
+      <span>{{ ex.languages | default: "C++ · Python · Java" }}</span>
+      <span>Open →</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p>No examples yet.</p>
+{% endif %}

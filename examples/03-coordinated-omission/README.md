@@ -15,7 +15,7 @@ that one run it records:
 | Variant | Latency is | What it shows |
 |---|---|---|
 | `receipt-time` | `done - time the datagram was dequeued` | A naive service-side timer: it starts the clock when it gets the work, so the 200 parcels that queued during the stall look fast. |
-| `intended-time` | `done - intended_emit_ns` | The belt's schedule. The queued parcels are charged their wait. Honest. |
+| `intended-time` | `done - intended_emit_ns` | The belt's schedule. The queued parcels are charged their wait. |
 | `closed-loop-naive` | one sample per request | A client that issues the next request only after the previous completes (one request per 1 ms, same 200 ms stall). One slow sample in 10,000. |
 | `closed-loop-corrected` | the same samples through the kit's `record_corrected(latency, 1 ms)` | HdrHistogram back-fills the ~199 requests a 1 kHz client would have issued during the stall. |
 
@@ -90,16 +90,38 @@ read and show up in these numbers).
 - Java and Python run unwarmed on purpose (noted in the reports): the first parcels
   include JIT and interpreter warm-up.
 
+## Percentile rank differs between the HdrHistogram ports
+
+The three kits use the HdrHistogram port of their language, and the ports do not
+define the percentile rank the same way: the C and Python ports round `p x N / 100`
+half up, the Java port rounds it up (`ceil`). On dense data the answers fall in the
+same bucket; in a sparse tail, such as the 200 parcels behind the stall in 10,000,
+the languages can land one bucket apart. Each kit keeps its library's convention, and
+`lowlat-report check` recomputes a report with the convention of the language that
+wrote it. Do not compare a C++ and a Java p99 as if one rule produced both. The full
+statement is in [`examples/common/MEASUREMENT.md`](../common/MEASUREMENT.md).
+
 ## Verification status
 
-Run on the development host, busy (kernel build and other agents running,
-`ALLOW_BUSY=1`), governor `powersave`, `tuned=balanced`, bare metal, clocksource `tsc`:
-numbers are indicative only. A quiet-host run (S19) is pending.
+Behavioural. `verify.sh` runs, in C++, Java and Python, the 200 ms stall run, the
+no-stall control run and the clock probe, then asserts per language:
 
-- Stall criteria (4 per language): met in C++, Java and Python. `intended-time` p99 about
-  100 ms, `receipt-time` p99 8 to 31 us, `closed-loop-corrected` p99 about 98 to 99 ms,
-  `closed-loop-naive` p99 0.8 to 19 us.
-- Control criteria (2 per language): met. `intended-time-control` p99 189 to 234 us
-  (< 1 ms); corrected and naive closed-loop p99 identical (0.8, 5.9, 18.7 us).
-- `lowlat-report check` passes on every report.
-- Status: **unverified** until the quiet-host run (S19) repeats this.
+- `intended-time` p99 >= 50 ms and `receipt-time` p99 < 1 ms;
+- `closed-loop-corrected` p99 within 2x of `intended-time` p99, `closed-loop-naive` p99 < 1 ms;
+- control: `intended-time-control` p99 < 1 ms, and `closed-loop-corrected-control` p99
+  within 2x of `closed-loop-naive-control` p99;
+- every report passes `lowlat-report check` (schema, histogram decode, percentile recompute).
+
+All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor
+`powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2.11-200.fc44). Ranges over
+the three runs, in all three languages:
+
+| Quantity | Range (p99 unless noted) |
+|---|---|
+| `intended-time`, stall | 100,401,151 to 101,646,335 ns |
+| `closed-loop-corrected`, stall | 98,107,391 to 99,287,039 ns |
+| `receipt-time`, stall | 5,087 to 56,351 ns |
+| `closed-loop-naive`, stall | 526 to 19,855 ns |
+| `intended-time-control` | 177,279 to 448,767 ns |
+| `closed-loop-corrected-control` = `closed-loop-naive-control` | 604 to 19,343 ns (identical per language) |
+| clock read, p50 | C++ 12 to 13 ns, Java 13 ns, Python 45 to 47 ns |

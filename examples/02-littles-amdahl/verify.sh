@@ -51,7 +51,7 @@ if [[ ${SKIP_BUILD:-0} != 1 ]]; then
   build_java "$HERE/java"
   step "unit tests"
   "$(cpp_bin ch02-model-test)" --gtest_brief=1
-  mvn -B -q -f "$HERE/java/pom.xml" test
+  mvn -B -q -f "$LOWLAT_EXAMPLES/pom.xml" -pl 02-littles-amdahl/java -am test
   (cd "$LOWLAT_EXAMPLES" && uv run -q --package lowlat-amdahl pytest -q "$HERE/amdahl-py")
 fi
 [[ -f $BIN_JAR ]] || die "missing $BIN_JAR (run without SKIP_BUILD)"

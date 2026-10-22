@@ -1,0 +1,187 @@
+# CI for the measurement kits, the examples and the book's static checks.
+#
+# Shape (lgtm-github §6): a `changes` job decides whether the heavy build jobs run;
+# `validate` is cheap and always runs; one summary job, `ci-ok`, passes when every
+# job it needs succeeded or was skipped by `changes`. A ruleset requires `ci-ok`
+# only (not applied from here). No `paths:` filter on the triggers: a filtered-out
+# run would report nothing and a required check would wait forever.
+#
+# The build jobs run in a fedora:44 container, the book's platform, with the same
+# packages scripts/check-prereqs.sh expects. They only install packages inside the
+# container; nothing here tunes a host. Latency numbers are never produced in CI
+# (shared runners are not a quiet host); CI proves that everything builds and that
+# the unit tests pass. Measurements come from each example's verify.sh on the lab host.
+#
+# The pinned protobuf (versions.env) is built from source by
+# scripts/deps/build-protobuf.sh into ~/.cache/lowlat/prefix and cached on the
+# hash of versions.env and that script. Java needs no prefix: the Maven plugin
+# resolves protoc from Maven Central at the pinned version.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Packages check-prereqs.sh looks for, as Fedora 44 names them.
+  FEDORA_PACKAGES: >-
+    git tar zstd jq which findutils diffutils
+    clang gcc-c++ cmake ninja-build
+    java-25-openjdk-devel maven
+    python3.14 uv
+
+jobs:
+  # Decides whether the build jobs run. The workflow always runs, so ci-ok always reports.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      kits: ${{ steps.diff.outputs.kits }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          if ! files="$(git diff --name-only "$base" "${{ github.sha }}" 2>/dev/null)"; then
+            echo "kits=true" >> "$GITHUB_OUTPUT"   # cannot diff (new branch, force push): build everything
+          elif grep -qE '^(examples/|contracts/|scripts/|versions\.env$|\.github/workflows/ci\.yml$)' <<<"$files"; then
+            echo "kits=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "kits=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Static checks: front matter, Liquid hygiene, figures against _data/diagrams.yml,
+  # codetabs, shell syntax, no mean latency, and the 1,900-2,500 word chapter gate.
+  validate:
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - name: Install packages (container only)
+        run: dnf -y --setopt=install_weak_deps=False install git tar zstd python3 python3-pyyaml bash
+      - uses: actions/checkout@v7.0.1
+      - name: validate.py
+        run: python3 scripts/validate.py
+      - name: wordcount.sh
+        run: scripts/wordcount.sh
+
+  # Builds protoc and the C++ protobuf library once and caches them for cpp and python.
+  protobuf:
+    needs: changes
+    if: needs.changes.outputs.kits == 'true'
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - name: Install packages (container only)
+        run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
+        id: prefix
+        with:
+          path: ~/.cache/lowlat/prefix
+          key: lowlat-prefix-fedora44-${{ hashFiles('versions.env', 'scripts/deps/build-protobuf.sh') }}
+      - name: Build the pinned protobuf and abseil
+        if: steps.prefix.outputs.cache-hit != 'true'
+        run: scripts/deps/build-protobuf.sh
+      - name: Check the pinned protoc
+        run: ~/.cache/lowlat/prefix/bin/protoc --version
+
+  # C++: the kits, the line simulator, the consumers and every chapter's C++ example.
+  cpp:
+    needs: [changes, protobuf]
+    if: needs.changes.outputs.kits == 'true'
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - name: Install packages (container only)
+        run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/lowlat/prefix
+          key: lowlat-prefix-fedora44-${{ hashFiles('versions.env', 'scripts/deps/build-protobuf.sh') }}
+      - name: Ensure the pinned protobuf (no-op on a cache hit)
+        run: scripts/deps/build-protobuf.sh
+      - name: Configure, build, test (release preset)
+        working-directory: examples
+        run: |
+          cmake --preset release
+          cmake --build --preset release
+          ctest --preset release
+
+  # Python: the uv workspace, the generated protobuf modules, pytest and ruff.
+  python:
+    needs: [changes, protobuf]
+    if: needs.changes.outputs.kits == 'true'
+    runs-on: ubuntu-latest
+    container: fedora:44
+    env:
+      UV_PYTHON: python3.14
+      UV_PYTHON_DOWNLOADS: never
+    steps:
+      - name: Install packages (container only)
+        run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/lowlat/prefix
+          key: lowlat-prefix-fedora44-${{ hashFiles('versions.env', 'scripts/deps/build-protobuf.sh') }}
+      - name: Ensure the pinned protobuf (no-op on a cache hit)
+        run: scripts/deps/build-protobuf.sh
+      - name: Generate the Python protobuf modules
+        run: scripts/gen-python-proto.sh
+      - name: Sync, test, lint
+        working-directory: examples
+        run: |
+          uv sync --all-packages
+          uv run pytest
+          uv run ruff check
+
+  # Java: the aggregator builds every module (kits, simulator consumer, chapter examples) and runs the tests.
+  java:
+    needs: changes
+    if: needs.changes.outputs.kits == 'true'
+    runs-on: ubuntu-latest
+    container: fedora:44
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-25-openjdk
+    steps:
+      - name: Install packages (container only)
+        run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: lowlat-m2-fedora44-${{ hashFiles('examples/pom.xml', 'examples/**/pom.xml') }}
+          restore-keys: lowlat-m2-fedora44-
+      - name: Show the toolchain
+        run: |
+          java -version
+          mvn -v
+      - name: Build and test every module
+        run: mvn -B -f examples/pom.xml verify
+
+  # The one check a ruleset requires. Passes when every needed job succeeded or
+  # was skipped by `changes`.
+  ci-ok:
+    if: always()
+    needs: [changes, validate, protobuf, cpp, python, java]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: jq -e 'to_entries | all(.value.result == "success" or .value.result == "skipped")' <<<"$NEEDS"
