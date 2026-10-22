@@ -1,6 +1,6 @@
 """Line receive loop: receive ``ParcelEvent`` datagrams, record latency from the schedule.
 
-Execution model, stated plainly because it is part of the result:
+Execution model, which is part of the result:
 
 * One thread, one process, under the GIL (``build.gil_enabled`` in the report says
   whether this interpreter is the GIL or the free-threaded build). There is no
