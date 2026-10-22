@@ -13,6 +13,7 @@
 #include <memory>
 #include <stdexcept>
 #include <system_error>
+#include <utility>
 
 #include "lowlat/line/cli.hpp"
 #include "lowlat/line/clock.hpp"
@@ -22,7 +23,7 @@
 namespace lowlat::line {
 
 // A bound IPv4 UDP socket with the receive timeout set.
-Fd open_bound(const std::string& bind_to, int rcvbuf, int tick_ms, int& granted) {
+Bound open_bound(const std::string& bind_to, int rcvbuf, int tick_ms) {
   const auto colon = bind_to.rfind(':');
   if (colon == std::string::npos) throw std::runtime_error("--bind must be host:port");
   const std::string host = bind_to.substr(0, colon);
@@ -47,6 +48,7 @@ Fd open_bound(const std::string& bind_to, int rcvbuf, int tick_ms, int& granted)
   if (::setsockopt(fd.get(), SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof rcvbuf) != 0) {
     throw std::system_error(errno, std::generic_category(), "setsockopt SO_RCVBUF");
   }
+  int granted = 0;
   socklen_t len = sizeof granted;
   if (::getsockopt(fd.get(), SOL_SOCKET, SO_RCVBUF, &granted, &len) != 0) {
     throw std::system_error(errno, std::generic_category(), "getsockopt SO_RCVBUF");
@@ -59,7 +61,7 @@ Fd open_bound(const std::string& bind_to, int rcvbuf, int tick_ms, int& granted)
   if (::bind(fd.get(), addr->ai_addr, addr->ai_addrlen) != 0) {
     throw std::system_error(errno, std::generic_category(), std::format("bind {}", bind_to));
   }
-  return fd;
+  return {std::move(fd), granted};
 }
 
 int bound_port_of(int fd) {

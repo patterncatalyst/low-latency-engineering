@@ -67,8 +67,9 @@ Recorders::Recorders(const std::string& suffix)
 void stall_for(std::chrono::milliseconds d) { std::this_thread::sleep_for(d); }
 
 std::uint64_t run_receive(const Config& cfg, Recorders& rec) {
-  int granted = 0;  // not reported here
-  const line::Fd sock = line::open_bound(cfg.bind, cfg.rcvbuf, /*tick_ms=*/100, granted);  // 100 ms bounds the idle check
+  // 100 ms bounds the idle check. The granted rcvbuf (the Bound's second member) is deliberately
+  // not reported here: this experiment's stdout lines are parsed by verify.sh and do not carry it.
+  const line::Fd sock = line::open_bound(cfg.bind, cfg.rcvbuf, /*tick_ms=*/100).fd;
   line::SeqTracker tracker;
   line::v1::ParcelEvent ev;
   std::array<char, 2048> datagram{};

@@ -89,9 +89,15 @@ using ReadyFn = std::function<void(int port, int granted_rcvbuf)>;
 /// Longest the receive blocks before the loop re-checks the stop flag.
 inline constexpr int kTickMs = 100;
 
-/// A bound IPv4 UDP socket with SO_RCVBUF requested (`granted` receives what the
+/// A bound socket and the SO_RCVBUF the kernel granted for it.
+struct Bound {
+  Fd fd;
+  int rcvbuf_granted;
+};
+
+/// A bound IPv4 UDP socket with SO_RCVBUF requested (`rcvbuf_granted` is what the
 /// kernel gave) and a receive timeout of `tick_ms`. Throws on any socket error.
-[[nodiscard]] Fd open_bound(const std::string& bind_to, int rcvbuf, int tick_ms, int& granted);
+[[nodiscard]] Bound open_bound(const std::string& bind_to, int rcvbuf, int tick_ms);
 [[nodiscard]] int bound_port_of(int fd);
 
 [[noreturn]] void throw_negative_latency(std::int64_t latency_ns, std::uint64_t seq);
@@ -156,7 +162,9 @@ ConsumerResult consume_with(const ConsumerConfig& cfg, const std::atomic<bool>& 
                             Handler& handler, const ReadyFn& on_ready = {}) {
   ConsumerResult result;
   const int tick_ms = std::min(kTickMs, cfg.idle_timeout_ms);
-  const Fd sock = open_bound(cfg.bind, cfg.rcvbuf, tick_ms, result.granted_rcvbuf);
+  const Bound bound = open_bound(cfg.bind, cfg.rcvbuf, tick_ms);
+  const Fd& sock = bound.fd;
+  result.granted_rcvbuf = bound.rcvbuf_granted;
   if (on_ready) on_ready(bound_port_of(sock.get()), result.granted_rcvbuf);
 
   SeqTracker tracker;
