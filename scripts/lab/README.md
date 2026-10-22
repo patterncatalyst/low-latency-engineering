@@ -80,7 +80,7 @@ Defaults: 4 vCPU, 8192 MB RAM, 40 GB disk (`VCPUS`, `RAM_MB`, `DISK_GB`).
 
 ## Guest toolset
 
-Real-time and time: `realtime-tests` (cyclictest; not Fedora's unrelated `rt-tests`), `linuxptp`, `chrony`, `tuned` with
+Real-time and time: `realtime-tests` (cyclictest; not Fedora's unrelated `rt-tests`), `linuxptp` (with the `ptp_kvm` module loaded at boot, giving `/dev/ptp0` "KVM virtual PTP"), `chrony`, `tuned` with
 `tuned-profiles-cpu-partitioning`, `realtime-setup`. Profiling: `perf`,
 `kernel-tools`, `numactl`. Toolchains: `gcc-c++`, `clang`, `cmake`,
 `ninja-build`, `java-25-openjdk-devel`, `maven`, `python3`, `uv`, plus `jq`,

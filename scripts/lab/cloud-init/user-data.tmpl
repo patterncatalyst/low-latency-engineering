@@ -64,14 +64,22 @@ packages:
   - containerd.io
   - docker-compose-plugin
 
+# The KVM PTP clock (/dev/ptp0, "KVM virtual PTP") is the guest's view of the host
+# clock for phc2sys. The module is not autoloaded, so load it on every boot.
+write_files:
+  - path: /etc/modules-load.d/ptp_kvm.conf
+    content: |
+      ptp_kvm
+
 runcmd:
+  - [ bash, -c, "modprobe ptp_kvm" ]
   - [ bash, -c, "usermod -aG docker fedora" ]
   - [ bash, -c, "alternatives --set iptables /usr/bin/iptables-nft" ]
   - [ bash, -c, "systemctl enable --now docker" ]
   - [ bash, -c, "systemctl enable --now chronyd" ]
   # Readiness marker: written last, only once the key tools are present and the
   # Docker daemon actually answers (a binary on PATH is not a running engine).
-  - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v tuned-adm >/dev/null && docker info >/dev/null 2>&1; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]
+  - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v tuned-adm >/dev/null && test -c /dev/ptp0 && docker info >/dev/null 2>&1; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]
   - [ bash, -c, "uname -r >> /var/log/lab-ready" ]
   - [ bash, -c, "touch /var/lib/cloud/lab-provisioned" ]
 

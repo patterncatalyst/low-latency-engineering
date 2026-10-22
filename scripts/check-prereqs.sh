@@ -334,6 +334,11 @@ run_vm() {
   vm_need ptp4l linuxptp
   vm_need phc2sys linuxptp
   vm_need tuned-adm tuned
+  if vm 'test -c /dev/ptp0 && grep -qx "KVM virtual PTP" /sys/class/ptp/ptp0/clock_name'; then
+    record PASS "guest: /dev/ptp0" "KVM virtual PTP clock"
+  else
+    record FAIL "guest: /dev/ptp0" "no KVM PTP clock" "in the guest: sudo modprobe ptp_kvm (cloud-init loads it via /etc/modules-load.d/ptp_kvm.conf)"
+  fi
   if vm "docker version --format '{{.Server.Version}}'" >/dev/null; then
     record PASS "guest: docker" "daemon reachable"
   else
