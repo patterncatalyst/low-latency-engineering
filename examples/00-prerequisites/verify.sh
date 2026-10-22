@@ -38,11 +38,7 @@ py_sync
 CPP_CONSUMER=$(cpp_bin line-consumer)
 [[ -f $JAVA_JAR ]] || die "Java consumer jar not found: $JAVA_JAR"
 
-consumer_pid=""
-cleanup() { [[ -n $consumer_pid ]] && kill "$consumer_pid" 2>/dev/null || true; }
-trap cleanup EXIT
-
-# run_one LANG PORT CMD...: start the consumer, wait until its UDP socket is bound (ss), drive the
+# run_one LANG PORT CMD...: start the consumer, wait until its UDP socket is bound, drive the
 # simulator into it, wait for the consumer to exit and require exit 0.
 run_one() {
   local lang=$1 port=$2; shift 2
@@ -51,19 +47,14 @@ run_one() {
   : >"$out"
   "$@" --bind "127.0.0.1:$port" --expect "$EXPECT" --example "$EXAMPLE" \
        --variant baseline --report "$RESULTS/$lang.json" >"$out" 2>&1 &
-  consumer_pid=$!
-  local i
-  for ((i = 0; i < 300; i++)); do
-    ss -ulnH "sport = :$port" | grep -q . && break
-    kill -0 "$consumer_pid" 2>/dev/null || { cat "$out" >&2; die "$lang consumer exited before listening"; }
-    sleep 0.1
-  done
-  ss -ulnH "sport = :$port" | grep -q . || die "$lang consumer never bound UDP port $port within 30 s"
+  local consumer_pid=$!
+  bg_track "$consumer_pid"
+  wait_udp_bound "$port" "$consumer_pid" "$out"
   simulate --rate "$RATE" --duration "$DURATION" --dest "127.0.0.1:$port" --quiet \
     >"$RESULTS/sim-$lang.out" 2>&1 || die "simulator failed for $lang (see $RESULTS/sim-$lang.out)"
   local rc=0
   wait "$consumer_pid" || rc=$?
-  consumer_pid=""
+  bg_forget "$consumer_pid"
   cat "$out"
   ((rc == 0)) || die "$lang consumer exited $rc"
   ok "$lang consumer exited 0"

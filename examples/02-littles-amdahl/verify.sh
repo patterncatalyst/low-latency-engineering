@@ -41,8 +41,15 @@ check() {
   fi
 }
 
-# fcmp EXPR: evaluate a Python boolean expression over floats; prints 1 or 0.
-fcmp() { python3 -I -c "print(int($1))"; }
+# within ABS_VALUE LIMIT: 1 when |ABS_VALUE| <= LIMIT (floats), else 0.
+within() { jq -n --argjson v "$1" --argjson l "$2" 'if ($v | fabs) <= $l then 1 else 0 end'; }
+
+# pct VALUE: VALUE x 100 with a sign and DECIMALS places (default 2), e.g. 0.0123 -> +1.23
+pct() { printf "%+.${2:-2}f" "$(jq -n --argjson v "$1" '$v * 100')"; }
+
+# lt A B / gt A B: 1 when the float A is below / above B, else 0.
+lt() { jq -n --argjson a "$1" --argjson b "$2" 'if $a < $b then 1 else 0 end'; }
+gt() { jq -n --argjson a "$1" --argjson b "$2" 'if $a > $b then 1 else 0 end'; }
 
 # ---------------------------------------------------------------------------- build
 BIN_JAR="$HERE/java/target/littles-amdahl-java.jar"
@@ -66,14 +73,12 @@ littles() {
   shift 2
   step "Little's Law, $lang: lambda=$RATE/s for ${DURATION}s into UDP $port"
   "$@" >"$RESULTS/$lang-littles.log" 2>&1 &
-  local pid=$! tries=0
-  until ss -uln "sport = :$port" | grep -q ":$port"; do
-    kill -0 "$pid" 2>/dev/null || { cat "$RESULTS/$lang-littles.log" >&2; die "$lang consumer exited early"; }
-    ((++tries < 200)) || die "$lang consumer never bound UDP $port"
-    sleep 0.1
-  done
+  local pid=$!
+  bg_track "$pid"
+  wait_udp_bound "$port" "$pid" "$RESULTS/$lang-littles.log" 200
   simulate --rate "$RATE" --duration "$DURATION" --dest "127.0.0.1:$port" --quiet >/dev/null
   wait "$pid" || { cat "$RESULTS/$lang-littles.log" >&2; die "$lang consumer failed"; }
+  bg_forget "$pid"
   grep -E '^(model|warehouse):' "$RESULTS/$lang-littles.log"
 }
 
@@ -90,8 +95,8 @@ for lang in cpp java; do
   pred=$(jget "$f" .model.predicted_L)
   err=$(jget "$f" .model.relative_error)
   check "A $lang no loss" "$((count == RATE * DURATION && dropped == 0))" "count=$count dropped=$dropped"
-  check "A $lang Little's Law" "$(fcmp "abs($err) <= 0.05")" \
-    "L(sampled)=$l vs lambda*W-bar=$pred, error $(python3 -I -c "print(f'{$err*100:+.2f}')") % (need within 5 %)"
+  check "A $lang Little's Law" "$(within "$err" 0.05)" \
+    "L(sampled)=$l vs lambda*W-bar=$pred, error $(pct "$err") % (need within 5 %)"
 done
 echo "warehouse framing: $(jq -r --arg rate "$RATE" '.model.warehouse | "\(.scan_to_divert_budget_ms) ms scan-to-divert at \(.belt_mps) m/s = \(.belt_metres_in_budget) m of belt; at \($rate) parcels/s that is lambda*W = \(.in_flight_parcels) parcels in flight"' "$RESULTS/cpp-littles.json")"
 
@@ -103,7 +108,7 @@ effective_ghz() {
   cycles=$(awk -F, '$3 ~ /^cycles/ && $1 ~ /^[0-9]+$/ {print $1}' "$1" 2>/dev/null || true)
   clock=$(awk -F, '$3 ~ /^task-clock/ && $1 ~ /^[0-9.]+$/ {print $1}' "$1" 2>/dev/null || true)
   if [[ -n $cycles && -n $clock ]]; then
-    python3 -I -c "print(f'{$cycles / ($clock * 1e6):.2f}')"
+    printf '%.2f' "$(jq -n --argjson c "$cycles" --argjson t "$clock" '$c / ($t * 1e6)')"
   else
     echo "unavailable (perf_event_paranoid=$paranoid)"
   fi
@@ -141,14 +146,14 @@ for lang in cpp java; do
   pred=$(jget "$f" .model.predicted_speedup)
   meas=$(jget "$f" .model.measured_speedup_p50)
   err=$(jget "$f" .model.relative_error)
-  check "B $lang Amdahl N=4" "$(fcmp "abs($err) <= 0.15")" \
-    "s=$s, predicted $(printf %.2f "$pred")x, measured $(printf %.2f "$meas")x, error $(python3 -I -c "print(f'{$err*100:+.1f}')") % (need within 15 %)"
+  check "B $lang Amdahl N=4" "$(within "$err" 0.15)" \
+    "s=$s, predicted $(printf %.2f "$pred")x, measured $(printf %.2f "$meas")x, error $(pct "$err" 1) % (need within 15 %)"
 done
 t4=$(jget "$RESULTS/python-amdahl-threads-n4.json" .model.measured_speedup_p50)
 p4=$(jget "$RESULTS/python-amdahl-processes-n4.json" .model.measured_speedup_p50)
 gil=$(jget "$RESULTS/python-amdahl-threads-n4.json" .build.gil_enabled)
-check "B python threads (GIL=$gil)" "$(fcmp "$t4 < 1.3")" "N=4 speedup $(printf %.2f "$t4")x (need < 1.3x)"
-check "B python processes" "$(fcmp "$p4 > 2.0")" "N=4 speedup $(printf %.2f "$p4")x (need > 2x)"
+check "B python threads (GIL=$gil)" "$(lt "$t4" 1.3)" "N=4 speedup $(printf %.2f "$t4")x (need < 1.3x)"
+check "B python processes" "$(gt "$p4" 2.0)" "N=4 speedup $(printf %.2f "$p4")x (need > 2x)"
 
 # Observation, not a criterion: the same work without the barriers. A lock section then overlaps
 # the other workers' parallel work, so the run beats the strict-serial formula.

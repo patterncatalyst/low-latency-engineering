@@ -49,14 +49,11 @@ run_variant() {
   (cd "$LOWLAT_EXAMPLES" && exec "${cmd[@]}" --variant "$variant" --bind "127.0.0.1:$PORT" \
     --expect "$COUNT" --example "$EXAMPLE" --report "$report") >"$log" 2>&1 &
   pid=$!
-  # The consumer prints its "variant" line once it is bound (after calibration).
-  for _ in $(seq 1 300); do
-    grep -q 'variant' "$log" 2>/dev/null && break
-    kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "$lang/$variant consumer exited early"; }
-    sleep 0.1
-  done
+  bg_track "$pid"
+  wait_udp_bound "$PORT" "$pid" "$log" # a consumer binds after its calibration
   simulate --rate "$RATE" --duration "$SECONDS_RUN" --dest "127.0.0.1:$PORT" --quiet >>"$log"
   wait "$pid" || { cat "$log" >&2; die "$lang/$variant consumer failed"; }
+  bg_forget "$pid"
   [[ $(jget "$report" .count) -eq $COUNT ]] || die "$lang/$variant: count != $COUNT"
   [[ $(jget "$report" .dropped) -eq 0 ]] || die "$lang/$variant: parcels were dropped"
 }

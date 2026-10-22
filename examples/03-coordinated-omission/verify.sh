@@ -14,6 +14,7 @@
 #
 # Reports (lowlat-report/1) and profile.json land in $RESULTS_DIR
 # (default results/latest). UDP ports 47230-47235 on 127.0.0.1.
+set -euo pipefail
 # shellcheck source=../_lib/lib.sh
 . "$(dirname "$0")/../_lib/lib.sh"
 
@@ -37,10 +38,6 @@ CPP_BIN="$(cpp_bin co-experiment)"
 JAR="$EX/java/target/co-experiment-java.jar"
 [[ -f $JAR ]] || die "missing $JAR (build_java first)"
 
-consumer_pid=''
-cleanup() { [[ -z $consumer_pid ]] || kill "$consumer_pid" 2>/dev/null || true; }
-trap cleanup EXIT
-
 # consumer LANG ARGS...: run one language's experiment binary.
 consumer() {
   local lang=$1
@@ -59,20 +56,15 @@ run_pair() {
   if [[ $lang == python ]]; then suffix_arg=(--suffix="$suffix"); else suffix_arg=(--suffix "$suffix"); fi
   log="$OUT/$lang${suffix:-}.log"
   step "$lang: stall ${stall} ms at parcel $STALL_SEQ, port $port${suffix:+ ($suffix)}"
-  : >"$log"  # exists before the first grep below
+  : >"$log"
   consumer "$lang" run --bind "127.0.0.1:$port" --expect "$EXPECT" --stall-ms "$stall" \
     --stall-seq "$STALL_SEQ" "${suffix_arg[@]}" --out "$OUT" >"$log" 2>&1 &
-  consumer_pid=$!
-  local i
-  for ((i = 0; i < 300; i++)); do
-    grep -q '^listening on' "$log" && break
-    kill -0 "$consumer_pid" 2>/dev/null || { cat "$log" >&2; die "$lang consumer exited early"; }
-    sleep 0.1
-  done
-  grep -q '^listening on' "$log" || die "$lang consumer never started listening"
+  local consumer_pid=$!
+  bg_track "$consumer_pid"
+  wait_udp_bound "$port" "$consumer_pid" "$log"
   simulate --rate "$RATE" --duration "$DURATION" --dest "127.0.0.1:$port" --quiet >/dev/null
   wait "$consumer_pid" || { cat "$log" >&2; die "$lang consumer failed"; }
-  consumer_pid=''
+  bg_forget "$consumer_pid"
 }
 
 # p99 LANG VARIANT: the p99 in ns from a report.

@@ -31,10 +31,7 @@ capture_profile "$OUT"
 
 # ---- build and unit-test parity --------------------------------------------------------
 build_cpp check-digit-bench check-digit-test
-if [[ ${SKIP_BUILD:-0} != 1 ]]; then
-  step "building Java benchmarks.jar (runs the parity test)"
-  mvn -B -q -f "$HERE/java/pom.xml" package
-fi
+BUILD_JAVA_TESTS=1 build_java "$HERE/java" # benchmarks.jar; the parity test runs on the way
 step "unit tests: check digit parity on known-good SSCCs"
 "$(cpp_bin check-digit-test)" --gtest_brief=1
 pyrun pytest -q "$HERE/benchmarks-py/tests"
@@ -107,8 +104,7 @@ echo "  warm-up vs warmed (calibration run, cold interpreter): $py_warm"
 
 # ---- convert every harness's samples to lowlat reports and check them ------------------
 step "converting harness samples to lowlat reports"
-reports=()
-while IFS= read -r f; do reports+=("$f"); done < <(
+mapfile -t reports < <(
   pyrun bench-to-report gbench "$OUT/gbench.json" "$OUT"
   pyrun bench-to-report jmh "$OUT/jmh.json" "$OUT"
   pyrun bench-to-report pyperf "$OUT/pyperf.json" "$OUT")

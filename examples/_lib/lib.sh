@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # examples/_lib/lib.sh - shared helpers for every examples/NN-*/verify.sh.
 #
 # Source it from a verify.sh:
@@ -30,6 +31,38 @@ fi
 step() { printf '%s━━ %s%s\n' "$_c_step" "$*" "$_c_off"; }
 ok()   { printf '%s✓ %s%s\n' "$_c_ok" "$*" "$_c_off"; }
 die()  { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off" >&2; exit 1; }
+
+# Background consumers: track each one so that a die mid-run (or Ctrl-C) never leaves it holding
+# its UDP port. bg_track PID after starting one, bg_forget PID once it has been waited for.
+BG_PIDS=()
+bg_track() { BG_PIDS+=("$1"); }
+bg_forget() {
+  local keep=() p
+  for p in "${BG_PIDS[@]}"; do
+    [[ $p == "$1" ]] || keep+=("$p")
+  done
+  BG_PIDS=("${keep[@]}")
+}
+_bg_cleanup() {
+  local p
+  for p in "${BG_PIDS[@]}"; do
+    kill "$p" 2>/dev/null || true
+  done
+}
+trap _bg_cleanup EXIT
+
+# wait_udp_bound PORT PID LOG [TRIES]: wait (TRIES x 0.1 s, default 300) until a UDP socket is
+# bound to PORT. Dies, printing LOG, if the background process PID exits first or never binds.
+# Readiness comes from the kernel (ss), not from what the consumer prints.
+wait_udp_bound() {
+  local port=$1 pid=$2 log=$3 tries=${4:-300} i
+  for ((i = 0; i < tries; i++)); do
+    [[ -z $(ss -ulnH "sport = :$port") ]] || return 0
+    kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "consumer exited before binding UDP $port"; }
+    sleep 0.1
+  done
+  die "consumer never bound UDP $port within $((tries / 10)) s"
+}
 
 # redact_host JSON...: replace the machine's hostname with the profile's
 # host_label in third-party output (Google Benchmark, pyperf record it), so a
@@ -91,13 +124,14 @@ cpp_bin() {
 
 # build_java MODULE_DIR: package one Maven module and the sibling modules it
 # depends on (-am), through the examples/pom.xml aggregator, so a clean machine
-# needs no earlier `mvn install`.
+# needs no earlier `mvn install`. Tests are skipped unless BUILD_JAVA_TESTS=1.
 build_java() {
   [[ ${SKIP_BUILD:-0} == 1 ]] && return 0
-  local rel
+  local rel skip=(-DskipTests)
+  [[ ${BUILD_JAVA_TESTS:-0} == 1 ]] && skip=()
   rel=$(realpath --relative-to="$LOWLAT_EXAMPLES" "$1")
-  step "building Java module $rel"
-  mvn -B -q -f "$LOWLAT_EXAMPLES/pom.xml" -pl "$rel" -am -DskipTests package
+  step "building Java module $rel${skip[*]:+ (tests skipped)}"
+  mvn -B -q -f "$LOWLAT_EXAMPLES/pom.xml" -pl "$rel" -am "${skip[@]}" package
 }
 
 # py_sync: make sure the uv workspace is installed.
@@ -111,7 +145,7 @@ py_sync() {
 uvrun() { (cd "$LOWLAT_EXAMPLES" && uv run -q "$@"); }
 
 # report_check FILE...: schema-validate and recompute every report.
-report_check() { uvrun lowlat-report check "$@"; uvrun lowlat-report show "$@"; }
+report_check() { uvrun lowlat-report check "$@" && uvrun lowlat-report show "$@"; }
 
 # jget FILE JQ: read one value from a report.
 jget() { jq -er "$2" "$1"; }
