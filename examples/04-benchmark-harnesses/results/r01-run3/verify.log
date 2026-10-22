@@ -1,7 +1,7 @@
 ✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
 ━━ building C++ (release preset) check-digit-bench check-digit-test
-[1/18] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
-[2/16] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[1/18] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[2/15] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
 [3/13] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
 [4/9] Generating CXX dyndep file 04-benchmark-harnesses/cpp/CMakeFiles/check-digit-bench.dir/CXX.dd
 [5/7] Generating CXX dyndep file 04-benchmark-harnesses/cpp/CMakeFiles/check-digit-test.dir/CXX.dd
@@ -29,12 +29,12 @@ Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/rele
 ✓ C++ (GoogleTest), Java (JUnit, ran during package) and Python (pytest) agree on the check digit
 ━━ C++ Google Benchmark: 30 repetitions per benchmark
 Google Benchmark aggregates (default output also prints a mean; read median and p99):
-  BM_CheckDigit_Guarded  median  4.732 ns
-  BM_CheckDigit_Guarded  p99  4.839 ns
+  BM_CheckDigit_Guarded  median  4.811 ns
+  BM_CheckDigit_Guarded  p99  4.98 ns
   BM_CheckDigit_Eliminated  median  0 ns
   BM_CheckDigit_Eliminated  p99  0 ns
-  median guarded = 4.7324430717436119 ns, eliminated = 1.7698039300739766E-10 ns (divisor floored at 0.01 ns)
-✓ C++: eliminated median is >= 10x lower than guarded (473 >= 10)
+  median guarded = 4.8110814650110330 ns, eliminated = 4.8150832299143084E-10 ns (divisor floored at 0.01 ns)
+✓ C++: eliminated median is >= 10x lower than guarded (481 >= 10)
 ━━ Java JMH SampleTime: 3 forks x (3 warm-up + 5 measured) iterations
 JMH percentile view (percent, ns per check digit):
   eliminated
@@ -44,30 +44,32 @@ JMH percentile view (percent, ns per check digit):
     p95.0  0
     p99.0  0
     p99.9  0
-    p99.99  1.081
-    p99.999  14.649
-    p99.9999  17
-    p100.0  17
+    p99.99  1
+    p99.999  15.293
+    p99.9999  16
+    p100.0  16
   guarded
     p0.0  14
-    p50.0  32
-    p90.0  35
-    p95.0  37
-    p99.0  39
-    p99.9  45
-    p99.99  69.237
-    p99.999  138
-    p99.9999  138
-    p100.0  138
+    p50.0  33
+    p90.0  38
+    p95.0  39
+    p99.0  40
+    p99.9  52.815
+    p99.99  86.563
+    p99.999  146
+    p99.9999  146
+    p100.0  146
 ✓ JMH SampleTime output includes p0.99 and p0.999
-  p50 guarded = 32.0 ns, eliminated = 0.0 ns (divisor floored at 0.01 ns)
-✓ Java: eliminated p50 is >= 10x lower than guarded (3200 >= 10)
+  p50 guarded = 33.0 ns, eliminated = 0.0 ns (divisor floored at 0.01 ns)
+✓ Java: eliminated p50 is >= 10x lower than guarded (3300 >= 10)
 ━━ Python pyperf: 6 worker processes x 4 values, 3 warm-ups each
-Total duration: 6.5 sec
-Start date: 2026-10-22 11:47:20
-End date: 2026-10-22 11:47:27
-Raw value minimum: 128 ms
-Raw value maximum: 137 ms
+WARNING: the benchmark result may be unstable
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Total duration: 6.7 sec
+Start date: 2026-10-22 12:09:58
+End date: 2026-10-22 12:10:05
+Raw value minimum: 129 ms
+Raw value maximum: 136 ms
 
 Number of calibration run: 1
 Number of run with values: 6
@@ -78,20 +80,28 @@ Number of value per run: 4
 Loop iterations per value: 2^16 (64 outer-loops x 1024 inner-loops)
 Total number of values: 24
 
-Minimum:         1.96 us
-Median +- MAD:   1.97 us +- 0.00 us
-Mean +- std dev: 1.98 us +- 0.02 us
-Maximum:         2.09 us
+Minimum:         1.97 us
+Median +- MAD:   2.02 us +- 0.01 us
+Mean +- std dev: 2.03 us +- 0.02 us
+Maximum:         2.07 us
 
-  0th percentile: 1.96 us (-1% of the mean) -- minimum
-  5th percentile: 1.96 us (-1% of the mean)
- 25th percentile: 1.97 us (-0% of the mean) -- Q1
- 50th percentile: 1.97 us (-0% of the mean) -- median
- 75th percentile: 1.98 us (+0% of the mean) -- Q3
- 95th percentile: 1.98 us (+0% of the mean)
-100th percentile: 2.09 us (+6% of the mean) -- maximum
+  0th percentile: 1.97 us (-3% of the mean) -- minimum
+  5th percentile: 2.01 us (-1% of the mean)
+ 25th percentile: 2.02 us (-1% of the mean) -- Q1
+ 50th percentile: 2.02 us (-0% of the mean) -- median
+ 75th percentile: 2.05 us (+1% of the mean) -- Q3
+ 95th percentile: 2.07 us (+2% of the mean)
+100th percentile: 2.07 us (+2% of the mean) -- maximum
 
-Number of outlier (out of 1.96 us..1.99 us): 1
+Number of outlier (out of 1.97 us..2.11 us): 0
+
+WARNING: the benchmark result may be unstable
+* Not enough samples to get a stable result (95% certainly of less than 1% variation)
+
+Try to rerun the benchmark with more runs, values and/or loops.
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Use pyperf stats, pyperf dump and pyperf hist to analyze results.
+Use --quiet option to hide these warnings.
 host tuning state (pyperf system show, read-only; untuned by design):
   CPU scaling governor: 0-15=powersave
   Turbo Boost (intel_pstate): Turbo Boost enabled
@@ -99,14 +109,14 @@ host tuning state (pyperf system show, read-only; untuned by design):
   Turbo Boost (intel_pstate): Disable Turbo Boost to get more reliable CPU frequency
 ✓ pyperf recorded values (24 >= 20)
 ✓ pyperf worker processes with values (6 >= 3)
-  warm-up vs warmed (calibration run, cold interpreter): first warm-up 1899.5 ns, median measured 1973 ns
+  warm-up vs warmed (calibration run, cold interpreter): first warm-up 1917.7 ns, median measured 2023.2 ns
 ━━ converting harness samples to lowlat reports
 report percentiles in ns (lowlat-report show prints microseconds, too coarse here):
   cpp guarded: n=30 p50=5 p90=5 p99=5 p99.9=5 max=5
   cpp eliminated: n=30 p50=0 p90=0 p99=0 p99.9=0 max=0
-  java eliminated: n=139190 p50=0 p90=0 p99=0 p99.9=0 max=17
-  java guarded: n=67627 p50=32 p90=35 p99=39 p99.9=45 max=138
-  python check_digit-measured: n=24 p50=1973 p90=1982 p99=2089 p99.9=2089 max=2089
-  python check_digit-warmup: n=31 p50=1979 p90=2018 p99=2025 p99.9=2025 max=2025
+  java eliminated: n=135348 p50=0 p90=0 p99=0 p99.9=0 max=16
+  java guarded: n=67184 p50=33 p90=38 p99=40 p99.9=52 max=146
+  python check_digit-measured: n=24 p50=2023 p90=2067 p99=2073 p99.9=2073 max=2073
+  python check_digit-warmup: n=31 p50=2021 p90=2073 p99=2097 p99.9=2097 max=2097
 ✓ 6 lowlat reports validate (profile embedded: bare-metal-host)
-✓ 04-benchmark-harnesses: C++ 473x, Java 3200x, pyperf 24 values / 6 processes; results in /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/results/r01-run3
+✓ 04-benchmark-harnesses: C++ 481x, Java 3300x, pyperf 24 values / 6 processes; results in /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/results/r01-run3
