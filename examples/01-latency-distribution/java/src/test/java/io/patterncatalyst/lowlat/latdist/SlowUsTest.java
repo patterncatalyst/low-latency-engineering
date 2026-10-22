@@ -24,6 +24,12 @@ class SlowUsTest {
         assertEquals(List.of("--expect", "10"), s.rest());
     }
 
+    @Test
+    void leavesAFlagWithoutAValueToTheCommonParser() {
+        // Config.parse then reports "option --slow-us needs a value".
+        assertEquals(List.of("--slow-us"), Latdist.SlowUs.split(new String[] {"--slow-us"}).rest());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"0", "-1"})
     void rejectsNonPositive(String value) {

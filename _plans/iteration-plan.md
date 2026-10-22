@@ -13,8 +13,8 @@ tagged `rNN.x`.
 
 - **r00 (`release/r00`):** repo, CLAUDE.md, site scaffold, Parts, outline, Figure 0.1,
   this plan. No chapter prose.
-- **r01 (`release/r01`): in progress.** Steps S0 to S26 done (simulator, kits, lab, Ch0 to Ch4,
-  examples page, validation, CI); S27 (review, Jekyll build, package, PR) pending. Step status: `_plans/r01-plan.md`.
+- **r01 (`release/r01`): complete, in review.** Steps S0 to S27 done (simulator, kits, lab, Ch0 to Ch4,
+  examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
   Claim log: `_plans/reconciliation-plan.md`.
 - Everything after r01 is planned, not started.
 
@@ -44,7 +44,7 @@ chapter of its own.
 
 ## Foundations first (r01)
 
-Nothing in Part 1 can be written honestly until these exist, so r01 is mostly
+Nothing in Part 1 can be written accurately until these exist, so r01 is mostly
 infrastructure plus the chapters that explain it:
 
 1. **Line simulator** (`examples/common/line-simulator/`): emits parcels at a
@@ -66,7 +66,7 @@ infrastructure plus the chapters that explain it:
 | Iter | Delivers | Notes |
 |---|---|---|
 | r00 | Scaffold, outline, plan, Figure 0.1 | `release/r00` |
-| r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **In progress; S26 done** |
+| r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete; in review (PR to main)** |
 | r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline |
 | r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language |
 | r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers |
