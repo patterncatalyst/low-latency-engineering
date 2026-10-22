@@ -80,7 +80,7 @@ Executor is Sonnet unless MAIN. One checkpoint commit per step (scopes `r02.x`, 
 | id | What | Files | Dep | Runs on | Status |
 |---|---|---|---|---|---|
 | S0 | Upstream survey + exact pins, licences, date, holds: JDK 25.0.x/27/28-EA, Temurin SHA, Fedora `java-25-openjdk`, JMH, Agrona, Disruptor, `chronicle-bom` (+ queue, map, bytes; confirm 2026.x OSS; list Enterprise-only), Affinity, async-profiler, JOL, GraalVM CE "Innovation" + native-image GC, jextract (EA only), `std::start_lifetime_as` in Clang/GCC, CPython 3.14.8 GC, `stress-ng` | `_plans/dependency-pins.md`, `versions.env` | – | host (read-only queries) | todo |
-| S1 | Record answers to Q1–Q12; iteration plan status; outline/part blurb if Valhalla scope changes | `CLAUDE.md` (only if Q1/Q2 change a rule), `_plans/iteration-plan.md`, this file | answers | MAIN | todo |
+| S1 | Record answers to Q1–Q12; iteration plan status; outline/part blurb if Valhalla scope changes | `CLAUDE.md` (only if Q1/Q2 change a rule), `_plans/iteration-plan.md`, this file | answers | MAIN | done |
 | S2 | Report contract: optional top-level `runtime` object (GC, heap, `alloc_bytes_per_parcel`, `jit`, `aot`, `ctx_switches`), additive in `lowlat-report/1`; `check` validates it and rejects `mean` inside it; fixtures; Java `BuildInfo` fills `flags` from `RuntimeMXBean.getInputArguments()` and GC names from `GarbageCollectorMXBean`s | `contracts/measurement/latency-report.schema.json`, `measure-py`, `measure-java`, `measure-fixtures/` | S0 | host | todo |
 | S3 | `profile.sh`: `memory.thp_enabled`/`thp_defrag`, `perf_event_paranoid`, memlock, full `java -version`. `lib.sh`: `java_run` (JFR to scratch, async `-Xlog:gc*,safepoint` to `$OUT`, flags echoed), `jfr_pauses` (measure-java CLI on `jdk.jfr.consumer.RecordingFile` → `gc-pause` report), `task_ctx_switches PID TID`, `time_to_ready`. `.gitignore`: `*.jfr`, queue dirs | `scripts/profile.sh`, `examples/_lib/lib.sh`, `measure-java` (`JfrPauses`), `.gitignore` | S2 | host | todo |
 | S4 | Common kit: Java `LineReceiver` pluggable `Decoder` (protobuf default; FFM flat in Ch8); `--window N` writes `<variant>-first-N` + `-steady`; receive-thread allocated bytes via `com.sun.management.ThreadMXBean` (off-path); `Completion` ownable by another thread (single writer, published by join). C++ `--window`. Simulator `--wire flat` + `contracts/flat/parcel-v1` (header, doc, golden bytes). Python flat reader. Tests | `common/line-simulator/**`, `contracts/flat/`, consumers ×3 | S2 | host | todo |
@@ -163,4 +163,9 @@ Executor is Sonnet unless MAIN. One checkpoint commit per step (scopes `r02.x`, 
 
 | Item | Decision |
 |---|---|
-| (filled in as steps land) | |
+| Q1 base JDK (2026-10-22) | Temurin 25.0.5 LTS, pinned; no JDK 27 side run. Host user-local SDKMAN JDK upgraded 25.0.3 → 25.0.5 (user approved; no system change) |
+| Q2 Valhalla | (a) conceptual only, C++ `vector<struct>` comparison, FFM flat layout as today's substitute, dated status box, re-visit at JDK 28 GA |
+| Q3 AOT | Leyden AOT cache measured; GraalVM CE native-image prose only (recommendation, not objected) |
+| Q4 affinity | guest isolation (`isolcpus`/`nohz_full`/`rcu_nocbs`) + libvirt `vcpupin` as committed domain config, applied and reverted by a lab script/snapshot |
+| Q5 large pages | host THP only (`madvise`), observed; hugetlbfs deferred to Part 5 |
+| Q6–Q12 | plan recommendations taken (default `warn` for Unsafe; no `.jfr` committed; 10 kHz for 06–08, 1 kHz for 05; Python in Ch6/Ch8 only; `contracts/flat/parcel-v1`; C++ lanes as listed; pinned Temurin in CI and guest) |

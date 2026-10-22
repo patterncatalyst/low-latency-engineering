@@ -16,7 +16,8 @@ GitHub release; no tarball is built.
 - **r01: complete** (merged in #3, tag `r01.x`). Steps S0 to S27 done (simulator, kits, lab, Ch0 to Ch4,
   examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
   Claim log: `_plans/reconciliation-plan.md`.
-- Everything after r01 is planned, not started.
+- **r02 (`release/r02`): in progress.** Part 2 (Ch5–8). Step status: `_plans/r02-plan.md`.
+- Everything after r02 is planned, not started.
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
