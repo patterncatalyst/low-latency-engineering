@@ -51,6 +51,58 @@
       "description": "Optional modelling inputs for Little's Law / Amdahl's Law checks (Ch2). The only place a time-average (for example a mean residence time W) may appear. Free-form.",
       "additionalProperties": true
     },
+    "runtime": {
+      "description": "Optional managed-runtime and scheduler facts for the run (additive; reports without it stay valid). Like the percentiles, it can never carry a mean: no key anywhere inside it may be named 'mean' or end in '_mean' or 'mean_ns'.",
+      "allOf": [{ "$ref": "#/$defs/noMean" }],
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gc": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Garbage collector in use.",
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "description": "Collector name, e.g. 'ZGC' or 'G1'." },
+            "collectors": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "GarbageCollectorMXBean names." },
+            "heap_bytes": { "type": "integer", "minimum": 0, "description": "Configured or observed heap size in bytes." },
+            "flags": { "type": "array", "items": { "type": "string" }, "description": "GC-related JVM flags, e.g. '-XX:+UseZGC'." }
+          }
+        },
+        "alloc_bytes_per_parcel": { "type": "number", "minimum": 0, "description": "Bytes allocated per parcel on the measured path." },
+        "jit": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Free-form JIT counts (for example compilations, deoptimizations), keyed by measurement window."
+        },
+        "aot": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Ahead-of-time cache use.",
+          "properties": {
+            "cache": { "type": "string", "description": "Cache file or location." },
+            "mode": { "type": "string", "description": "Mode, e.g. 'record', 'create' or 'on'." },
+            "used": { "type": "boolean", "description": "Whether the cache was actually used." }
+          }
+        },
+        "ctx_switches": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Context switches of the measured thread or process.",
+          "properties": {
+            "voluntary": { "type": "integer", "minimum": 0 },
+            "involuntary": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
     "notes": { "type": "string", "description": "Free-text remarks about the run." }
+  },
+  "$defs": {
+    "noMean": {
+      "description": "No-mean rule: no property name in this subtree is 'mean' or ends in '_mean' or 'mean_ns'.",
+      "propertyNames": { "not": { "pattern": "^(mean|.*_mean|.*mean_ns)$" } },
+      "additionalProperties": { "$ref": "#/$defs/noMean" },
+      "items": { "$ref": "#/$defs/noMean" }
+    }
   }
 }

@@ -125,6 +125,15 @@ public final class LatencyRecorder {
      * time-average may appear. Omitted when null or empty.
      */
     public Report report(String notes, Map<String, Object> model) {
+        return report(notes, model, null);
+    }
+
+    /**
+     * As {@link #report(String, Map)}, with an optional {@code runtime} object (GC, JIT, AOT,
+     * context switches; see {@link RuntimeInfo#jvm()}). Omitted when null or empty; no key
+     * inside it may be a mean.
+     */
+    public Report report(String notes, Map<String, Object> model, Map<String, Object> runtime) {
         Histogram h = histogram();
         return new Report(Report.SCHEMA, example, "java", variant, "ns",
                 h.getTotalCount(), dropped(),
@@ -132,7 +141,8 @@ public final class LatencyRecorder {
                         h.getValueAtPercentile(99), h.getValueAtPercentile(99.9), h.getMaxValue()),
                 encode(h), BuildInfo.current(), loadProfile(),
                 notes == null || notes.isEmpty() ? null : notes,
-                model == null || model.isEmpty() ? null : model);
+                model == null || model.isEmpty() ? null : model,
+                runtime == null || runtime.isEmpty() ? null : runtime);
     }
 
     /** Write the report as JSON and return it. Fails if {@code LOWLAT_PROFILE} is unset. */
@@ -147,7 +157,13 @@ public final class LatencyRecorder {
 
     /** As {@link #writeReport(Path, String)}, with an optional {@code model} object (omitted when null or empty). */
     public Report writeReport(Path path, String notes, Map<String, Object> model) {
-        Report report = report(notes, model);
+        return writeReport(path, notes, model, null);
+    }
+
+    /** As {@link #writeReport(Path, String, Map)}, with an optional {@code runtime} object (omitted when null or empty). */
+    public Report writeReport(Path path, String notes, Map<String, Object> model,
+            Map<String, Object> runtime) {
+        Report report = report(notes, model, runtime);
         try {
             Path parent = path.toAbsolutePath().getParent();
             if (parent != null) {

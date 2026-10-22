@@ -201,6 +201,18 @@ TEST_F(Measure, ModelAppearsOnlyWhenGiven) {
   EXPECT_TRUE(r.report({}, model).contains("model"));
 }
 
+TEST_F(Measure, RuntimeAppearsOnlyWhenGiven) {
+  Recorder r{"t", "v"};
+  r.record(1000);
+  EXPECT_FALSE(r.report().contains("runtime"));
+  EXPECT_FALSE(r.report("", std::nullopt, json::object()).contains("runtime"));
+  EXPECT_FALSE(r.report("", std::nullopt, json(nullptr)).contains("runtime"));
+  const json runtime = {{"alloc_bytes_per_parcel", 0}, {"ctx_switches", {{"voluntary", 3}, {"involuntary", 1}}}};
+  const json doc = r.report("", std::nullopt, runtime);
+  EXPECT_EQ(doc.at("runtime"), runtime);
+  EXPECT_FALSE(doc.contains("model"));
+}
+
 TEST_F(Measure, WriteReportCarriesModel) {
   Recorder r{"t", "v"};
   r.record(1000);

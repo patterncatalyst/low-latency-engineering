@@ -114,8 +114,10 @@ class Recorder:
         *,
         language: str = LANGUAGE,
         build: Mapping[str, Any] | None = None,
+        runtime: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """The ``lowlat-report/1`` document. ``model`` is the optional ``model`` block.
+        """The ``lowlat-report/1`` document. ``model`` is the optional ``model`` block and
+        ``runtime`` the optional ``runtime`` block (GC, JIT, AOT, context switches).
 
         ``language`` and ``build`` are for a report that speaks for another language than
         this kit (converted harness output); the percentiles then follow that language's
@@ -140,6 +142,8 @@ class Recorder:
             report["notes"] = notes
         if model:
             report["model"] = dict(model)
+        if runtime:
+            report["runtime"] = dict(runtime)
         return report
 
     def write_report(
@@ -150,8 +154,11 @@ class Recorder:
         *,
         language: str = LANGUAGE,
         build: Mapping[str, Any] | None = None,
+        runtime: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        report = self.build_report(notes, model, language=language, build=build)
+        report = self.build_report(
+            notes, model, language=language, build=build, runtime=runtime
+        )
         Path(path).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         return report
 

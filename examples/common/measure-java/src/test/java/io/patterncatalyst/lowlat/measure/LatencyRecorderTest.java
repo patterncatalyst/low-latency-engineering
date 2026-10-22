@@ -216,4 +216,50 @@ class LatencyRecorderTest {
             assertTrue(tree.has(field), field);
         }
     }
+
+    @Test
+    void runtimeBlockIsCarriedAndOmittedWhenAbsent(@TempDir Path dir) throws IOException {
+        LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "runtime");
+        rec.record(MS);
+        Path plain = dir.resolve("plain.json");
+        Path withRuntime = dir.resolve("runtime.json");
+        rec.writeReport(plain);
+        rec.writeReport(withRuntime, null, null, Map.of());
+        assertFalse(JSON.readTree(plain).has("runtime"));
+        assertFalse(JSON.readTree(withRuntime).has("runtime"));
+        rec.writeReport(withRuntime, null, null, RuntimeInfo.jvm());
+        JsonNode gc = JSON.readTree(withRuntime).get("runtime").get("gc");
+        assertTrue(gc.get("collectors").size() >= 1);
+        assertTrue(gc.get("heap_bytes").asLong() > 0);
+    }
+
+    /** A child JVM launched with -XX:+UseZGC reports the flag in build.flags and ZGC in runtime.gc. */
+    @Test
+    void buildFlagsRecordJvmInputArguments(@TempDir Path dir) throws Exception {
+        Path out = dir.resolve("zgc.json");
+        String java = Path.of(System.getProperty("java.home"), "bin", "java").toString();
+        Process child = new ProcessBuilder(java, "-XX:+UseZGC", "-Xmx64m",
+                "-cp", System.getProperty("java.class.path"),
+                ChildReport.class.getName(), out.toString())
+                .redirectErrorStream(true)
+                .start();
+        String output = new String(child.getInputStream().readAllBytes());
+        assertEquals(0, child.waitFor(), output);
+        JsonNode tree = JSON.readTree(out);
+        String flags = tree.get("build").get("flags").asString();
+        assertTrue(flags.contains("-XX:+UseZGC"), flags);
+        assertTrue(flags.contains("-Xmx64m"), flags);
+        JsonNode gc = tree.get("runtime").get("gc");
+        assertEquals("-XX:+UseZGC", gc.get("flags").get(0).asString());
+        assertTrue(gc.get("collectors").toString().contains("ZGC"), gc.toString());
+    }
+
+    /** Entry point of the child JVM above: writes one report with the JVM's runtime block. */
+    public static final class ChildReport {
+        public static void main(String[] args) {
+            LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "child");
+            rec.record(MS);
+            rec.writeReport(Path.of(args[0]), null, null, RuntimeInfo.jvm());
+        }
+    }
 }

@@ -13,6 +13,7 @@ FIXTURES = COMMON / "measure-fixtures"
 INVALID_MEAN = (
     Path(__file__).resolve().parents[4] / "contracts/measurement/examples/invalid-mean.json"
 )
+EXAMPLES = Path(__file__).resolve().parents[4] / "contracts/measurement/examples"
 MS = 1_000_000
 
 
@@ -135,3 +136,41 @@ def test_model_block_only_when_given(lowlat_profile: Path, tmp_path: Path) -> No
     plain = tmp_path / "p.json"
     rec.write_report(plain)
     assert "model" not in json.loads(plain.read_text(encoding="utf-8"))
+
+
+def test_runtime_block_validates_and_checks(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["check", str(EXAMPLES / "valid-runtime.json")]) == 0
+
+
+def test_runtime_block_rejects_mean(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["check", str(EXAMPLES / "invalid-runtime-mean.json")]) == 1
+    assert "pause_mean_ns" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("key", ["mean", "mean_ns", "pause_mean", "pause_mean_ns"])
+def test_runtime_rejects_mean_anywhere(
+    lowlat_profile: Path, tmp_path: Path, key: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    for runtime in ({key: 1}, {"jit": {"steady": {key: 1}}}, {"gc": {key: 1}}):
+        out = tmp_path / "bad.json"
+        rec.write_report(out, runtime=runtime)
+        assert main(["check", str(out)]) == 1
+    capsys.readouterr()
+
+
+def test_runtime_only_when_given(lowlat_profile: Path, tmp_path: Path) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    assert "runtime" not in rec.build_report()
+    assert "runtime" not in rec.build_report(runtime={})
+    runtime = {
+        "gc": {"name": "G1", "collectors": ["G1 Young Generation"]},
+        "alloc_bytes_per_parcel": 48.5,
+    }
+    out = tmp_path / "r.json"
+    report = rec.write_report(out, runtime=runtime)
+    assert list(report)[-1] == "runtime"
+    assert json.loads(out.read_text(encoding="utf-8"))["runtime"] == runtime
+    assert main(["check", str(out)]) == 0

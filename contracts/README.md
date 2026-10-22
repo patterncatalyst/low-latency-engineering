@@ -11,6 +11,8 @@ produces.
 | `measurement/latency-report.schema.json` | JSON Schema 2020-12 for the one-per-run report (`lowlat-report/1`). |
 | `measurement/examples/valid.json` | A complete valid report with a real `scripts/profile.sh` capture and a real HdrHistogram string. |
 | `measurement/examples/invalid-mean.json` | The same report with a `mean` in `percentiles`; the schema must reject it. |
+| `measurement/examples/valid-runtime.json` | The same report with the optional `runtime` block (GC, `alloc_bytes_per_parcel`, JIT, AOT, context switches). |
+| `measurement/examples/invalid-runtime-mean.json` | A `runtime` block with `gc.pause_mean_ns`; the schema and `lowlat-report check` must reject it. |
 | `proto/buf.yaml` | buf lint (STANDARD) and breaking-change (FILE) rules. |
 
 ## Design decisions
