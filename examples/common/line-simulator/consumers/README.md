@@ -79,7 +79,7 @@ Ch8 measures it). The wire layout is `contracts/flat/parcel-v1`; Python reads it
 between the start and the end of the loop divided by the parcels received. The counter is read
 twice per run, never per parcel. It counts the receive thread only (selector, channel, decode,
 and handler work done on that thread), so work moved to a decide thread is not in it.
-`line-consumer-java` writes it into every report.
+`line-consumer-java` writes it into the whole-run report. The `--window` reports carry `RuntimeInfo.jvm()` only (`EventReceiver.windowRuntime()`): the counter covers the whole run, so it is not repeated as a per-window figure.
 
 The ready line (the first line printed once the socket is bound) is flushed
 immediately in all three, so a script can wait on a redirected stdout.

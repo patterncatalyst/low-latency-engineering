@@ -97,7 +97,7 @@ public final class Consumer {
             recorder.writeReport(report, receiver.reportNotes(), null, runtime);
             System.out.println("report: " + report);
             if (receiver.windows() != null) {
-                for (Path window : receiver.windows().writeReports(report, receiver.reportNotes(), runtime)) {
+                for (Path window : receiver.windows().writeReports(report, receiver.reportNotes(), receiver.windowRuntime())) {
                     System.out.println("report: " + window);
                 }
             }

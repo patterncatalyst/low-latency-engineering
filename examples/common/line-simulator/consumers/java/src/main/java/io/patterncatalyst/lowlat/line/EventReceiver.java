@@ -170,6 +170,15 @@ public class EventReceiver<E> implements AutoCloseable {
     }
 
     /**
+     * The {@code runtime} block for the window reports: {@link RuntimeInfo#jvm()} only. The
+     * allocation counter covers the whole run, so a per-window report must not carry it as if it
+     * were that window's figure.
+     */
+    public Map<String, Object> windowRuntime() {
+        return RuntimeInfo.jvm();
+    }
+
+    /**
      * Receives until the expected count, the idle timeout or {@link #stop()}, calling
      * {@code handler} for each new parcel and then {@link EventHandler#drain}. Gaps are booked
      * into the recorder as they appear.
