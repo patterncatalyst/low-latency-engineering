@@ -6,7 +6,12 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <cstdlib>
+#include <deque>
+#include <filesystem>
 #include <future>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -300,5 +305,165 @@ TEST(ConsumerHook, DeferredCompletionAndDrain) {
   EXPECT_EQ(result.completed, 3u);  // two in the loop, one by drain
   EXPECT_EQ(latency.count(), 3);
   EXPECT_EQ(latency.dropped(), 1u);
+  EXPECT_LE(result.first_done_ns, result.last_done_ns);
+}
+
+// --- Windows ----------------------------------------------------------------
+
+TEST(SeqTracker, DropsAreBookedInTheirWindow) {
+  line::SeqTracker t{10};
+  for (std::uint64_t s : {0, 1, 4}) (void)t.observe(s);  // 2, 3 missing: both below 10
+  EXPECT_EQ(t.dropped_below_window(), 2u);
+  (void)t.observe(14);  // 5..13 missing: 5..9 below 10, 10..13 not
+  EXPECT_EQ(t.dropped(), 11u);
+  EXPECT_EQ(t.dropped_below_window(), 7u);
+  (void)t.observe(20);  // 15..19 missing, all above
+  EXPECT_EQ(t.dropped_below_window(), 7u);
+  EXPECT_EQ(t.dropped(), 16u);
+}
+
+TEST(ConsumerConfig, WindowOption) {
+  using V = std::vector<std::string_view>;
+  EXPECT_FALSE(line::parse_consumer_args(V{}).window);
+  EXPECT_EQ(line::parse_consumer_args(V{"--window", "2000"}).window, 2000u);
+  EXPECT_THROW((void)line::parse_consumer_args(V{"--window", "0"}), std::invalid_argument);
+}
+
+TEST(WindowedRecorders, SplitBySeqAndNameTheReports) {
+  line::WindowedRecorders w{"ex", "warmed", 3};
+  for (std::uint64_t seq = 0; seq < 10; ++seq) w.record(seq, 1000 + static_cast<std::int64_t>(seq));
+  EXPECT_EQ(w.first().count(), 3);
+  EXPECT_EQ(w.steady().count(), 7);
+  EXPECT_EQ(w.first().variant(), "warmed-first-3");
+  EXPECT_EQ(w.steady().variant(), "warmed-steady");
+
+  ASSERT_EQ(::setenv("LOWLAT_PROFILE", LOWLAT_FIXTURES_DIR "/profile.json", 1), 0);
+  const auto dir = std::filesystem::temp_directory_path() / "lowlat-window-test";
+  std::filesystem::create_directories(dir);
+  const auto paths = w.write_reports(dir / "run.json", "n");
+  ASSERT_EQ(paths.size(), 2u);
+  EXPECT_EQ(paths[0].filename(), "run-first-3.json");
+  EXPECT_EQ(paths[1].filename(), "run-steady.json");
+  for (const auto& p : paths) EXPECT_TRUE(std::filesystem::exists(p)) << p;
+  std::filesystem::remove_all(dir);
+}
+
+namespace {
+
+void send_window_run(const line::ConsumerConfig& cfg, double seconds) {
+  line::Config sim;
+  sim.rate_hz = 1000;
+  sim.duration_s = seconds;
+  sim.dest = cfg.bind;
+  std::atomic<bool> sim_stop{false};
+  lowlat::measure::Recorder lateness{"line-simulator", "emit-lateness"};
+  (void)line::run(sim, sim_stop, lateness);
+}
+
+}  // namespace
+
+TEST(ConsumerWindow, TwoWindowsSumToTheTotal) {
+  auto cfg = test_config();
+  cfg.expect = 500;
+  cfg.window = 200;
+  std::atomic<bool> stop{false};
+  lowlat::measure::Recorder latency{"line-consumer-test", "windowed"};
+  line::WindowedRecorders windows{"line-consumer-test", "windowed", 200};
+  std::promise<void> up;
+  auto ready = up.get_future();
+  line::ConsumerResult result;
+  std::jthread consumer{[&] { result = line::consume(cfg, stop, latency, [&](int, int) { up.set_value(); }, &windows); }};
+  ASSERT_EQ(ready.wait_for(5s), std::future_status::ready);
+  send_window_run(cfg, 0.5);
+  consumer.join();
+
+  EXPECT_EQ(latency.count(), 500);
+  EXPECT_EQ(windows.first().count(), 200);
+  EXPECT_EQ(windows.steady().count(), 300);
+  EXPECT_EQ(windows.first().count() + windows.steady().count(), latency.count());
+  EXPECT_EQ(windows.first().dropped() + windows.steady().dropped(), latency.dropped());
+}
+
+// --- Completion owned by another thread -------------------------------------
+
+namespace {
+
+// The shape Ch7 uses: the receive thread only enqueues; a decide thread owns the
+// Completion and completes. drain() joins it, which publishes its recordings.
+class DecideThread {
+ public:
+  void operator()(const lowlat::line::v1::ParcelEvent& ev, line::Completion& done) {
+    if (!worker_.joinable()) worker_ = std::jthread{[this, &done](std::stop_token st) { decide(st, done); }};
+    {
+      const std::lock_guard lock{mutex_};
+      queue_.push_back({ev.seq(), ev.intended_emit_ns()});
+    }
+    wake_.notify_one();
+  }
+
+  void drain(line::Completion&) {
+    worker_.request_stop();
+    worker_.join();
+  }
+
+  [[nodiscard]] std::thread::id decide_thread() const { return decide_id_; }  // valid after drain
+
+ private:
+  struct Item {
+    std::uint64_t seq;
+    std::int64_t intended_ns;
+  };
+
+  void decide(std::stop_token st, line::Completion& done) {
+    decide_id_ = std::this_thread::get_id();
+    while (true) {
+      std::unique_lock lock{mutex_};
+      wake_.wait(lock, st, [this] { return !queue_.empty(); });
+      if (queue_.empty()) return;  // stop requested and nothing left
+      const Item item = queue_.front();
+      queue_.pop_front();
+      lock.unlock();
+      done.complete(item.seq, item.intended_ns, line::monotonic_ns());
+    }
+  }
+
+  std::mutex mutex_;
+  std::condition_variable_any wake_;
+  std::deque<Item> queue_;
+  std::thread::id decide_id_;
+  std::jthread worker_;  // last: stopped and joined before the rest is destroyed
+};
+
+static_assert(line::ParcelHandler<DecideThread>);
+
+}  // namespace
+
+TEST(ConsumerOwnership, CompletionOnASecondThreadRecordsEveryReceivedParcel) {
+  auto cfg = test_config();
+  cfg.expect = 400;
+  cfg.window = 100;
+  std::atomic<bool> stop{false};
+  lowlat::measure::Recorder latency{"line-consumer-test", "decide"};
+  line::WindowedRecorders windows{"line-consumer-test", "decide", 100};
+  DecideThread handler;
+  std::promise<void> up;
+  auto ready = up.get_future();
+  line::ConsumerResult result;
+  std::thread::id receive_thread;
+  std::jthread consumer{[&] {
+    receive_thread = std::this_thread::get_id();
+    result = line::consume_with(cfg, stop, latency, handler, [&](int, int) { up.set_value(); }, &windows);
+  }};
+  ASSERT_EQ(ready.wait_for(5s), std::future_status::ready);
+  send_window_run(cfg, 0.4);
+  consumer.join();
+
+  EXPECT_NE(handler.decide_thread(), receive_thread);
+  EXPECT_NE(handler.decide_thread(), std::thread::id{});
+  EXPECT_EQ(result.received, 400u);
+  EXPECT_EQ(result.completed, result.received);  // every parcel received was completed, on the other thread
+  EXPECT_EQ(latency.count(), static_cast<std::int64_t>(result.received));
+  EXPECT_EQ(windows.first().count() + windows.steady().count(), latency.count());
+  EXPECT_EQ(windows.first().count(), 100);
   EXPECT_LE(result.first_done_ns, result.last_done_ns);
 }
