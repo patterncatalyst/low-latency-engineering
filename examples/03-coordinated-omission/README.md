@@ -119,9 +119,9 @@ the three runs, in all three languages:
 | Quantity | Range (p99 unless noted) |
 |---|---|
 | `intended-time`, stall | 100,401,151 to 101,580,799 ns |
-| `closed-loop-corrected`, stall | 98,107,391 to 99,221,503 ns |
-| `receipt-time`, stall | 4,711 to 57,087 ns |
-| `closed-loop-naive`, stall | 675 to 19,231 ns |
-| `intended-time-control` | 181,503 to 419,839 ns |
-| `closed-loop-corrected-control` = `closed-loop-naive-control` | 757 to 18,895 ns (identical per language) |
-| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 41 to 45 ns |
+| `closed-loop-corrected`, stall | 98,172,927 to 99,287,039 ns |
+| `receipt-time`, stall | 5,495 to 54,143 ns |
+| `closed-loop-naive`, stall | 972 to 19,711 ns |
+| `intended-time-control` | 177,023 to 347,391 ns |
+| `closed-loop-corrected-control` = `closed-loop-naive-control` | 940 to 19,855 ns (identical per language) |
+| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 44 to 46 ns |

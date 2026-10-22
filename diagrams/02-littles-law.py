@@ -28,8 +28,8 @@ nodes = [
      "lines": ["W-bar (model input)", "done - intended emit"]},
     {"x": 300, "y": 358, "w": 340, "h": 66, "style": "ink",
      "lines": ["L sampled vs lambda x W-bar",
-               "C++  +0.4 to +0.8 %",
-               "Java +2.3 to +4.3 %"]},
+               "C++  +0.3 to +1.6 %",
+               "Java +2.4 to +3.6 %"]},
 ]
 
 edges = [

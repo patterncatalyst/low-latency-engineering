@@ -14,7 +14,7 @@ and committed but not asserted), `smoke` (ran once, not a measurement), `unverif
 
 | Run | What | Host profile |
 |---|---|---|
-| `r01-run1..3` | `verify.sh` of examples 00 to 04, run serially with the lab VM down; committed in `examples/NN-*/results/r01-run{1,2,3}/`. All of examples 00 to 04 re-measured 2026-10-22 at commit 77b71be, after the S27 idiom fixes | bare-metal host (XPS 15 9510, 16 logical CPUs), `virt: none`, governor `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), clocksource `tsc`, load average 0.21 to 1.66 at the start; "quiet host" |
+| `r01-run1..3` | `verify.sh` of examples 00 to 04, run serially with the lab VM down; committed in `examples/NN-*/results/r01-run{1,2,3}/`. All of examples 00 to 04 re-measured 2026-10-22 at commit c3e4cce, after the S27 validation fixes | bare-metal host (XPS 15 9510, 16 logical CPUs), `virt: none`, governor `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), clocksource `tsc`, load average 0.16 to 1.34 at the start; "quiet host" |
 | `r01-vm-smoke` | `ALLOW_BUSY=1 VM=1 examples/00-prerequisites/verify.sh`, 2026-10-21, `lowlat-target` running | host reports taken with the guest running (never quoted); guest output in `vm/`, labelled `vm` |
 
 Every `verify.log` in `r01-run1..3` ends with all criteria passing and contains no failed
@@ -37,8 +37,8 @@ never compared.
 |---|---|---|---|
 | 01.1 | Every report has `count = 10000`, `dropped = 0` and passes `check` (3 languages x 3 variants) | verified (r01-run1..3) | `results/r01-run*/*.json`, `verify.log` |
 | 01.2 | per-parcel and batch-32 throughput differ by less than 1 % | verified (r01-run1..3) | `throughput_mhz` in each report's `notes` |
-| 01.3 | batch-32 p50 >= 10x per-parcel p50 | verified (r01-run1..3) | batch-32 p50 15.2 to 15.5 ms against per-parcel 0.08 to 0.18 ms |
-| 01.4 | bimodal p99 >= 20x its own p50 | verified (r01-run1..3) | `verify.log`; margin is thin by design (1 % slow parcels sit on the p99 boundary); the narrowest margin of the suite (C++ run 2, p99 21.7x its own p50 against the 20x bound) |
+| 01.3 | batch-32 p50 >= 10x per-parcel p50 | verified (r01-run1..3) | batch-32 p50 15.1 to 15.5 ms against per-parcel 0.095 to 0.19 ms |
+| 01.4 | bimodal p99 >= 20x its own p50 | verified (r01-run1..3) | `verify.log`; margin is thin by design (1 % slow parcels sit on the p99 boundary); the narrowest margin of the suite (Python run 2, p99 28.1x its own p50 against the 20x bound) |
 | 01.5 | bimodal p50 < 1/4 of the same run's measured `slow_path_us` | verified (r01-run1..3) | replaced the cross-run p50 check (bimodal p50 < 2x per-parcel p50) after it failed once in the earlier S19 runs: commit 1811055, `r01-run2/verify.log`, C++ got 158335 ns, needed < 147838 ns (user decision 2026-10-21) |
 
 ## Example 02: Little's Law and Amdahl's Law
@@ -46,40 +46,40 @@ never compared.
 | # | Claim | Status | Evidence |
 |---|---|---|---|
 | 02.1 | C++ and Java: `count = 10000`, `dropped = 0` | verified (r01-run1..3) | `cpp-littles.json`, `java-littles.json` |
-| 02.2 | C++: sampled L within 5 % of lambda x W-bar | verified (r01-run1..3) | error +0.44 to +0.83 % |
-| 02.3 | Java: sampled L within 5 % of lambda x W-bar | verified (r01-run1..3) | error +2.34 to +4.33 % (largest in run 2) |
-| 02.4 | C++ speedup at N = 4 within 15 % of the Amdahl prediction | verified (r01-run1..3) | 2.82 to 2.84x against 3.11x (-8.7 to -9.3 %) |
-| 02.5 | Java speedup at N = 4 within 15 % of the Amdahl prediction | verified (r01-run1..3) | 2.73 to 2.75x against 3.08x (-10.9 to -11.4 %) |
-| 02.6 | Python threads speedup at N = 4 < 1.3x (GIL) | verified (r01-run1..3) | 0.63 to 0.80x, `build.gil_enabled = true` |
-| 02.7 | Python processes speedup at N = 4 > 2x | verified (r01-run1..3) | 2.88 to 2.93x |
+| 02.2 | C++: sampled L within 5 % of lambda x W-bar | verified (r01-run1..3) | error +0.31 to +1.58 % |
+| 02.3 | Java: sampled L within 5 % of lambda x W-bar | verified (r01-run1..3) | error +2.41 to +3.57 % (largest in run 3) |
+| 02.4 | C++ speedup at N = 4 within 15 % of the Amdahl prediction | verified (r01-run1..3) | 2.83 to 2.84x against 3.11x (-8.7 to -8.9 %) |
+| 02.5 | Java speedup at N = 4 within 15 % of the Amdahl prediction | verified (r01-run1..3) | 2.74x against 3.08 to 3.09x (-11.0 to -11.1 %) |
+| 02.6 | Python threads speedup at N = 4 < 1.3x (GIL) | verified (r01-run1..3) | 0.48 to 0.52x, `build.gil_enabled = true` |
+| 02.7 | Python processes speedup at N = 4 > 2x | verified (r01-run1..3) | 2.93 to 3.01x |
 | 02.8 | Unit tests (C++ model, Java JUnit, Python pytest) pass | verified (r01-run1..3) | `verify.log` |
-| 02.9 | `--sync free` (no barriers) beats the Amdahl prediction | observed, not asserted | 3.53 to 3.60x C++, 3.53 to 3.55x Java against 3.09 to 3.11x predicted |
-| 02.10 | Effective GHz recorded from `perf stat` | observed, not asserted | C++ 4.30 to 4.32, Java 4.32 to 4.34, Python 3.92 to 4.03 |
+| 02.9 | `--sync free` (no barriers) beats the Amdahl prediction | observed, not asserted | 3.59 to 3.60x C++, 3.51 to 3.57x Java against 3.09 to 3.11x predicted |
+| 02.10 | Effective GHz recorded from `perf stat` | observed, not asserted | C++ 4.33 to 4.35, Java 4.35 to 4.36, Python 3.74 to 3.93 |
 
 ## Example 03: coordinated omission
 
 | # | Claim | Status | Evidence |
 |---|---|---|---|
 | 03.1 | `intended-time` p99 >= 50 ms in C++, Java, Python | verified (r01-run1..3) | 100.4 to 101.6 ms |
-| 03.2 | `receipt-time` p99 < 1 ms | verified (r01-run1..3) | 4.7 to 57.1 us |
-| 03.3 | `closed-loop-corrected` p99 within 2x of `intended-time` p99 | verified (r01-run1..3) | 98.1 to 99.2 ms |
-| 03.4 | `closed-loop-naive` p99 < 1 ms | verified (r01-run1..3) | 0.7 to 19.2 us |
-| 03.5 | Control: `intended-time-control` p99 < 1 ms | verified (r01-run1..3) | 182 to 420 us (the simulator's send lateness and the loopback hop) |
+| 03.2 | `receipt-time` p99 < 1 ms | verified (r01-run1..3) | 5.5 to 54.1 us |
+| 03.3 | `closed-loop-corrected` p99 within 2x of `intended-time` p99 | verified (r01-run1..3) | 98.2 to 99.3 ms |
+| 03.4 | `closed-loop-naive` p99 < 1 ms | verified (r01-run1..3) | 1.0 to 19.7 us |
+| 03.5 | Control: `intended-time-control` p99 < 1 ms | verified (r01-run1..3) | 177 to 347 us (the simulator's send lateness and the loopback hop) |
 | 03.6 | Control: `closed-loop-corrected-control` within 2x of `closed-loop-naive-control` | verified (r01-run1..3) | identical p99 per language and run |
 | 03.7 | All reports pass `lowlat-report check` (schema, decode, recompute with the writing language's rank convention) | verified (r01-run1..3) | `verify.log`; Java ceil vs C/Python half-up documented in `examples/common/MEASUREMENT.md` |
-| 03.8 | Clock read cost recorded per language | observed, not asserted | p50 12 to 13 ns (C++), 12 to 13 ns (Java), 41 to 45 ns (Python) |
+| 03.8 | Clock read cost recorded per language | observed, not asserted | p50 12 to 13 ns (C++), 12 to 13 ns (Java), 44 to 46 ns (Python) |
 
 ## Example 04: benchmark harnesses
 
 | # | Claim | Status | Evidence |
 |---|---|---|---|
 | 04.1 | The check digit agrees across the C++, Java and Python tests | verified (r01-run1..3) | `verify.log` |
-| 04.2 | C++: eliminated median >= 10x lower than guarded | verified (r01-run1..3) | 472 to 478x (divisor floored at 0.01 ns: a lower bound) |
-| 04.3 | Java: eliminated p50 >= 10x lower than guarded | verified (r01-run1..3) | 3,200 to 3,300x (floored) |
+| 04.2 | C++: eliminated median >= 10x lower than guarded | verified (r01-run1..3) | 472 to 473x (divisor floored at 0.01 ns: a lower bound) |
+| 04.3 | Java: eliminated p50 >= 10x lower than guarded | verified (r01-run1..3) | 3,200x (floored) |
 | 04.4 | JMH console and JSON include p0.99 and p0.999 | verified (r01-run1..3) | `jmh.console.txt`, `jmh.json` |
 | 04.5 | pyperf JSON holds >= 20 values from >= 3 worker processes | verified (r01-run1..3) | 24 values, 6 processes; 64 outer loops x 1,024 inner loops per value |
 | 04.6 | The six converted reports validate with the profile embedded | verified (r01-run1..3) | `report-*.json` |
-| 04.7 | pyperf warm-up values are close to measured values for this function | observed, not asserted | first warm-up 1,887 to 1,922 ns, median measured 1,961 to 2,014 ns |
+| 04.7 | pyperf warm-up values are close to measured values for this function | observed, not asserted | first warm-up 1,890 to 1,902 ns, median measured 1,961 to 1,974 ns |
 
 ## Lab claims (S12 to S14)
 
@@ -99,4 +99,4 @@ never compared.
 | Iteration | Change |
 |---|---|
 | r01 | All of examples 00 to 04 verified on `r01-run1..3`; lab claims from S12 to S14; this page written in S26. Ch1 criterion 5 replaced (in-run check). |
-| r01.x S27 | Idiom fixes (S27) applied to the example code; all of examples 00 to 04 re-measured on the bare-metal host with the VM down (`r01-run1..3`, commit 77b71be) and every quoted number in the chapters, READMEs, figures and this page moved to the new runs. Check-prereqs now reports 26 PASS, 1 WARN, 0 FAIL after the libvirt NAT check was replaced by passt and libvirt-ssh-proxy checks. |
+| r01.x S27 | Idiom fixes (S27) applied to the example code; all of examples 00 to 04 re-measured on the bare-metal host with the VM down (`r01-run1..3`, commit c3e4cce, after the S27 validation fixes) and every quoted number in the chapters, READMEs, figures and this page moved to the new runs. Check-prereqs now reports 26 PASS, 1 WARN, 0 FAIL after the libvirt NAT check was replaced by passt and libvirt-ssh-proxy checks. |

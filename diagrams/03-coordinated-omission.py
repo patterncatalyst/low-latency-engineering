@@ -25,9 +25,9 @@ nodes = [
     {"x": 290, "y": 140, "w": 250, "h": 56, "style": "accent",
      "lines": ["intended-time", "clock starts at belt schedule"]},
     {"x": 630, "y": 72, "w": 220, "h": 56, "style": "ink",
-     "lines": ["p99 4.7-8.2 us", "C++: stall hidden"]},
+     "lines": ["p99 5.5-8.8 us", "C++: stall hidden"]},
     {"x": 630, "y": 140, "w": 220, "h": 56, "style": "ink",
-     "lines": ["p99 100.4-100.6 ms", "C++; Java 101.5-101.6 ms"]},
+     "lines": ["p99 100.4-100.7 ms", "C++; Java 100.9-101.6 ms"]},
 
     {"x": 40, "y": 288, "w": 150, "h": 56, "style": "user",
      "lines": ["Client", "waits for each reply"]},
@@ -36,9 +36,9 @@ nodes = [
     {"x": 290, "y": 322, "w": 250, "h": 56, "style": "accent",
      "lines": ["closed-loop corrected", "back-fills ~199 missed"]},
     {"x": 630, "y": 254, "w": 220, "h": 56, "style": "ink",
-     "lines": ["p99 0.7-1.0 us", "C++; Java 6.5-6.8 us"]},
+     "lines": ["p99 1.0 us", "C++; Java 6.8 us"]},
     {"x": 630, "y": 322, "w": 220, "h": 56, "style": "ink",
-     "lines": ["p99 98.1-98.2 ms", "C++; Java 99.2 ms"]},
+     "lines": ["p99 98.2 ms", "C++; Java 99.2-99.3 ms"]},
 ]
 
 edges = [

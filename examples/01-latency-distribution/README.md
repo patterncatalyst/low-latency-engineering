@@ -11,13 +11,13 @@ they process the same number of parcels per second. The batch variant holds
 parcels until 32 have arrived and then handles them together, the
 "throughput-friendly" design. Each parcel's latency is `done - intended_emit`,
 so a parcel that arrives first waits for 31 more (31 ms at 1 kHz) before it is
-handled. Throughput is equal; p50 is 15.2 to 15.5 ms instead of 0.08 to 0.18 ms (r01-run1..3).
+handled. Throughput is equal; p50 is 15.1 to 15.5 ms instead of 0.095 to 0.19 ms (r01-run1..3).
 
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
 a scanner no-read) takes a slow re-lookup path of about 2 ms. The median does
 not move. p99 jumps by an order of magnitude, because the slow parcel and the
-parcels queued behind it all land in the tail: in r01-run1..3, 2.3 to 6.0 % of
-parcels took 1 ms or more, and p99 was 2,094,079 to 6,737,919 ns. A single summary number
+parcels queued behind it all land in the tail: in r01-run1..3, 3.0 to 5.1 % of
+parcels took 1 ms or more, and p99 was 2,910,207 to 6,049,791 ns. A single summary number
 describes neither group.
 
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
@@ -115,14 +115,14 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
    duration (`slow_path_us` in `notes`): the median stays in the fast mode. An
    earlier version compared it with the `per-parcel` run's p50 and failed in one
    quiet-host run (commit `1811055`), because on an untuned host the median itself moves between
-   runs (C++ per-parcel p50 114, 94 and 153 us across r01-run1..3). Comparing within one run removes that dependence.
+   runs (Python per-parcel p50 116, 186 and 108 us across r01-run1..3). Comparing within one run removes that dependence.
 
 All reports must also have `count = 10000`, `dropped = 0`, and pass
 `lowlat-report check`.
 
 Criterion 3 depends on the 1 % boundary: exactly 100 of 10,000 parcels are slow,
 so p99 sits where the slow parcels and the parcels queued behind them meet
-(2.1 to 6.7 ms in r01-run1..3). The ratio therefore also depends on how small the
+(2.9 to 6.0 ms in r01-run1..3). The ratio therefore also depends on how small the
 median is.
 On a loaded host the median grows and the margin shrinks.
 
@@ -142,12 +142,12 @@ three runs, in nanoseconds:
 
 | Variant | p50 | p99 |
 |---|---|---|
-| per-parcel (all languages) | 83,903 to 182,911 | 175,103 to 350,975 |
-| batch-32 (all languages) | 15,171,583 to 15,466,495 | 31,129,599 to 31,211,519 |
-| bimodal-1pct (all languages) | 77,247 to 218,879 | 2,094,079 to 6,737,919 |
+| per-parcel (all languages) | 95,103 to 185,599 | 177,535 to 485,887 |
+| batch-32 (all languages) | 15,097,855 to 15,499,263 | 31,080,447 to 31,260,671 |
+| bimodal-1pct (all languages) | 88,511 to 185,727 | 2,910,207 to 6,049,791 |
 
-The per-parcel median itself moves between runs on this untuned host (C++ 113,535,
-93,695 and 153,471 ns across runs 1 to 3), which is why no criterion compares
+The per-parcel median itself moves between runs on this untuned host (Python 116,159,
+185,599 and 107,839 ns across runs 1 to 3), which is why no criterion compares
 medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU

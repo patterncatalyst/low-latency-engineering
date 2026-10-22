@@ -20,8 +20,8 @@ bands = [
 nodes = []
 edges = []
 for lang, cy, guard, stat, big in (
-        ("C++", 95, "DoNotOptimize(result)", "median 4.73-4.78 ns", "at least 472x lower"),
-        ("Java", 285, "Blackhole.consume(result)", "p50 32-33 ns", "at least 3,200x lower")):
+        ("C++", 95, "DoNotOptimize(result)", "median 4.73 ns", "at least 472x lower"),
+        ("Java", 285, "Blackhole.consume(result)", "p50 32 ns", "at least 3,200x lower")):
     nodes += [
         {"x": 35, "y": cy - 25, "w": 60, "h": 50, "style": "user", "lines": [lang]},
         {"x": 120, "y": cy - 28, "w": 160, "h": 56, "style": "sub", "lines": ["guarded", guard]},
