@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patterncatalyst.github.io/low-latency-engineering/contracts/latency-report.schema.json",
+  "title": "Latency report (lowlat-report/1)",
+  "description": "One report per run of one example variant. Latencies are integer nanoseconds, summarised by percentiles and a cross-decodable HdrHistogram; a latency mean is deliberately impossible (percentiles forbids extra properties). The optional 'model' object is the ONLY place a time-average may appear, as a labelled input to Little's Law / Amdahl's Law model checks (Ch2); it is never a latency result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "example", "language", "variant", "unit", "count", "dropped", "percentiles", "hdr_histogram", "build", "profile"],
+  "properties": {
+    "schema": { "const": "lowlat-report/1", "description": "Schema identifier and major version." },
+    "example": { "type": "string", "minLength": 1, "description": "Example name, e.g. 'ch01-baseline'." },
+    "language": { "enum": ["cpp", "python", "java"], "description": "Implementation language of the measured program." },
+    "variant": { "type": "string", "minLength": 1, "description": "Variant within the example, e.g. 'naive' or 'preallocated'." },
+    "unit": { "const": "ns", "description": "Unit of every latency value in this report." },
+    "count": { "type": "integer", "minimum": 0, "description": "Number of latency samples recorded in the histogram." },
+    "dropped": { "type": "integer", "minimum": 0, "description": "Parcels lost, counted as gaps in the sequence numbers." },
+    "percentiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p50", "p90", "p99", "p99_9", "max"],
+      "description": "Latency percentiles in ns, measured from intended emit time. No other keys are allowed, so no mean can be added.",
+      "properties": {
+        "p50": { "type": "integer", "minimum": 0 },
+        "p90": { "type": "integer", "minimum": 0 },
+        "p99": { "type": "integer", "minimum": 0 },
+        "p99_9": { "type": "integer", "minimum": 0 },
+        "max": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "hdr_histogram": { "type": "string", "minLength": 1, "description": "HdrHistogram in the compressed V2 form, base64 encoded; decodable by the C, Java and Python implementations." },
+    "build": {
+      "type": "object",
+      "required": ["compiler", "gil_enabled"],
+      "description": "How the measured program was built and run.",
+      "properties": {
+        "compiler": { "type": "string", "minLength": 1, "description": "Compiler or runtime name and version, e.g. 'g++ 16.1.1', 'CPython 3.14.8', 'OpenJDK 25'." },
+        "flags": { "type": "string", "description": "Build flags or runtime options, when relevant." },
+        "gil_enabled": { "type": ["boolean", "null"], "description": "Python only: whether the GIL is enabled (false on a free-threaded build). null for C++ and Java." }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["schema"],
+      "description": "Machine profile captured by scripts/profile.sh. That script owns the shape; only the schema identifier is checked here.",
+      "properties": {
+        "schema": { "const": "lowlat-profile/1" }
+      }
+    },
+    "model": {
+      "type": "object",
+      "description": "Optional modelling inputs for Little's Law / Amdahl's Law checks (Ch2). The only place a time-average (for example a mean residence time W) may appear. Free-form.",
+      "additionalProperties": true
+    },
+    "notes": { "type": "string", "description": "Free-text remarks about the run." }
+  }
+}

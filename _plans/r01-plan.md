@@ -1,0 +1,163 @@
+---
+title: "r01 plan: foundations first"
+render_with_liquid: false
+description: "Relay plan for r01: line simulator, measurement kits, profile capture, contracts, VM lab, Ch0–4. Step status is kept current so a fresh session can resume."
+---
+
+Planned by Opus on 2026-10-21. Status column is updated as steps land.
+
+## Approach
+
+- **Line simulator:** one reference simulator in C++23 (`examples/common/line-simulator/`).
+  Open-loop schedule: intended emit time of parcel *i* is `t0 + i/rate`, slept to with
+  `clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME)` so it never drifts. One protobuf
+  `Parcel` per UDP datagram to 127.0.0.1 (`seq`, `intended_emit_ns`, `actual_emit_ns`,
+  encoder tick from intended time × belt speed, seeded barcode/weight/dims). Consumers in
+  C++/Python/Java compute `done_ns − intended_emit_ns`, so coordinated omission cannot
+  hide. UDP has no backpressure: the sender never waits, like the belt; slowness shows as
+  queueing or `gaps`. The simulator reports its own emit lateness.
+  Rejected: a library per language (three schedulers drift); TCP (flow control
+  reintroduces CO); Unix stream (framing; no public delimited API in Python protobuf);
+  shared-memory ring (Part 3/6 material).
+- **Measurement kits:** `examples/common/measure/{cpp,python,java}` on HdrHistogram's own
+  APIs (`hdr_record_corrected_value`; `Recorder`, `recordValueWithExpectedInterval`,
+  `copyCorrectedForCoordinatedOmission`; Python `record_corrected_value`). ns units,
+  1 ns–1 h, 3 significant digits. One JSON report per run against
+  `contracts/measurement/latency-report.schema.json`: example, language, variant, count,
+  gaps, p50/p90/p99/p99_9/max (no mean; extra fields forbidden), `hdr` (compressed base64,
+  cross-decodable), `build`, `profile` (embedded from `scripts/profile.sh`). A Python CLI
+  `lowlat-report` validates, tabulates and re-decodes every `hdr` (cross-language check).
+  JSON via Jackson / nlohmann/json / stdlib.
+- **Builds:** CMake superproject + presets with FetchContent at pinned tags (HdrHistogram_c,
+  Google Benchmark, GoogleTest, nlohmann/json); protobuf + abseil built once by
+  `scripts/deps/build-protobuf.sh` into `~/.cache/lowlat/prefix`, found by
+  `find_package(Protobuf CONFIG)` with `protobuf_generate`. Maven aggregator; JMH archetype
+  layout with shaded `benchmarks.jar`; `io.github.ascopes:protobuf-maven-plugin`. uv
+  workspace for Python.
+- **VM lab in r01:** provision and smoke-test only (PREEMPT_RT kernel, `cyclictest`,
+  `ptp_kvm` + `phc2sys`), recorded as readiness, not claims. **All Ch1–4 numbers are host
+  bare-metal, labelled.**
+- **Container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs
+  (decided by the user 2026-10-21); minikube runs on the docker driver, per the lgtm
+  skills. Podman is not used. Ch13's in-guest container numbers use Docker Engine in the guest.
+  CRC uses neither: it runs its default CRI-O runtime with `crun`, left as shipped.
+
+## Steps
+
+Exec = sonnet executor unless MAIN. Host measurement runs are serial with the VM down.
+
+| id | What | Dep | Exec | Status |
+|---|---|---|---|---|
+| S0 | Survey latest stable + pin + licence for every dependency → `_plans/versions.md`; seed `reconciliation-plan.md` | – | sonnet | done |
+| S1 | Record decisions (Docker Engine, Q2–Q5) in CLAUDE.md, Part 0 blurb, outline | answers | MAIN | done |
+| S2 | Contracts: `contracts/proto/lowlat/line/v1/{parcel,divert}.proto`, measurement schema, README with design rationale | S0 | sonnet | done |
+| S3 | `scripts/profile.sh` (JSON / `--text`; CPU, SMT, governor, EPP, turbo, tuned, kernel, RT, isolation, affinity, clocksource, virt, loadavg, running libvirt domains; no sudo) | – | sonnet | done |
+| S4 | Build scaffolding: CMake + presets, protobuf prefix script, Maven aggregator, uv workspace | S0,S2 | sonnet | done |
+| S5–S7 | Measurement kits C++ / Python (+`lowlat-report`) / Java with correction unit tests | S4 | sonnet ×3 | done |
+| S8 | Reference line simulator + README | S4 | sonnet | done |
+| S9a–c | Consumers C++ / Python / Java | S5–S8 | sonnet ×3 | done |
+| S10 | `scripts/lab/` from lgtm-systems-programming (LAB_PREFIX=lowlat, 4 vCPU, 8 GB; RT/PTP/tuned packages; refuses non-`lowlat-*`) | S0 | sonnet | done |
+| S11 | `scripts/check-prereqs.sh` (PASS/WARN/FAIL; warns on system protoc 3.19) | S0 | sonnet | done |
+| S12 | Provision `lowlat-target`, snapshot `lab-ready` | S10 | MAIN | done (passt networking + ssh over vsock; no host firewall change) |
+| S13 | PREEMPT_RT probe in guest → fallback per Q3; cyclictest + ptp_kvm/phc2sys smoke; snapshot `lab-ready-rt` | S12 | MAIN | done (install-rt-kernel.sh; PREEMPT_RT running, ptp_kvm + phc2sys locked, Docker up; snapshot lab-ready-rt) |
+| S14 | `examples/00-prerequisites/verify.sh` + README (VM=1 runs lab smoke) | S9,S11 | sonnet | done (VM=1 path not yet run) |
+| S15 | `examples/01-latency-distribution` (per-parcel vs batch-32; 1 % slow re-read path) | S9 | sonnet | done |
+| S16 | `examples/02-littles-amdahl` (in-flight ≈ λ·W; Amdahl with serial lock; Python threads vs multiprocessing; effective GHz) | S9 | sonnet | done |
+| S17 | `examples/03-coordinated-omission` (A naive / B corrected / C open-loop; 200 ms stall; clock read cost; clocksource) | S9 | sonnet | done (control criterion replaced per user) |
+| S18 | `examples/04-benchmark-harnesses` (GS1 check digit: Google Benchmark, JMH SampleTime + Blackhole, pyperf) | S5–S7 | sonnet | done |
+| S19 | Measurement runs: each verify.sh 3×, serial, VM down; results committed | S14–S18 | MAIN | done 2026-10-21: 14/15 exit 0; 01 run2 failed a cross-run check, since replaced and re-evaluated (see follow-ups); 201/201 reports pass `check` |
+| S20 | ≥2 figures per chapter 0–4, wired into `_data/diagrams.yml` | S14–S18 | sonnet | done 2026-10-21: 11 figures (`_plans/r01-figures.md`), Opus-validated |
+| S21–S25 | Ch0–Ch4 prose with codetabs, quoting only S19 results | S19,S20 | sonnet ×5 | done 2026-10-22: Opus-validated (`_plans/r01-chapters.md`) |
+| S26 | Wiring: examples table, outline links, plan status, reconciliation, `validate.py`, `wordcount.sh`, CI build job for kits | S21–25 | sonnet | done 2026-10-22: `examples.html` + 5 `_example_pages`, outline links, example READMEs from r01-run1..3, `examples/pom.xml` builds all modules (`build_java` now `-pl -am`), `scripts/{wordcount.sh,validate.py}`, `.github/workflows/ci.yml` (unrun until the PR), `reconciliation-plan.md`; Jekyll build in `ruby:4.0` renders all pages |
+| S27 | Idiomatic + voice review, Jekyll build, Opus validation, package, PR | S26 | MAIN | done |
+
+## Acceptance criteria
+
+- **S0** protobuf/protoc pinned to the latest stable upstream release; every dependency has an exact version, licence, survey date; holds have a reason; no ranges or `LATEST`.
+- **S2** both `.proto` compile with the pinned protoc; the schema accepts a sample and rejects one containing `mean`.
+- **S3** `profile.sh | python3 -m json.tool` exits 0; host shows `virt: none`, `clocksource: tsc`, non-empty governor; guest shows `kvm`.
+- **S5–S7** 1,000 × 1 ms + one 1 s value with 1 ms expected interval → corrected count exactly 2,000 and p99 > 1 ms; uncorrected p99 ≈ 1 ms; a Java-encoded `hdr` decoded in Python gives the same p99 to 3 significant digits.
+- **S8** 1 kHz × 10 s emits 10,000 datagrams; emit-lateness p99 reported.
+- **S9** each consumer at 1 kHz × 10 s: `count=10000`, `gaps=0`, no negative latency.
+- **S11** exits 0 on this host; FAILs with an install hint when a tool is removed from PATH.
+- **S12/S13** `PREEMPT_RT` in `uname -v` and `CONFIG_PREEMPT_RT=y` in the running kernel's config (revised: mainline RT has no `/sys/kernel/realtime`); `cyclictest -l 10000` exits 0 with output stored, labelled `vm`; `/dev/ptp0` exists; snapshot `lab-ready-rt` listed; `ebpf-*` and `systems-*` domains unchanged.
+- **S14** verify.sh exits 0; reports for all three languages with profile; cross-decode matches.
+- **S15** throughput equal within 1 %; batched p50 ≥ 10× per-parcel p50; with slow path p99/p50 ≥ 10.
+- **S16** C++ and Java speedup at 4 workers within ±15 % of the Amdahl prediction from the measured serial fraction; Python threads < 1.3×, multiprocessing > 2×; effective GHz printed.
+- **S17** in all three languages corrected (B) p99 ≥ 10× naive (A) p99 and B within 2× of C (one 200 ms stall at 1 kHz × 10 s back-fills ≈ 2 %; B p99 ≈ 100 ms vs A < 1 ms).
+- **S18** the dead-code-eliminated variant ≥ 5× faster than the Blackhole/`DoNotOptimize` variant in C++ and Java; every harness emits percentiles.
+- **S19** every result file validates and carries `profile.virt` and `loadavg`.
+- **S20** `_data/diagrams.yml` ≥ 2 entries per chapter 0–4; every SVG and `.excalidraw` exists and parses; specs regenerate them unchanged.
+- **S21–25** 1,900–2,500 words each; `part:` matches; full spine; every number in prose appears in a committed result file; behavioural verification footer.
+- **S27** Jekyll build passes in `ruby:4.0`; `validate.py` exits 0; voice and idiom scanners clean after triage.
+
+## Risks
+
+| Risk | Detection |
+|---|---|
+| Fedora 44 has no `kernel-rt` (host repoquery found none) | S13 probe; `uname -v` + running config; Q3 fallback |
+| Clock-domain mismatch across processes | S9 negative-latency assertion; actual − intended check |
+| Frequency scaling / turbo noise (`powersave` / `balanced`) | profile block; 3× runs; ratio-based criteria; `perf stat` effective GHz |
+| Concurrent load (agents, VM) during host runs | S19 serial on MAIN; profile records loadavg + running domains; verify.sh refuses if a `lowlat-*` VM runs |
+| `hdrhistogram` (PyPI) unmaintained or no cp314 wheel | S0 survey; S6 cross-decode test; record a hold or pick a maintained build |
+| System protoc 3.19 shadows the pinned one | check-prereqs warning; `protobuf::protoc` target; Python VersionError |
+| UDP drops at high rates (`rmem_max`) | `gaps` counter; `gaps=0` criterion |
+| Python recording cost / JIT warm-up distort results | measured explicitly in Ch3/Ch4; warm-up reported, not dropped |
+| Free-threaded `3.14t` picked by accident | `build.gil_enabled` field |
+| Simulator wake-up jitter on a non-RT kernel | emit-lateness histogram on every run |
+
+## Decisions
+
+- **No changes to the development host** (user, 2026-10-21): no kernel, boot-param,
+  sysctl, tuned, governor, hugepage or package changes and no host sudo. The host runs
+  only unprivileged user-space programs and Docker containers; every system-level change
+  happens in `lowlat-target`. The RT kernel is compiled in a throwaway `fedora:44`
+  container and installed only in the guest. The optional host-tuning commands from the
+  planner (`tuned-adm`, `perf_event_paranoid`, `pyperf system tune`) are dropped.
+
+- **Q1 container engine:** Docker Engine + Compose plugin everywhere, host and lab VMs; no Podman; CRC keeps its default CRI-O + `crun` (user, 2026-10-21).
+- **Q2 means in Little's / Amdahl's laws:** decided (default): a time-average only as a labelled modelling input in Ch2; a latency is never reported as a mean.
+- **Q3 RT kernel if Fedora 44 has no package:** decided (default): rebuild Fedora's kernel SRPM with a versioned PREEMPT_RT fragment in a `fedora:44` container (alternatives: CentOS Stream 10 guest with `kernel-rt`; defer RT to r05).
+- **Q4 host tuning for Ch1–4 runs:** decided (default): run as-is (`balanced`/`powersave`), labelled; tuning is taught in Part 5.
+
+- **Q5 wire format:** decided (default): protobuf in r01; SBE contrast in Part 6.
+- **protobuf/protoc version:** latest stable upstream, surveyed in S0, pinned exactly, built from source into `~/.cache/lowlat/prefix`; Fedora's protoc 3.19.6 is never used (user, 2026-10-21).
+- **Plan approved by the user 2026-10-21.**
+
+## Revision (planner pass 2, after the Docker decision)
+
+Folded in from the planner's second pass; these refine the steps above.
+
+- **S1** also removes every "Podman" mention from CLAUDE.md, `_parts/00-prerequisites.md`,
+  the outline's Ch0 line and the iteration plan's "host (Podman)" column. Criterion:
+  `grep -rni podman CLAUDE.md _parts _docs _plans` returns only intentional "not used" lines.
+- **S3 host facts already checked:** clocksource `tsc`, governor `powersave`, tuned
+  `balanced`, kernel `PREEMPT_DYNAMIC` (no `CONFIG_PREEMPT_RT`), Fedora `protoc` 3.19.6.
+  Fedora repos carry `realtime-tests` (cyclictest), `realtime-setup`, `linuxptp`,
+  `tuned-profiles-cpu-partitioning`; no `kernel-rt`, no `tuned-profiles-realtime`.
+- **S13 (coordinated omission) sharper variants and criteria:** receipt-time vs
+  intended-time vs closed-loop + HdrHistogram correction. At 1 kHz × 10 s with one 200 ms
+  stall: intended-time p99 ≥ 50 ms; receipt-time p99 < 1 ms; corrected closed-loop p99
+  within 2× of intended-time. No-stall control: all three p99 within 2× of each other.
+- **S12 Little's Law:** measured L within 5 % of λ·W̄ (the mean lives in a separate
+  `model` block, per Q2), plus the Amdahl criteria above.
+- **Wire format:** protobuf for the simulator in r01 (SBE contrast comes in Part 6).
+  One protobuf release across C++, Java and Python, because Python rejects generated
+  code newer than its runtime.
+- Lab cloud-init adds `ninja-build`, `maven`, `uv`; `deploy-to-vm.sh` comes from the
+  linux-systems-programming repo.
+
+## Follow-ups (found during execution)
+
+| Item | Found in | Plan |
+|---|---|---|
+| C++ consumer's ready line is block-buffered when stdout is a file, so scripts can't wait on it (S14 polls the socket with `ss` instead) | S14 | flush after the ready line in all consumers; keep the socket poll |
+| S15 bimodal criterion "p99 ≥ 20× p50" is fragile: with exactly 1 % slow parcels, p99 sits on the boundary between the slow mode and the parcels queued behind it (margin ~10 % on a busy host) | S15 | decide with S19 quiet-host data: keep, assert on p99.9, or make the slow fraction 2 %; the user approved the criterion, so any change goes back to them |
+| S17 control criterion "all three p99 within 2× with no stall" cannot hold: intended-time includes the simulator's send lateness + loopback (~180–225 µs) that receipt-time and closed-loop cannot see (1–28 µs) | S17 | decided by the user 2026-10-21 and applied: control asserts intended-time p99 < 1 ms and closed-loop-corrected within 2× of closed-loop-naive (correction adds nothing when nothing is late) |
+| HdrHistogram ports disagree on percentile rank (Java ceil vs C/Python half-up); one bucket apart in sparse tails | S17 | fixed: `lowlat-report check` recomputes with the writing language's convention; regression fixture `java-sparse-tail.json`; documented in MEASUREMENT.md; Ch3 sidebar material |
+| Java kit `Report` has no `model` component; 02's `ModelReport` rewrites the JSON to add it (C++/Python kits take it directly) | S16 | add an optional `model` to the Java kit's `writeReport` for parity |
+| S16 Amdahl: a free-running per-parcel lock beats the formula (lock sections overlap other workers' parallel work); the example uses barriers so the serial part is strictly serial, and keeps `--sync free` as an unasserted observation | S16 | Ch2 prose material; phased N=4 sits 10–12 % under prediction against ±15 %, watch it in S19 |
+| Examples 01 copy the minimal receive loop because the common consumers have no handler hook | S15 | consider a handler hook in the common consumers in a later iteration; the copy is justified in the README |
+| S13 smoke cyclictest (60 s, unpinned vCPUs, untuned): RT guest kernel did not beat stock under hackbench (worst 1277 µs vs 170 µs on one vCPU). Smoke only, not publishable | S13 | RT chapter: measure with libvirt vCPU pinning (<cputune>, domain config, no host change), isolcpus/nohz_full in the guest, and many runs; state that a guest RT kernel cannot remove host-side preemption |
+| S19: 01 run2 failed `bimodal p50 < 2× per-parcel p50` (cpp: 158.3 µs vs 73.9 µs). The per-parcel p50 itself is modal across runs on this `powersave`/`balanced` host (cpp 157/74/80 µs; python bimodal 185/190/95 µs), and the check compares two separate consumer runs. The flagged `p99 ≥ 20× p50` held in all 9 (smallest margin 1.3×). The check is not one of the approved S15 criteria (an executor addition) | S19 | decided by the user 2026-10-21 and applied: replaced with an in-run check (bimodal p50 < 1/4 of the same run's `slow_path_us`); `RECHECK=results/<run-id> ./verify.sh` re-evaluated r01-run1..3 without rerunning: all criteria pass (`recheck.log`), run2's original failure stays in its `verify.log`. The run-to-run median shift is Ch1 material |
+| Lab two-guest networking: passt guests cannot reach each other | S12 | design when the PTP/network chapters need it (candidate: QEMU UDP-socket link on host loopback, unverified); never a host firewall change |

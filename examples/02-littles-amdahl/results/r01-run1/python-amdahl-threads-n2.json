@@ -1,0 +1,116 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "02-littles-amdahl",
+  "language": "python",
+  "variant": "amdahl-threads-n2",
+  "unit": "ns",
+  "count": 30,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 181010431,
+    "p90": 183238655,
+    "p99": 187695103,
+    "p99_9": 187695103,
+    "max": 187695103
+  },
+  "hdr_histogram": "HISTFAAAAEJ4nJNpmSzMwMCgxgABzFCakYGB2c1gxwIG+w8QgcdLmJi0mbhZWJkEWZiYmBjZ2JiZGJkYmUCIBcJismUCAESIBsg=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T15:31:07Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2106674,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 0.17,
+      "load5": 0.42,
+      "load15": 0.59,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "30 repetitions after 3 warm-up rounds; wall time of the whole batch (pool already started); repetitions interleaved across N; sync=phased",
+  "model": {
+    "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
+    "workers": 2,
+    "executor": "ThreadPoolExecutor",
+    "serial_fraction_modelling_input": 0.09989512111716789,
+    "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
+    "predicted_speedup": 1.818355188237031,
+    "measured_speedup_p50": 1.007241129656224,
+    "relative_error": -0.4460701978512872,
+    "wall_p50_ns_n1": 182321151,
+    "wall_p50_ns": 181010431,
+    "batch_parcels": 1200,
+    "sync": "phased: barriers between the parallel and serial parts of a wave",
+    "parcels_per_worker_per_wave": 60,
+    "lock": "threading.Lock",
+    "effective_ghz": 3.74
+  }
+}

@@ -16,3 +16,12 @@ dist/
 .vscode/
 .bundle-cache/
 diagrams/__pycache__/
+
+# examples: build outputs and generated code
+examples/build/
+examples/common/proto-py/src/lowlat/
+.pytest_cache/
+.ruff_cache/
+
+# verify.sh scratch output; published runs go to results/<run-id>/
+examples/*/results/latest/

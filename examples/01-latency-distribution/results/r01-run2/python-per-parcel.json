@@ -1,0 +1,99 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "01-latency-distribution",
+  "language": "python",
+  "variant": "per-parcel",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 185599,
+    "p90": 329983,
+    "p99": 360191,
+    "p99_9": 377855,
+    "max": 444671
+  },
+  "hdr_histogram": "HISTFAAABUR4nDVWXYokRRCejIqOjokJY9PctCjKpi2aZmiGZRiWYRn2YQQREW/hi69ewht4Ab2Fl/AGXkB88cV3+SJ7m2GqsrIyfr/vizr88uvbm5vbv27Gb7pey83N9N3TH7/dfP3vePDPT/Rnod8L/VfoZ7qjSQpRYd3hyiIyUWHiQjt+S8SfM9HE2FBxJTcN9TA2Y2YWUiLacRHYsFvc4gF9RrzHwT19QYVgeaI93fGX9BW/Idozw42Q0ORMWO2FmUmId8QkbEQkRFxEcl24iAoLkxRS1oxSipIKq6hMxEJEzCoEQwyvRQm7CLMYDBUXCbem0dxcgkRZVYSMXbX21i7bcdue5tNxnrfWqi/hqhoqRVk4iJVNCiLdkTGLkpoyqjBRkaKW3rFmYqIyAkH8WDIj6wl7ypPQRJNe32GEmScybDzMxwqzhF8hLVhcq541lXEaPvMGFghOWGgS2BairGw1IlZjJdFRJrwrzMLIjF0CC1U3i2YhHrVqtYqrsCk7s3gJMmHJTmT/1cVMA/9ExaoDHb2ZmoSh8EHAjgqq4oWk4Djhit3KJGgqFWETIy4qqmiXwTqQhxyKTogWiU/5LkpSUEDJXgsDpRNgODwUwGCSkrUomeqwLSwq6VJQW+AW+KJsKk+kWT60KKteEGdWmaRKGLuFKO7UdGlxiFi1OxubmmkVYmcvEpXZAQ6y9A0IfGpQYSSWvMq2ojLJBWbGhhRWZK3j1dGobLgkcBLaiBZnEW2SGBXIbBNmMlEyaNQauWRt4FN4xFAyhIlLgjBrK6jAiEmRCHAIyxAHNCIj3kuxpPSAOAjBYkhPSzr8FAMCHTy+OmSWksQnZ7rFHd3SDm0bZOHCk/KeoBVSEr5T+qcroanQ3dATxTkWvdaAaYe7HY2sr13LRoJDqqPOgBOxlSyiM6cECfhhivChf3jbxMR6qALRSmas7t7Uq9h1XyMszNTFq5p3d4mtm/copjWq1ggNa9GOc116BAzM0d28aW9zbS0OXJeosSyt9ZiXJdoc89LmeV4f5/N8fLrUx/v788Pp4XR+PN8/nx8+Xrbnd+8/vHz/+vxyef7hm6ePLy8fXz88fvv44fnD8+vp/fPr6eH14TRvp8vxYd0e3t8/3j/Nj5ft3bvL6el02t5v58f1fp639fhwulwO27ps69aPbT2uvW+HbTlFa4flcJ7PvS/R/Xjsc7T5cOh9bnO0Oq/ea4Qbcqrm0WvMzat7dW14Gs2Va3hzM+7WpJlENas1PEjdusnSRaVaaGVRUzdx8xrWNnM1UQ/V1dwa2mDhomrMc5iglhxh1dypuoZC1Iw02BCCoY0eXJQxrmDaSBhKLu4ChcOBqOrsIfDPOtoqVVygZGbQOFEHC6F9KaLQJginQ0VUKQRjxdwwFAz0BMywhXhy5OggA7NqEeEAwoQMGIXoY0JJ6kFJdk9J8sQ0dIwl4T6wW0BqxiTDvE3dLEka9uRykpdT86echTTJlAxJNdjLlcnEd9fpArbccaqopEyCojl2Ul0hv2Vwd88llWga0STZcYKGPDPtsAGhTqpmZDS58lB3cF9TBHXoALjHKfFpishLCgcEmg0eJNVs6AxGppJqypgRpdDk1HMZo0WZjaSY7KDELklkx4gSo4KmiTs4TuSVlDGgoroBgN5qW6vFEs66zmarL1ut56X25dCt9mVe2mpL7TVWi1j7snhv4Vu9j669+7ou5hpLt8WhC14rL2JhIq5VqrGKmElRPJDKOWmBCnx3DAHDlwxfx3U2B/OgjEKisfjj3YADNJuGgOfH1o/0N9Eb+h8Y3Fvm",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T15:35:38Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2111189,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 1.29,
+      "load5": 0.77,
+      "load15": 0.69,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "throughput_mhz=1000123; done_span_ns=9998764619; reordered=0; single thread, GIL"
+}

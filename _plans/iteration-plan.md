@@ -13,7 +13,10 @@ tagged `rNN.x`.
 
 - **r00 (`release/r00`):** repo, CLAUDE.md, site scaffold, Parts, outline, Figure 0.1,
   this plan. No chapter prose.
-- Everything below is planned, not started.
+- **r01 (`release/r01`): complete, in review.** Steps S0 to S27 done (simulator, kits, lab, Ch0 to Ch4,
+  examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
+  Claim log: `_plans/reconciliation-plan.md`.
+- Everything after r01 is planned, not started.
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
@@ -28,20 +31,20 @@ chapter of its own.
 | Part | Chapters | Lab |
 |---|---|---|
 | 0 Prerequisites & the Lab | 0 | host + VM |
-| 1 Understanding & Measuring Latency | 1–4 | host (Podman) |
+| 1 Understanding & Measuring Latency | 1–4 | host (bare metal) |
 | 2 The Managed-Runtime Question | 5–8 | host |
 | 3 Accelerating Code | 9–10 | host |
 | 4 Threading & I/O Models | 11–13 | host; Ch13 host + VM |
 | 5 The OS, Isolation & the Network Edge | 14–18 | **VM mandatory** |
-| 6 Transports by Latency Budget | 19–25 | host (Podman); DDS/Aeron latency runs in VM |
+| 6 Transports by Latency Budget | 19–25 | host (Docker Engine); DDS/Aeron latency runs in VM |
 | 7 Observing Without Wrecking It | 26–27 | host + LGTM |
 | 8 Failure: Detect, Withstand, Act, Observe | 28–31 | host |
-| 9 Capstone | 32 | VM |
+| 9 The Whole Line | 32 | VM |
 | Appendices | A–F | — |
 
 ## Foundations first (r01)
 
-Nothing in Part 1 can be written honestly until these exist, so r01 is mostly
+Nothing in Part 1 can be written accurately until these exist, so r01 is mostly
 infrastructure plus the chapters that explain it:
 
 1. **Line simulator** (`examples/common/line-simulator/`): emits parcels at a
@@ -63,7 +66,7 @@ infrastructure plus the chapters that explain it:
 | Iter | Delivers | Notes |
 |---|---|---|
 | r00 | Scaffold, outline, plan, Figure 0.1 | `release/r00` |
-| r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0 |
+| r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete; in review (PR to main)** |
 | r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline |
 | r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language |
 | r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers |
@@ -72,7 +75,7 @@ infrastructure plus the chapters that explain it:
 | r07 | Part 6b (Ch23–25): FIX/Artio, WebSockets + Kafka, Modbus + D-Bus | Appendix D (PTP) with Ch21 follow-up |
 | r08 | Part 7 (Ch26–27): low-overhead observability | LGTM via lgtm-docker-stack |
 | r09 | Part 8 (Ch28–31): failure model | Appendix A |
-| r10 | Part 9 (Ch32): capstone | VM; command latency held under data flood |
+| r10 | Part 9 (Ch32): the whole line | VM; command latency held under data flood |
 | r11 | Appendices C, E, F; coverage-map audit; manuscript build | Appendix C proves coverage of every reference topic |
 | r12 | Companion decks (100, 101 ×2, 201, appendix decks) | decks last, mined from finished content |
 

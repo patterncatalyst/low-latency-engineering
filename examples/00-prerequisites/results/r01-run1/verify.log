@@ -1,0 +1,79 @@
+━━ host prerequisites
+Host prerequisites (protoc pin 36.2, prefix /home/rsedor/.cache/lowlat/prefix)
+[PASS] OS                           Fedora Linux 44 (Workstation Edition)
+[PASS] clang++ -std=c++23           22.1.8, <print> compiles and runs
+[PASS] g++ -std=c++23               16.2.1, <print> compiles and runs
+[PASS] cmake >= 4.3                 4.3.0
+[PASS] ninja                        /home/rsedor/.local/bin/ninja
+[PASS] java 25                      25.0.3
+[PASS] mvn runs on java 25          Java 25.0.3
+[PASS] python3.14                   3.14.8
+[PASS] uv                           /home/rsedor/.local/bin/uv
+[PASS] pinned protoc 36.2           /home/rsedor/.cache/lowlat/prefix/bin/protoc (36.2)
+[WARN] system protoc                /usr/bin/protoc is 3.19.6, must not be used
+       hint: the build ignores PATH protoc and uses /home/rsedor/.cache/lowlat/prefix/bin/protoc; do not install protobuf-compiler
+[PASS] docker context               default
+[PASS] docker engine                server 29.9.1
+[PASS] docker compose               5.6.0
+[PASS] /dev/kvm                     accessible
+[PASS] group libvirt                rsedor is a member
+[PASS] group kvm                    rsedor is a member
+[PASS] libvirt (qemu:///system)     reachable
+[PASS] passt                        /usr/bin/passt
+[PASS] libvirt-ssh-proxy            /usr/libexec/libvirt-ssh-proxy
+[PASS] virt-install                 /usr/bin/virt-install
+[PASS] qemu-img                     /usr/bin/qemu-img
+[PASS] cloud-localds                /usr/bin/cloud-localds
+[PASS] perf                         /usr/bin/perf
+[PASS] jq                           /usr/bin/jq
+[PASS] rsync                        /usr/bin/rsync
+[PASS] ssh key                      /home/rsedor/.ssh/id_ed25519.pub
+
+Summary: 26 PASS, 1 WARN, 0 FAIL
+✓ check-prereqs.sh exited 0
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+━━ building C++ (release preset) line-simulator line-consumer
+[1/21] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[2/18] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[3/16] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[4/12] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[5/10] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
+[6/8] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/line-consumer.dir/CXX.dd
+━━ building Java module common/line-simulator/consumers/java (tests skipped)
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+━━ syncing the Python workspace
+━━ cpp consumer on 127.0.0.1:47200
+line-consumer: listening on 127.0.0.1:47200, SO_RCVBUF requested 4194304 B
+SO_RCVBUF granted: 8388608 B
+received 5000, dropped 0, reordered 0, malformed 0 (stopped: expect)
+00-prerequisites         cpp  baseline         count=     5000 dropped=     0 p50=    155.5us p90=    166.0us p99=    180.6us p99.9=    202.6us max=     347.1us
+report: /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run1/cpp.json
+✓ cpp consumer exited 0
+━━ python consumer on 127.0.0.1:47201
+line-consumer-py: bound 127.0.0.1:47201, SO_RCVBUF requested 4194304 granted 8388608 (Linux reports double the set value; capped by net.core.rmem_max)
+line-consumer-py: received 5000 dropped 0 reordered 0
+00-prerequisites  python  baseline  5000  0  174.2  191.6  208.3  293.6  413.7
+✓ python consumer exited 0
+━━ java consumer on 127.0.0.1:47202
+listening on /127.0.0.1:47202, SO_RCVBUF requested 4194304, granted 4194304
+stopped: EXPECTED
+00-prerequisites           java   baseline                 5000        0      185.5      208.6      300.3     9822.2    14647.3
+received=5000 dropped=0 reordered=0 malformed=0 lanes=[625, 625, 625, 625, 625, 625, 625, 625] rcvbuf_granted=4194304; JIT not warmed: the first thousands of parcels ran interpreted/C1 and are included
+report: /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run1/java.json
+✓ java consumer exited 0
+━━ checking the three reports
+ok   /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run1/cpp.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run1/python.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/00-prerequisites/results/r01-run1/java.json
+example           language  variant   count  dropped    p50    p90    p99   p99.9      max
+00-prerequisites  cpp       baseline   5000        0  155.5  166.0  180.6   202.6    347.1
+00-prerequisites  python    baseline   5000        0  174.2  191.6  208.3   293.6    413.7
+00-prerequisites  java      baseline   5000        0  185.5  208.6  300.3  9822.2  14647.3
+✓ cpp: count=5000 dropped=0 p99=180607 ns
+✓ python: count=5000 dropped=0 p99=208255 ns
+✓ java: count=5000 dropped=0 p99=300287 ns
+✓ 00-prerequisites: all three languages received 5000/5000 with 0 dropped
+profile: bare-metal-host virt=none governor=powersave tuned=balanced

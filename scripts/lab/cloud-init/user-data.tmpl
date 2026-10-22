@@ -1,0 +1,87 @@
+#cloud-config
+# cloud-init user-data template for the lowlat latency-engineering guest.
+# The hostname and ssh-key placeholders below are filled by provision-vm.sh.
+hostname: __HOSTNAME__
+fqdn: __HOSTNAME__.lab
+
+users:
+  - name: fedora
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: [wheel]            # docker group is added in runcmd, after docker-ce creates it
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - __SSH_PUBKEY__
+
+# Grow the root filesystem to fill the overlay disk.
+growpart:
+  mode: auto
+  devices: ['/']
+
+# Docker's official Fedora repository (docker-ce); Docker Engine is the only container runtime.
+yum_repos:
+  docker-ce-stable:
+    name: Docker CE Stable
+    baseurl: https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/fedora/gpg
+
+package_update: true
+
+# --- Toolset -----------------------------------------------------------------
+packages:
+  # real-time + time sync
+  - realtime-tests            # cyclictest, hackbench; Fedora's "rt-tests" is an unrelated package
+  - linuxptp
+  - chrony
+  - tuned
+  - tuned-profiles-cpu-partitioning
+  - realtime-setup
+  # profiling
+  - kernel-tools          # turbostat / cpupower
+  - perf
+  - numactl
+  # toolchains
+  - gcc-c++
+  - clang
+  - cmake
+  - ninja-build
+  - zlib-ng-compat-devel  # HdrHistogram_c's report encoding
+  - java-25-openjdk-devel
+  - maven
+  - python3
+  - uv
+  # utilities
+  - jq
+  - git
+  - rsync
+  # Docker Engine. iptables-nft explicitly: docker-ce accepts "iptables-nft or
+  # iptables", and dnf otherwise resolves iptables-legacy, which needs
+  # CONFIG_NETFILTER_XTABLES_LEGACY; Fedora's realtime kernel config leaves it out.
+  - iptables-nft
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+
+# The KVM PTP clock (/dev/ptp0, "KVM virtual PTP") is the guest's view of the host
+# clock for phc2sys. The module is not autoloaded, so load it on every boot.
+write_files:
+  - path: /etc/modules-load.d/ptp_kvm.conf
+    content: |
+      ptp_kvm
+
+runcmd:
+  - [ bash, -c, "modprobe ptp_kvm" ]
+  - [ bash, -c, "usermod -aG docker fedora" ]
+  - [ bash, -c, "alternatives --set iptables /usr/bin/iptables-nft" ]
+  - [ bash, -c, "systemctl enable --now docker" ]
+  - [ bash, -c, "systemctl enable --now chronyd" ]
+  # Readiness marker: written last, only once the key tools are present and the
+  # Docker daemon actually answers (a binary on PATH is not a running engine).
+  - [ bash, -c, "if command -v cyclictest >/dev/null && command -v java >/dev/null && command -v tuned-adm >/dev/null && test -c /dev/ptp0 && docker info >/dev/null 2>&1; then echo 'lab-ready: ok'; else echo 'lab-ready: INCOMPLETE'; fi >/var/log/lab-ready 2>&1" ]
+  - [ bash, -c, "uname -r >> /var/log/lab-ready" ]
+  - [ bash, -c, "touch /var/lib/cloud/lab-provisioned" ]
+
+final_message: "lab guest __HOSTNAME__ is up after $UPTIME seconds"

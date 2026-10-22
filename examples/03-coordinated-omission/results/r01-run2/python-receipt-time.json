@@ -1,0 +1,99 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "03-coordinated-omission",
+  "language": "python",
+  "variant": "receipt-time",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 18879,
+    "p90": 20287,
+    "p99": 26015,
+    "p99_9": 32991,
+    "max": 200278015
+  },
+  "hdr_histogram": "HISTFAAABOJ4nDVWPahcVRB+8525s/Nm55097+bmZrN5L+8lhuAPhqQxYBOwsFBBRAWxMAYsVCQEKwsbJQTRFNFgERB5ilgJhiBqbZEilVhYCaKlIFhpKzN7c1n27j13zjkz33zfd3bn6s1DGxt6a2N9lelOGxvlybM/Hmxc+Gc98MchELbwHuESLuJj4NMOvxd8ATzLYGxCCCzCJmDhGAILiamimolVYRHp1UDMDIiQkgqZFCGJAQIBIBYpcZsBx/A8juAHwk3BUXxLWOBvwot4BIQ9XMI5HMEeHkLBHgoKjoKwiaexjRkKFkABxYIAwMwSWzCbcAUjs2BkrmyilVQgrtUjwKiaoomwqsMIVisrjFWU1VXc3Cl+C4kqReEKVmFTgqqwS16sylo5LrBHmDAsEqqsLFW9F4ZIzw1cm3rAZNXcTV2sat+8nWrLcdn64z4MO6uh99aPfd1vfavaqi170aF3MeVmoqpiYMvqIFA146yTCZENIGxZfsBBiY4Qg2WNCVUGCnOBCji7JcVYkZGEWIaFFApAeVooX6GDRASXfFyDT4iAoEdyIiaDmUxLkAAS62YUVUHAGZjBWRQO5YhgkIhCOV5FADOpSLbPWTk/KpWsFyhbhWrgDxFxNmNXdlc1VGlVvVpvI9fm7Np6r0MvrssqqtXr0ND3o3kzq65jNRlNtVEdxF3cVJVFTCx40JpLQhpdDQpIFTEoNLtaQAKJRoMRmRqBtMZrQBpBGaLszU3UWqbrXD2KrMbBgsGiIOOmNhibujp7FR/c1EQG81jYtVd3k6qiGigg8oSINmWNxZ1VxGEa+gSinRoQZdLBCIpMLEgTBQW80TJiTG2P7gUdLASTjyCNRq6FlDRgCukGGQq4ZPncTUQLamHGBLKIMIv55T4FiRWUeZEglbTegjX2LCmtCKC0luBMJBNWwRFOgOQUIU66RxZswcMiTCJd7CElKl7zsqTnhFeF4tYUJgOJkkval1pIJR0iWRrWBLZQhISYNGAoDKWJ7cwBHXk8a2SQFSTgnNaT1U4GGKRWLrk6ulBTLNEBUVNqdy0cMMrUgRjumHmWxsazKLubXG4CHwVb3KUb7iLuhyNihm1sYhs4h/MgnMAMc94G4QLOY4ZjvBVRmPMC8asDF/XQkO0MzZe+qm2109uyr0NTV9be2KrK4FKHvi51rFUy54SKOQQ3DMP+2SfOvPzC5cvX6Dod0Nf0FV2n23SXbtMB/US/0B26TVfpgK7Ru29fee2VK6++/tJbH9I7N+gD+py+oS/pT/qe/qJf6V/6je7RPfqZ7tFdukOf0Sd0g958n5556vH9M6dPHh/raM09PCn6CfFQ0tCvxtrGvm/jso3cWl2NvQ/jYOJxMPXjamwP7+zvnDx56vhj44PDqXF1ehiGMHtvjqR2SVwxMSQQFsvGJCGT8FwwSw0Ql0CS1943Nd4yYGJueBuhhLvy1Ge5LyuEkbmYxLkQtpFOruuJ8b0ZKxeejlcNI4RJ+nQ4fsmcOHcLgw6VFI6jlJIk4ODFmrmFJ05RHN7BsC722E4ObueEOQ5hjq0Y4WMZ0GGGBzDPmMPYQ4etNUCyton5xMUFFvlvIZHbjJ3nmGEXBZ3s5vsZ5pjnipHSZsIV913McDRInDtQEvgEJ+r8EeE5dHgD5/AoFri1wH/fEf4HPi5ovA==",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T15:38:40Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2113941,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 1.27,
+      "load5": 0.87,
+      "load15": 0.73,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; single thread, GIL"
+}

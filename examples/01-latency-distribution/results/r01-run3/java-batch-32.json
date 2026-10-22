@@ -1,0 +1,96 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "01-latency-distribution",
+  "language" : "java",
+  "variant" : "batch-32",
+  "unit" : "ns",
+  "count" : 10000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 15294463,
+    "p90" : 28196863,
+    "p99" : 31129599,
+    "p99_9" : 31277055,
+    "max" : 32702463
+  },
+  "hdr_histogram" : "HISTFAAAA/54nHVUO2wdRRTdOTs7O2+8b96+9Xr9eGw2juM44DgJyCDxE0GCWBQhMR9FFBQk0BG5oAAEyBKQDiS+FQUgIRQpFQVB1DRAhRSlQBQ0SBQgoUgkUkrOnV0TP/PyPrM7c849d+5npj7/8WwUpWei9hN3T8XX9bu++yI6drVduL6JfxK8oxDhL4VjiDHALO4H5nEICaeYIRQh1kAfkYnACd85hofWXNKxlvUwl6fmI+ZIc4KRJWhghCN0bYQkmBbdno6ETRCJDn6gk2DZfmnIXcg+iMfcU2QRgLCAlG+zYQwK6AWtXhCfkf1H6Ose5jAkLdZ7keoZrqwxzlTA2xlpH3gDT2NNJGgfvj2u05p83MvXfZzMU/64BNXHHtzWmp+iAD3gTjL387mfywdJGdI5ZQdhStkhDnMXh7iDQdhwj0BMmzVQuk/hJESU4DCeAH+syBweJHGIl3AAlzQuKbyl8H6C31NccFSVQCTnLIr15fJifU9dVlVeOpN5Z5hqy8wayYvuB29MPPkRsys50qkJSTOpqLT55rogrGBMw9jQhg6YyYT/tqCpTqUR+BcTycK7inHtwZcKH0pEnydMRkKXVuvqsRMPrC41ZWUyYykgdeVL1wrSKDYObSROjJFWYTDayI5s2xVp20Whlo8yHwOm/AdF9z+DMwmGrVXe9/DG6tJiUTmb0dqExnW68xOzYUzU+Qk9SBsNYzo/jDw0lvw6P3N0cAo/dX6GwQ/t7Mrjp+84Upcj76zEEfrUWtPqshKQgKTFjRCc1h5BXnozllL36OQAXuB4QTE2AtnSR+r5h1aKXAvLM2vWaMmRpoY23uisLduExkGc2akxelu9vL5cePefBmzQoLE1mdXOiAa2S713iogtX3t9faXKrRxyl0maXKthGaLEI1n7v4YE85VoSDL9ua2NlTH7jzzrtRi7SFRaDVFsNeSQMxY5uEPczfFJ9pt78Yo6WVudZ64wNit8VohPxj8ILm8y7bO/qmcaiyJzWWZd4f2tmOaRq+r0QmC6TDRvydRHbqizZOYZqc4VGWtidjBncbRjYumaOrfgO6bNfenZTNJk3bnYQa2vqc1ljyzvqIW306kw1Z/qzeUcrrDCJTVzHXUQjudNqi7+UFurBWu2TXWZCac9UOX+OSp3S/kb1s1CVTbjgseLZ4kJn+f5RPkLTuiFUdGMy0mguIKTthnndbMbuIyNqYC/jKfcVOBHPBeAupoAovx7nHV17ZvxaBLw32LTNaOirncB2dd4xTVV0ewG3EVsuZoB1rz3AiB3PQH7Kd5TnshoseRRCGd7G/oEH6h8OnQen6miLsvxQrULMjfURVVOQHI7tdjf6pttzDiEyzxgr+Jfj914Rw==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.3+9-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T15:41:41Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2116470,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.71,
+      "load5" : 0.68,
+      "load15" : 0.67,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0"
+    }
+  },
+  "notes" : "throughput_mhz=1003309; done_span_ns=9967016512; reordered=0; JIT not warmed: first parcels included; batch=32"
+}

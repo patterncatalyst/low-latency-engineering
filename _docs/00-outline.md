@@ -37,13 +37,13 @@ The arc is below. Chapters link as they ship; see the
 [roadmap]({{ '/plans/iteration-plan/' | relative_url }}) for which iteration delivers each.
 
 ## Part 0 — Prerequisites & the Lab
-- Ch0 · Setup: Fedora 44, the three toolchains, Podman, the KVM/libvirt VM lab, a PREEMPT_RT kernel, `linuxptp`, and the line simulator
+- Ch0 · [Setup: Fedora 44, the three toolchains, Docker Engine, the KVM/libvirt VM lab, a PREEMPT_RT kernel, `linuxptp`, and the line simulator]({{ '/docs/00-prerequisites/' | relative_url }})
 
 ## Part 1 — Understanding & Measuring Latency
-- Ch1 · Latency vs bandwidth; latency as a distribution
-- Ch2 · Modeling with Little's Law and Amdahl's Law
-- Ch3 · Measuring correctly: clocks, percentiles, coordinated omission, HdrHistogram
-- Ch4 · Benchmark harnesses: Google Benchmark, `pyperf`, JMH
+- Ch1 · [Latency vs bandwidth; latency as a distribution]({{ '/docs/01-latency-distribution/' | relative_url }})
+- Ch2 · [Modeling with Little's Law and Amdahl's Law]({{ '/docs/02-littles-amdahl/' | relative_url }})
+- Ch3 · [Measuring correctly: clocks, percentiles, coordinated omission, HdrHistogram]({{ '/docs/03-coordinated-omission/' | relative_url }})
+- Ch4 · [Benchmark harnesses: Google Benchmark, `pyperf`, JMH]({{ '/docs/04-benchmark-harnesses/' | relative_url }})
 
 ## Part 2 — The Managed-Runtime Question
 - Ch5 · What the JVM costs: allocation, escape analysis, JIT warmup vs AOT
@@ -86,7 +86,7 @@ The arc is below. Chapters link as they ship; see the
 - Ch30 · Withstand and act: restart, failover, redundant paths, graceful degradation
 - Ch31 · Observe: feeding every tier back into observability
 
-## Part 9 — Capstone
+## Part 9 — The Whole Line
 - Ch32 · A latency-tiered line end to end, holding command latency while the data path is flooded
 
 ## Appendices
