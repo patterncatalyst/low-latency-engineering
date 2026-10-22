@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
@@ -36,6 +37,7 @@ public final class Handoff {
     }
 
     public static void main(String[] args) throws Exception {
+        ChronicleAnalytics.disable();
         Settings settings;
         try {
             settings = Settings.parse(List.of(args));
@@ -128,9 +130,9 @@ public final class Handoff {
 
         LatencyRecorder endToEnd = receiver.recorder();
         endToEnd.printSummary();
-        endToEnd.writeReport(report, notes, null, receiver.runtime());
+        endToEnd.writeReport(report, notes, null, withOldGen(receiver.runtime(), result));
         out.println("report: " + report);
-        for (Path window : receiver.windows().writeReports(report, notes, receiver.windowRuntime())) {
+        for (Path window : receiver.windows().writeReports(report, notes, withOldGen(receiver.windowRuntime(), result))) {
             out.println("report: " + window);
         }
 
@@ -146,6 +148,13 @@ public final class Handoff {
         }
         diverter.latency().printSummary();
         write(diverter.latency(), sibling(report, "-divert"), notes, out);
+    }
+
+    /** Adds {@code gc.old_gen_used_bytes}, the old generation after a collection at the end of the run. */
+    @SuppressWarnings("unchecked") // RuntimeInfo.jvm() builds gc as a mutable Map<String, Object>
+    private static Map<String, Object> withOldGen(Map<String, Object> runtime, Result result) {
+        ((Map<String, Object>) runtime.get("gc")).put("old_gen_used_bytes", result.oldGenAfterGcBytes());
+        return runtime;
     }
 
     private static void writeSplit(SplitRecorder recorder, Path path, String notes, PrintStream out) {
@@ -180,8 +189,7 @@ public final class Handoff {
             notes.append("; manifest_entries=").append(settings.manifestEntries())
                     .append("; manifest_hits=").append(result.manifestHits());
         }
-        notes.append("; old_gen_bytes_after_gc=").append(result.oldGenAfterGcBytes())
-                .append("; old_gen_baseline_bytes=").append(result.oldGenBaselineBytes());
+        notes.append("; old_gen_baseline_bytes=").append(result.oldGenBaselineBytes());
         return notes.toString();
     }
 

@@ -247,6 +247,39 @@ task_ctx_switches() {
   awk '/^voluntary_ctxt_switches:/ {v = $2} /^nonvoluntary_ctxt_switches:/ {n = $2} END {print v, n}' "$f"
 }
 
+# task_io_faults PID TID: print "WRITE_SYSCALLS MINOR_FAULTS" for one thread, from
+# /proc/PID/task/TID/io (syscw: write-like system calls) and .../stat (field 10, minflt). Read
+# before and after a window and subtract. /proc/.../io is readable only by the thread's own user.
+#   read -r wr minflt < <(task_io_faults "$pid" "$tid")
+task_io_faults() {
+  local writes faults
+  writes=$(awk '/^syscw:/ {print $2}' "/proc/$1/task/$2/io") || die "no such thread: $1/$2"
+  faults=$(sed -E 's/^.*\) //' "/proc/$1/task/$2/stat" | awk '{print $8}') # fields after "(comm) ": state is 1
+  echo "$writes $faults"
+}
+
+# jmh_lock_wait MINUTES CONSOLE CMD...: run a JMH command (java ... -jar benchmarks.jar ...) with
+# its output in CONSOLE, retrying every 20 s for up to MINUTES while another JMH instance holds
+# the lock. JMH 1.37 takes ${java.io.tmpdir}/jmh.lock so that two benchmark runs never share the
+# CPUs; the lock is the point, so it is waited for rather than moved (a per-run lock file, by
+# -Djava.io.tmpdir, would let parallel runs perturb each other's numbers). The retry is around
+# the run, not a probe of the lock, so two waiters cannot both pass a check and then collide.
+# Returns CMD's status; any other failure ends the wait at once. Prints the tail of CONSOLE on failure.
+jmh_lock_wait() {
+  local minutes=$1 console=$2 attempt
+  shift 2
+  for ((attempt = 0; attempt < minutes * 3; attempt++)); do
+    if "$@" >"$console" 2>&1; then
+      return 0
+    fi
+    grep -q 'Unable to acquire the JMH lock' "$console" || break
+    echo "another JMH instance holds /tmp/jmh.lock; retrying in 20 s"
+    sleep 20
+  done
+  tail -30 "$console" >&2
+  return 1
+}
+
 # time_to_ready CMD...: launch CMD, wait for a line containing $READY_PATTERN (default "ready")
 # on its stdout/stderr, print the nanoseconds from launch to that line, then terminate CMD.
 # READY_TIMEOUT seconds (default 60) bounds the wait; the output is printed if CMD dies first

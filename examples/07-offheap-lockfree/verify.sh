@@ -86,15 +86,6 @@ wait_log_line() {
   die "no /$pattern/ line within $((tries / 50)) s"
 }
 
-# task_io_faults PID TID: print "WRITE_SYSCALLS MINOR_FAULTS" for one thread, from
-# /proc/PID/task/TID/io (syscw: write-like system calls) and .../stat (field 10, minflt).
-task_io_faults() {
-  local writes faults
-  writes=$(awk '/^syscw:/ {print $2}' "/proc/$1/task/$2/io") || die "no such thread: $1/$2"
-  faults=$(sed -E 's/^.*\) //' "/proc/$1/task/$2/stat" | awk '{print $8}') # fields after "(comm) ": state is 1
-  echo "$writes $faults"
-}
-
 # run_variant LANG VARIANT: one 10 kHz x 20 s run. Reports land in $OUT as LANG-VARIANT*.json.
 # The decide thread prints "decide-thread pid=P tid=T"; this script reads that thread's context
 # switches from /proc before the simulator starts and again at the "window-end" line, and adds
@@ -187,20 +178,9 @@ if [[ -z ${RECHECK:-} ]]; then
   done
 
   step "JMH -prof gc: bytes allocated per publish"
-  # JMH takes /tmp/jmh.lock so that two benchmark runs never share the CPUs; wait for the other
-  # one (up to 30 min).
-  jmh_done=0
-  for ((attempt = 0; attempt < 90; attempt++)); do
-    if java --enable-native-access=ALL-UNNAMED -jar "$JAR" PublishBenchmark -prof gc -rf json -rff "$OUT/jmh.json" \
-      >"$OUT/jmh.console.txt" 2>&1; then
-      jmh_done=1
-      break
-    fi
-    grep -q 'Unable to acquire the JMH lock' "$OUT/jmh.console.txt" || break
-    echo "another JMH instance holds /tmp/jmh.lock; retrying in 20 s"
-    sleep 20
-  done
-  ((jmh_done)) || { tail -30 "$OUT/jmh.console.txt" >&2; die "JMH failed"; }
+  jmh_lock_wait 30 "$OUT/jmh.console.txt" \
+    java --enable-native-access=ALL-UNNAMED -jar "$JAR" PublishBenchmark -prof gc -rf json -rff "$OUT/jmh.json" ||
+    die "JMH failed"
 fi
 
 step "checking reports"
@@ -216,7 +196,7 @@ ok "every run: count $COUNT, dropped 0, no overflow, every divert command receiv
 
 FAILURES=0
 bad() {
-  printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"
+  say_bad "$*"
   FAILURES=$((FAILURES + 1))
 }
 # expect_ge A B MESSAGE / expect_lt A B MESSAGE: like assert_ge and assert_lt, but a miss is
@@ -282,8 +262,8 @@ expect_ge "$(note_of "$OUT/java-write-per-parcel.json" decide_write_syscalls)" "
   "4: write-per-parcel makes at least one write system call per event"
 
 step "criteria 5: old generation after a full GC, 1,000,000-entry manifest"
-cmap_old=$(note_of "$OUT/java-chronicle-map-manifest.json" old_gen_bytes_after_gc)
-heap_old=$(note_of "$OUT/java-on-heap-manifest.json" old_gen_bytes_after_gc)
+cmap_old=$(jget "$OUT/java-chronicle-map-manifest.json" .runtime.gc.old_gen_used_bytes)
+heap_old=$(jget "$OUT/java-on-heap-manifest.json" .runtime.gc.old_gen_used_bytes)
 echo "  baseline (no manifest, before the run): $(note_of "$OUT/java-on-heap-manifest.json" old_gen_baseline_bytes) B"
 echo "  manifest lookup p50 / p99 in ns: chronicle-map $(jget "$OUT/java-chronicle-map-manifest-manifest-lookup.json" '"\(.percentiles.p50) / \(.percentiles.p99)"')," \
   "on-heap $(jget "$OUT/java-on-heap-manifest-manifest-lookup.json" '"\(.percentiles.p50) / \(.percentiles.p99)"')"

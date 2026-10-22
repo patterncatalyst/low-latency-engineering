@@ -87,7 +87,8 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
 - Optional `runtime` (additive in `lowlat-report/1`; reports without it stay valid): facts
   about the managed runtime and scheduler during the run. All members optional:
   - `gc`: `name` (string), `collectors` (array of strings), `heap_bytes` (integer),
-    `flags` (array of strings, e.g. `-XX:+UseZGC`)
+    `old_gen_used_bytes` (integer; old-generation bytes in use after a collection at the end of the run, written
+    by example 07), `flags` (array of strings, e.g. `-XX:+UseZGC`)
   - `alloc_bytes_per_parcel` (number)
   - `jit`: free-form counts such as `compilations` and `deoptimizations`, keyed by window
     (`{"first-1000": {...}, "steady": {...}}`)

@@ -16,6 +16,7 @@ parcel (`flat/parcel-v1`), and the measurement report every run produces.
 | `measurement/examples/invalid-mean.json` | The same report with a `mean` in `percentiles`; the schema must reject it. |
 | `measurement/examples/valid-runtime.json` | The same report with the optional `runtime` block (GC, `alloc_bytes_per_parcel`, JIT, AOT, context switches). |
 | `measurement/examples/invalid-runtime-mean.json` | A `runtime` block with `gc.pause_mean_ns`; the schema and `lowlat-report check` must reject it. |
+| `measurement/examples/invalid-runtime-old-gen.json` | A `runtime.gc.old_gen_used_bytes` of -1; the schema must reject a negative byte count. |
 | `measurement/examples/invalid-runtime-avg.json` | A `runtime` block with `gc.pause_avg_ns`; rejected like a mean. |
 | `measurement/examples/invalid-runtime-camel.json` | A `runtime.jit` window with `meanCompileNs`; rejected (camelCase). |
 | `proto/buf.yaml` | buf lint (STANDARD) and breaking-change (FILE) rules. |

@@ -65,6 +65,7 @@
             "name": { "type": "string", "minLength": 1, "description": "Collector name, e.g. 'ZGC' or 'G1'." },
             "collectors": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "GarbageCollectorMXBean names." },
             "heap_bytes": { "type": "integer", "minimum": 0, "description": "Configured or observed heap size in bytes." },
+            "old_gen_used_bytes": { "type": "integer", "minimum": 0, "description": "Old-generation bytes in use after a collection at the end of the run (what the collector must carry; off-heap state does not count)." },
             "flags": { "type": "array", "items": { "type": "string" }, "description": "GC-related JVM flags, e.g. '-XX:+UseZGC'." }
           }
         },

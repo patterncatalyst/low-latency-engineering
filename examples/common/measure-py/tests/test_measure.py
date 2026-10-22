@@ -142,6 +142,13 @@ def test_runtime_block_validates_and_checks(capsys: pytest.CaptureFixture[str]) 
     assert main(["check", str(EXAMPLES / "valid-runtime.json")]) == 0
 
 
+def test_runtime_old_gen_used_bytes_is_non_negative(capsys: pytest.CaptureFixture[str]) -> None:
+    valid = json.loads((EXAMPLES / "valid-runtime.json").read_text(encoding="utf-8"))
+    assert valid["runtime"]["gc"]["old_gen_used_bytes"] == 52428800
+    assert main(["check", str(EXAMPLES / "invalid-runtime-old-gen.json")]) == 1
+    assert "old_gen_used_bytes" in capsys.readouterr().err
+
+
 def test_runtime_block_rejects_mean(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["check", str(EXAMPLES / "invalid-runtime-mean.json")]) == 1
     assert "pause_mean_ns" in capsys.readouterr().err

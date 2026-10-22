@@ -96,18 +96,7 @@ fi
 
 # ---- 2 and 4. JMH: decode and table sweep (one run), plus the clock benchmarks ---------------
 step "JMH SampleTime with the gc profiler: DecodeBenchmark, TableBenchmark, ClockBenchmark (about 3 minutes)"
-# JMH takes /tmp/jmh.lock so that two benchmark runs never share the CPUs; wait for the other one (up to 30 min).
-jmh_done=0
-for ((attempt = 0; attempt < 90; attempt++)); do
-  if java -jar "$JAR" -rf json -rff "$OUT/jmh.json" -prof gc >"$OUT/jmh.console.txt" 2>&1; then
-    jmh_done=1
-    break
-  fi
-  grep -q 'Unable to acquire the JMH lock' "$OUT/jmh.console.txt" || break
-  echo "another JMH instance holds /tmp/jmh.lock; retrying in 20 s"
-  sleep 20
-done
-((jmh_done)) || { tail -30 "$OUT/jmh.console.txt" >&2; die "JMH failed"; }
+jmh_lock_wait 30 "$OUT/jmh.console.txt" java -jar "$JAR" -rf json -rff "$OUT/jmh.json" -prof gc || die "JMH failed"
 uvrun --package lowlat-flat flat-py jmh-to-report "$OUT/jmh.json" "$OUT/jmh" >/dev/null
 jmh_p50() { jget "$OUT/jmh/java-$1.json" .percentiles.p50; }
 jmh_alloc() { jget "$OUT/jmh/java-$1.json" '.runtime.alloc_bytes_per_parcel'; }
