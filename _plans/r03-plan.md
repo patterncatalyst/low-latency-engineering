@@ -178,9 +178,10 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | S11 | Ch10 prose | `_docs/10-lockfree-waitfree.md` | S9 | – | todo |
 | S12 | Wiring: `_example_pages/09`, `10`; outline links Ch9/Ch10; forward links in Ch5, Ch6, Ch7, Ch8, 07 README become links to the shipped chapters (`relative_url`), no number changes; reconciliation 09.x and 10.x plus runs rows; iteration-plan status | listed files, `_plans/reconciliation-plan.md` | S10, S11 | – | todo |
 | S13 | CI + `validate.py`: `java-flags` covers `results/r0[2-9]-*` and chapters 5–10; new checks: every report with `runtime.hw_counters` names a `source`, every pinned report has `runtime.placement.cpus`, no `cachegrind.out.*` or jcstress HTML tracked, `tools.perf`/`tools.valgrind` in profiles are major.minor; `--self-test` planted case for each; CI builds and unit-tests 09/10 (deterministic tests only: exactly-once, seqlock torn-read 0, litmus `seq-cst` 0 at a small trial count); ruff over the new packages | `scripts/validate.py`, `.github/workflows/ci.yml` | S4, S12 | CI | todo |
-| S14 | Idiom + voice review: `lgtm-idiomatic-review` on 09, 10 and kit diffs; `lgtm-professional-voice` on `_docs/09-10`, READMEs, `_plans/r03-*`; fix findings now | all r03 files | S13 | host (MAIN + executors) | todo |
+| S14 | Idiom + voice review: `lgtm-idiomatic-review` on 09, 10 and kit diffs; `lgtm-professional-voice` (pattern scan **and** the house-voice rubric: Geewax model, `scan.sh --stats`) on `_docs/09-10`, READMEs, `_plans/r03-*`; fix findings now | all r03 files | S13 | host (MAIN + executors) | todo |
+| S14b | House-voice pass over the shipped prose (user request 2026-10-23; fix now): Ch0–8 (`_docs/00-*`–`08-*`, incl. the outline), example READMEs 00–08, `_data/diagrams.yml` captions, site chrome (rule 14 sweep). Captions `Figure N.x — …` become `Figure N.x: …` in chapters and `_data/diagrams.yml`; contractions where the sentence allows; cadence and triads per rule 15; example-first openings. Prose only: no number, code block, command, identifier, recorded output or verification footer data changes, so no re-measure | `_docs/0[0-8]-*.md`, `examples/0[0-8]-*/README.md`, `_data/diagrams.yml`, site chrome | S13 | – (executors split per lgtm-professional-voice) | todo |
 | S15 | Re-measure: any S14 change to measured code or a `verify.sh` invalidates S8; re-run `r03-run1..3` and re-quote chapters, figures and reconciliation. Only where a "no regression" claim is made instead: committed interleaved A/B worded "no shift detected". Otherwise "no re-measure needed" with the diff stat | results, chapters, figures, reconciliation | S14 | host (MAIN) | todo |
-| S16 | Opus validation: every quoted number recomputed from committed files; §4 criteria; Jekyll in `ruby:4.0`; `validate.py` + `--self-test`; `wordcount.sh`; figures regenerate byte-identically; host-ids clean | – | S15 | host (MAIN) | todo |
+| S16 | (after S14b) Opus validation: every quoted number recomputed from committed files; §4 criteria; Jekyll in `ruby:4.0`; `validate.py` + `--self-test`; `wordcount.sh`; figures regenerate byte-identically; host-ids clean | – | S15 | host (MAIN) | todo |
 | S17 | Ship: PR `release/r03` -> main, `ci-ok` green, squash-merge (user OK), delete branch, tag `r03.x`, notes-only GitHub release; no tarball | – | S16 | GitHub (MAIN) | todo |
 
 ## 4. Acceptance criteria
@@ -214,10 +215,12 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
   - sub-2x margins stated;
   - `listings` and `codetabs` pass;
   - no trading domain;
-  - nothing ported from a reference.
+  - nothing ported from a reference;
+  - house voice from the first draft (lgtm-professional-voice "House voice", Geewax model): `scan.sh --tier ban` 0 and `scan.sh --stats` shows no em dash, no `stiff` flag (most negations and "it is" forms contracted) and no `uniform sentence length` flag; every `check triads` candidate read and either a real list or rewritten; sections open on a concrete thing in the line before the abstraction.
 - **S12:** examples page lists 00–10; reconciliation has one row per asserted and observed claim with run evidence; forward links resolve.
 - **S13:** `ci-ok` green on the PR; each new check fails on its planted case and passes on the tree.
-- **S14:** both scanners 0 ban-tier after triage; idiom findings fixed or the non-idiomatic construct justified in prose.
+- **S14:** both scanners 0 ban-tier after triage; idiom findings fixed or the non-idiomatic construct justified in prose; `scan.sh --stats` on r03 prose clean of em dashes and `stiff`/`uniform` flags, triad candidates triaged.
+- **S14b:** `scan.sh --tier ban` 0 on Ch0–8, READMEs 00–08 and `_data/diagrams.yml`; `scan.sh --stats` before/after table committed in Follow-ups with no em dash and no `stiff` flag left; `git diff` shows no change inside code blocks, inline code, commands, numbers or recorded output (a script compares the numbers in each changed paragraph before and after); `validate.py` (incl. diagram captions vs `_data/diagrams.yml`), Jekyll build and `wordcount.sh` still pass (each chapter stays 1,900–2,500 words).
 - **S15:** quoted numbers match the final committed runs; any A/B is committed and worded "no shift detected".
 - **S16:** every criterion above holds; Jekyll builds with 0 warnings.
 - **S17:** PR squash-merged, tag `r03.x`, notes-only release published, branch deleted.
