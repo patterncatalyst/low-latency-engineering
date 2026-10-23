@@ -1,0 +1,15 @@
+.s...s...                                                                [100%]
+=============================== warnings summary ===============================
+10-lockfree-waitfree/sync-py/tests/test_sync_lane.py::test_report_is_made_from_the_raw_file
+  /usr/lib64/python3.14/ctypes/_endian.py:33: DeprecationWarning: Due to '_pack_', the 'ExternalHeader' Structure will use memory layout compatible with MSVC (Windows). If this is intended, set _layout_ to 'ms'. The implicit default is deprecated and slated to become an error in Python 3.19.
+    super().__setattr__(attrname, value)
+
+10-lockfree-waitfree/sync-py/tests/test_sync_lane.py::test_report_is_made_from_the_raw_file
+  /usr/lib64/python3.14/ctypes/_endian.py:33: DeprecationWarning: Due to '_pack_', the 'PayloadHeader' Structure will use memory layout compatible with MSVC (Windows). If this is intended, set _layout_ to 'ms'. The implicit default is deprecated and slated to become an error in Python 3.19.
+    super().__setattr__(attrname, value)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] 10-lockfree-waitfree/sync-py/tests/test_sync_lane.py:27: set LOWLAT_EXPECT_FREE_THREADED=1 when running under python3.14t
+SKIPPED [1] 10-lockfree-waitfree/sync-py/tests/test_sync_lane.py:61: under the GIL a lost claim is rare and only observed
+7 passed, 2 skipped, 2 warnings in 0.12s

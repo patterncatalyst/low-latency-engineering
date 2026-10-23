@@ -1,0 +1,229 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "10-lockfree-waitfree",
+  "language": "python",
+  "variant": "lock",
+  "unit": "ns",
+  "count": 400000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 203,
+    "p90": 279,
+    "p99": 363,
+    "p99_9": 497,
+    "max": 20824063
+  },
+  "hdr_histogram": "HISTFAAABDt4nC1QXWhbZRju+3zfOTn5cs5JlqRJk3PSpOlfmh+6rW5Ot9rOMXHsxgsHouCFA/VC2PRChu6ijFCClK5oKWXEErtSSphl1FBlhFFKLaWboeiIIY46pUgpoYQRwiizSDLfm5f353l4nsdMfuNqaeF/trwo9n+nlhb2xtGfMi1D1ReLb0kxc5SUClo5+PS1p+/d/eDw8t1Lo8PP4g9Dy66CPilK8n1eYNNy0bqvp7wVIxOqdzw2d71bzgO9KraUgiUlrbM97NITmqYRKtNDrLHn/Jm8ZKuqJXvOtdY65a8Gtjs2ux/1rEWex9Kx0tFKrBydiCx218PPOoqhBSPXlvdkXZNHcvakumU9VGYtNflAqkmb0q60ID+SM8qmOFC3HTvu9baKORXei2705ePp+Eo0G53um4usduy2p8xb7RnzIFA0VsxMYNnMmQWzFl409oycbz64bo4bs6FSoB7YCY52zHSVetJd870jocXEw+5853J0J5ju3AzdN7bb980l31yg7C2Yaf+EOdY7GhrvfRp7FL31yvPBv19eefPxyfJbk+dGhw8vlU7dGP76zNzxey8tDNzqzUT32ivh3cCCsRYa995vm3HPubdai86c84azpuWP5PSaOu8c0+paXU/qVe3QPmPf1+f1rL5sH9ezzjk9bc/q9/S6VnbU1H09bytqSW3DVlTnxLqatabEorUiqmLUtiz+ERXbhi2lbajz2oK6Z1sV2+qaWBaHyqGSV1blJcusvC/t8BFe5kv8Bp/ge2ySl1iVTfNVnuF3+BO2xsZ5iY2xLJthNUxhGjOYQIV+pQJt0CIVaZ9GUKVtmkIamzigWdRpFHeQwgpKtIgtylOB8nR9nr6iFCVpilJ09ZPrV699PkJj9MUIJemdq9eS9Nnwxx++/e7rp04djxx9tSceOR4/E4+E/P72rh4zGj7Z7umJ94TCfjPidptut8Njhtu6nKZDDesep9/pdzhUv8P0CN3jdKiqUBycm4oQsqwKRdGF6uGKDqEqTlUXss6FIhRFCAWyrIBzAZlDCIU4JxkckLlMHMQBziFDAuOcAxIAAqFxksBAAFNIlkHNF9Y4AAwMFlihgQFWzgALJFi5Cy7YGzsNBAsYbCBoiIHJDVADACussDSmAAhB7kKwAQXBCwndzZ7AAAjHcBFwgWDABrSCmnI6MQDYEYQX3U0SH1zwNURZYQchgcuQEOPHcAUPCBcxhLOwYwi/E3zowy+EsziPK7CB+9CJfvTjWJPKwGm0ogP9+IHQDQ12nMY5GPDBggR8kPgVeDHYcM1dSCDWNDmIfqAXWtOzFQkM4QKsjbRwHp8CtmZWDemDOIEBDKEXNvgQQwKdONuEBREEvM1gCK3owwn8QPxHAoKw46aMSzDwJT6CAQv+InxHuE34g3ABrbgJ/Az8y/A94bcQHrzf1MJwBA98uC3jPwF8NCs=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T20:50:11Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 8-core/16-thread CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15",
+      "caches": {
+        "l1d": {
+          "size_bytes": 49152,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 1310720,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 25165824,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 6,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 7,
+          "core_id": 7,
+          "package_id": 0
+        },
+        {
+          "cpu": 8,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 9,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 10,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 11,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 12,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 13,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 14,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 15,
+          "core_id": 7,
+          "package_id": 0
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3703663,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none"
+    },
+    "load": {
+      "load1": 1.91,
+      "load5": 2.05,
+      "load15": 1.66,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": "3.27.1",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "claim; threads=4; claims_per_thread=100000; racy_claim=true; switch_interval_ms=5; gil_at_start=true; gil_at_end=true; claim time is time.perf_counter_ns around the claim only",
+  "runtime": {
+    "ctx_switches": {
+      "voluntary": 157,
+      "involuntary": 1
+    },
+    "placement": {
+      "cpus": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    },
+    "counters": {
+      "claims": 400000,
+      "lost_or_duplicated_claims": 0,
+      "racy_claim": 1
+    },
+    "python_build": "gil"
+  }
+}

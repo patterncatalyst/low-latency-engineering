@@ -1,0 +1,226 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 1999951,
+  "dropped": 0,
+  "example": "10-lockfree-waitfree",
+  "hdr_histogram": "HISTFAAAAwR4nDVUPYidVRB9c77znZ03uXl5yxqjyyIIsqioWIhoo1aBgKWNhYVaxFJEtJWQYHC3Uyws1iAYcAmiQSGQypDCIoqIf4VYikmxLCk0SFA591u/996995t7586cM2fexul312azsWbTMxzMMZsNxx+9dG729P5kOPbGPw/9+uROuzVeqYsru1E8O3z7c2x/cmz7mxdu7r78/lt3/LaF70/sPbC/tqd39MXhS8truomL2MF57GAbp/FLvIe9uBHfxd9xK37HD+M+buNT3IgrcT7OxqsfxQfx0uObD248srl+//EL8VO8/sRjG+v3LNfrrude24trcSGefeqZV3bjdpwaPhu/zlPLP+bbh/+sc/OrvBr3tSUEBSmEFECoiS0XTZSQiEwRKgEYIQnMBAcEyaiBKyAqk7VEZhDBvkOMiP6hb8Vg0yGEYOcBcwS6Hb5qBENIEgS8UDCzNhehBRcbBYJzjDgKrOIkHsZXgVXci8sjTuJy4vMjWMEqDmHE3Q6FoQfB9NOAnsMUEc6I4bQ4AGTfYBYTGUiWUyXZaeEwoSFkJymzSPNRXJRfma0AmCW2JFBkCiWfbshsDuIAYpXAqkCJairblqXGUpp/MlPRnAozspIi0AcBSpqZlGuSJjozUb6bCLQSObkSVC1yUTIc2JReqiWMwV+vSLVSMxjK0aJYCRaUhiSpUYo0cSRzYCHLXHQwTIvAKB1YKhFcJqlEJtLKSJm8MGKRTsJTqyl8oWAU3RDG1QVjQsMeZblFGiBNs4Gqs+E1fSechvW1gi7SI1OpPYzEgQ7R/fpq6LKbe2GloO/ZaaWrccDHgTM+Oe++VpBFQh/9X1lDd6L6dlCusLqmzD37BBxYoR7ZHFVOSbc7LYnIdPuhlGIL+XEXaFJYLqJMKtJl46IgmTFYLqancpKZqWdGM8ZSNnVqTGa5sAesemBv64ZGLVUurF17L5jS0ICuOGYBkUEOyamPg717gtMfxduB64HrwIs4ijfxL/BX4MfAhyO2gC8Da9gKnMDz+A/bSmSa",
+  "language": "cpp",
+  "notes": "seqlock; one writer at 1000 ns period (open loop), 3 readers spinning, 2000 ms; a snapshot is 8 words with a checksum; update time is clock_gettime around write() only",
+  "percentiles": {
+    "max": 18271,
+    "p50": 26,
+    "p90": 27,
+    "p99": 29,
+    "p99_9": 297
+  },
+  "profile": {
+    "captured_at": "2026-10-23T20:50:11Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "caches": {
+        "l1d": {
+          "line_bytes": 64,
+          "size_bytes": 49152
+        },
+        "l1i": {
+          "line_bytes": 64,
+          "size_bytes": 32768
+        },
+        "l2": {
+          "line_bytes": 64,
+          "size_bytes": 1310720
+        },
+        "l3": {
+          "line_bytes": 64,
+          "size_bytes": 25165824
+        }
+      },
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2,
+      "topology": [
+        {
+          "core_id": 0,
+          "cpu": 0,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 1,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 2,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 3,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 4,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 5,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 6,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 7,
+          "package_id": 0
+        },
+        {
+          "core_id": 0,
+          "cpu": 8,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 9,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 10,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 11,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 12,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 13,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 14,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 15,
+          "package_id": 0
+        }
+      ],
+      "vendor": "Intel"
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.91,
+      "load15": 1.66,
+      "load5": 2.05,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 3703663,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf": "7.2",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8",
+      "valgrind": "3.27.1"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "type": "none"
+    }
+  },
+  "runtime": {
+    "counters": {
+      "reader_retries": 28249984,
+      "reads": 2419037946,
+      "torn_snapshots": 0,
+      "updates": 1999951
+    },
+    "placement": {
+      "cpus": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "seqlock"
+}

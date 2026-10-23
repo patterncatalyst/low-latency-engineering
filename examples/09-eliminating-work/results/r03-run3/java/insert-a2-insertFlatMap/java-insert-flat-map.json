@@ -1,0 +1,218 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "09-eliminating-work",
+  "language": "java",
+  "variant": "insert-flat-map",
+  "unit": "ns",
+  "count": 139488,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 109,
+    "p90": 142,
+    "p99": 202,
+    "p99_9": 3725,
+    "max": 37407
+  },
+  "hdr_histogram": "HISTFAAAA0N4nD1S32scVRjd78x3786d3dnNJDvTTJKN3bKbZN2k7QqWFkyqYIWCfVDIQ4P5A/IgiFAQ8aGGRYIPJSBKEYUaikietnkQH2qJ4ot9KKWUpQ0+iIQgEiSPEkqR75vZXmbm3nvuOef7cWeq98VYoWCokA0vn6lQ8N46+9OtwsWjDPiW4AfTH9309sr3J48WDl7ZOHNjYdD6ofln43l741z/4vrr/aV/L9w/fX3hsPPPywfzx2d+7fTaz2d3Zp7NHLb7px90NtsPZ9dnjk993zxq9Kb/mvpq8ln6JO1N7CZPkt14UNuu/V3brA2ihyOfjdyo3q4cVw7K/fJuab20H2wF/7lv3L6/4Q+K28VHxT07MHdNz2yYXd7jz/k377b3wPva2/L+wCPcw4/oYwf3cBPrOKTHtE+PaY/u0g71aZtu0RZt0sc9+uQ6ffjBeysrK2+/++ZrS+fOn186Oz8/15ybazZPnpqaPjk9MT4xNTE+XkuSpJYko8loLRkdHSlXKpVypRJUyoEfBL5vgyDwbZnZss/W+tZn61vrQxAd+aQAIJPM8mTb4UqG1QP9kgVbgPITJgWHgJd9vAzL8BKAUBaE6AXDsENuRFyEE7QEjz3uZFZCfwlFFZTYsHh4OMFFEGLx8xCJAkbtUMUkjIbGLGJxiECoipmHKgwMUiYYjMGgBAI3EKGIKjzEmESMNXTggXACVczyGAh1xBBJpC/BSQkcIgShhQZSOISoa0YpQhgQCytGSzjsYLAMA2dbILwKB8MGTnw4VrZBXVOTtegjSZGNtidCC1fU5XIeW7iyMrrrgpBqfiHaSJUluxTimqKFRTSULdmKJuIIqZ5HiFQrPhfQxVXNXmKGWNT6sjO5sgZCxIqu5bGNYg5vIFJWqsyQjcbX2jVq15q8ZlJdXWOH2q8o0+Rdy3qaYaRZkI2UR9odxykauav8MfUhk12ercm58taZXqBOM3PDeEx6R6TdCDlThLmbY2dNXvfw3tWRQ+1YqPsQy1hFV3OP9DbDvLqu3kkdDVxS3VVcw1PCIr4jXMGXhDZ+lpoyxarA13SZ4g7hfSwixSUs41NgQcu5jDW8oz/UU8o6hVX8TrhTxS+E/wH9d4wJ",
+  "build": {
+    "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
+    "gil_enabled": null,
+    "flags": "-Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1"
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T20:32:24Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 8-core/16-thread CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15",
+      "caches": {
+        "l1d": {
+          "size_bytes": 49152,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 1310720,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 25165824,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 6,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 7,
+          "core_id": 7,
+          "package_id": 0
+        },
+        {
+          "cpu": 8,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 9,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 10,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 11,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 12,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 13,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 14,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 15,
+          "core_id": 7,
+          "package_id": 0
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3613118,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none"
+    },
+    "load": {
+      "load1": 0.71,
+      "load5": 1.23,
+      "load15": 1.36,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": "3.27.1",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "JMH SampleTime, 1 forks x 5 iterations of 1 s; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns",
+  "runtime": {
+    "alloc_bytes_per_parcel": 0.018007029922309126,
+    "placement": {
+      "cpus": [
+        1
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    }
+  }
+}

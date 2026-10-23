@@ -1,0 +1,201 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+━━ building C++ (release preset) lockfree-bench lockfree-line lockfree-store-bench lockfree-test line-simulator
+[1/34] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[2/31] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[3/28] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[4/24] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[5/22] Generating CXX dyndep file 10-lockfree-waitfree/cpp/CMakeFiles/lockfree-bench.dir/CXX.dd
+[6/21] Generating CXX dyndep file 10-lockfree-waitfree/cpp/CMakeFiles/lockfree-line.dir/CXX.dd
+[7/20] Generating CXX dyndep file 10-lockfree-waitfree/cpp/CMakeFiles/lowlat_lockfree.dir/CXX.dd
+[8/18] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
+[9/14] Generating CXX dyndep file 10-lockfree-waitfree/cpp/CMakeFiles/lockfree-store-bench.dir/CXX.dd
+[10/12] Generating CXX dyndep file 10-lockfree-waitfree/cpp/CMakeFiles/lockfree-test.dir/CXX.dd
+━━ building Java module 10-lockfree-waitfree/java
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+# WARNING: Unable to get Instrumentation. Dynamic Attach failed. You may add this JAR as -javaagent manually, or supply -Djdk.attach.allowAttachSelf
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:~/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+━━ syncing the Python workspace
+━━ unit tests: C++ (GoogleTest), Python under the GIL and under the free-threaded build; Java ran during the package step
+✓ C++, Java and Python (both builds) unit tests pass
+━━ C++ claim: mutex (alternation 1)
+✓ placement: 5 threads of cpp-mutex-alt1 run on the CPUs they were pinned to
+━━ C++ claim: cas-loop (alternation 1)
+✓ placement: 5 threads of cpp-cas-loop-alt1 run on the CPUs they were pinned to
+━━ C++ claim: fetch-add (alternation 1)
+✓ placement: 5 threads of cpp-fetch-add-alt1 run on the CPUs they were pinned to
+━━ C++ claim: mutex (alternation 2)
+✓ placement: 5 threads of cpp-mutex-alt2 run on the CPUs they were pinned to
+━━ C++ claim: cas-loop (alternation 2)
+✓ placement: 5 threads of cpp-cas-loop-alt2 run on the CPUs they were pinned to
+━━ C++ claim: fetch-add (alternation 2)
+✓ placement: 5 threads of cpp-fetch-add-alt2 run on the CPUs they were pinned to
+━━ C++ claim: mutex (alternation 3)
+✓ placement: 5 threads of cpp-mutex-alt3 run on the CPUs they were pinned to
+━━ C++ claim: cas-loop (alternation 3)
+✓ placement: 5 threads of cpp-cas-loop-alt3 run on the CPUs they were pinned to
+━━ C++ claim: fetch-add (alternation 3)
+✓ placement: 5 threads of cpp-fetch-add-alt3 run on the CPUs they were pinned to
+━━ C++ claim: fetch-add with --stalled-producer
+✓ placement: 5 threads of cpp-fetch-add-stalled run on the CPUs they were pinned to
+━━ Java claim: mutex (alternation 1)
+✓ placement: 5 threads of java-mutex-alt1 run on the CPUs they were pinned to
+━━ Java claim: cas-loop (alternation 1)
+✓ placement: 5 threads of java-cas-loop-alt1 run on the CPUs they were pinned to
+━━ Java claim: fetch-add (alternation 1)
+✓ placement: 5 threads of java-fetch-add-alt1 run on the CPUs they were pinned to
+━━ Java claim: mutex (alternation 2)
+✓ placement: 5 threads of java-mutex-alt2 run on the CPUs they were pinned to
+━━ Java claim: cas-loop (alternation 2)
+✓ placement: 5 threads of java-cas-loop-alt2 run on the CPUs they were pinned to
+━━ Java claim: fetch-add (alternation 2)
+✓ placement: 5 threads of java-fetch-add-alt2 run on the CPUs they were pinned to
+━━ Java claim: mutex (alternation 3)
+✓ placement: 5 threads of java-mutex-alt3 run on the CPUs they were pinned to
+━━ Java claim: cas-loop (alternation 3)
+✓ placement: 5 threads of java-cas-loop-alt3 run on the CPUs they were pinned to
+━━ Java claim: fetch-add (alternation 3)
+✓ placement: 5 threads of java-fetch-add-alt3 run on the CPUs they were pinned to
+━━ Java claim: fetch-add with --stalled-producer
+✓ placement: 5 threads of java-fetch-add-stalled run on the CPUs they were pinned to
+━━ C++ read side: shared-mutex (alternation 1)
+✓ placement: 4 threads of cpp-cell-shared-mutex-alt1 run on the CPUs they were pinned to
+━━ C++ read side: seqlock (alternation 1)
+✓ placement: 4 threads of cpp-cell-seqlock-alt1 run on the CPUs they were pinned to
+━━ C++ read side: shared-mutex (alternation 2)
+✓ placement: 4 threads of cpp-cell-shared-mutex-alt2 run on the CPUs they were pinned to
+━━ C++ read side: seqlock (alternation 2)
+✓ placement: 4 threads of cpp-cell-seqlock-alt2 run on the CPUs they were pinned to
+━━ C++ read side: shared-mutex (alternation 3)
+✓ placement: 4 threads of cpp-cell-shared-mutex-alt3 run on the CPUs they were pinned to
+━━ C++ read side: seqlock (alternation 3)
+✓ placement: 4 threads of cpp-cell-seqlock-alt3 run on the CPUs they were pinned to
+━━ Java read side: rw-lock (alternation 1)
+✓ placement: 4 threads of java-cell-rw-lock-alt1 run on the CPUs they were pinned to
+━━ Java read side: stamped-lock (alternation 1)
+✓ placement: 4 threads of java-cell-stamped-lock-alt1 run on the CPUs they were pinned to
+━━ Java read side: rw-lock (alternation 2)
+✓ placement: 4 threads of java-cell-rw-lock-alt2 run on the CPUs they were pinned to
+━━ Java read side: stamped-lock (alternation 2)
+✓ placement: 4 threads of java-cell-stamped-lock-alt2 run on the CPUs they were pinned to
+━━ Java read side: rw-lock (alternation 3)
+✓ placement: 4 threads of java-cell-rw-lock-alt3 run on the CPUs they were pinned to
+━━ Java read side: stamped-lock (alternation 3)
+✓ placement: 4 threads of java-cell-stamped-lock-alt3 run on the CPUs they were pinned to
+━━ C++ litmus: release-acquire, 10000000 trials
+✓ placement: 2 threads of cpp-litmus-release-acquire run on the CPUs they were pinned to
+━━ C++ litmus: seq-cst, 10000000 trials
+✓ placement: 2 threads of cpp-litmus-seq-cst run on the CPUs they were pinned to
+━━ Java litmus: jcstress quick mode, StoreBufferVolatile and StoreBufferAcquireRelease (about 20 s, all CPUs)
+━━ Python claim: lock in the gil build
+✓ placement: 4 threads of python-gil-lock run on the CPUs they were pinned to
+━━ Python claim: itertools-count in the gil build
+✓ placement: 4 threads of python-gil-itertools-count run on the CPUs they were pinned to
+━━ Python claim: lock (racy) in the gil build
+✓ placement: 4 threads of python-gil-lock-racy-claim run on the CPUs they were pinned to
+━━ Python claim: lock in the free-threaded build
+✓ placement: 4 threads of python-free-threaded-lock run on the CPUs they were pinned to
+━━ Python claim: itertools-count in the free-threaded build
+✓ placement: 4 threads of python-free-threaded-itertools-count run on the CPUs they were pinned to
+━━ Python claim: lock (racy) in the free-threaded build
+✓ placement: 4 threads of python-free-threaded-lock-racy-claim run on the CPUs they were pinned to
+━━ per-store cost (observed): Google Benchmark on one CPU, then JMH
+━━ line: cpp / mutex, 4 simulator instances at 2500 Hz x 20 s, UDP 47300-47303
+✓ placement: 5 threads of cpp-line-mutex run on the CPUs they were pinned to
+━━ line: java / blocking-queue, 4 simulator instances at 2500 Hz x 20 s, UDP 47300-47303
+✓ placement: 5 threads of java-line-blocking-queue run on the CPUs they were pinned to
+━━ line: cpp / fetch-add, 4 simulator instances at 2500 Hz x 20 s, UDP 47304-47307
+✓ placement: 5 threads of cpp-line-fetch-add run on the CPUs they were pinned to
+━━ line: java / agrona-mpsc, 4 simulator instances at 2500 Hz x 20 s, UDP 47304-47307
+✓ placement: 5 threads of java-line-agrona-mpsc run on the CPUs they were pinned to
+━━ reports: schema, histogram decode, percentile recompute
+✓ 8 88 reports validate (profile embedded: bare-metal-host)
+━━ criterion 1: exactly once (exact)
+✓ 1 cpp: all 10 claim runs handed out 4000000 sequences exactly once (byte map after join, payload checked by the consumer)
+✓ 1 java: all 10 claim runs handed out 4000000 sequences exactly once (byte map after join, payload checked by the consumer)
+✓ 1 Python lock, gil build: lost or duplicated claims: measured 0, bound == 0 (exact)
+✓ 1 Python lock, gil build: claims made: measured 400000, bound == 400000 (exact)
+✓ 1 Python lock, free-threaded build: lost or duplicated claims: measured 0, bound == 0 (exact)
+✓ 1 Python lock, free-threaded build: claims made: measured 400000, bound == 400000 (exact)
+✓ 1 Python free-threaded build: the GIL stayed off from start to end in every measurement
+✓ 1 Python --racy-claim, free-threaded build: lost or duplicated claims (exact, demonstrates the race): measured 115804, bound >= 1, margin 115804.00x
+  observed: Python lost or duplicated claims, GIL build: lock 0, itertools-count 0, racy 0; free-threaded build: itertools-count 0, racy 115804 (of 400000)
+━━ criterion 2: steps per claim and contention
+✓ 2 cpp fetch-add alt1: claim steps (4000000) per 4000000 claims: measured 4000000, bound == 4000000 (exact)
+✓ 2 cpp fetch-add alt2: claim steps (4000000) per 4000000 claims: measured 4000000, bound == 4000000 (exact)
+✓ 2 cpp fetch-add alt3: claim steps (4000000) per 4000000 claims: measured 4000000, bound == 4000000 (exact)
+✓ 2 cpp cas-loop: failed CAS in the least contended of 3 runs (exact count; contention present); largest retry count in one claim, run 1: 10: measured 2739445, bound >= 1, margin 2739445.00x
+✓ 2 cpp mutex: voluntary context switches of the least-switching producer (median of 3 runs: 5406 882 8710): measured 5406, bound >= 100, margin 54.06x
+✓ 2 cpp fetch-add: voluntary context switches of the most-switching producer (median of 3 runs: 0 1 1): measured 1, bound <= 10, margin 10.00x
+✓ 2 java fetch-add alt1: claim steps (4000000) per 4000000 claims: measured 4000000, bound == 4000000 (exact)
+✓ 2 java fetch-add alt2: claim steps (4000000) per 4000000 claims: measured 4000000, bound == 4000000 (exact)
+✓ 2 java fetch-add alt3: claim steps (4000000) per 4000000 claims: measured 4000000, bound == 4000000 (exact)
+✓ 2 java cas-loop: failed CAS in the least contended of 3 runs (exact count; contention present); largest retry count in one claim, run 1: 55: measured 5004253, bound >= 1, margin 5004253.00x
+✓ 2 java mutex: voluntary context switches of the least-switching producer (median of 3 runs: 42276 63641 61712): measured 61712, bound >= 100, margin 617.12x
+✓ 2 java fetch-add: voluntary context switches of the most-switching producer (median of 3 runs: 1 1 2): measured 1, bound <= 10, margin 10.00x
+━━ criterion 3: claim p99, mutex against fetch-add, same run, median of 3 alternations
+✓ 3 cpp claim p99: measured 6.20x (mutex over fetch-add, per alternation: 7262 6202 5750 thousandths), bound >= 2.50x, margin 2.48x
+  observed: cpp mutex over fetch-add p99.9 per alternation: 6318 5440 5641 thousandths (median 5641)
+  observed: cpp cas-loop over fetch-add p99 per alternation: 1221 1088 1036 thousandths (lock-free is not faster; wait-free bounds steps, not time)
+  cpp mutex claim p50 / p99 / p99.9 / max in ns, alternation 1: 155 / 2985 / 5503 / 107583
+  cpp cas-loop claim p50 / p99 / p99.9 / max in ns, alternation 1: 160 / 502 / 1237 / 54303
+  cpp fetch-add claim p50 / p99 / p99.9 / max in ns, alternation 1: 91 / 411 / 871 / 24207
+✓ 3 java claim p99: measured 15.23x (mutex over fetch-add, per alternation: 15998 12863 15230 thousandths), bound >= 3.00x, margin 5.08x
+  observed: java mutex over fetch-add p99.9 per alternation: 6526 6050 6400 thousandths (median 6400)
+  observed: java cas-loop over fetch-add p99 per alternation: 3512 3762 3632 thousandths (lock-free is not faster; wait-free bounds steps, not time)
+  java mutex claim p50 / p99 / p99.9 / max in ns, alternation 1: 85 / 8367 / 12015 / 403967
+  java cas-loop claim p50 / p99 / p99.9 / max in ns, alternation 1: 199 / 1837 / 3647 / 330239
+  java fetch-add claim p50 / p99 / p99.9 / max in ns, alternation 1: 143 / 523 / 1841 / 273919
+━━ criterion 4: --stalled-producer, the consumer's wait at the stalled sequence
+✓ 4 cpp fetch-add: consumer wait at the stalled sequence, ns (the producer slept 1 ms between claim and publish): measured 1063751, bound >= 500000, margin 2.13x
+  cpp without the stall (alternation 1): largest consumer wait 144515 ns
+✓ 4 java fetch-add: consumer wait at the stalled sequence, ns (the producer slept 1 ms between claim and publish): measured 1136744, bound >= 500000, margin 2.27x
+  java without the stall (alternation 1): largest consumer wait 703581 ns
+━━ criterion 5: induction-gap litmus test
+✓ 5 C++ seq-cst, outcome 0, 0 in 10000000 trials: measured 0, bound == 0 (exact)
+✓ 5 C++ release-acquire, outcome 0, 0 in 10000000 trials (exact count): measured 2306475, bound >= 1, margin 2306475.00x
+  C++ release-acquire outcomes (r1,r2): 0,0 = 2306475; 0,1 = 3430906; 1,0 = 4178743; 1,1 = 83876; seq-cst: 0,1 = 3958667; 1,0 = 1490798; 1,1 = 4550535
+✓ 5 Java volatile (jcstress), outcome 0, 0: measured 0, bound == 0 (exact)
+✓ 5 Java setRelease/getAcquire (jcstress), outcome 0, 0 (exact count): measured 84955019, bound >= 1, margin 84955019.00x
+  Java volatile samples with all outcomes seen: 0,1 = 297297825; 1,0 = 276993390; 1,1 = 7283973
+  per-store cost, p50 per store in ns (observed): C++ release 0, seq_cst 4; Java release 0, volatile 4
+━━ criterion 6: the read side
+✓ 6 cpp torn snapshots, shared-mutex and seqlock, 3 alternations each: measured 0, bound == 0 (exact)
+✓ 6 cpp writer p99: measured 231.00x (shared-mutex over seqlock, per alternation: 234269 231000 204483 thousandths), bound >= 3.00x, margin 77.00x
+  observed: cpp writer shared-mutex over seqlock p99.9 per alternation: 4225 55323 4437 thousandths (median 4437)
+  cpp writer update p50 / p99 / p99.9 in ns, alternation 1: shared-mutex 4057 / 6091 / 13671; seqlock 23 / 26 / 3235
+  cpp seqlock: updates 1999964, reads 2440886602, reader retries 26456022 (observed)
+✓ 6 java torn snapshots, rw-lock and stamped-lock, 3 alternations each: measured 0, bound == 0 (exact)
+✓ 6 java writer p99: measured 37.12x (rw-lock over stamped-lock, per alternation: 38490 37115 29310 thousandths), bound >= 3.00x, margin 12.37x
+  observed: java writer rw-lock over stamped-lock p99.9 per alternation: 3018 2362 2602 thousandths (median 2602)
+  java writer update p50 / p99 / p99.9 in ns, alternation 1: rw-lock 27 / 8083 / 11855; stamped-lock 155 / 210 / 3927
+  java stamped-lock: updates 1999568, reads 1222772461, reader retries 6366054 (observed)
+━━ criterion 7: the line
+✓ 7 cpp-line-mutex: count 200000 (bound == 200000), dropped 0 per camera (exact 0), divert commands received 200000 (exact 200000)
+  cpp-line-mutex end-to-end p50 / p99 / p99.9 / max in ns (observed): 70719 / 100479 / 134399 / 2826239; divert command p99 16783 ns
+✓ 7 java-line-blocking-queue: count 200000 (bound == 200000), dropped 0 per camera (exact 0), divert commands received 200000 (exact 200000)
+  java-line-blocking-queue end-to-end p50 / p99 / p99.9 / max in ns (observed): 81919 / 127423 / 197247 / 4313087; divert command p99 26031 ns
+✓ 7 cpp-line-fetch-add: count 200000 (bound == 200000), dropped 0 per camera (exact 0), divert commands received 200000 (exact 200000)
+  cpp-line-fetch-add end-to-end p50 / p99 / p99.9 / max in ns (observed): 87743 / 105471 / 151295 / 2871295; divert command p99 18719 ns
+✓ 7 java-line-agrona-mpsc: count 200000 (bound == 200000), dropped 0 per camera (exact 0), divert commands received 200000 (exact 200000)
+  java-line-agrona-mpsc end-to-end p50 / p99 / p99.9 / max in ns (observed): 93439 / 113471 / 163839 / 1828863; divert command p99 40255 ns
+━━ observed: Python claim tail against the interpreter's switch interval
+  gil lock: p50 / p99 / p99.9 / max in ns = 404 / 677 / 1114 / 113377279; voluntary ctx switches 255; switch interval 5 ms
+  gil itertools-count: p50 / p99 / p99.9 / max in ns = 90 / 338 / 647 / 15458303; voluntary ctx switches 89; switch interval 5 ms
+  gil lock-racy-claim: p50 / p99 / p99.9 / max in ns = 203 / 363 / 497 / 20824063; voluntary ctx switches 157; switch interval 5 ms
+  free-threaded lock: p50 / p99 / p99.9 / max in ns = 392 / 13087 / 29135 / 226431; voluntary ctx switches 15854; switch interval 5 ms
+  free-threaded itertools-count: p50 / p99 / p99.9 / max in ns = 201 / 871 / 2647 / 37695; voluntary ctx switches 7098; switch interval 5 ms
+  free-threaded lock-racy-claim: p50 / p99 / p99.9 / max in ns = 469 / 8935 / 17055 / 71039; voluntary ctx switches 2510; switch interval 5 ms
+━━ criterion 8: every report carries count, dropped = 0, build.flags, placement
+✓ 8 88 reports: count > 0, dropped = 0, build.flags (C++ and Java) and runtime.python_build (Python) present
+✓ 8 every pinned run records runtime.placement (distinct_cores true, smt_siblings false)
+✓ 10-lockfree-waitfree: every criterion holds; results in <repo>/examples/10-lockfree-waitfree/results/r03-run2
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2 load1=1.91

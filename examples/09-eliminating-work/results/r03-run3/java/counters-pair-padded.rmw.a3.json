@@ -1,0 +1,253 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "09-eliminating-work",
+  "language": "java",
+  "variant": "counters-pair-padded",
+  "unit": "ns",
+  "count": 100000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 5047,
+    "p90": 5067,
+    "p99": 6335,
+    "p99_9": 9255,
+    "max": 23695
+  },
+  "hdr_histogram": "HISTFAAAAoF4nC1Sv2sUQRSe/ebd7Nxms7e3t3eem7tEzyMcGkyIURNFLBRNEawsbARBBCs7BYNliMHOHwREi2BhFQRTWUiqIPkTLK1TWaSw9Htz2Z2ZN/N+fu+b6W28bxljd8z4sycy4vbOwo8dc/PvWPF9sderzgxTi7PP/vQPunvd3e7v/k+4GMnTN9GLjWg7ul/BIP5mj9c/P9l/9O/x8fpReylLvTgZrN5bXlstHIyXvEjTw1eHr6N3W9H2VnS0Gf16uW8/RA+ujVK/9hUHdtdu2i92D7cTDyQ+7Q6nl+dGs4uzc8N01Em9SxOpsqrs5EmSGDHinHdwAoe6QGTSw8I4wAoISX8qYhhRPYTTi0GNdn6QSVF7DTroOjF2VQfjY4ScIUcYFnA1YeaaqkX9VBot5mjVCiBudk0MomhBmJ59FJJlknZyV+ZpMp3nZd4tqrysZqtOrzdKB9MLw/OD0ZXBqFgqLxadstsryrzMulmWFEWV5Z0yc47NMjOQe/GO3CbKLyd7MizrPTGloI/CMHR2ZESbJiKuGh5Qc8sWnDBSOWNGwmfD7kRhQs/ec+uS2Gm3ShdbkoQFlV/jjFdqNY4mNSOgSDSHBO9AmmZXOkKQHqwOj/AeiILMjbkVq0KLa8Y4hAT/0IFxlGmn8ElRpYFyjAMMpujSlBok5uXpFdSBPkV/fPHQUxuNYG4SaZ23XB+/ihbXGZmkokEZIEtD38JlIuvTYSYkjIPrFKPaGtni0sJprSZNOk8xvolTLNNggQnM09IIWHAOtNRp6SPkssygjwt3KRq4wVjFOx8ensUK5yWeV/AQt/AJuM5AQUv0KVLTxwXW/RjhKkTrPsfbCP8B5yJDAg==",
+  "build": {
+    "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags": "-Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true",
+    "gil_enabled": null
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T20:32:24Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 8-core/16-thread CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15",
+      "caches": {
+        "l1d": {
+          "size_bytes": 49152,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 1310720,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 25165824,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 6,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 7,
+          "core_id": 7,
+          "package_id": 0
+        },
+        {
+          "cpu": 8,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 9,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 10,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 11,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 12,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 13,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 14,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 15,
+          "core_id": 7,
+          "package_id": 0
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3613118,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none"
+    },
+    "load": {
+      "load1": 0.71,
+      "load5": 1.23,
+      "load15": 1.36,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": "3.27.1",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "op=counters; one sample = one batch of 1000 increments by one camera thread (5 cameras, each thread pinned; increment=getAndAdd); a telemetry thread samples every camera about once per millisecond",
+  "runtime": {
+    "gc": {
+      "collectors": [
+        "PS MarkSweep",
+        "PS Scavenge"
+      ],
+      "heap_bytes": 2058354688,
+      "flags": [
+        "-Xms2g",
+        "-Xmx2g",
+        "-XX:+AlwaysPreTouch",
+        "-XX:+UseParallelGC"
+      ]
+    },
+    "counters": {
+      "batch_size": 1000,
+      "batches_per_camera": 20000,
+      "cameras": 5,
+      "increments": 100000000,
+      "stride_bytes": 128,
+      "telemetry_samples": 653
+    },
+    "placement": {
+      "cpus": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    },
+    "hw_counters": {
+      "source": "perf",
+      "ops": 100000000,
+      "per_op": {
+        "cycles": 21.29966256,
+        "instructions": 39.23372791,
+        "L1-dcache-load-misses": 0.00050997,
+        "LLC-load-misses": 0.0000079
+      }
+    }
+  }
+}

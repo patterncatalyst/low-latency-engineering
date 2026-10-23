@@ -1,0 +1,14 @@
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+pinned pid=3742524 tid=3742622 cpu=2 role=producer-1
+pinned pid=3742524 tid=3742624 cpu=4 role=producer-3
+pinned pid=3742524 tid=3742623 cpu=3 role=producer-2
+pinned pid=3742524 tid=3742621 cpu=1 role=producer-0
+pinned pid=3742524 tid=3742625 cpu=5 role=consumer
+placement-ready
+released
+10-lockfree-waitfree       java   fetch-add             4000000        0        0.2        0.3        0.5        1.9       38.5
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run3/java-fetch-add-alt2.json
+10-lockfree-waitfree       java   fetch-add              139438        0        0.1        0.3        0.7        3.8      874.5
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run3/java-fetch-add-alt2-consumer-wait.json

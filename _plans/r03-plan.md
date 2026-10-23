@@ -172,7 +172,7 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | S5 | Example 09 (C++, Java, Python) + `verify.sh` (criteria §2 Ch9) + README (technique, workload, expected effect, observation surfaces: terminal output, Grafana "no panel by design" (Part 7), licences) | `examples/09-eliminating-work/**` | S3, S4 | host | done |
 | S6 | Example 10 (C++, Java, Python) + `verify.sh` + README; jcstress summary to text | `examples/10-lockfree-waitfree/**` | S3, S4 | host | done |
 | S7 | Calibration gate: 3 quiet dry runs of 09 and 10 into `results/latest` (uncommitted); margin table per asserted criterion; every bound clears at least 2x (exact counters exempt and labelled); tuned parameters (batch size, trial counts, hub size) into READMEs; any bound change or sub-2x margin goes to the user and is recorded in Follow-ups | READMEs, this file's Follow-ups | S5, S6 | host (MAIN) | done |
-| S8 | Host measurement `r03-run{1,2,3}` for 09 and 10, serial, VM down, load1 at most 2 at start, one recorded commit; `verify.log` through `scrub-host-ids.py --filter`. 00–08 not re-measured unless a step touched the shared receive path (then re-measure all, as r02 S13); otherwise `lowlat-report check` over every committed report and record "no re-measure needed" with the diff stat of `examples/common/` | `examples/09-*/results/r03-run*/`, `examples/10-*/results/r03-run*/` | S7 | host (MAIN) | todo |
+| S8 | Host measurement `r03-run{1,2,3}` for 09 and 10, serial, VM down, load1 at most 2 at start, one recorded commit; `verify.log` through `scrub-host-ids.py --filter`. 00–08 not re-measured unless a step touched the shared receive path (then re-measure all, as r02 S13); otherwise `lowlat-report check` over every committed report and record "no re-measure needed" with the diff stat of `examples/common/` | `examples/09-*/results/r03-run*/`, `examples/10-*/results/r03-run*/` | S7 | host (MAIN) | done |
 | S9 | Figures 9.1–9.4, 10.1–10.3 (+10.4), r01 visual grammar, S8 ranges only; `_plans/r03-figures.md` value table completed | `_plans/r03-figures.md`, `diagrams/09-*.py`, `diagrams/10-*.py`, `assets/diagrams/`, `_data/diagrams.yml` | S8 | host | todo |
 | S10 | Ch9 prose from `_plans/r03-chapters.md` | `_docs/09-eliminating-work.md`, `_plans/r03-chapters.md` | S9 | – | todo |
 | S11 | Ch10 prose | `_docs/10-lockfree-waitfree.md` | S9 | – | todo |
@@ -280,6 +280,10 @@ Asserted non-exact criteria, final full `verify.sh` run of each example (median 
 | 10 | 3 claim p99, Java | 15.1x (13.4x, 15.9x) | ≥3x | 5.0x |
 | 10 | 4 stalled consumer wait, C++ / Java | 1.07 / 1.14 ms | ≥0.5 ms | 2.1x / 2.3x (by construction) |
 | 10 | 6 writer p99 seqlock vs lock, C++ / Java | 216x / 29.9x | ≥3x | 72x / 10x |
+
+### S8 record (2026-10-23)
+
+`r03-run1..3` for 09 and 10 at commit 20664bd, host bare metal (`virt` none, powersave, balanced, kernel 7.2), lab VM down, serial under a host lock, each start at load1 ≤ 2 (`run-start.json` per run: 0.46 to 1.99). Every `verify.sh` exited 0 with every criterion holding and no margin under 2x; 510 reports pass `lowlat-report check`; results 15 MB; `scrub-host-ids --check` clean. The first attempt of 10's runs lost its `verify.log` (verify.sh clears stale `*.log` in its results dir at start), so those runs were deleted and re-run at the same commit with the log written outside and moved in. 00–08 need no re-measure: `examples/common/line-simulator` and the shared consumers are unchanged since main; `examples/common` changed only additively (15 files changed, 831 insertions(+), 6 deletions(-): S2/S3 report fields, placement and counter writers, the promoted harness converter).
 
 ## Follow-ups
 

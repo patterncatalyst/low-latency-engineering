@@ -1,0 +1,172 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertFlatMap
+
+# Run progress: 0.00% complete, ETA 00:00:08
+# Fork: 1 of 1
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+placement pid=3618152 tid=3618218 cpu=1 role=bench
+155.213 ±(99.9%) 8.681 ns/op
+# Warmup Iteration   2: 127.396 ±(99.9%) 5.165 ns/op
+# Warmup Iteration   3: 127.773 ±(99.9%) 5.476 ns/op
+Iteration   1: 123.464 ±(99.9%) 3.953 ns/op
+                 gc.alloc.rate:      0.161 MB/sec
+                 gc.alloc.rate.norm: 0.017 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              80.000 ns/op
+                 p0.50:              111.000 ns/op
+                 p0.90:              141.000 ns/op
+                 p0.95:              154.000 ns/op
+                 p0.99:              201.000 ns/op
+                 p0.999:             3541.672 ns/op
+                 p0.9999:            13879.430 ns/op
+                 p1.00:              15104.000 ns/op
+
+Iteration   2: 126.671 ±(99.9%) 4.490 ns/op
+                 gc.alloc.rate:      0.196 MB/sec
+                 gc.alloc.rate.norm: 0.020 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              80.000 ns/op
+                 p0.50:              110.000 ns/op
+                 p0.90:              143.000 ns/op
+                 p0.95:              159.000 ns/op
+                 p0.99:              334.330 ns/op
+                 p0.999:             3431.132 ns/op
+                 p0.9999:            14161.064 ns/op
+                 p1.00:              16896.000 ns/op
+
+Iteration   3: 120.360 ±(99.9%) 3.396 ns/op
+                 gc.alloc.rate:      0.159 MB/sec
+                 gc.alloc.rate.norm: 0.016 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              80.000 ns/op
+                 p0.50:              109.000 ns/op
+                 p0.90:              140.000 ns/op
+                 p0.95:              151.000 ns/op
+                 p0.99:              181.000 ns/op
+                 p0.999:             3024.172 ns/op
+                 p0.9999:            11166.594 ns/op
+                 p1.00:              14720.000 ns/op
+
+Iteration   4: 117.690 ±(99.9%) 2.031 ns/op
+                 gc.alloc.rate:      0.156 MB/sec
+                 gc.alloc.rate.norm: 0.016 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              82.000 ns/op
+                 p0.50:              111.000 ns/op
+                 p0.90:              138.000 ns/op
+                 p0.95:              147.000 ns/op
+                 p0.99:              172.860 ns/op
+                 p0.999:             1769.048 ns/op
+                 p0.9999:            4226.722 ns/op
+                 p1.00:              12128.000 ns/op
+
+Iteration   5: 121.196 ±(99.9%) 5.731 ns/op
+                 gc.alloc.rate:      0.192 MB/sec
+                 gc.alloc.rate.norm: 0.020 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              82.000 ns/op
+                 p0.50:              110.000 ns/op
+                 p0.90:              141.000 ns/op
+                 p0.95:              154.000 ns/op
+                 p0.99:              181.000 ns/op
+                 p0.999:             2130.116 ns/op
+                 p0.9999:            11232.259 ns/op
+                 p1.00:              37760.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertFlatMap":
+  N = 198094
+  mean =    121.885 ±(99.9%) 1.837 ns/op
+
+  Histogram, ns/op:
+    [    0.000,  2500.000) = 197880 
+    [ 2500.000,  5000.000) = 156 
+    [ 5000.000,  7500.000) = 14 
+    [ 7500.000, 10000.000) = 19 
+    [10000.000, 12500.000) = 9 
+    [12500.000, 15000.000) = 11 
+    [15000.000, 17500.000) = 2 
+    [17500.000, 20000.000) = 0 
+    [20000.000, 22500.000) = 0 
+    [22500.000, 25000.000) = 0 
+    [25000.000, 27500.000) = 0 
+    [27500.000, 30000.000) = 0 
+    [30000.000, 32500.000) = 0 
+    [32500.000, 35000.000) = 0 
+    [35000.000, 37500.000) = 2 
+
+  Percentiles, ns/op:
+      p(0.0000) =     80.000 ns/op
+     p(50.0000) =    110.000 ns/op
+     p(90.0000) =    140.000 ns/op
+     p(95.0000) =    153.000 ns/op
+     p(99.0000) =    189.000 ns/op
+     p(99.9000) =   2894.300 ns/op
+     p(99.9900) =  11331.064 ns/op
+     p(99.9990) =  37257.754 ns/op
+     p(99.9999) =  37760.000 ns/op
+    p(100.0000) =  37760.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertFlatMap:gc.alloc.rate":
+  0.173 ±(99.9%) 0.075 MB/sec [Average]
+  (min, avg, max) = (0.156, 0.173, 0.196), stdev = 0.020
+  CI (99.9%): [0.097, 0.248] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertFlatMap:gc.alloc.rate.norm":
+  0.018 ±(99.9%) 0.008 B/op [Average]
+  (min, avg, max) = (0.016, 0.018, 0.020), stdev = 0.002
+  CI (99.9%): [0.010, 0.026] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertFlatMap:gc.count":
+  ≈ 0 counts
+
+
+# Run complete. Total time: 00:00:08
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                           Mode     Cnt      Score   Error   Units
+InsertBenchmark.insertFlatMap                     sample  198094    121.885 ± 1.837   ns/op
+InsertBenchmark.insertFlatMap:gc.alloc.rate       sample       5      0.173 ± 0.075  MB/sec
+InsertBenchmark.insertFlatMap:gc.alloc.rate.norm  sample       5      0.018 ± 0.008    B/op
+InsertBenchmark.insertFlatMap:gc.count            sample       5        ≈ 0          counts
+InsertBenchmark.insertFlatMap:p0.00               sample             80.000           ns/op
+InsertBenchmark.insertFlatMap:p0.50               sample            110.000           ns/op
+InsertBenchmark.insertFlatMap:p0.90               sample            140.000           ns/op
+InsertBenchmark.insertFlatMap:p0.95               sample            153.000           ns/op
+InsertBenchmark.insertFlatMap:p0.99               sample            189.000           ns/op
+InsertBenchmark.insertFlatMap:p0.999              sample           2894.300           ns/op
+InsertBenchmark.insertFlatMap:p0.9999             sample          11331.064           ns/op
+InsertBenchmark.insertFlatMap:p1.00               sample          37760.000           ns/op
+
+Benchmark result is saved to <repo>/examples/09-eliminating-work/results/r03-run3/java/insert-a1-insertFlatMap/jmh.json
