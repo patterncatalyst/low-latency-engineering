@@ -55,6 +55,8 @@ record() {
     WARN) N_WARN=$((N_WARN + 1)); color="$C_Y" ;;
     *)    N_FAIL=$((N_FAIL + 1)); color="$C_R"; status="FAIL" ;;
   esac
+  # Output is committed as evidence: show $HOME as ~ so no absolute home path is published.
+  detail="${detail//"$HOME"/\~}"
   printf '%s[%s]%s %-28s %s\n' "$color" "$status" "$C_0" "$label" "$detail"
   if [[ "$status" != PASS && -n "$hint" ]]; then
     printf '       hint: %s\n' "$hint"
@@ -237,11 +239,11 @@ in_group() {
 check_group() {
   local g="$1"
   if in_group "$g"; then
-    record PASS "group $g" "$USER is a member"
-  elif [[ ",$(getent group "$g" | cut -d: -f4)," == *",$USER,"* ]]; then
+    record PASS "group $g" "you are a member"
+  elif [[ ",$(getent group "$g" | cut -d: -f4)," == *",$(id -un),"* ]]; then
     record FAIL "group $g" "member, but not active in this session" "log out and back in (or: newgrp $g)"
   else
-    record FAIL "group $g" "$USER is not a member" "sudo usermod -aG $g $USER, then log out and back in"
+    record FAIL "group $g" "you are not a member" "sudo usermod -aG $g \$USER, then log out and back in"
   fi
 }
 
@@ -260,7 +262,7 @@ check_docker() {
   if sv="$(docker version --format '{{.Server.Version}}' 2>/dev/null)" && [[ -n "$sv" ]]; then
     record PASS "docker engine" "server $sv"
   else
-    record FAIL "docker engine" "daemon not reachable" "sudo systemctl enable --now docker && sudo usermod -aG docker $USER, then re-login"
+    record FAIL "docker engine" "daemon not reachable" "sudo systemctl enable --now docker && sudo usermod -aG docker \$USER, then re-login"
   fi
   if cv="$(docker compose version --short 2>/dev/null)" && [[ -n "$cv" ]]; then
     record PASS "docker compose" "$cv"
@@ -274,7 +276,7 @@ check_virt() {
     if [[ -r /dev/kvm && -w /dev/kvm ]]; then
       record PASS "/dev/kvm" "accessible"
     else
-      record FAIL "/dev/kvm" "exists, no read/write access" "sudo usermod -aG kvm $USER, then re-login"
+      record FAIL "/dev/kvm" "exists, no read/write access" "sudo usermod -aG kvm \$USER, then re-login"
     fi
   else
     record FAIL "/dev/kvm" "missing" "enable VT-x/AMD-V in firmware; sudo modprobe kvm_intel (or kvm_amd)"

@@ -7,6 +7,8 @@
 #   --pid PID    report CPU affinity / sched policy of PID (default: this script)
 #   --out FILE   write JSON to FILE; nothing on stdout
 #
+# Publishable by design: no CPU model, no DMI product name, no kernel build number or
+# date, no hostname (see the publishing rule in CLAUDE.md and `validate.py` check host-ids).
 # No root needed. Every probe degrades to null/"unknown" when a file or tool is
 # missing or unreadable, so it runs on the Fedora host and inside a KVM guest.
 set -euo pipefail
@@ -16,7 +18,7 @@ MODE=json
 OUT=""
 PID=$$
 
-usage() { sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,8p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 # Print file contents (first line unless "all"), empty on any failure.
 read_file() {
@@ -65,19 +67,29 @@ cmdline_param() {
 }
 
 g_cpu() {
-  local model lscpu_json="{}"
-  model=$(try grep -m1 '^model name' /proc/cpuinfo | sed 's/^[^:]*: *//')
+  local vendor lscpu_json="{}"
+  # Vendor and topology only: the model string names the machine, so it is never recorded.
+  vendor=$(try grep -m1 '^vendor_id' /proc/cpuinfo | sed 's/^[^:]*: *//')
+  case $vendor in
+    GenuineIntel) vendor=Intel ;;
+    AuthenticAMD) vendor=AMD ;;
+    "") vendor="" ;;
+    *) vendor=other ;;
+  esac
   have lscpu && lscpu_json=$(try lscpu -J || echo '{}')
   [[ -n $lscpu_json ]] || lscpu_json="{}"
   local smt; smt=$(read_file "$SYS/smt/active")
-  jq -nc --argjson l "$lscpu_json" --argjson model "$(jstr "$model")" \
+  jq -nc --argjson l "$lscpu_json" --argjson vendor "$(jstr "$vendor")" \
      --arg smt "$smt" --argjson online "$(jstr "$(read_file "$SYS/online")")" '
     def f($k): [$l.lscpu[]? | select(.field == $k) | .data][0] | try tonumber catch null;
-    { model: $model,
-      sockets: f("Socket(s):"),
-      cores_per_socket: f("Core(s) per socket:"),
+    (f("Socket(s):")) as $s | (f("Core(s) per socket:")) as $c | (f("CPU(s):")) as $n |
+    { vendor: $vendor,
+      model: (if $vendor != null and $s != null and $c != null and $n != null
+              then "\($vendor) \($s * $c)-core/\($n)-thread CPU" else null end),
+      sockets: $s,
+      cores_per_socket: $c,
       threads_per_core: f("Thread(s) per core:"),
-      logical_cpus: f("CPU(s):"),
+      logical_cpus: $n,
       smt_active: (if $smt == "1" then true elif $smt == "0" then false else null end),
       online: $online }'
 }
@@ -137,7 +149,10 @@ g_kernel() {
   esac
   rt_file=$(read_file /sys/kernel/realtime)
   if [[ $rt_file == 1 || $preempt == PREEMPT_RT ]]; then rt=true; fi
-  jq -nc --arg rel "$rel" --arg ver "$ver" --arg pre "$preempt" --argjson rt "$rt" \
+  # Publish major.minor and the preempt model only: the build number and build date
+  # pin one machine's exact kernel.
+  rel=$(sed -E 's/^([0-9]+\.[0-9]+).*/\1/' <<<"$rel")
+  jq -nc --arg rel "$rel" --arg pre "$preempt" --argjson rt "$rt" \
      --argjson rtf "$(jstr "$rt_file")" --argjson cmd "$(jstr "$cmd")" \
      --argjson iso "$(cmdline_param "$cmd" isolcpus)" \
      --argjson nohz "$(cmdline_param "$cmd" nohz_full)" \
@@ -145,7 +160,7 @@ g_kernel() {
      --argjson irq "$(cmdline_param "$cmd" irqaffinity)" \
      --argjson sysiso "$(jstr "$(read_file "$SYS/isolated")")" \
      --argjson sysnohz "$(jstr "$(read_file "$SYS/nohz_full")")" '
-    { release: $rel, version: $ver, preempt_model: $pre, realtime: $rt,
+    { release: $rel, version: $pre, preempt_model: $pre, realtime: $rt,
       sys_kernel_realtime: $rtf, cmdline: $cmd,
       isolcpus: $iso, nohz_full: $nohz, rcu_nocbs: $rcu, irqaffinity: $irq,
       sys_isolated: $sysiso, sys_nohz_full: $sysnohz }'
@@ -176,8 +191,7 @@ g_virt() {
   local v=""
   if have systemd-detect-virt; then v=$(systemd-detect-virt 2>/dev/null || true); fi
   jq -nc --arg v "${v:-unknown}" \
-     --argjson prod "$(jstr "$(read_file /sys/class/dmi/id/product_name)")" \
-     '{type: $v, product_name: $prod}'
+     '{type: $v}'
 }
 
 g_load() {

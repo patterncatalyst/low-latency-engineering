@@ -3,7 +3,7 @@
 #
 #   ./deploy-to-vm.sh                       # to <prefix>-target:~/low-latency-engineering/
 #   ./deploy-to-vm.sh lowlat-target         # explicit guest
-#   REMOTE_DIR=/home/fedora/ll ./deploy-to-vm.sh
+#   REMOTE_DIR=ll ./deploy-to-vm.sh   # relative to the guest user's home
 #
 # Build on the host or in the guest as the example's README says; numbers
 # measured in the guest are labelled `vm` and are never compared with
@@ -16,7 +16,7 @@ VM="${1:-${TARGET_VM:-${LAB_PREFIX}-target}}"
 guard_name "$VM"
 command -v rsync >/dev/null || die "rsync not found on the host (dnf install rsync)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-REMOTE_DIR="${REMOTE_DIR:-/home/${GUEST_USER}/low-latency-engineering}"
+REMOTE_DIR="${REMOTE_DIR:-low-latency-engineering}" # relative to the guest user's home
 DEST="$(ssh_dest "$VM")"
 
 for d in examples scripts; do
