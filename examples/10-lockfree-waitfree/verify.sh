@@ -139,7 +139,7 @@ counter() { jget "$1" ".runtime.counters.$2"; }
 
 # alt_ratio FILE_NUM FILE_DEN: the ratio of two p99 values in thousandths (the asserted tail).
 alt_ratio() { echo $((1000 * $(p99 "$1") / $(p99 "$2"))); }
-# alt_ratio999 FILE_NUM FILE_DEN: the same at p99.9 (observed: it sits at the host's interrupt floor, a few microseconds).
+# alt_ratio999 FILE_NUM FILE_DEN: the same at p99.9 (observed only, not asserted).
 alt_ratio999() { echo $((1000 * $(p999 "$1") / $(p999 "$2"))); }
 
 # median_of VALUE...: the middle value of the sorted integers.
@@ -183,7 +183,7 @@ each_alt() {
 
 # ---- build and unit tests ------------------------------------------------------------------------------------------
 if ((RUN)); then
-  # Five distinct physical cores, CPU 0 excluded: it takes most interrupts (example 09 does the same).
+  # Five distinct physical cores, CPU 0 excluded (example 09 does the same).
   cores=$(distinct_cores 7) || die "need 6 distinct physical cores (5 to pin, CPU 0 left alone)"
   mapfile -t CORES < <(awk '$1 != 0' <<<"$cores" | head -n 5)
   ((${#CORES[@]} == 5)) || die "need 5 distinct physical cores other than CPU 0, found ${#CORES[@]}"

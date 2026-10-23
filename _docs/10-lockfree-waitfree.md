@@ -37,7 +37,7 @@ Take the camera threads claiming slots. With a `mutex` around the counter, a thr
 
 Platform matters: on a load-linked/store-conditional machine (AArch64 without the ARMv8.1 LSE atomics, for example) `fetch_add` compiles to a retry loop, and "wait-free" stops being true of the same source line. And wait-free bounds steps, not time: a step can wait for a cache line another core owns. It covers the claim only. Claiming a slot and publishing it are two steps, and the consumer reads in order.
 
-If the camera that claimed slot 42 sleeps before it publishes, slots 43 and 44 can be full and the tracker still waits at 42 (Figure 10.4, in Measure, draws it). The operation with the guarantee is the claim; the log's read blocks at a stalled producer. The guarantee is a property of the operation, not the structure.
+If the camera that claimed slot 42 sleeps before it publishes, slots 43 and 44 can be full and the tracker still waits at 42 (Figure 10.4, in Measure, draws it). The operation with the guarantee is the claim; the log's read blocks at a stalled producer.
 
 A monotonic 64-bit sequence sidesteps two classic traps. A number is never reused, so a CAS can't succeed against a value that went away and came back (ABA), and nothing is freed. A structure that recycles nodes needs hazard pointers or epochs in C++; C++26 specifies `<hazard_pointer>` and `<rcu>`, but libstdc++ (GCC 16.2, also used by Clang 22.1 here) doesn't ship them. In Java the collector frees a node only when no thread can reach it, which is that work done for you. In Python, reference counting frees objects and the interpreter keeps the counts consistent.
 
@@ -270,7 +270,7 @@ examples/10-lockfree-waitfree/verify.sh
 
 `ALLOW_BUSY=1` measures on a loaded host; `RECHECK=results/<run-id>` re-evaluates committed reports. A latency ratio is the median of three alternations inside one run.
 
-Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, GCC 16.2, Python 3.14.8. Threads sit on distinct physical cores, CPU 0 left out because it takes most interrupts, placed with `sched_setaffinity`: an experiment control, not isolation (jcstress picks its own CPUs), which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, GCC 16.2, Python 3.14.8. Threads sit on distinct physical cores other than CPU 0 (jcstress picks its own CPUs), placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
 
 ### Claims
 
@@ -323,7 +323,7 @@ On the line all four variants counted 200,000 parcels, dropped none, and receive
 
 ## Cross-check
 
-jcstress and the C++ harness test the same litmus outcome independently, on different memory models and tooling, and agree on both outcomes in all three runs.
+jcstress and the C++ harness run the same store-buffering test independently, under different memory models and tooling, and agree on both orderings in all three runs.
 
 Context-switch counters explain the claim tails: the `mutex` producers sleep thousands of times, the `fetch-add` producers at most three, and the `mutex` p99 sits 6x to 15x above `fetch-add`'s.
 

@@ -59,7 +59,7 @@ the mechanism; they aren't advice for general code.
 Placement is unprivileged `sched_setaffinity` on our own benchmark threads (`pthread_setaffinity_np`, OpenHFT
 `Affinity.setAffinity`, `os.sched_setaffinity`) on CPUs from `distinct_cores` in `examples/_lib/lib.sh`: one logical CPU per
 physical core, chosen from sysfs topology. `verify.sh` asks for six cores and drops the first, so the pinned threads
-start at the second physical core: CPU 0 carries most of the interrupts, and example 09 leaves it alone too. All three
+start at the second physical core, leaving CPU 0 out as example 09 does. All three
 languages receive the same list through `--cpus`. It's an experiment control, and it doesn't isolate the cores from the
 scheduler or the timer tick; isolation is Part 5. Every run records `runtime.placement`, and `verify.sh`
 checks each pinned thread's last CPU in `/proc/<pid>/task/<tid>/stat` while the run holds at its start gate.

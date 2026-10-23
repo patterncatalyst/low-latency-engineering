@@ -108,7 +108,7 @@ pre-touched so no collection starts inside a run. The counters and the line run 
 `Main` (`counters`, `consume`), because JMH can't give control of five pinned threads. Each camera thread
 first runs its whole measured loop, `timeBatches`, on a scratch counter set for 600 ms. That matters more than
 it sounds: warming only the inner batch left the outer loop at C1's profiling tier, whose shared profile
-counters bounced between the five cores and added about 0.005 L1 misses per increment to the padded layout.
+counters bounced between the five cores and added L1 misses to the padded layout.
 Warmed whole, the loop runs C2 code and compilation stays out of the measured region, which lasts only tens of
 milliseconds.
 

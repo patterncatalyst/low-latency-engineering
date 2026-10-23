@@ -202,7 +202,7 @@ if ((RUN)); then
   ok "C++, Java and Python unit tests pass (tracker logic, SSCC packing against the parcel-v1 golden barcodes, layout)"
 
   # Distinct physical cores for the pinned threads, from sysfs topology.
-  # CPU 0 is left alone: it takes the boot-time interrupts and OpenHFT Affinity will not bind to it.
+  # CPU 0 is left alone: OpenHFT AffinityLock doesn't reserve it by default, so the Java pin would fail.
   mapfile -t CORES < <(distinct_cores 7 | awk '$1 != 0' | head -n 6)
   ((${#CORES[@]} == 6)) || die "need six physical cores other than CPU 0, got ${#CORES[@]}"
   ok "pinned threads use physical cores ${CORES[*]} (one logical CPU per core); not isolation"
