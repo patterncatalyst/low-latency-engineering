@@ -1,68 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 460" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 456" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
 <defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
-<rect x="20" y="44" width="840" height="122" rx="12" fill="#fafafa" stroke="#ddd"/>
+<rect x="20" y="44" width="840" height="118" rx="12" fill="#fafafa" stroke="#ddd"/>
 <text x="32" y="64" font-size="12" font-weight="700" fill="#1d1d1d">C++: the owner frees; there is no collector</text>
-<rect x="20" y="176" width="840" height="122" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="196" font-size="12" font-weight="700" fill="#1d1d1d">Python: refcounts free at once; a cycle collector finds cycles</text>
-<rect x="20" y="308" width="840" height="122" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="328" font-size="12" font-weight="700" fill="#1d1d1d">Java: tracing collectors mark what is live</text>
+<rect x="20" y="170" width="840" height="118" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="190" font-size="12" font-weight="700" fill="#1d1d1d">Python: refcounts free at once; a cycle collector finds cycles</text>
+<rect x="20" y="296" width="840" height="118" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="316" font-size="12" font-weight="700" fill="#1d1d1d">Java: tracing collectors mark what is live</text>
 <rect x="40" y="74" width="180" height="86" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
 <text x="130.0" y="115.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">C++</text>
 <text x="130.0" y="132.0" font-size="11.5" fill="#555555" text-anchor="middle">ownership: free is a call</text>
 <rect x="280" y="74" width="320" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
 <text x="440.0" y="92.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">--bulk-free</text>
-<text x="440.0" y="109.0" font-size="11.5" fill="#555555" text-anchor="middle">wave destroyed on the hot thread</text>
+<text x="440.0" y="109.0" font-size="11.5" fill="#555555" text-anchor="middle">destroyed on the hot thread</text>
 <rect x="660" y="74" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="755.0" y="92.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">max latency</text>
-<text x="755.0" y="109.0" font-size="11.5" fill="#555555" text-anchor="middle">3.65-3.87 ms</text>
+<text x="755.0" y="92.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99.9 latency</text>
+<text x="755.0" y="109.0" font-size="11.5" fill="#555555" text-anchor="middle">2.08-2.19 ms</text>
 <rect x="280" y="120" width="320" height="40" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
 <text x="440.0" y="138.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">deferred-free</text>
-<text x="440.0" y="155.0" font-size="11.5" fill="#555555" text-anchor="middle">a reclaimer thread destroys it</text>
+<text x="440.0" y="155.0" font-size="11.5" fill="#555555" text-anchor="middle">reclaimer thread destroys it</text>
 <rect x="660" y="120" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="755.0" y="138.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99.9 latency</text>
 <text x="755.0" y="155.0" font-size="11.5" fill="#555555" text-anchor="middle">0.135-0.141 ms</text>
-<rect x="40" y="206" width="180" height="86" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="130.0" y="247.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Python</text>
-<text x="130.0" y="264.0" font-size="11.5" fill="#555555" text-anchor="middle">refcount + generational GC</text>
-<rect x="280" y="206" width="320" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
-<text x="440.0" y="224.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">cyclic-garbage</text>
-<text x="440.0" y="241.0" font-size="11.5" fill="#555555" text-anchor="middle">reference cycles, gen-2 runs</text>
-<rect x="660" y="206" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="755.0" y="224.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">9 gen-2 runs</text>
-<text x="755.0" y="241.0" font-size="11.5" fill="#555555" text-anchor="middle">max pause 144-151 ms</text>
-<rect x="280" y="252" width="320" height="40" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
-<text x="440.0" y="270.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">frozen</text>
-<text x="440.0" y="287.0" font-size="11.5" fill="#555555" text-anchor="middle">no cycles, gc.freeze()</text>
-<rect x="660" y="252" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="755.0" y="270.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">0 gen-2 runs</text>
-<text x="755.0" y="287.0" font-size="11.5" fill="#555555" text-anchor="middle">refcount frees everything</text>
-<rect x="40" y="338" width="180" height="86" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="130.0" y="379.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Java</text>
-<text x="130.0" y="396.0" font-size="11.5" fill="#555555" text-anchor="middle">tracing, generational</text>
-<rect x="280" y="338" width="320" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
-<text x="440.0" y="356.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">--stop-the-world</text>
-<text x="440.0" y="373.0" font-size="11.5" fill="#555555" text-anchor="middle">Parallel: full pause, heap walk</text>
-<rect x="660" y="338" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="755.0" y="356.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">max GC pause</text>
-<text x="755.0" y="373.0" font-size="11.5" fill="#555555" text-anchor="middle">158-170 ms</text>
-<rect x="280" y="384" width="320" height="40" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
-<text x="440.0" y="402.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">zgc</text>
-<text x="440.0" y="419.0" font-size="11.5" fill="#555555" text-anchor="middle">concurrent mark and relocate</text>
-<rect x="660" y="384" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="755.0" y="402.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">max GC pause</text>
-<text x="755.0" y="419.0" font-size="11.5" fill="#555555" text-anchor="middle">0.017-0.036 ms</text>
+<rect x="40" y="200" width="180" height="86" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="130.0" y="241.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Python</text>
+<text x="130.0" y="258.0" font-size="11.5" fill="#555555" text-anchor="middle">refcount + generational GC</text>
+<rect x="280" y="200" width="320" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="440.0" y="218.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">cyclic-garbage</text>
+<text x="440.0" y="235.0" font-size="11.5" fill="#555555" text-anchor="middle">reference cycles, gen-2 runs</text>
+<rect x="660" y="200" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="755.0" y="218.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">9 gen-2 runs</text>
+<text x="755.0" y="235.0" font-size="11.5" fill="#555555" text-anchor="middle">p99.9 138-144 ms</text>
+<rect x="280" y="246" width="320" height="40" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="440.0" y="264.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">frozen</text>
+<text x="440.0" y="281.0" font-size="11.5" fill="#555555" text-anchor="middle">no cycles, gc.freeze()</text>
+<rect x="660" y="246" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="755.0" y="264.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">0 gen-2 runs</text>
+<text x="755.0" y="281.0" font-size="11.5" fill="#555555" text-anchor="middle">p99.9 0.154-0.168 ms</text>
+<rect x="40" y="326" width="180" height="86" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="130.0" y="367.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Java</text>
+<text x="130.0" y="384.0" font-size="11.5" fill="#555555" text-anchor="middle">tracing, generational</text>
+<rect x="280" y="326" width="320" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="440.0" y="344.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">--stop-the-world</text>
+<text x="440.0" y="361.0" font-size="11.5" fill="#555555" text-anchor="middle">full pause walks the heap</text>
+<rect x="660" y="326" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="755.0" y="344.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99.9 latency</text>
+<text x="755.0" y="361.0" font-size="11.5" fill="#555555" text-anchor="middle">152-157 ms</text>
+<rect x="280" y="372" width="320" height="40" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="440.0" y="390.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">zgc</text>
+<text x="440.0" y="407.0" font-size="11.5" fill="#555555" text-anchor="middle">concurrent mark and relocate</text>
+<rect x="660" y="372" width="190" height="40" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="755.0" y="390.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99.9 latency</text>
+<text x="755.0" y="407.0" font-size="11.5" fill="#555555" text-anchor="middle">0.135-0.153 ms</text>
 <path d="M220,94 L280,94" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <path d="M600,94 L660,94" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <path d="M220,140 L280,140" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
 <path d="M600,140 L660,140" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
-<path d="M220,226 L280,226" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M600,226 L660,226" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M220,272 L280,272" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
-<path d="M600,272 L660,272" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
-<path d="M220,358 L280,358" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M600,358 L660,358" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M220,404 L280,404" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
-<path d="M600,404 L660,404" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M220,220 L280,220" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M600,220 L660,220" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M220,266 L280,266" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M600,266 L660,266" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M220,346 L280,346" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M600,346 L660,346" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M220,392 L280,392" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M600,392 L660,392" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
 <text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Where reclaim cost lands depends on the runtime and on who frees</text>
-<text x="440" y="450" font-size="12" fill="#1d1d1d" text-anchor="middle">Amber: the variant that keeps reclaim off the latency-critical path.</text>
+<text x="440" y="436" font-size="12" fill="#1d1d1d" text-anchor="middle">Amber: the variant that keeps reclaim off the latency-critical path.</text>
 </svg>

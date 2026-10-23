@@ -13,9 +13,9 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 LANES = [
-    ("escaping: the decision is stored in a field", "sub", ["new DivertDecision", "stored, so it escapes"], "ink", ["gc.alloc.rate.norm", "24 B/op, exact"], False),
+    ("escaping: the decision is stored in a field", "sub", ["new DivertDecision", "stored, so it escapes"], "ink", ["gc.alloc.rate.norm", "~24 B/op"], False),
     ("scalar-replaced: read and dropped in the loop", "accent", ["Scalar replacement", "fields live in registers"], "ink", ["gc.alloc.rate.norm", "< 1 B/op"], True),
-    ("--no-escape-analysis: -XX:-DoEscapeAnalysis", "ghost", ["Scalar replacement", "absent, object is built"], "ink", ["gc.alloc.rate.norm", "24 B/op, exact"], False),
+    ("--no-escape-analysis: -XX:-DoEscapeAnalysis", "ghost", ["Scalar replacement", "absent, object is built"], "ink", ["gc.alloc.rate.norm", "~24 B/op"], False),
 ]
 
 bands = []
@@ -54,7 +54,7 @@ notes = [
     },
 ]
 
-g.emit("05-escape-analysis", 880, 400, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("05-escape-analysis", 880, 408, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

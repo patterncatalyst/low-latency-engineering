@@ -41,7 +41,7 @@ nodes += [
         "w": 380,
         "h": 54,
         "style": "sub",
-        "lines": ["slot = sequence & (slots - 1)", "slots is a power of two: 65,536 in the run"],
+        "lines": ["slot = sequence & (slots - 1)", "power of two (65,536 in run)"],
     },
     {"x": 680, "y": 250, "w": 170, "h": 54, "style": "ghost", "lines": ["Full ring", "the producer would wait"]},
 ]

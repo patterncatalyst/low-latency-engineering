@@ -17,24 +17,24 @@ LANES = [
         "C++: the owner frees; there is no collector",
         ["C++", "ownership: free is a call"],
         [
-            ("sub", ["--bulk-free", "wave destroyed on the hot thread"], ["max latency", "3.65-3.87 ms"], False),
-            ("accent", ["deferred-free", "a reclaimer thread destroys it"], ["p99.9 latency", "0.135-0.141 ms"], True),
+            ("sub", ["--bulk-free", "destroyed on the hot thread"], ["p99.9 latency", "2.08-2.19 ms"], False),
+            ("accent", ["deferred-free", "reclaimer thread destroys it"], ["p99.9 latency", "0.135-0.141 ms"], True),
         ],
     ),
     (
         "Python: refcounts free at once; a cycle collector finds cycles",
         ["Python", "refcount + generational GC"],
         [
-            ("sub", ["cyclic-garbage", "reference cycles, gen-2 runs"], ["9 gen-2 runs", "max pause 144-151 ms"], False),
-            ("accent", ["frozen", "no cycles, gc.freeze()"], ["0 gen-2 runs", "refcount frees everything"], True),
+            ("sub", ["cyclic-garbage", "reference cycles, gen-2 runs"], ["9 gen-2 runs", "p99.9 138-144 ms"], False),
+            ("accent", ["frozen", "no cycles, gc.freeze()"], ["0 gen-2 runs", "p99.9 0.154-0.168 ms"], True),
         ],
     ),
     (
         "Java: tracing collectors mark what is live",
         ["Java", "tracing, generational"],
         [
-            ("sub", ["--stop-the-world", "Parallel: full pause, heap walk"], ["max GC pause", "158-170 ms"], False),
-            ("accent", ["zgc", "concurrent mark and relocate"], ["max GC pause", "0.017-0.036 ms"], True),
+            ("sub", ["--stop-the-world", "full pause walks the heap"], ["p99.9 latency", "152-157 ms"], False),
+            ("accent", ["zgc", "concurrent mark and relocate"], ["p99.9 latency", "0.135-0.153 ms"], True),
         ],
     ),
 ]
@@ -43,8 +43,8 @@ bands = []
 nodes = []
 edges = []
 for i, (label, lang, rows) in enumerate(LANES):
-    y0 = 44 + i * 132
-    bands.append({"x": 20, "y": y0, "w": 840, "h": 122, "label": label})
+    y0 = 44 + i * 126
+    bands.append({"x": 20, "y": y0, "w": 840, "h": 118, "label": label})
     nodes.append({"x": 40, "y": y0 + 30, "w": 180, "h": 86, "style": "user", "lines": lang})
     for j, (style, mech, res, amber) in enumerate(rows):
         y = y0 + 30 + j * 46
@@ -70,14 +70,14 @@ notes = [
     },
     {
         "x": 440,
-        "y": 450,
+        "y": 436,
         "text": "Amber: the variant that keeps reclaim off the latency-critical path.",
         "anchor": "middle",
         "size": 12,
     },
 ]
 
-g.emit("06-refcount-vs-tracing", 880, 460, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("06-refcount-vs-tracing", 880, 456, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

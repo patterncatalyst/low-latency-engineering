@@ -24,15 +24,15 @@ bands = [
 
 nodes = [
     {"x": 40, "y": 50, "w": 200, "h": 60, "style": "sub", "lines": ["Interpreter", "tier 0, bytecode as is"]},
-    {"x": 340, "y": 50, "w": 200, "h": 60, "style": "sub", "lines": ["C1", "tiers 1-3, adds profiling"]},
+    {"x": 340, "y": 50, "w": 200, "h": 60, "style": "sub", "lines": ["C1", "tier 1; 2-3 add profiling"]},
     {"x": 640, "y": 50, "w": 200, "h": 60, "style": "accent", "lines": ["C2", "tier 4, optimized code"]},
     {"x": 340, "y": 150, "w": 200, "h": 50, "style": "ghost", "lines": ["Deoptimization", "an assumption breaks"]},
-    {"x": 40, "y": 246, "w": 240, "h": 50, "style": "user", "lines": ["--unwarmed", "binds at once, JIT warms live"]},
+    {"x": 40, "y": 246, "w": 240, "h": 50, "style": "user", "lines": ["--unwarmed", "binds at once, JIT cold"]},
     {"x": 320, "y": 246, "w": 240, "h": 50, "style": "accent", "lines": ["warmed", "replays 20,000 parcels first"]},
-    {"x": 600, "y": 246, "w": 240, "h": 50, "style": "accent", "lines": ["aot-cache", "trained cache, AOTMode=on"]},
+    {"x": 600, "y": 246, "w": 240, "h": 50, "style": "accent", "lines": ["aot-cache", "classes + profiles, no code"]},
     {"x": 40, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "13.4-28.5 ms"]},
     {"x": 320, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "0.29-0.36 ms"]},
-    {"x": 600, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "0.61-3.2 ms; ready 51-55 ms"]},
+    {"x": 600, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "0.61-3.2 ms"]},
 ]
 
 edges = [
@@ -47,8 +47,8 @@ edges = [
         "y2": 110,
         "amber": True,
         "label": "replay -> C2",
-        "lx": 70,
-        "ly": 8,
+        "lx": 45,
+        "ly": 16,
     },
     {"x1": 160, "y1": 296, "x2": 160, "y2": 322},
     {"x1": 440, "y1": 296, "x2": 440, "y2": 322},
@@ -59,7 +59,7 @@ notes = [
     {
         "x": 440,
         "y": 28,
-        "text": "The first parcels pay for warm-up unless it moves before the bind",
+        "text": "The first parcels pay for warm-up; a replay moves it off the belt",
         "anchor": "middle",
         "size": 14,
         "bold": True,
@@ -68,13 +68,13 @@ notes = [
     {
         "x": 440,
         "y": 398,
-        "text": "Time to ready: 173-177 ms without the AOT cache, 51-55 ms with it.",
+        "text": "Time to ready, median of 5 launches: 173-177 ms without a trained AOT cache, 51-55 ms with one.",
         "anchor": "middle",
         "size": 12,
     },
 ]
 
-g.emit("05-jit-tiers", 880, 410, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("05-jit-tiers", 880, 418, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

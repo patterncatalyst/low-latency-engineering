@@ -13,7 +13,7 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 ROWS = [
-    ("sub", ["--stop-the-world", "all threads stop, heap walked"], "158-170 ms", False),
+    ("sub", ["--stop-the-world", "all threads stop, full walk"], "158-170 ms", False),
     ("sub", ["g1", "stop-the-world evacuation"], "21.0-21.6 ms", False),
     ("accent", ["zgc", "concurrent mark and relocate"], "0.017-0.036 ms", True),
     ("sub", ["shenandoah-gen", "concurrent evacuation"], "0.53-0.82 ms", False),
@@ -62,7 +62,7 @@ notes = [
     },
 ]
 
-g.emit("06-collector-pauses", 880, 400, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("06-collector-pauses", 880, 408, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

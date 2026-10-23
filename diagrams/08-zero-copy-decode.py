@@ -29,7 +29,7 @@ nodes = [
         "y": 88,
         "w": 150,
         "h": 226,
-        "style": "kernel",
+        "style": "sub",
         "lines": ["Receive buffer", "one direct ByteBuffer", "one datagram at a time"],
     },
     {
@@ -46,7 +46,7 @@ nodes = [
         "w": 250,
         "h": 70,
         "style": "accent",
-        "lines": ["FlatView", "MemorySegment.ofBuffer", "VarHandles at fixed offsets"],
+        "lines": ["FlatView", "checks schema, version, size", "MemorySegment + VarHandles"],
     },
     {"x": 580, "y": 88, "w": 250, "h": 70, "style": "ink", "lines": ["544-576 B/op, p50 150-160 ns", "line: 531-591 B/parcel"]},
     {"x": 580, "y": 254, "w": 250, "h": 70, "style": "ink", "lines": ["< 1 B/op, p50 16 ns", "line: 8.76 B/parcel"]},
@@ -72,7 +72,7 @@ notes = [
     {
         "x": 440,
         "y": 388,
-        "text": "A read-only view of bytes someone else owns: nothing to parse, nothing to allocate.",
+        "text": "A read-only view of bytes someone else owns: nothing to parse, under 1 B per decode.",
         "anchor": "middle",
         "size": 12,
     },

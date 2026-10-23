@@ -15,7 +15,7 @@ AOT cache.
   removes an allocation that never leaves the compiled method (scalar replacement: the
   object's fields live in registers). JMH's `-prof gc` reads the exact count
   (`gc.alloc.rate.norm`, bytes per operation), so the effect is a counter, not a timing.
-- **Warm-up.** Bytecode runs interpreted, then C1 (tiers 1 to 3, with profiling), then C2
+- **Warm-up.** Bytecode runs interpreted, then C1 (tier 1 without profiling, tiers 2 and 3 with it), then C2
   (tier 4); an assumption that breaks sends compiled code back to the interpreter
   (deoptimization). A JVM that binds its socket at once pays this on the first parcels of
   the line. Replaying synthetic parcels through the same classes before the bind moves the

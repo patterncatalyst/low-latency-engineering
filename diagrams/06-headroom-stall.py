@@ -20,8 +20,7 @@ bands = [
 nodes = [
     {"x": 40, "y": 90, "w": 150, "h": 60, "style": "user", "lines": ["Handler", "~400 MB/s of garbage"]},
     {"x": 230, "y": 90, "w": 190, "h": 60, "style": "sub", "lines": ["ZGC cycles", "ahead of the rate"]},
-    {"x": 460, "y": 90, "w": 180, "h": 60, "style": "ghost", "lines": ["no stall", "0 allocation stalls"]},
-    {"x": 680, "y": 90, "w": 170, "h": 60, "style": "ink", "lines": ["p99.9", "0.135-0.153 ms"]},
+    {"x": 460, "y": 90, "w": 190, "h": 60, "style": "ink", "lines": ["0 allocation stalls", "p99.9 0.135-0.153 ms"]},
     {"x": 40, "y": 236, "w": 150, "h": 60, "style": "user", "lines": ["Handler", "~400 MB/s of garbage"]},
     {"x": 230, "y": 236, "w": 190, "h": 60, "style": "sub", "lines": ["ZGC cycles", "free memory runs out"]},
     {"x": 460, "y": 236, "w": 180, "h": 60, "style": "accent", "lines": ["allocation stall", "the thread waits"]},
@@ -30,8 +29,7 @@ nodes = [
 
 edges = [
     {"x1": 190, "y1": 120, "x2": 230, "y2": 120},
-    {"x1": 420, "y1": 120, "x2": 460, "y2": 120, "dashed": True},
-    {"x1": 640, "y1": 120, "x2": 680, "y2": 120, "dashed": True},
+    {"x1": 420, "y1": 120, "x2": 460, "y2": 120},
     {"x1": 190, "y1": 266, "x2": 230, "y2": 266},
     {"x1": 420, "y1": 266, "x2": 460, "y2": 266, "amber": True},
     {"x1": 640, "y1": 266, "x2": 680, "y2": 266, "amber": True},
@@ -50,7 +48,7 @@ notes = [
     {
         "x": 440,
         "y": 348,
-        "text": "Dashed: nothing stalled, so the wait never happened. A stall is a pause by another name.",
+        "text": "A stall is a pause by another name: the allocating thread waits for the collector.",
         "anchor": "middle",
         "size": 12,
     },
