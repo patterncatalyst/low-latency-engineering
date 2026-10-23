@@ -311,11 +311,11 @@ Each run does the 10 kHz, 20 s workload unpinned and pinned, alternated three ti
 
 **Placement (criterion 3).** The pinned thread's `Cpus_allowed_list` was CPU 3 and `/proc` showed it on CPU 3. The unpinned thread was allowed on CPUs 0-3 and seen on CPUs 0-2.
 
-Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and does not remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own isolation, and Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, covers the kernel. 
+Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and does not remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own isolation, and Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, covers the real-time kernel. 
 
 ## Cross-check
 
-The decide thread's switches (read from `/proc/<pid>/task/<tid>/status`) and the in-process percentiles agree: the blocking queue shows nearly one voluntary switch per parcel and a p99 well above the rings'. The `syscw` from `/proc/<pid>/task/<tid>/io` is 200,000 for `write-per-parcel`, matching its readback count, and 0 for Chronicle. JMH's bytes per publish and the old-generation reading are two independent views of the heap and measure different things. The C++ lane reproduces the park and spin split. In the VM, `Cpus_allowed_list` and `/proc` showing CPU 3 confirm the placement.
+The decide thread's switches (read from `/proc/<pid>/task/<tid>/status`) and the in-process percentiles agree: the blocking queue shows nearly one voluntary switch per parcel and a p99 well above the rings'. The `syscw` from `/proc/<pid>/task/<tid>/io` is 200,000 for `write-per-parcel`, matching its readback count, and 0 for Chronicle. The C++ lane reproduces the park and spin split. In the VM, `Cpus_allowed_list` and `/proc` showing CPU 3 confirm the placement.
 
 ## What you learned
 
@@ -331,7 +331,7 @@ The next chapter, *Zero-copy and flat data: Panama (FFM), Valhalla value objects
 
 - Enberg, *Latency* (Manning), as further reading.
 - Chapter 10, *Lock-free and wait-free synchronization*, in Part 3, for memory orders in full.
-- Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code*, in Part 5, for isolation as versioned deployment config.
+- Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code: CI/CD, deployment, and rollouts gated on a latency and jitter SLO*, in Part 5, for isolation as versioned deployment config.
 - `examples/common/MEASUREMENT.md` for the report format.
 
 ---

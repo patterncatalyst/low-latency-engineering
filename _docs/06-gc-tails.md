@@ -138,7 +138,7 @@ void Tracker::close_wave() {
         return lane
 ```
 
-The Java handler never frees anything. `scan` allocates samples, each with a fresh `byte[]`, and `track` keeps a few in the `ParcelState` that goes into the `LinkedHashMap`; the rest is garbage once `checksum` returns. The manifest write replaces an old `ManifestEntry`. Nothing in the code mentions the collector, which decides what it costs.
+The Java handler never frees anything. `scan` allocates samples, each with a fresh `byte[]`, and `track` keeps a few in the `ParcelState` that goes into the `LinkedHashMap`; the rest is garbage once `checksum` returns. The manifest write replaces an old `ManifestEntry`. Nothing in the code mentions the collector; the collector decides what it costs.
 
 In Python, `self.cyclic` is the one branch that matters: each sample gets `parent = state`, closing the cycle. Without it, the parcel dies when the table drops it.
 
@@ -264,7 +264,7 @@ ZGC's end-to-end maximum is 2.45 to 2.69 ms while its longest GC pause is under 
 
 **Headroom.** With the heap at 1.05 times the live set (1,895 to 1,901 MB), `undersized-heap` recorded 532 to 976 allocation stalls, the longest 60.7 to 156.9 ms, and a p99.9 of 49.6 to 134.9 ms against 0.135 to 0.153 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses stayed at 0.040 to 0.051 ms at most, so the stalls are the whole cost.
 
-**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.150 to 0.155 ms and a maximum pause of 0.41 to 0.51 ms. `thp`, which got no huge pages, gave a p99.9 of 0.142 to 0.146 ms and a maximum pause of 0.022 to 0.030 ms. With the recording off, `jfr-off` gave a p99.9 of 0.145 to 0.159 ms, 6 to 11 microseconds above ZGC's in the same run: less than ZGC's own 18 microsecond run-to-run spread (0.135 to 0.153 ms), and the opposite direction from a recording cost. The book claims no more.
+**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.150 to 0.155 ms and a maximum pause of 0.41 to 0.51 ms. `thp`, which got no huge pages, gave a p99.9 of 0.142 to 0.146 ms and a maximum pause of 0.022 to 0.030 ms. With the recording off, `jfr-off` gave a p99.9 of 0.145 to 0.159 ms, 6 to 11 microseconds above ZGC's in the same run: less than ZGC's own 18-microsecond run-to-run spread (0.135 to 0.153 ms), and the opposite direction from a recording cost. The book claims no more.
 
 **Python.** `cyclic-garbage` ran 9 generation-2 collections in the window (99 of generation 1, 1,092 of generation 0), the longest collection 144.0 to 150.6 ms, with a p99.9 of 138.1 to 144.4 ms. `frozen` ran 0 collections with 119,780 objects frozen and a p99.9 of 0.154 to 0.168 ms. Criterion 4 asserts 0 generation-2 collections for `frozen` and at least 1 for `cyclic-garbage`.
 
