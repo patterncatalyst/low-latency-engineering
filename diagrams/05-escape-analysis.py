@@ -13,9 +13,30 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 LANES = [
-    ("escaping: the decision is stored in a field", "sub", ["new DivertDecision", "stored, so it escapes"], "ink", ["gc.alloc.rate.norm", "~24 B/op"], False),
-    ("scalar-replaced: read and dropped in the loop", "accent", ["Scalar replacement", "fields live in registers"], "ink", ["gc.alloc.rate.norm", "< 1 B/op"], True),
-    ("--no-escape-analysis: -XX:-DoEscapeAnalysis", "ghost", ["Scalar replacement", "absent, object is built"], "ink", ["gc.alloc.rate.norm", "~24 B/op"], False),
+    (
+        "escaping: the decision is stored in a field",
+        "sub",
+        ["new DivertDecision", "stored, so it escapes"],
+        "ink",
+        ["gc.alloc.rate.norm", "~24 B/op"],
+        False,
+    ),
+    (
+        "scalar-replaced: read and dropped in the loop",
+        "accent",
+        ["Scalar replacement", "fields live in registers"],
+        "ink",
+        ["gc.alloc.rate.norm", "< 1 B/op"],
+        True,
+    ),
+    (
+        "--no-escape-analysis: -XX:-DoEscapeAnalysis",
+        "ghost",
+        ["Scalar replacement", "absent, object is built"],
+        "ink",
+        ["gc.alloc.rate.norm", "~24 B/op"],
+        False,
+    ),
 ]
 
 bands = []
@@ -26,7 +47,14 @@ for i, (label, style, mid, rstyle, res, amber) in enumerate(LANES):
     cy = y0 + 59
     bands.append({"x": 20, "y": y0, "w": 840, "h": 100, "label": label})
     nodes += [
-        {"x": 40, "y": y0 + 32, "w": 170, "h": 54, "style": "user", "lines": ["JMH decide()", "one call per parcel"]},
+        {
+            "x": 40,
+            "y": y0 + 32,
+            "w": 170,
+            "h": 54,
+            "style": "user",
+            "lines": ["JMH decide()", "one call per parcel"],
+        },
         {"x": 290, "y": y0 + 32, "w": 290, "h": 54, "style": style, "lines": mid},
         {"x": 660, "y": y0 + 32, "w": 190, "h": 54, "style": rstyle, "lines": res},
     ]
@@ -48,7 +76,10 @@ notes = [
     {
         "x": 440,
         "y": 388,
-        "text": "An allocation is a TLAB bump; its cost is the bytes it adds to the next young collection.",
+        "text": (
+            "An allocation is a TLAB bump; its cost is the bytes "
+            "it adds to the next young collection."
+        ),
         "anchor": "middle",
         "size": 12,
     },

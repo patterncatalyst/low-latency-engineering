@@ -13,16 +13,63 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 bands = [
-    {"x": 20, "y": 44, "w": 840, "h": 172, "label": "object-table: ParcelState[] of 1,000,000 references"},
-    {"x": 20, "y": 310, "w": 840, "h": 108, "label": "flat-table: one MemorySegment of 24-byte structs in an Arena"},
+    {
+        "x": 20,
+        "y": 44,
+        "w": 840,
+        "h": 172,
+        "label": "object-table: ParcelState[] of 1,000,000 references",
+    },
+    {
+        "x": 20,
+        "y": 310,
+        "w": 840,
+        "h": 108,
+        "label": "flat-table: one MemorySegment of 24-byte structs in an Arena",
+    },
 ]
 
 nodes = [
-    {"x": 40, "y": 100, "w": 170, "h": 70, "style": "sub", "lines": ["ParcelState[]", "references only"]},
-    {"x": 300, "y": 80, "w": 150, "h": 40, "style": "sub", "lines": ["ParcelState", "header + fields"]},
-    {"x": 330, "y": 124, "w": 150, "h": 40, "style": "sub", "lines": ["ParcelState", "header + fields"]},
-    {"x": 310, "y": 168, "w": 150, "h": 40, "style": "sub", "lines": ["ParcelState", "header + fields"]},
-    {"x": 560, "y": 116, "w": 290, "h": 56, "style": "ink", "lines": ["sweep of 1,000,000, p50", "5.01-5.03 ms"]},
+    {
+        "x": 40,
+        "y": 100,
+        "w": 170,
+        "h": 70,
+        "style": "sub",
+        "lines": ["ParcelState[]", "references only"],
+    },
+    {
+        "x": 300,
+        "y": 80,
+        "w": 150,
+        "h": 40,
+        "style": "sub",
+        "lines": ["ParcelState", "header + fields"],
+    },
+    {
+        "x": 330,
+        "y": 124,
+        "w": 150,
+        "h": 40,
+        "style": "sub",
+        "lines": ["ParcelState", "header + fields"],
+    },
+    {
+        "x": 310,
+        "y": 168,
+        "w": 150,
+        "h": 40,
+        "style": "sub",
+        "lines": ["ParcelState", "header + fields"],
+    },
+    {
+        "x": 560,
+        "y": 116,
+        "w": 290,
+        "h": 56,
+        "style": "ink",
+        "lines": ["sweep of 1,000,000, p50", "5.01-5.03 ms"],
+    },
     {
         "x": 40,
         "y": 244,
@@ -35,7 +82,14 @@ nodes = [
     {"x": 140, "y": 348, "w": 90, "h": 44, "style": "accent", "lines": ["slot 1", "24 B"]},
     {"x": 240, "y": 348, "w": 90, "h": 44, "style": "accent", "lines": ["slot 2", "24 B"]},
     {"x": 340, "y": 348, "w": 90, "h": 44, "style": "accent", "lines": ["slot 3", "24 B"]},
-    {"x": 560, "y": 342, "w": 290, "h": 56, "style": "ink", "lines": ["sweep of 1,000,000, p50", "0.97-1.00 ms"]},
+    {
+        "x": 560,
+        "y": 342,
+        "w": 290,
+        "h": 56,
+        "style": "ink",
+        "lines": ["sweep of 1,000,000, p50", "0.97-1.00 ms"],
+    },
 ]
 
 edges = [
@@ -69,7 +123,10 @@ notes = [
     {
         "x": 440,
         "y": 440,
-        "text": "40 B per object (32 B with compact headers) against 24 B per flat slot, no header, no pointer.",
+        "text": (
+            "40 B per object (32 B with compact headers) against 24 B "
+            "per flat slot, no header, no pointer."
+        ),
         "anchor": "middle",
         "size": 12,
     },

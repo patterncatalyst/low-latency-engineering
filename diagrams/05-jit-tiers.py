@@ -23,16 +23,86 @@ bands = [
 ]
 
 nodes = [
-    {"x": 40, "y": 50, "w": 200, "h": 60, "style": "sub", "lines": ["Interpreter", "tier 0, bytecode as is"]},
-    {"x": 340, "y": 50, "w": 200, "h": 60, "style": "sub", "lines": ["C1", "tier 1; 2-3 add profiling"]},
-    {"x": 640, "y": 50, "w": 200, "h": 60, "style": "accent", "lines": ["C2", "tier 4, optimized code"]},
-    {"x": 340, "y": 150, "w": 200, "h": 50, "style": "ghost", "lines": ["Deoptimization", "an assumption breaks"]},
-    {"x": 40, "y": 246, "w": 240, "h": 50, "style": "user", "lines": ["--unwarmed", "binds at once, JIT cold"]},
-    {"x": 320, "y": 246, "w": 240, "h": 50, "style": "accent", "lines": ["warmed", "replays 20,000 parcels first"]},
-    {"x": 600, "y": 246, "w": 240, "h": 50, "style": "accent", "lines": ["aot-cache", "classes + profiles, no code"]},
-    {"x": 40, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "13.4-28.5 ms"]},
-    {"x": 320, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "0.29-0.36 ms"]},
-    {"x": 600, "y": 322, "w": 240, "h": 42, "style": "ink", "lines": ["first-window p99.9", "0.61-3.2 ms"]},
+    {
+        "x": 40,
+        "y": 50,
+        "w": 200,
+        "h": 60,
+        "style": "sub",
+        "lines": ["Interpreter", "tier 0, bytecode as is"],
+    },
+    {
+        "x": 340,
+        "y": 50,
+        "w": 200,
+        "h": 60,
+        "style": "sub",
+        "lines": ["C1", "tier 1; 2-3 add profiling"],
+    },
+    {
+        "x": 640,
+        "y": 50,
+        "w": 200,
+        "h": 60,
+        "style": "accent",
+        "lines": ["C2", "tier 4, optimized code"],
+    },
+    {
+        "x": 340,
+        "y": 150,
+        "w": 200,
+        "h": 50,
+        "style": "ghost",
+        "lines": ["Deoptimization", "an assumption breaks"],
+    },
+    {
+        "x": 40,
+        "y": 246,
+        "w": 240,
+        "h": 50,
+        "style": "user",
+        "lines": ["--unwarmed", "binds at once, JIT cold"],
+    },
+    {
+        "x": 320,
+        "y": 246,
+        "w": 240,
+        "h": 50,
+        "style": "accent",
+        "lines": ["warmed", "replays 20,000 parcels first"],
+    },
+    {
+        "x": 600,
+        "y": 246,
+        "w": 240,
+        "h": 50,
+        "style": "accent",
+        "lines": ["aot-cache", "classes + profiles, no code"],
+    },
+    {
+        "x": 40,
+        "y": 322,
+        "w": 240,
+        "h": 42,
+        "style": "ink",
+        "lines": ["first-window p99.9", "13.4-28.5 ms"],
+    },
+    {
+        "x": 320,
+        "y": 322,
+        "w": 240,
+        "h": 42,
+        "style": "ink",
+        "lines": ["first-window p99.9", "0.29-0.36 ms"],
+    },
+    {
+        "x": 600,
+        "y": 322,
+        "w": 240,
+        "h": 42,
+        "style": "ink",
+        "lines": ["first-window p99.9", "0.61-3.2 ms"],
+    },
 ]
 
 edges = [
@@ -68,7 +138,10 @@ notes = [
     {
         "x": 440,
         "y": 398,
-        "text": "Time to ready, median of 5 launches: 173-177 ms without a trained AOT cache, 51-55 ms with one.",
+        "text": (
+            "Time to ready, median of 5 launches: 173-177 ms without "
+            "a trained AOT cache, 51-55 ms with one."
+        ),
         "anchor": "middle",
         "size": 12,
     },

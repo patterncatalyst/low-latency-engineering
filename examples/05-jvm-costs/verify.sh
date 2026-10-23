@@ -9,7 +9,8 @@
 #   5. every Java report's build.flags carries the JVM arguments it ran with.
 #   6. every line run: count = 20,000, dropped = 0, lowlat-report check passes.
 # Observed, not asserted: compilations and deoptimizations per window, allocated bytes per parcel, the C++
-# first/steady split, the C++ allocating/value/pmr counters, the AOT first-window p99.
+# first/steady split, the C++ pmr counters (allocating and value are asserted, criterion 1), the AOT
+# first-window p99.
 # Every criterion is evaluated and printed; the exit status is non-zero if any missed.
 # Line runs: 1 kHz x 20 s on UDP port 47250 (47251 for the AOT training run, 47252 for time to ready).
 #   RECHECK=results/<run-id>  re-evaluates the committed reports without running anything.

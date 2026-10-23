@@ -13,18 +13,79 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 bands = [
-    {"x": 20, "y": 44, "w": 840, "h": 130, "label": "Right-sized: -Xms4g -Xmx4g, a live set well under the heap"},
-    {"x": 20, "y": 190, "w": 840, "h": 130, "label": "Undersized: heap = 1.05x the live set, same allocation rate"},
+    {
+        "x": 20,
+        "y": 44,
+        "w": 840,
+        "h": 130,
+        "label": "Right-sized: -Xms4g -Xmx4g, a live set well under the heap",
+    },
+    {
+        "x": 20,
+        "y": 190,
+        "w": 840,
+        "h": 130,
+        "label": "Undersized: heap = 1.05x the live set, same allocation rate",
+    },
 ]
 
 nodes = [
-    {"x": 40, "y": 90, "w": 150, "h": 60, "style": "user", "lines": ["Handler", "~400 MB/s of garbage"]},
-    {"x": 230, "y": 90, "w": 190, "h": 60, "style": "sub", "lines": ["ZGC cycles", "ahead of the rate"]},
-    {"x": 460, "y": 90, "w": 190, "h": 60, "style": "ink", "lines": ["0 allocation stalls", "p99.9 0.135-0.153 ms"]},
-    {"x": 40, "y": 236, "w": 150, "h": 60, "style": "user", "lines": ["Handler", "~400 MB/s of garbage"]},
-    {"x": 230, "y": 236, "w": 190, "h": 60, "style": "sub", "lines": ["ZGC cycles", "free memory runs out"]},
-    {"x": 460, "y": 236, "w": 180, "h": 60, "style": "accent", "lines": ["allocation stall", "the thread waits"]},
-    {"x": 680, "y": 236, "w": 170, "h": 60, "style": "ink", "lines": ["532-976 stalls", "p99.9 49.6-134.9 ms"]},
+    {
+        "x": 40,
+        "y": 90,
+        "w": 150,
+        "h": 60,
+        "style": "user",
+        "lines": ["Handler", "~400 MB/s of garbage"],
+    },
+    {
+        "x": 230,
+        "y": 90,
+        "w": 190,
+        "h": 60,
+        "style": "sub",
+        "lines": ["ZGC cycles", "ahead of the rate"],
+    },
+    {
+        "x": 460,
+        "y": 90,
+        "w": 190,
+        "h": 60,
+        "style": "ink",
+        "lines": ["0 allocation stalls", "p99.9 0.135-0.153 ms"],
+    },
+    {
+        "x": 40,
+        "y": 236,
+        "w": 150,
+        "h": 60,
+        "style": "user",
+        "lines": ["Handler", "~400 MB/s of garbage"],
+    },
+    {
+        "x": 230,
+        "y": 236,
+        "w": 190,
+        "h": 60,
+        "style": "sub",
+        "lines": ["ZGC cycles", "free memory runs out"],
+    },
+    {
+        "x": 460,
+        "y": 236,
+        "w": 180,
+        "h": 60,
+        "style": "accent",
+        "lines": ["allocation stall", "the thread waits"],
+    },
+    {
+        "x": 680,
+        "y": 236,
+        "w": 170,
+        "h": 60,
+        "style": "ink",
+        "lines": ["532-976 stalls", "p99.9 49.6-134.9 ms"],
+    },
 ]
 
 edges = [
@@ -48,7 +109,9 @@ notes = [
     {
         "x": 440,
         "y": 348,
-        "text": "A stall is a pause by another name: the allocating thread waits for the collector.",
+        "text": (
+            "A stall is a pause by another name: the allocating thread waits for the collector."
+        ),
         "anchor": "middle",
         "size": 12,
     },

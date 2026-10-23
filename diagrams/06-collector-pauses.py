@@ -56,7 +56,10 @@ notes = [
     {
         "x": 440,
         "y": 388,
-        "text": "The pause is half of the tail; the other half is whether the collector keeps up (Figure 6.2).",
+        "text": (
+            "The pause is half of the tail; the other half is "
+            "whether the collector keeps up (Figure 6.2)."
+        ),
         "anchor": "middle",
         "size": 12,
     },

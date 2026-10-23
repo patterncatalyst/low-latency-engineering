@@ -13,7 +13,13 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 bands = [
-    {"x": 220, "y": 44, "w": 640, "h": 150, "label": "protobuf-decode: a fresh message per datagram"},
+    {
+        "x": 220,
+        "y": 44,
+        "w": 640,
+        "h": 150,
+        "label": "protobuf-decode: a fresh message per datagram",
+    },
     {
         "x": 220,
         "y": 210,
@@ -48,8 +54,22 @@ nodes = [
         "style": "accent",
         "lines": ["FlatView", "checks schema, version, size", "MemorySegment + VarHandles"],
     },
-    {"x": 580, "y": 88, "w": 250, "h": 70, "style": "ink", "lines": ["544-576 B/op, p50 150-160 ns", "line: 531-591 B/parcel"]},
-    {"x": 580, "y": 254, "w": 250, "h": 70, "style": "ink", "lines": ["< 1 B/op, p50 16 ns", "line: 8.76 B/parcel"]},
+    {
+        "x": 580,
+        "y": 88,
+        "w": 250,
+        "h": 70,
+        "style": "ink",
+        "lines": ["544-576 B/op, p50 150-160 ns", "line: 531-591 B/parcel"],
+    },
+    {
+        "x": 580,
+        "y": 254,
+        "w": 250,
+        "h": 70,
+        "style": "ink",
+        "lines": ["< 1 B/op, p50 16 ns", "line: 8.76 B/parcel"],
+    },
 ]
 
 edges = [
@@ -72,7 +92,9 @@ notes = [
     {
         "x": 440,
         "y": 388,
-        "text": "A read-only view of bytes someone else owns: nothing to parse, under 1 B per decode.",
+        "text": (
+            "A read-only view of bytes someone else owns: nothing to parse, under 1 B per decode."
+        ),
         "anchor": "middle",
         "size": 12,
     },

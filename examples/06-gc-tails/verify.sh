@@ -289,6 +289,11 @@ for variant in shenandoah thp jfr-off; do
   [[ $variant == jfr-off ]] || line+=", max pause $(fmt "$(pause_max "$variant")" ns)"
   echo "$line"
 done
+# thp asks ZGC for large pages; the JVM's own init line says whether it got them. ZGC's heap is shared
+# memory, governed by transparent_hugepage/shmem_enabled, so "Disabled (OS enforced)" is the host
+# refusing, not a flag that was ignored.
+large_pages=$(zcat "$out/thp.gc.log.gz" | sed -n 's/.*Large Page Support: *//p' | head -n 1)
+echo "thp: large pages ${large_pages:-not reported} (GC log), shmem_enabled=$(jq -r '.memory.thp_shmem_enabled // "not recorded"' "$LOWLAT_PROFILE")"
 echo "cpp deferred-free max $(fmt "$deferred_max" ns), no-free control max $(fmt "$nofree_max" ns) (both are single OS-noise events)"
 echo "zgc (reference): p99.9 $(fmt "$(p999 java zgc)" ns), max pause $(fmt "$zgc_max" ns)"
 echo "live set: $(($(<"$out/live-set-bytes.txt") >> 20)) MB; allocation: $(jq -r '.runtime.alloc_bytes_per_parcel | floor' "$out/java-zgc.json") B/parcel on the receive thread, $RATE parcels/s"

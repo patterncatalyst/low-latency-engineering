@@ -198,9 +198,11 @@ g_memory() {
   jq -nc --argjson t "$(mem MemTotal)" --argjson ht "$(mem HugePages_Total)" \
      --argjson hf "$(mem HugePages_Free)" --argjson hs "$(mem Hugepagesize)" \
      --argjson thp "$(jstr "$thp")" --argjson defrag "$(jstr "$(thp_mode defrag)")" \
+     --argjson shmem "$(jstr "$(thp_mode shmem_enabled)")" \
      '{mem_total_kb: $t, hugepages_total: $ht, hugepages_free: $hf,
        hugepagesize_kb: $hs, transparent_hugepage: $thp,
-       thp_enabled: $thp, thp_defrag: $defrag}'
+       thp_enabled: $thp, thp_defrag: $defrag,
+       thp_shmem_enabled: $shmem}'
 }
 
 g_lab() {
