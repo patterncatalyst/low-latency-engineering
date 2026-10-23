@@ -2,7 +2,7 @@
 title: "GC for tails: Generational ZGC and Shenandoah"
 order: 6
 part: "The Managed-Runtime Question"
-description: "On a 4 GB heap with a 1.8 GB live set, the maximum GC pause is 158-170 ms under Parallel and 0.017-0.036 ms under Generational ZGC, and a heap at 1.05 times the live set turns ZGC's p99.9 from 0.135-0.153 ms into 49.6-134.9 ms. Bare-metal, untuned host."
+description: "On a 4 GB heap with a 1.8 GB live set, the maximum GC pause is 158-162 ms under Parallel and 0.020-0.039 ms under Generational ZGC, and a heap at 1.05 times the live set turns ZGC's p99.9 from 0.147-0.149 ms into 50.4-113.0 ms. Bare-metal, untuned host."
 duration: 50 minutes
 ---
 
@@ -26,7 +26,7 @@ The code is in `examples/06-gc-tails/`. The run script there builds and runs it;
 
 ## Diagram
 
-{% include excalidraw.html file="06-collector-pauses" alt="A tracker at 10 kHz for 30 s with a 4 GB pre-touched heap feeds four collectors, each with the maximum GC pause read from JFR: stop-the-world Parallel, where all threads stop and the heap is walked, 158-170 ms; G1 with stop-the-world evacuation, 21.0-21.6 ms; Generational ZGC (amber) with concurrent mark and relocate, 0.017-0.036 ms; and generational Shenandoah with concurrent evacuation, 0.53-0.82 ms." caption="Figure 6.1 — Same bytecode and allocation, different collector: the maximum pause runs from 158-170 ms under Parallel to 0.017-0.036 ms under ZGC." %}
+{% include excalidraw.html file="06-collector-pauses" alt="A tracker at 10 kHz for 30 s with a 4 GB pre-touched heap feeds four collectors, each with the maximum GC pause read from JFR: stop-the-world Parallel, where all threads stop and the heap is walked, 158-162 ms; G1 with stop-the-world evacuation, 21.4-22.0 ms; Generational ZGC (amber) with concurrent mark and relocate, 0.020-0.039 ms; and generational Shenandoah with concurrent evacuation, 0.61-0.81 ms." caption="Figure 6.1 — Same bytecode and allocation, different collector: the maximum pause runs from 158-162 ms under Parallel to 0.020-0.039 ms under ZGC." %}
 
 ## Concept
 
@@ -45,19 +45,19 @@ The shift manifest is a ring: each new parcel overwrites the oldest entry, so th
 
 A concurrent collector runs beside the application, and both draw on the same free heap. If the application allocates faster than a cycle frees memory, free heap reaches zero and the allocating thread waits. That is an allocation stall: a pause that does not appear as a GC pause. ZGC reports it as the `jdk.ZAllocationStall` event, which the example counts apart from `jdk.GCPhasePause`. The undersized variant runs ZGC with the heap at 1.05 times the measured live set.
 
-{% include excalidraw.html file="06-headroom-stall" alt="Two lanes with the same handler allocating about 400 MB/s of garbage. With a 4 GB heap and a live set well under it, ZGC cycles stay ahead of the rate: 0 allocation stalls and p99.9 of 0.135-0.153 ms. With the heap at 1.05 times the live set, free memory runs out and an amber path leads to an allocation stall where the thread waits; the run records 532-976 stalls with p99.9 of 49.6-134.9 ms." caption="Figure 6.2 — A concurrent collector needs headroom. At 1.05 times the live set, ZGC stalls the allocating thread 532-976 times and p99.9 rises from 0.135-0.153 ms to 49.6-134.9 ms." %}
+{% include excalidraw.html file="06-headroom-stall" alt="Two lanes with the same handler allocating about 400 MB/s of garbage. With a 4 GB heap and a live set well under it, ZGC cycles stay ahead of the rate: 0 allocation stalls and p99.9 of 0.147-0.149 ms. With the heap at 1.05 times the live set, free memory runs out and an amber path leads to an allocation stall where the thread waits; the run records 530-977 stalls with p99.9 of 50.4-113.0 ms." caption="Figure 6.2 — A concurrent collector needs headroom. At 1.05 times the live set, ZGC stalls the allocating thread 530-977 times and p99.9 rises from 0.147-0.149 ms to 50.4-113.0 ms." %}
 
-The shape came from a sweep: calibration runs on 2026-10-22, one run per row, not committed measurement runs, reproducible with `SWEEP=1 examples/06-gc-tails/verify.sh`. ZGC with a fixed heap gave 0 allocation stalls at 4 GB and down to 1.10 times the live set, 14 stalls (longest 50.5 ms) at 1.075 times, and 884 stalls (longest 98.2 ms) at 1.05 times. At 1.30 times and a doubled allocation rate, ZGC gave 0 stalls and ran more minor collections instead (270 against 162). Headroom, not allocation rate, is the lever, and the transition is sharp; the book's undersized heap is 1.05 times.
+The shape came from a sweep: calibration runs on 2026-10-22, one run per row, not committed measurement runs, reproducible with `SWEEP=1 examples/06-gc-tails/verify.sh`. ZGC with a fixed heap gave 0 allocation stalls at 4 GB and down to 1.10 times the live set, 14 stalls (longest 50.5 ms) at 1.075 times, and 884 stalls (longest 98.2 ms) at 1.05 times. At 1.30 times and a doubled allocation rate, ZGC gave 0 stalls and ran more minor collections instead (270 against 162). Headroom, not allocation rate, is the lever, and the transition is sharp.
 
 ### Pre-touch and huge pages
 
-Every Java variant pre-touches a fixed heap (`-Xms` = `-Xmx`, with `-XX:+AlwaysPreTouch`), 4 GB except `undersized-heap`: no heap growth, and no first-touch page faults inside the window. The `thp` variant adds `-XX:+UseTransparentHugePages` to ZGC to request huge pages. The OS refused them for ZGC's shared-memory heap, and the JVM logged `Large Page Support: Disabled (OS enforced)` in every run. So `thp` ran on 4 KB pages, effectively a second ZGC run, and the book draws no conclusion about huge pages. Huge pages for ZGC are versioned configuration in Part 5, *The OS, Isolation & the Network Edge*, in the lab VM.
+Every Java variant pre-touches a fixed heap (`-Xms` = `-Xmx`, with `-XX:+AlwaysPreTouch`), 4 GB except `undersized-heap`: no heap growth, and no first-touch page faults inside the window. The `thp` variant adds `-XX:+UseTransparentHugePages` to ZGC to request huge pages. The OS refused them for ZGC's shared-memory heap, and the JVM logged `Large Page Support: Disabled (OS enforced)` in every run, which `verify.sh` prints as `thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never`. So `thp` ran on 4 KB pages, effectively a second ZGC run, and the book draws no conclusion about huge pages. Huge pages for ZGC are versioned configuration in Part 5, *The OS, Isolation & the Network Edge*, in the lab VM.
 
 ### Reclaiming in C++ and Python
 
 The other two runtimes decide where the frees run.
 
-{% include excalidraw.html file="06-refcount-vs-tracing" alt="Three lanes in the order C++, Python, Java, each with its end-to-end p99.9 latency. C++: the owner frees, so bulk-free destroys a wave on the hot thread (2.08-2.19 ms) while deferred-free hands it to a reclaimer thread (0.135-0.141 ms). Python: refcounts free at once and a generational cycle collector finds cycles; cyclic-garbage runs 9 gen-2 collections (138-144 ms) and frozen, with no cycles and gc.freeze(), runs 0 (0.154-0.168 ms). Java: tracing collectors mark what is live; stop-the-world Parallel is 152-157 ms and ZGC 0.135-0.153 ms." caption="Figure 6.3 — C++ frees where the owner says, CPython frees by reference count and sweeps cycles in generations, and the JVM traces from roots; each has a variant that keeps the reclaim cost off the latency-critical path." %}
+{% include excalidraw.html file="06-refcount-vs-tracing" alt="Three lanes in the order C++, Python, Java, each with its end-to-end p99.9 latency. C++: the owner frees, so bulk-free destroys a wave on the hot thread (2.13-2.31 ms) while deferred-free hands it to a reclaimer thread (0.139-0.145 ms). Python: refcounts free at once and a generational cycle collector finds cycles; cyclic-garbage runs 9 gen-2 collections (138-141 ms) and frozen, with no cycles and gc.freeze(), runs 0 (0.166-0.170 ms). Java: tracing collectors mark what is live; stop-the-world Parallel is 153-154 ms and ZGC 0.147-0.149 ms." caption="Figure 6.3 — C++ frees where the owner says, CPython frees by reference count and sweeps cycles in generations, and the JVM traces from roots; each has a variant that keeps the reclaim cost off the latency-critical path." %}
 
 CPython frees an object the moment its reference count reaches zero. A reference cycle never does, so a generational cycle collector finds it (CPython 3.14.8 here; 3.14.0 to 3.14.4 shipped an incremental collector that 3.14.5 reverted). In `cyclic-garbage` every parcel's scan history is a cycle: the parcel lists its samples and each sample points back at it. By the time the parcel leaves the belt the cycle is in the oldest generation, so only a generation-2 collection, which walks every tracked object that is not frozen, frees it. The `frozen` variant removes the cycles and calls `gc.freeze()` after setup. It ran 0 collections in every generation: refcounting frees each parcel at once, so generation 0 never reaches its threshold, and the frozen setup objects would be skipped if it did.
 
@@ -245,45 +245,45 @@ It needs 4 GB for a heap and refuses to start while a `lowlat-*` VM is running; 
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, THP `madvise`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-The live set was 1,804 to 1,810 MB, and the receive thread allocated 47,639 B per parcel in the `zgc` report of every run, about 476 MB/s at 10 kHz. Every report has count 300,000 and dropped 0, passes `lowlat-report check`, and (Java) names its collector and heap in `build.flags` (criterion 6).
+The live set was 1,802 to 1,804 MB, and the receive thread allocated 47,553 to 47,639 B per parcel in the `zgc` reports, about 476 MB/s at 10 kHz. Every report has count 300,000 and dropped 0, passes `lowlat-report check`, and (Java) names its collector and heap in `build.flags` (criterion 6).
 
 **Pauses and the tail.** Maximum GC pause is from the flight recording; p99.9 is the end-to-end latency the line sees.
 
 | Variant | Max GC pause | End-to-end p99.9 |
 |---|---|---|
-| Parallel | 158 to 170 ms | 152.4 to 157.2 ms |
-| G1 | 21.0 to 21.6 ms | 16.4 to 16.6 ms |
-| Generational ZGC | 0.017 to 0.036 ms | 0.135 to 0.153 ms |
-| Generational Shenandoah | 0.53 to 0.82 ms | 0.158 to 0.180 ms |
+| Parallel | 158 to 162 ms | 152.8 to 153.9 ms |
+| G1 | 21.4 to 22.0 ms | 16.5 to 17.0 ms |
+| Generational ZGC | 0.020 to 0.039 ms | 0.147 to 0.149 ms |
+| Generational Shenandoah | 0.61 to 0.81 ms | 0.164 to 0.183 ms |
 
 Criterion 1 asserts Parallel's maximum is at least 10 ms and 20x ZGC's, ZGC's is under 1 ms, and Generational Shenandoah's is at most a fifth of Parallel's; criterion 2, that ZGC's p99.9 is at most a third of Parallel's. Both held in all three runs.
 
-Under Parallel the p99 is already 130.8 to 135.4 ms, while the p50 is 0.06 ms in every Java variant. Parallel's worst pause spends 158 to 170 ms of the 480 ms budget before the parcel's own work begins.
+Under Parallel the p99 is already 130.9 to 131.8 ms, while the p50 is 0.06 ms in every Java variant. Parallel's worst pause spends 158 to 162 ms of the 480 ms budget before the parcel's own work begins.
 
-ZGC's end-to-end maximum is 2.45 to 2.69 ms while its longest GC pause is under 0.04 ms. The maximum is therefore not a GC pause, and the book does not attribute it.
+ZGC's end-to-end maximum is 2.61 to 6.10 ms while its longest GC pause is under 0.04 ms. The maximum is therefore not a GC pause, and the book does not attribute it.
 
-**Headroom.** With the heap at 1.05 times the live set (1,895 to 1,901 MB), `undersized-heap` recorded 532 to 976 allocation stalls, the longest 60.7 to 156.9 ms, and a p99.9 of 49.6 to 134.9 ms against 0.135 to 0.153 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses stayed at 0.040 to 0.051 ms at most, so the stalls are the whole cost.
+**Headroom.** With the heap at 1.05 times the live set (1,893 to 1,895 MB), `undersized-heap` recorded 530 to 977 allocation stalls, the longest 61.1 to 139.9 ms, and a p99.9 of 50.4 to 113.0 ms against 0.147 to 0.149 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses stayed at 0.050 to 0.053 ms at most, so the stalls are the whole cost.
 
-**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.150 to 0.155 ms and a maximum pause of 0.41 to 0.51 ms. `thp`, which got no huge pages, gave a p99.9 of 0.142 to 0.146 ms and a maximum pause of 0.022 to 0.030 ms. With the recording off, `jfr-off` gave a p99.9 of 0.145 to 0.159 ms, 0.006 to 0.011 ms above ZGC's in the same run: less than ZGC's own 0.018 ms run-to-run spread (0.135 to 0.153 ms), and the opposite direction from a recording cost.
+**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.152 to 0.167 ms and a maximum pause of 0.68 to 0.75 ms. `thp`, which got no huge pages, gave a p99.9 of 0.149 to 0.204 ms and a maximum pause of 0.028 to 0.045 ms. With the recording off, `jfr-off` gave a p99.9 of 0.149 to 0.154 ms, 0.001 to 0.007 ms above ZGC's in the same run. ZGC's own spread is 0.002 ms, but `thp`, the same collector on the same 4 KB pages, spans 0.055 ms, so this set cannot tell that difference from noise.
 
-**Python.** `cyclic-garbage` ran 9 generation-2 collections in the window (99 of generation 1, 1,092 of generation 0), the longest collection 144.0 to 150.6 ms, with a p99.9 of 138.1 to 144.4 ms. `frozen` ran 0 collections with 119,780 objects frozen and a p99.9 of 0.154 to 0.168 ms. Criterion 4 asserts 0 generation-2 collections for `frozen` and at least 1 for `cyclic-garbage`.
+**Python.** `cyclic-garbage` ran 9 generation-2 collections in the window (99 of generation 1, 1,092 of generation 0), the longest collection 145.8 to 153.7 ms, with a p99.9 of 138.1 to 141.0 ms. `frozen` ran 0 collections with 119,780 objects frozen and a p99.9 of 0.166 to 0.170 ms. Criterion 4 asserts 0 generation-2 collections for `frozen` and at least 1 for `cyclic-garbage`.
 
-**C++.** The `bulk-free` maximum is 3.65 to 3.87 ms and its p99.9 is 2.08 to 2.19 ms, against a `deferred-free` p99.9 of 0.135 to 0.141 ms. Criterion 5 asserts the `bulk-free` maximum is at least 10x the `deferred-free` p99.9. Each run closed 33 waves; 320,000 entries were destroyed inline (`bulk-free`), by the reclaimer (`deferred-free`) or kept (`no-free`). The maxima of `deferred-free` (0.79 to 0.85 ms) and the `no-free` control (0.36 to 0.49 ms) are single operating-system events, observed as a pair; the reclaimer claim rests on criterion 5.
+**C++.** The `bulk-free` maximum is 3.73 to 3.99 ms and its p99.9 is 2.13 to 2.31 ms, against a `deferred-free` p99.9 of 0.139 to 0.145 ms. Criterion 5 asserts the `bulk-free` maximum is at least 10x the `deferred-free` p99.9. Each run closed 33 waves; 320,000 entries were destroyed inline (`bulk-free`), by the reclaimer (`deferred-free`) or kept (`no-free`). The maxima of `deferred-free` (0.73 to 0.91 ms) and the `no-free` control (0.32 to 1.18 ms) are single operating-system events, observed as a pair; the reclaimer claim rests on criterion 5.
 
 ## Cross-check
 
 The unified GC log (`-Xlog:gc*,safepoint`) records the same pauses independently of the flight recording. Three comparisons hold on all three runs.
 
-1. **Event counts.** Each `jdk.GCPhasePause` count in `java-<variant>.jfr-summary.txt` equals the `count` of its `-gc-pause.json`: 13 for Parallel and 16 for G1 in every run, 38, 41 and 35 for ZGC, and 91, 113 and 91 for Generational Shenandoah. The `jdk.ZAllocationStall` count of the undersized run equals its `alloc_stalls.count`: 532, 976 and 613.
-2. **Pause sizes.** In the Parallel logs, after the `Pause Full (System.gc())` line, the largest `Pause Full (Allocation Failure)` is 157.2, 169.2 and 157.6 ms against the recording's maxima of 157.5, 169.6 and 158.1 ms.
-3. **Why the window matters.** The same logs show pauses the recording never saw: a `Pause Full (System.gc())` of 178.7 to 185.9 ms in the Parallel runs and G1 evacuation pauses of up to 72.5 to 75.5 ms while the manifest was built. They happen before the recording starts, which is why `Flight.during` starts it inside the JVM.
+1. **Event counts.** Each `jdk.GCPhasePause` count in `java-<variant>.jfr-summary.txt` equals the `count` of its `-gc-pause.json`: 13 for Parallel and 16 for G1 in every run, 38, 38 and 41 for ZGC, and 91 for Generational Shenandoah. The `jdk.ZAllocationStall` count of the undersized run equals its `alloc_stalls.count`: 977, 903 and 530.
+2. **Pause sizes.** In the Parallel logs, after the `Pause Full (System.gc())` line, the largest `Pause Full (Allocation Failure)` is 161.3, 160.5 and 157.7 ms against the recording's maxima of 161.6, 161.0 and 158.1 ms.
+3. **Why the window matters.** The same logs show pauses the recording never saw: a `Pause Full (System.gc())` of 178.2 to 181.4 ms in the Parallel runs and G1 evacuation pauses of up to 72.4 to 73.7 ms while the manifest was built. They happen before the recording starts, which is why `Flight.during` starts it inside the JVM.
 
 Python's cross-check is the callback count: `collections=1200` is 1,092 + 99 + 9. C++'s is the `notes` counters: `destroyed_inline`, `reclaimed` and `retained` are each 320,000 in the variant that owns them and 0 elsewhere.
 
 ## What you learned
 
-- On a 1.8 GB live set the maximum pause runs from 158 to 170 ms under Parallel to 0.017 to 0.036 ms under Generational ZGC.
-- Headroom decides whether a concurrent collector works: at 1.05 times the live set, ZGC stalled the allocating thread 532 to 976 times, and a GC pause histogram does not show it.
+- On a 1.8 GB live set the maximum pause runs from 158 to 162 ms under Parallel to 0.020 to 0.039 ms under Generational ZGC.
+- Headroom decides whether a concurrent collector works: at 1.05 times the live set, ZGC stalled the allocating thread 530 to 977 times, and a GC pause histogram does not show it.
 - Record pauses where they happen and exclude setup: a recording started inside the JVM, and a `gc.callbacks` hook that stores into preallocated buffers.
 - In CPython, reference cycles cost generation-2 collections that walk the live set; without cycles, refcounting frees each parcel and no collection runs. In C++, the choice is which thread pays for the frees.
 - The `thp` variant got no huge pages from the OS, so it shows nothing about them; turning the recording off did not lower ZGC's p99.9.

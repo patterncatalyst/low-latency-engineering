@@ -60,7 +60,7 @@ nodes = [
         "w": 250,
         "h": 70,
         "style": "ink",
-        "lines": ["544-576 B/op, p50 150-160 ns", "line: 531-591 B/parcel"],
+        "lines": ["576 B/op, p50 157-162 ns", "line: 591 B/parcel"],
     },
     {
         "x": 580,

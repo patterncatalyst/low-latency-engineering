@@ -20,13 +20,13 @@ LANES = [
             (
                 "sub",
                 ["--bulk-free", "destroyed on the hot thread"],
-                ["p99.9 latency", "2.08-2.19 ms"],
+                ["p99.9 latency", "2.13-2.31 ms"],
                 False,
             ),
             (
                 "accent",
                 ["deferred-free", "reclaimer thread destroys it"],
-                ["p99.9 latency", "0.135-0.141 ms"],
+                ["p99.9 latency", "0.139-0.145 ms"],
                 True,
             ),
         ],
@@ -38,13 +38,13 @@ LANES = [
             (
                 "sub",
                 ["cyclic-garbage", "reference cycles, gen-2 runs"],
-                ["9 gen-2 runs", "p99.9 lat. 138-144 ms"],
+                ["9 gen-2 runs", "p99.9 lat. 138-141 ms"],
                 False,
             ),
             (
                 "accent",
                 ["frozen", "no cycles, gc.freeze()"],
-                ["0 gen-2 runs", "p99.9 lat. 0.154-0.168 ms"],
+                ["0 gen-2 runs", "p99.9 lat. 0.166-0.170 ms"],
                 True,
             ),
         ],
@@ -56,13 +56,13 @@ LANES = [
             (
                 "sub",
                 ["--stop-the-world", "full pause walks the heap"],
-                ["p99.9 latency", "152-157 ms"],
+                ["p99.9 latency", "153-154 ms"],
                 False,
             ),
             (
                 "accent",
                 ["zgc", "concurrent mark and relocate"],
-                ["p99.9 latency", "0.135-0.153 ms"],
+                ["p99.9 latency", "0.147-0.149 ms"],
                 True,
             ),
         ],

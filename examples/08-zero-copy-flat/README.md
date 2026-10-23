@@ -207,20 +207,21 @@ kernel 7.2.11-200.fc44, Temurin 25.0.5+8, VM down). Ranges over the three runs.
 | Quantity | Range |
 |---|---|
 | Golden bytes: C++, Java and Python readers, 3 seeds x 8 records | agree with the committed JSON in all three runs |
-| JMH `flat-ffm` / `protobuf-decode` allocation | 0.0012 B/op / 544 to 576 B/op |
-| JMH decode p50, `flat-ffm` / `protobuf-decode` | 16 ns / 150 to 160 ns; ratio 9.4x to 10x (bound 3x) |
-| Line, receive-thread allocation per parcel, `flat-ffm` / `protobuf-decode` | 8.76 B / 531 to 591 B; share 1.5 % to 1.7 % (bound 5 %) |
-| Table sweep of 1,000,000 parcels, p50, `flat-table` / `object-table` | 0.97 to 1.00 ms / 5.01 to 5.03 ms, about 5x (bound one half) |
+| JMH `flat-ffm` / `protobuf-decode` allocation | 0.0012 to 0.0014 B/op / 576 B/op |
+| JMH decode p50, `flat-ffm` / `protobuf-decode` | 16 ns / 157 to 162 ns; ratio 9.8x to 10.1x (bound 3x) |
+| Line, receive-thread allocation per parcel, `flat-ffm` / `protobuf-decode` | 8.76 B / 591 B; share 1.5 % (bound 5 %) |
+| Table sweep of 1,000,000 parcels, p50, `flat-table` / `object-table` | 0.95 to 0.97 ms / 4.97 to 5.03 ms, about 5x (bound one half) |
 | Downcalls against `System.nanoTime()` | largest skew outside the bracket 0 ns, standard and critical, in all three runs |
 | Line runs | 100,000 parcels counted, none dropped; 16 reports pass `lowlat-report check`; every Java report carries `build.flags` |
 | Observed: per-call p50, `nanoTime()` / standard / critical downcall | 12 ns / 18 to 20 ns / 17 ns |
 | Observed: footprint of 100,000 parcels (JOL) | object table 4,400,016 B (3,600,016 B with compact headers), flat table 2,400,000 B, protobuf `ParcelEvent` 80 B |
-| Observed: C++ decode p50 per 1,024 records, `memcpy` / `bit_cast` / `start_lifetime_as` | 9,047 to 9,455 / 8,511 to 8,855 / 7,615 to 7,851 ns |
-| Observed: C++ sweep p50, `flat-table` / `pointer-table` | 0.90 to 0.91 ms / 4.77 to 4.80 ms |
-| Observed: Python `unpack_from` / `ParseFromString` | 8.7 blocks and 6.7 new `int` objects per parcel for both; per-call p50 344 to 346 ns / 1,165 to 1,210 ns |
-| Observed: line end-to-end latency, both variants | p50 57.0 to 57.5 us, p99 91 to 99 us, p99.9 6.6 to 12.8 ms |
+| Observed: C++ decode p50 per 1,024 records, `memcpy` / `bit_cast` / `start_lifetime_as` | 9,055 to 9,247 / 8,535 to 8,663 / 7,423 to 7,543 ns |
+| Observed: C++ sweep p50, `flat-table` / `pointer-table` | 0.91 to 0.92 ms / 4.78 to 4.84 ms |
+| Observed: Python `unpack_from` / `ParseFromString` | 8.7 blocks and 6.7 new `int` objects per parcel for both; per-call p50 336 to 349 ns / 997 to 1,050 ns |
+| Observed: line end-to-end latency, both variants | p50 57.0 to 57.6 us, p99 87 to 94 us, p99.9 4.9 to 11.1 ms |
 
-The line's end-to-end latency does not show the decode saving. The p99.9 of 6.6 to 12.8 ms in both
-variants comes from unwarmed JVMs on the default heap (Ch5 measures that cost), and this example
-attributes no cause to it. JMH and the allocation counters resolve the saving, about 140 ns and 520 to
-580 B per parcel; an end-to-end percentile at this load does not.
+The line's end-to-end latency does not show the decode saving. The p99.9 of 4.9 to 11.1 ms
+comes from unwarmed JVMs on the default heap (Ch5 measures that cost). It is lower for `flat-ffm` in each
+run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and this example
+attributes no cause to it. JMH and the allocation counters resolve the saving, 141 to 146 ns and 582 to
+583 B per parcel; an end-to-end percentile at this load does not.

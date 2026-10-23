@@ -2,7 +2,7 @@
 title: "Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity"
 order: 7
 part: "The Managed-Runtime Question"
-description: "Swapping a parking queue for a spinning ring cuts the decide thread's voluntary context switches from 199,523-199,540 to 29-47 per 200,000 parcels and its steady hand-off p99 from 10,495-10,871 ns to 576-590 ns (bare-metal, untuned host); pinning to an isolated vCPU keeps the spinner's tail short in a VM."
+description: "Swapping a parking queue for a spinning ring cuts the decide thread's voluntary context switches from 199,383-199,582 to 38-47 per 200,000 parcels and its steady hand-off p99 from 10,455-11,743 ns to 572-674 ns (bare-metal, untuned host); pinning to an isolated vCPU keeps the spinner's tail short in a VM."
 duration: 55 minutes
 ---
 
@@ -26,7 +26,7 @@ The code is in `examples/07-offheap-lockfree/`. The run script there builds and 
 
 ## Diagram
 
-{% include excalidraw.html file="07-handoff-topology" alt="A receive thread passes parcels through a hand-off of 65,536 slots (amber) to the decide thread, which sends divert commands on a separate command channel. A dashed path to an audit journal marks that only the chronicle-journal and write-per-parcel variants append to it. Three hand-off variants can be swapped in (dashed): blocking-queue, an ArrayBlockingQueue that parks, with 199,523-199,540 voluntary context switches over 200,000 parcels; agrona-spsc, whose idle strategy busy-spins, with 29-47; and disruptor with BusySpinWaitStrategy, with 37-41." caption="Figure 7.1 — A spinning idle strategy keeps the decide thread running: 29-47 voluntary context switches for Agrona and 37-41 for the Disruptor, against almost one per parcel for a blocking queue." %}
+{% include excalidraw.html file="07-handoff-topology" alt="A receive thread passes parcels through a hand-off of 65,536 slots (amber) to the decide thread, which sends divert commands on a separate command channel. A dashed path to an audit journal marks that only the chronicle-journal and write-per-parcel variants append to it. Three hand-off variants can be swapped in (dashed): blocking-queue, an ArrayBlockingQueue that parks, with 199,383-199,582 voluntary context switches over 200,000 parcels; agrona-spsc, whose idle strategy busy-spins, with 38-47; and disruptor with BusySpinWaitStrategy, with 23-31." caption="Figure 7.1 — A spinning idle strategy keeps the decide thread running: 38-47 voluntary context switches for Agrona and 23-31 for the Disruptor, against almost one per parcel for a blocking queue." %}
 
 ## Concept
 
@@ -268,17 +268,17 @@ It runs twelve 20 s runs, then JMH. `ALLOW_BUSY=1` measures on a loaded host. `R
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-**Context switches (criterion 1).** Voluntary switches of the decide thread over 200,000 parcels: `blocking-queue` 199,523-199,540, `agrona-spsc` 29-47 and `disruptor` 37-41. The bounds are at most 1 % of the parcels for the spinners and at least 25 % for the queue. `linked-queue` and `disruptor-blocking-wait` park too (observed), at 199,380-199,541. `agrona-spsc-backoff` (observed) spins, yields, then parks, and the park phase returns the switches: 358,431-359,020.
+**Context switches (criterion 1).** Voluntary switches of the decide thread over 200,000 parcels: `blocking-queue` 199,383-199,582, `agrona-spsc` 38-47 and `disruptor` 23-31. The bounds are at most 1 % of the parcels for the spinners and at least 25 % for the queue. `linked-queue` and `disruptor-blocking-wait` park too (observed), at 199,489-199,577. `agrona-spsc-backoff` (observed) spins, yields, then parks, and the park phase returns the switches: 358,518-358,735.
 
-**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,495-10,871 ns, `agrona-spsc` 576-590 ns and `disruptor` 641-2,117 ns. The criterion is at most one fifth of `blocking-queue` in the same run. All three runs passed. Run 1 passed with a margin of 1.01: the Disruptor's p99 was 2,117 ns against a bound of 2,131 ns, one fifth of 10,655 ns. Runs 2 and 3 were 670 and 641 ns against bounds of 2,174 and 2,099 ns. Run 1 is an observed outlier with no measured cause; a spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
+**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,455-11,743 ns, `agrona-spsc` 572-674 ns and `disruptor` 674-731 ns. The bound is one fifth of `blocking-queue`'s in the same run. All three runs passed, with Disruptor margins (bound over observed) of 3.48, 2.86 and 3.38. Run 1 of the committed set from before S22 (git history, d419992) hit a Disruptor p99 of 2,117 ns, a margin of 1.01. It did not recur here, and no cause was measured. A spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
 
-**Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007 B/op (both under 1 B/op), `linked-queue` 96.1-97.1 B/op. `blocking-queue`, observed, allocates 90.2-95.7 B/op for the immutable `Scan` record. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covers what an allocation costs.
+**Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007-0.0009 B/op (both under 1 B/op), `linked-queue` 96.7-96.9 B/op. `blocking-queue`, observed, allocates 93.4-98.5 B/op for the immutable `Scan` record. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covers what an allocation costs.
 
-**Journal (criterion 4).** The tailer reads back 200,000 events in order for both journals. The Chronicle decide thread makes 0 write system calls and `write-per-parcel` 200,000. The append removes the system call and not the first-touch page fault: Chronicle's decide thread takes 1,427-1,459 minor faults against 64-67 for `write-per-parcel`. The journal is 15,002,637 B on btrfs (block size 64 MiB, roll cycle `FAST_DAILY`) in 3,662 pages, so the faults are 39-40 % of the page count, consistent with the kernel mapping several cached pages per fault. Steady-window append latency is observed only, as the journal's file system sets it: Chronicle p50 311-322 ns, p99 800-835 ns, p99.9 4,643-5,299 ns; `write-per-parcel` p50 1,071-1,079 ns, p99 2,485-3,023 ns, p99.9 5,139-7,607 ns.
+**Journal (criterion 4).** The tailer reads back 200,000 events in order for both journals. The Chronicle decide thread makes 0 write system calls and `write-per-parcel` 200,000. The append removes the system call and not the first-touch page fault: Chronicle's decide thread takes 1,442-1,457 minor faults against 68-73 for `write-per-parcel`. The journal is 15,002,633 to 15,002,637 B on btrfs (block size 64 MiB, roll cycle `FAST_DAILY`) in 3,662 pages, so the faults are 39 % of the page count, consistent with the kernel mapping several cached pages per fault. Steady-window append latency is observed only, as the journal's file system sets it: Chronicle p50 311-316 ns, p99 813-1,211 ns, p99.9 4,619-5,263 ns; `write-per-parcel` p50 1,054-1,080 ns, p99 2,643-3,177 ns, p99.9 5,831-7,971 ns.
 
-**Heap (criterion 5).** After a full collection the old generation holds 13.99-14.00 MB with `chronicle-map-manifest` against 137.3-137.4 MB with `on-heap-manifest`, from a 3.8 MB baseline. Observed whole-run lookup p50 and p99 (200,000 lookups): Chronicle Map 280-282 and 1,204-1,313 ns, `HashMap` 31-33 and 402-445 ns. Observed: the `on-heap-manifest` hand-off p99.9 is 227-397 us against 1.2-2.4 us for `chronicle-map-manifest`; run 1's G1 log records a young pause of 23.1 ms at 15.9 s. Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, covers the collectors.
+**Heap (criterion 5).** After a full collection the old generation holds 14.42-14.43 MB with `chronicle-map-manifest` against 137.51-137.52 MB with `on-heap-manifest`, from a 3.8 MB baseline. Observed whole-run lookup p50 and p99 (200,000 lookups): Chronicle Map 279-297 and 1,293-1,373 ns, `HashMap` 33-40 and 477-487 ns. Observed: the `on-heap-manifest` hand-off p99.9 is 218-347 us against 1.1-2.9 us for `chronicle-map-manifest`; the `on-heap-manifest` G1 log of each run records one young pause of 22.6 to 22.8 ms, from 14.0 to 15.4 s. Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, covers the collectors.
 
-**The C++ lane (observed).** `atomic-spsc` hand-off p50, p99 and p99.9 are 121-127, 326-329 and 431-511 ns with 0 voluntary switches. `atomic-wait` is 1,908-2,006, 9,023-9,439 and 53,855-76,863 ns with 199,861-199,892 voluntary switches.
+**The C++ lane (observed).** `atomic-spsc` hand-off p50, p99 and p99.9 are 129-132, 330-336 and 509-599 ns with 0 voluntary switches. `atomic-wait` is 1,823-1,958, 8,187-9,471 and 53,855-67,583 ns with 199,859-199,899 voluntary switches.
 
 **Every run (criterion 6).** Count 200,000, dropped 0, no overflow, every divert command received, every report passes `check`.
 
@@ -294,7 +294,7 @@ scripts/lab/lab-down.sh
 
 VM profile: lab guest `lowlat-target`, 4 vCPUs on the same i7-11800H host, PREEMPT_RT kernel 7.2.11-200.lowlatrt.fc44.x86_64+rt, guest command line `isolcpus=3 nohz_full=3 rcu_nocbs=3`, guest vCPU 3 pinned to host CPU 13 by libvirt (a pin, not host isolation), tuned `virtual-guest`, clocksource `kvm-clock`, `stress-ng --cpu 3` on guest CPUs 0-2, Temurin 25.0.5+8. Label `vm`; ranges across `r02-vm-run1` to `r02-vm-run3`, each from the snapshot `lab-ready-iso`. Never compared with the host numbers.
 
-{% include excalidraw.html file="07-affinity-vm" alt="Inside the host, the guest lowlat-target boots with isolcpus=3 nohz_full=3 rcu_nocbs=3. stress-ng runs on guest CPUs 0-2, which are vCPUs 0-2, unpinned on the host. An unpinned decide thread shares them and records 174,388-313,298 involuntary context switches across nine alternations and a steady-window hand-off p99.9 of 1.09-1.86 ms (median of 3 alternations per run). A pinned decide thread (AffinityLock 3, amber) runs on the isolated vCPU 3, which libvirt pins to host CPU 13, and records 0-5 involuntary switches and a p99.9 of 51-55 us (same median). All figures are from the VM." caption="Figure 7.3 — Pinned to an isolated vCPU, the decide thread is no longer preempted by the stress load. These are VM figures, never compared with the host runs." %}
+{% include excalidraw.html file="07-affinity-vm" alt="Inside the host, the guest lowlat-target boots with isolcpus=3 nohz_full=3 rcu_nocbs=3. stress-ng runs on guest CPUs 0-2, which are vCPUs 0-2, unpinned on the host. An unpinned decide thread shares them and records 119,779-360,310 involuntary context switches across nine alternations and a steady-window hand-off p99.9 of 0.43-1.56 ms (median of 3 alternations per run). A pinned decide thread (AffinityLock 3, amber) runs on the isolated vCPU 3, which libvirt pins to host CPU 13, and records 0-5 involuntary switches and a p99.9 of 54-55 us (same median). All figures are from the VM." caption="Figure 7.3 — Pinned to an isolated vCPU, the decide thread is no longer preempted by the stress load. These are VM figures, never compared with the host runs." %}
 
 The guest profile, versioned in `scripts/lab/guest-profiles/isolate-cpu3.conf`, is applied inside the guest only:
 
@@ -305,9 +305,9 @@ PROFILE_ARGS="isolcpus=3 nohz_full=3 rcu_nocbs=3"
 
 Each run does the 10 kHz, 20 s workload unpinned and pinned, alternated three times inside one boot, with `agrona-spsc`.
 
-**Involuntary switches (criterion 1).** Per 200,000-parcel run, the unpinned decide thread was preempted 174,388-313,298 times and the pinned one 0-5 times, in all nine alternations of each. Bounds: pinned at most 10, unpinned at least 100.
+**Involuntary switches (criterion 1).** Per 200,000-parcel run, the unpinned decide thread was preempted 119,779-360,310 times and the pinned one 0-5 times, in all nine alternations of each. Bounds: pinned at most 10, unpinned at least 100.
 
-**Tail (criterion 2).** Steady-window hand-off p99.9, the median of three alternations in each run: unpinned 1.09-1.86 ms (1,864,703, 1,087,487 and 1,640,447 ns), pinned 51-55 us (51,167, 54,559 and 52,383 ns). Bound: pinned at most half of unpinned.
+**Tail (criterion 2).** Steady-window hand-off p99.9, the median of three alternations in each run: unpinned 0.43-1.56 ms (1,036,799, 432,895 and 1,558,527 ns), pinned 54-55 us (54,655, 54,047 and 54,047 ns). Bound: pinned at most half of unpinned.
 
 **Placement (criterion 3).** The pinned thread's `Cpus_allowed_list` was CPU 3 and `/proc` showed it on CPU 3. The unpinned thread was allowed on CPUs 0-3 and seen on CPUs 0-2.
 
@@ -320,7 +320,7 @@ The decide thread's switches (read from `/proc/<pid>/task/<tid>/status`) and the
 ## What you learned
 
 - A parking consumer pays a kernel wake per parcel, visible as about one voluntary switch each; a spinning consumer pays a core instead and belongs on a pinned, dedicated thread.
-- Agrona and Disruptor rings publish under 1 B/op (0.0004 and 0.0007) and map a sequence to a slot with a mask.
+- Agrona and Disruptor rings publish under 1 B/op (0.0004 and 0.0007 to 0.0009) and map a sequence to a slot with a mask.
 - The divert command travels on its own socket and never shares a queue with the scans.
 - A memory-mapped journal removes the system call, not the first-touch fault; a Chronicle Map trims the heap at the price of a slower lookup.
 - A pin to an isolated vCPU removed the preemption in the VM; it narrows the tail and is not host isolation.

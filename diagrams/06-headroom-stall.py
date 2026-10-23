@@ -52,7 +52,7 @@ nodes = [
         "w": 190,
         "h": 60,
         "style": "ink",
-        "lines": ["0 allocation stalls", "p99.9 0.135-0.153 ms"],
+        "lines": ["0 allocation stalls", "p99.9 0.147-0.149 ms"],
     },
     {
         "x": 40,
@@ -84,7 +84,7 @@ nodes = [
         "w": 170,
         "h": 60,
         "style": "ink",
-        "lines": ["532-976 stalls", "p99.9 49.6-134.9 ms"],
+        "lines": ["530-977 stalls", "p99.9 50.4-113.0 ms"],
     },
 ]
 

@@ -2,7 +2,7 @@
 title: "Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison"
 order: 8
 part: "The Managed-Runtime Question"
-description: "Reading an 80-byte flat record in place through the Foreign Function & Memory API allocates under 1 B per decode against 544-576 B for a protobuf parse, and a flat table sweeps in 0.97-1.00 ms against 5.01-5.03 ms for an array of objects (bare-metal, untuned host, three runs)."
+description: "Reading an 80-byte flat record in place through the Foreign Function & Memory API allocates under 1 B per decode against 576 B for a protobuf parse, and a flat table sweeps in 0.95-0.97 ms against 4.97-5.03 ms for an array of objects (bare-metal, untuned host, three runs)."
 duration: 50 minutes
 ---
 
@@ -26,7 +26,7 @@ The code is in `examples/08-zero-copy-flat/`. The run script there builds and ru
 
 ## Diagram
 
-{% include excalidraw.html file="08-zero-copy-decode" alt="One receive buffer, a user-space direct ByteBuffer holding one datagram at a time, feeds two decoders. protobuf-decode calls parseFrom and builds a ParcelEvent, a Dimensions and a String barcode: 544-576 B/op with a p50 of 150-160 ns in JMH and 531-591 B per parcel on the line. flat-ffm (amber) puts a reused FlatView on the same bytes, a MemorySegment with VarHandles over the 80-byte parcel-v1 record that checks schema, version and size first: less than 1 B/op, p50 16 ns, and 8.76 B per parcel on the line." caption="Figure 8.1 — A flat 80-byte record read in place allocates under 1 B per decode, against 544-576 B for a protobuf parse." %}
+{% include excalidraw.html file="08-zero-copy-decode" alt="One receive buffer, a user-space direct ByteBuffer holding one datagram at a time, feeds two decoders. protobuf-decode calls parseFrom and builds a ParcelEvent, a Dimensions and a String barcode: 576 B/op with a p50 of 157-162 ns in JMH and 591 B per parcel on the line. flat-ffm (amber) puts a reused FlatView on the same bytes, a MemorySegment with VarHandles over the 80-byte parcel-v1 record that checks schema, version and size first: less than 1 B/op, p50 16 ns, and 8.76 B per parcel on the line." caption="Figure 8.1 — A flat 80-byte record read in place allocates under 1 B per decode, against 576 B for a protobuf parse." %}
 
 ## Reading bytes in place
 
@@ -152,7 +152,7 @@ In Python `Struct.unpack_from` over a `memoryview` does not copy the datagram bu
 
 The tracker sweeps its table at every encoder tick, summing the weight of the in-flight parcels whose `encoder_tick` has reached the diverter's, about 2 % of 1,000,000 slots, stored in shuffled order.
 
-{% include excalidraw.html file="08-flat-vs-pointer-layout" alt="An object-table of 1,000,000 references points at ParcelState objects scattered on the heap, each with a header and fields, and a sweep of the table takes a p50 of 5.01-5.03 ms. A flat-table keeps 24-byte slots side by side in one MemorySegment in an Arena, and the same sweep takes 0.97-1.00 ms. A dashed ghost box, ParcelState as a value class (JEP 401, JDK 28 early access only), points at the object-table to show the flat layout it aims at on the heap; on common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte ParcelState needs later enhancements. It is not measured, and the book pins JDK 25 LTS." caption="Figure 8.2 — Sweeping one run of memory takes 0.97-1.00 ms, against 5.01-5.03 ms for a pointer per parcel. Value classes aim at that layout but are early access only, so the book measures the flat table." %}
+{% include excalidraw.html file="08-flat-vs-pointer-layout" alt="An object-table of 1,000,000 references points at ParcelState objects scattered on the heap, each with a header and fields, and a sweep of the table takes a p50 of 4.97-5.03 ms. A flat-table keeps 24-byte slots side by side in one MemorySegment in an Arena, and the same sweep takes 0.95-0.97 ms. A dashed ghost box, ParcelState as a value class (JEP 401, JDK 28 early access only), points at the object-table to show the flat layout it aims at on the heap; on common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte ParcelState needs later enhancements. It is not measured, and the book pins JDK 25 LTS." caption="Figure 8.2 — Sweeping one run of memory takes 0.95-0.97 ms, against 4.97-5.03 ms for a pointer per parcel. Value classes aim at that layout but are early access only, so the book measures the flat table." %}
 
 The object table is a `ParcelState[]`, a heap object behind each reference; the flat table is a `MemorySegment` of 24-byte structs from an `Arena`. The Java tab joins `FlatTable.java` and `ObjectTable.sweepDue`; the C++ tab shows both `sweep_due` overloads from `cpp/include/lowlat/flat/table.hpp`. Python has no table lane; the decode lane already shows its object model.
 
@@ -273,32 +273,32 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 
 **Golden bytes (criterion 1).** The C++, Java and Python readers decode the golden files of seeds 1, 42 and 2026 (eight records each) to the committed JSON, in all three runs.
 
-**Decode, JMH (criterion 2).** In one JMH run, `flat-ffm` allocates under 1 B/op (0.0012) with a p50 of 16 ns. `protobuf-decode` allocates 544 to 576 B/op with a p50 of 150 to 160 ns. The criterion asks for a p50 ratio of at least 3x; the measured ratio is 9.4x to 10x. The allocation counter `gc.alloc.rate.norm` is bytes per operation, not a latency.
+**Decode, JMH (criterion 2).** In one JMH run, `flat-ffm` allocates under 1 B/op (0.0012 to 0.0014) with a p50 of 16 ns. `protobuf-decode` allocates 576 B/op with a p50 of 157 to 162 ns. The criterion asks for a p50 ratio of at least 3x; the measured ratio is 9.8x to 10.1x. The allocation counter `gc.alloc.rate.norm` is bytes per operation, not a latency.
 
-**Line allocation (criterion 3).** The receive thread's allocation per parcel, which covers the channel, the decode and the handler, is 8.76 B for `flat-ffm` against 531 to 591 B for `protobuf-decode`. The bound is 5 %; the measured share is 1.5 % to 1.7 %. The floor is not zero: the first decode loads classes and links the `VarHandle`s.
+**Line allocation (criterion 3).** The receive thread's allocation per parcel, which covers the channel, the decode and the handler, is 8.76 B for `flat-ffm` against 591 B for `protobuf-decode`. The bound is 5 %; the measured share is 1.5 %. The floor is not zero: the first decode loads classes and links the `VarHandle`s.
 
-**Table sweep (criterion 4).** In one JMH run, the `flat-table` sweep of 1,000,000 parcels has a p50 of 0.97 to 1.00 ms and the `object-table` sweep 5.01 to 5.03 ms, about 5x. The bound is one half.
+**Table sweep (criterion 4).** In one JMH run, the `flat-table` sweep of 1,000,000 parcels has a p50 of 0.95 to 0.97 ms and the `object-table` sweep 4.97 to 5.03 ms, about 5x. The bound is one half.
 
 **Clock downcall (criterion 5).** Both linkages agree with `System.nanoTime()`: the largest skew outside the `nanoTime()` bracket is 0 ns for standard and for critical in all three runs. Observed only: the per-call p50 is 12 ns for `nanoTime()`, 18 to 20 ns for the standard downcall and 17 ns for the critical one.
 
 **Reports (criterion 6).** Every report passes `lowlat-report check`, every Java report carries `build.flags`, and both line runs count 100,000 with 0 dropped.
 
-**Observed only.** The object table of 100,000 parcels is 4,400,016 B, or 3,600,016 B with compact headers; the flat table is 2,400,000 B either way; the protobuf `ParcelEvent` is 80 B either way. In C++, the p50 over the Google Benchmark repetitions per 1,024 records is 9,047 to 9,455 ns for `decode-memcpy`, 8,511 to 8,855 ns for `decode-bit-cast` and 7,615 to 7,851 ns for `decode-start-lifetime-as`. The C++ sweep is 0.90 to 0.91 ms for `flat-table` and 4.77 to 4.80 ms for `pointer-table`, also about 5x. Each ratio is within its own language. In Python, `unpack_from` and `ParseFromString` both allocate 8.7 blocks and 6.7 new `int` objects per parcel; the per-call p50 is 344 to 346 ns against 1,165 to 1,210 ns, each sample including two `perf_counter_ns` reads.
+**Observed only.** The object table of 100,000 parcels is 4,400,016 B, or 3,600,016 B with compact headers; the flat table is 2,400,000 B either way; the protobuf `ParcelEvent` is 80 B either way. In C++, the p50 over the Google Benchmark repetitions per 1,024 records is 9,055 to 9,247 ns for `decode-memcpy`, 8,535 to 8,663 ns for `decode-bit-cast` and 7,423 to 7,543 ns for `decode-start-lifetime-as`. The C++ sweep is 0.91 to 0.92 ms for `flat-table` and 4.78 to 4.84 ms for `pointer-table`, also about 5x. Each ratio is within its own language. In Python, `unpack_from` and `ParseFromString` both allocate 8.7 blocks and 6.7 new `int` objects per parcel; the per-call p50 is 336 to 349 ns against 997 to 1,050 ns, each sample including two `perf_counter_ns` reads.
 
 ### What the line does not show
 
-The line runs' end-to-end latency is not a criterion, and it does not show the decode saving. The p50 is 57.0 to 57.5 us and the p99 is 91 to 99 us for both variants, and the p99.9 is 6.6 to 12.8 ms in both, from unwarmed JVMs on the default heap. Chapter 5 measures the first-parcel cost of an unwarmed JVM; this chapter attributes no cause to the p99.9. JMH and the counters resolve the saving, about 140 ns and 520 to 580 B per parcel; an end-to-end percentile at this load does not. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the 480 ms budget.
+The line runs' end-to-end latency is not a criterion, and it does not show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, from unwarmed JVMs on the default heap (Chapter 5 measures that cost). It is lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load does not. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the budget.
 
 ## Cross-check
 
-Two independent allocation counters agree: JMH `-prof gc` (544 to 576 B/op for protobuf, 0.0012 B/op for flat) and `ThreadMXBean` on the line's receive thread (531 to 591 B and 8.76 B per parcel). The golden bytes cross three readers, JOL matches the record arithmetic, and the downcall is checked against `System.nanoTime()`. Chapter 5's 654 to 733 B per parcel is the cost this chapter removes, but Chapter 5 ran at 1 kHz with its own handler, so the numbers are not subtracted.
+Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf, 0.0012 to 0.0014 B/op for flat) and `ThreadMXBean` on the line's receive thread (591 B and 8.76 B per parcel). The golden bytes cross three readers, JOL matches the record arithmetic, and the downcall is checked against `System.nanoTime()`. Chapter 5's 654 to 733 B per parcel is the cost this chapter removes, but Chapter 5 ran at 1 kHz with its own handler, so the numbers are not subtracted.
 
 ## What you learned
 
 - A flat record is safe to read in place only when its contract fixes size, offsets, header, endianness and evolution, and golden bytes pin it across readers.
-- A reused view over the receive buffer allocates under 1 B/op in JMH and 8.76 B per parcel on the line, against 544 to 576 B/op and 531 to 591 B for a protobuf parse.
-- End-to-end percentiles on the line do not show a saving of about 140 ns per parcel. Counters and JMH do.
-- A flat off-heap table in an `Arena` swept in 0.97 to 1.00 ms against 5.01 to 5.03 ms for an array of objects, at the cost of an explicit lifetime.
+- A reused view over the receive buffer allocates under 1 B/op in JMH and 8.76 B per parcel on the line, against 576 B/op and 591 B for a protobuf parse.
+- End-to-end percentiles on the line do not show a saving of 141 to 146 ns per parcel. Counters and JMH do.
+- A flat off-heap table in an `Arena` swept in 0.95 to 0.97 ms against 4.97 to 5.03 ms for an array of objects, at the cost of an explicit lifetime.
 - C++ spells the idea `std::start_lifetime_as`; a `reinterpret_cast` read is undefined behaviour. CPython copies no bytes but allocates per field.
 - Value classes (JEP 401) are a JDK 28 early-access preview. The book measures JDK 25 and revisits at JDK 28 GA.
 

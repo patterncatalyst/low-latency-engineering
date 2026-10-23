@@ -87,7 +87,7 @@ nodes = [
         "w": 250,
         "h": 48,
         "style": "ink",
-        "lines": ["voluntary ctx switches", "199,523-199,540"],
+        "lines": ["voluntary ctx switches", "199,383-199,582"],
     },
     {
         "x": 315,
@@ -95,7 +95,7 @@ nodes = [
         "w": 250,
         "h": 48,
         "style": "ink",
-        "lines": ["voluntary ctx switches", "29-47"],
+        "lines": ["voluntary ctx switches", "38-47"],
     },
     {
         "x": 590,
@@ -103,7 +103,7 @@ nodes = [
         "w": 250,
         "h": 48,
         "style": "ink",
-        "lines": ["voluntary ctx switches", "37-41"],
+        "lines": ["voluntary ctx switches", "23-31"],
     },
 ]
 

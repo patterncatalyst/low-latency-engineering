@@ -1,7 +1,7 @@
 # 06-gc-tails
 
 Chapter 6: the collector decides the tail. The in-flight parcel tracker runs at 10 kHz for 30 s on a
-JVM whose heap holds a 1.8 GB live set (1,804 to 1,810 MB across the three runs, as `verify.sh` prints
+JVM whose heap holds a 1.8 GB live set (1,802 to 1,804 MB across the three runs, as `verify.sh` prints
 it, with 1 MB = 2^20 bytes; the shift manifest and the parcels on the belt) and whose
 handler allocates about 400 MB/s of scan history. Eight JVM variants run the same bytecode, the same
 seed and the same `-Xms4g -Xmx4g -XX:+AlwaysPreTouch`, and differ only in the collector (or, for two of
@@ -211,25 +211,26 @@ runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, THP
 
 | Quantity | Range |
 |---|---|
-| Measured live set; `undersized-heap` size (1.05x) | 1,804 to 1,810 MB; 1,895 to 1,901 MB |
-| Receive-thread allocation per parcel (`zgc`) | 47,639 B in every run, about 476 MB/s at 10 kHz |
-| Maximum GC pause (JFR), Parallel / G1 / Generational ZGC / Generational Shenandoah | 158 to 170 ms / 21.0 to 21.6 ms / 0.017 to 0.036 ms / 0.53 to 0.82 ms |
-| End-to-end p99.9, same order | 152.4 to 157.2 ms / 16.4 to 16.6 ms / 0.135 to 0.153 ms / 0.158 to 0.180 ms |
-| Parallel end-to-end p99; ZGC end-to-end maximum | 130.8 to 135.4 ms; 2.45 to 2.69 ms (not a GC pause: ZGC's longest pause is under 0.04 ms) |
-| `undersized-heap` allocation stalls; longest stall; p99.9 | 532 to 976; 60.7 to 156.9 ms; 49.6 to 134.9 ms (GC pauses at most 0.040 to 0.051 ms) |
-| Python `cyclic-garbage`: generation-2 collections; longest collection; p99.9 | 9 (and 99 of generation 1, 1,092 of generation 0); 144.0 to 150.6 ms; 138.1 to 144.4 ms |
-| Python `frozen`: collections; objects frozen; p99.9 | 0 in every generation; 119,780; 0.154 to 0.168 ms |
-| C++ `bulk-free`: maximum; p99.9 | 3.65 to 3.87 ms; 2.08 to 2.19 ms |
-| C++ `deferred-free`: p99.9; maximum (observed) | 0.135 to 0.141 ms; 0.79 to 0.85 ms |
-| C++ `no-free` maximum (observed); waves closed; entries destroyed inline, by the reclaimer or kept | 0.36 to 0.49 ms; 33; 320,000 |
-| Observed JVM variants, p99.9 / maximum pause | `shenandoah` 0.150 to 0.155 ms / 0.41 to 0.51 ms; `thp` 0.142 to 0.146 ms / 0.022 to 0.030 ms; `jfr-off` p99.9 0.145 to 0.159 ms |
+| Measured live set; `undersized-heap` size (1.05x) | 1,802 to 1,804 MB; 1,893 to 1,895 MB |
+| Receive-thread allocation per parcel (`zgc`) | 47,553 to 47,639 B, about 476 MB/s at 10 kHz |
+| Maximum GC pause (JFR), Parallel / G1 / Generational ZGC / Generational Shenandoah | 158 to 162 ms / 21.4 to 22.0 ms / 0.020 to 0.039 ms / 0.61 to 0.81 ms |
+| End-to-end p99.9, same order | 152.8 to 153.9 ms / 16.5 to 17.0 ms / 0.147 to 0.149 ms / 0.164 to 0.183 ms |
+| Parallel end-to-end p99; ZGC end-to-end maximum | 130.9 to 131.8 ms; 2.61 to 6.10 ms (not a GC pause: ZGC's longest pause is under 0.04 ms) |
+| `undersized-heap` allocation stalls; longest stall; p99.9 | 530 to 977; 61.1 to 139.9 ms; 50.4 to 113.0 ms (GC pauses at most 0.050 to 0.053 ms) |
+| Python `cyclic-garbage`: generation-2 collections; longest collection; p99.9 | 9 (and 99 of generation 1, 1,092 of generation 0); 145.8 to 153.7 ms; 138.1 to 141.0 ms |
+| Python `frozen`: collections; objects frozen; p99.9 | 0 in every generation; 119,780; 0.166 to 0.170 ms |
+| C++ `bulk-free`: maximum; p99.9 | 3.73 to 3.99 ms; 2.13 to 2.31 ms |
+| C++ `deferred-free`: p99.9; maximum (observed) | 0.139 to 0.145 ms; 0.73 to 0.91 ms |
+| C++ `no-free` maximum (observed); waves closed; entries destroyed inline, by the reclaimer or kept | 0.32 to 1.18 ms; 33; 320,000 |
+| Observed JVM variants, p99.9 / maximum pause | `shenandoah` 0.152 to 0.167 ms / 0.68 to 0.75 ms; `thp` 0.149 to 0.204 ms / 0.028 to 0.045 ms; `jfr-off` p99.9 0.149 to 0.154 ms |
 | Every report | 300,000 parcels counted, none dropped, `lowlat-report check` passes |
 
 The `thp` variant got no huge pages in any run: every `thp.gc.log.gz` logs
 `Large Page Support: Disabled (OS enforced)` and `java-thp.log` warns that shared-memory THP is not
-enabled. It is a second ZGC run on 4 KB pages, and its numbers say nothing about huge pages. With the
-recording off, the `jfr-off` p99.9 was 6 to 11 microseconds above `zgc`'s in the same run, inside
-ZGC's own run-to-run spread and the opposite direction from a recording cost. The C++ maxima of
+enabled; `verify.sh` prints it as `thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never`. It is a second ZGC run on 4 KB pages, and its numbers say nothing about huge pages. With the
+recording off, the `jfr-off` p99.9 was 1 to 7 microseconds above `zgc`'s in the same run. `zgc` itself spans
+2 microseconds over the three runs but `thp`, the same collector on the same pages, spans 55, so the
+set cannot separate the difference from noise and draws no recording cost from it. The C++ maxima of
 `deferred-free` and `no-free` are single operating-system events; the reclaimer claim rests on
 criterion 5.
 

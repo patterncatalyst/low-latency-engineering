@@ -52,8 +52,11 @@ ownership rule in `common/line-simulator/consumers/README.md`); the receive thre
 `drain`.
 
 Hand-off and end-to-end latency are separate reports. Both are also written per window: parcels
-below 20,000 (the first two seconds, which carry JIT warm-up and cold caches) and the steady
-rest. The hand-off criteria read the steady window.
+below 20,000 (the first two seconds) and the steady rest. The hand-off criteria read the steady
+window. The first window has the larger tail: for `blocking-queue` its hand-off p99 is 87 to 323 us and
+its p99.9 3.3 to 3.5 ms, against 10.5 to 11.7 us and 58 to 84 us in the steady window. The committed
+runs from before S22 (git history, d419992) show a larger first-window p99, 0.92 to 1.93 ms, and a
+smaller p99.9, 2.3 to 2.9 ms. Nothing in the runs says why the first-window p99 fell, so no cause is given.
 
 ## Variants
 
@@ -208,10 +211,11 @@ usage analytics unless `-Dchronicle.analytics.disable=true` is set; the scripts 
    every report passes `lowlat-report check`, the steady window holds 180,000 parcels.
 
 Observed on the bare-metal host (governor `powersave`, tuned `balanced`, untuned): criterion 2 passed in
-all three `r02-run1..3` runs, run 1 at a margin of 1.01. The Disruptor's steady-window hand-off p99 was
-2,117 ns in run 1, 670 ns in run 2 and 641 ns in run 3; the `blocking-queue` p99 was 10,655, 10,871
-and 10,495 ns, about 10.5 to 10.9 us throughout. In run 1 the bound was 2,131 ns, one fifth of
-10,655 ns, against the Disruptor's 2,117 ns. The bound stays at one fifth.
+all three `r02-run1..3` runs, with Disruptor margins (bound over observed) of 3.48, 2.86 and 3.38. The
+Disruptor's steady-window hand-off p99 was 674, 731 and 694 ns; the `blocking-queue` p99 was 11,719,
+10,455 and 11,743 ns, so the bounds were 2,344, 2,091 and 2,349 ns. Run 1 of the committed set from
+before S22 (git history, d419992) hit a Disruptor p99 of 2,117 ns against a bound of 2,131 ns, a margin
+of 1.01. It did not recur in these three runs, and no cause was measured. The bound stays at one fifth.
 
 ### What the memory-mapped append removes
 
@@ -358,25 +362,25 @@ Behavioural. The host part and the VM part each assert their criteria, and all o
 
 | Quantity | Range |
 |---|---|
-| Voluntary context switches over 200,000 parcels: `blocking-queue` / `agrona-spsc` / `disruptor` | 199,523 to 199,540 / 29 to 47 / 37 to 41 |
-| Same, observed: `linked-queue`, `disruptor-blocking-wait` / `agrona-spsc-backoff` | 199,380 to 199,541 / 358,431 to 359,020 |
-| Steady-window hand-off p99: `blocking-queue` / `agrona-spsc` / `disruptor` | 10,495 to 10,871 ns / 576 to 590 ns / 641 to 2,117 ns |
-| JMH publish allocation: Agrona / Disruptor / `linked-queue` (observed: `blocking-queue`) | 0.0004 B/op / 0.0007 B/op / 96.1 to 97.1 B/op (90.2 to 95.7 B/op) |
+| Voluntary context switches over 200,000 parcels: `blocking-queue` / `agrona-spsc` / `disruptor` | 199,383 to 199,582 / 38 to 47 / 23 to 31 |
+| Same, observed: `linked-queue`, `disruptor-blocking-wait` / `agrona-spsc-backoff` | 199,489 to 199,577 / 358,518 to 358,735 |
+| Steady-window hand-off p99: `blocking-queue` / `agrona-spsc` / `disruptor` | 10,455 to 11,743 ns / 572 to 674 ns / 674 to 731 ns |
+| JMH publish allocation: Agrona / Disruptor / `linked-queue` (observed: `blocking-queue`) | 0.0004 B/op / 0.0007 to 0.0009 B/op / 96.7 to 96.9 B/op (93.4 to 98.5 B/op) |
 | Journal readback; decide-thread write system calls: Chronicle / `write-per-parcel` | 200,000 events in order for both; 0 / 200,000 |
-| Decide-thread minor faults: Chronicle / `write-per-parcel` | 1,427 to 1,459 / 64 to 67 (journal 15,002,637 B on btrfs, 3,662 pages) |
-| Observed append latency, steady window, Chronicle p50 / p99 / p99.9 | 311 to 322 / 800 to 835 / 4,643 to 5,299 ns |
-| Observed append latency, `write-per-parcel` p50 / p99 / p99.9 | 1,071 to 1,079 / 2,485 to 3,023 / 5,139 to 7,607 ns |
-| Old generation after a full collection: `chronicle-map-manifest` / `on-heap-manifest` (baseline 3.8 MB) | 13.99 to 14.00 MB / 137.3 to 137.4 MB |
-| Observed whole-run lookup p50 / p99: Chronicle Map / `HashMap` | 280 to 282 / 1,204 to 1,313 ns; 31 to 33 / 402 to 445 ns |
-| Observed `on-heap-manifest` hand-off p99.9; `chronicle-map-manifest` | 227 to 397 us; 1.2 to 2.4 us |
-| Observed C++ `atomic-spsc` hand-off p50 / p99 / p99.9 | 121 to 127 / 326 to 329 / 431 to 511 ns, 0 voluntary switches |
-| Observed C++ `atomic-wait` hand-off p50 / p99 / p99.9 | 1,908 to 2,006 / 9,023 to 9,439 / 53,855 to 76,863 ns, 199,861 to 199,892 voluntary switches |
+| Decide-thread minor faults: Chronicle / `write-per-parcel` | 1,442 to 1,457 / 68 to 73 (journal 15,002,633 to 15,002,637 B on btrfs, 3,662 pages) |
+| Observed append latency, steady window, Chronicle p50 / p99 / p99.9 | 311 to 316 / 813 to 1,211 / 4,619 to 5,263 ns |
+| Observed append latency, `write-per-parcel` p50 / p99 / p99.9 | 1,054 to 1,080 / 2,643 to 3,177 / 5,831 to 7,971 ns |
+| Old generation after a full collection: `chronicle-map-manifest` / `on-heap-manifest` (baseline 3.8 MB) | 14.42 to 14.43 MB / 137.51 to 137.52 MB |
+| Observed whole-run lookup p50 / p99: Chronicle Map / `HashMap` | 279 to 297 / 1,293 to 1,373 ns; 33 to 40 / 477 to 487 ns |
+| Observed `on-heap-manifest` hand-off p99.9; `chronicle-map-manifest` | 218 to 347 us; 1.1 to 2.9 us |
+| Observed C++ `atomic-spsc` hand-off p50 / p99 / p99.9 | 129 to 132 / 330 to 336 / 509 to 599 ns, 0 voluntary switches |
+| Observed C++ `atomic-wait` hand-off p50 / p99 / p99.9 | 1,823 to 1,958 / 8,187 to 9,471 / 53,855 to 67,583 ns, 199,859 to 199,899 voluntary switches |
 | Every run | 200,000 parcels counted, none dropped, no overflow, every divert command received, `lowlat-report check` passes |
 
-Criterion 2 passed in all three runs. Run 1 passed with a margin of 1.01: the Disruptor's p99 was
-2,117 ns against a bound of 2,131 ns (one fifth of 10,655 ns). Runs 2 and 3 were 670 and 641 ns against
-bounds of 2,174 and 2,099 ns. Run 1 is an observed outlier with no
-measured cause.
+Criterion 2 passed in all three runs, with Disruptor margins of 3.48, 2.86 and 3.38 (p99 of 674, 731 and
+694 ns against bounds of 2,344, 2,091 and 2,349 ns). The old run 1 hit an outlier that did not recur: its
+Disruptor p99 was 2,117 ns against a bound of 2,131 ns, a margin of 1.01. Those committed runs from
+before S22 are in git history at d419992. No cause was measured.
 
 **VM part**, `r02-vm-run1..3` (lab guest `lowlat-target`, label `vm`, PREEMPT_RT kernel
 7.2.11-200.lowlatrt.fc44.x86_64+rt, guest command line `isolcpus=3 nohz_full=3 rcu_nocbs=3`, vCPU 3
@@ -386,8 +390,8 @@ with three alternations of unpinned and pinned in one boot:
 
 | Quantity | Range |
 |---|---|
-| Involuntary context switches per 200,000-parcel run, unpinned / pinned (bounds: at least 100 / at most 10) | 174,388 to 313,298 / 0 to 5 |
-| Steady-window hand-off p99.9, median of three alternations, unpinned / pinned (bound: pinned at most half) | 1,087,487 to 1,864,703 ns / 51,167 to 54,559 ns |
+| Involuntary context switches per 200,000-parcel run, unpinned / pinned (bounds: at least 100 / at most 10) | 119,779 to 360,310 / 0 to 5 |
+| Steady-window hand-off p99.9, median of three alternations, unpinned / pinned (bound: pinned at most half) | 432,895 to 1,558,527 ns / 54,047 to 54,655 ns |
 | Placement | pinned thread: `Cpus_allowed_list` CPU 3, seen on CPU 3 in every alternation; unpinned thread allowed on CPUs 0-3 and seen on CPUs 0-2 |
 | Every run | 200,000 parcels counted, none dropped, no overflow, every divert command received |
 

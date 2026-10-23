@@ -5,8 +5,8 @@ order: 6
 permalink: /examples/06-gc-tails/
 card_eyebrow: "Example 06 · Chapter 6"
 card_title: "Four collectors, one tracker"
-card_blurb: "On a 4 GB heap with a 1.8 GB live set the maximum GC pause is 158 to 170 ms under Parallel and 0.017 to 0.036 ms under Generational ZGC; at 1.05 times the live set ZGC stalls the allocating thread (bare-metal, untuned host)."
-description: "On a 4 GB heap with a 1.8 GB live set the maximum GC pause is 158 to 170 ms under Parallel and 0.017 to 0.036 ms under Generational ZGC; at 1.05 times the live set ZGC stalls the allocating thread (bare-metal, untuned host)."
+card_blurb: "On a 4 GB heap with a 1.8 GB live set the maximum GC pause is 158 to 162 ms under Parallel and 0.020 to 0.039 ms under Generational ZGC; at 1.05 times the live set ZGC stalls the allocating thread (bare-metal, untuned host)."
+description: "On a 4 GB heap with a 1.8 GB live set the maximum GC pause is 158 to 162 ms under Parallel and 0.020 to 0.039 ms under Generational ZGC; at 1.05 times the live set ZGC stalls the allocating thread (bare-metal, untuned host)."
 languages: "Java · C++ · Python"
 ---
 

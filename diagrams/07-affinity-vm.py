@@ -78,7 +78,7 @@ nodes = [
         "w": 200,
         "h": 60,
         "style": "ink",
-        "lines": ["VM: unpinned", "involuntary 174,388-313,298", "hand-off p99.9 1.09-1.86 ms"],
+        "lines": ["VM: unpinned", "involuntary 119,779-360,310", "hand-off p99.9 0.43-1.56 ms"],
     },
     {
         "x": 475,
@@ -86,7 +86,7 @@ nodes = [
         "w": 200,
         "h": 60,
         "style": "ink",
-        "lines": ["VM: pinned", "involuntary 0-5", "hand-off p99.9 51-55 us"],
+        "lines": ["VM: pinned", "involuntary 0-5", "hand-off p99.9 54-55 us"],
     },
 ]
 

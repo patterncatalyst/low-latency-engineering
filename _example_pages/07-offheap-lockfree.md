@@ -5,8 +5,8 @@ order: 7
 permalink: /examples/07-offheap-lockfree/
 card_eyebrow: "Example 07 · Chapter 7"
 card_title: "Rings, journals and a pinned thread"
-card_blurb: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,523-199,540 to 29-47 per 200,000 parcels and its steady hand-off p99 from 10,495-10,871 ns to 576-590 ns (bare-metal, untuned host); the VM part pins the spinner to an isolated vCPU."
-description: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,523-199,540 to 29-47 per 200,000 parcels and its steady hand-off p99 from 10,495-10,871 ns to 576-590 ns (bare-metal, untuned host); the VM part pins the spinner to an isolated vCPU."
+card_blurb: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,383-199,582 to 38-47 per 200,000 parcels and its steady hand-off p99 from 10,455-11,743 ns to 572-674 ns (bare-metal, untuned host); the VM part pins the spinner to an isolated vCPU."
+description: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,383-199,582 to 38-47 per 200,000 parcels and its steady hand-off p99 from 10,455-11,743 ns to 572-674 ns (bare-metal, untuned host); the VM part pins the spinner to an isolated vCPU."
 languages: "Java · C++"
 ---
 
@@ -32,7 +32,7 @@ scripts/lab/lab-down.sh
 - VM: the pinned decide thread has at most 10 involuntary context switches and the unpinned at least 100; the pinned hand-off p99.9 is at most half the unpinned one; the pinned thread is confined to CPU 3.
 - Every run counts 200,000 parcels, drops none, has no overflow, receives every divert command and passes `lowlat-report check`.
 
-The host part held on the quiet-host runs `r02-run1..3`; in run 1 the Disruptor's p99 passed its bound with a margin of 1.01. The VM part held on `r02-vm-run1..3`, each from the snapshot `lab-ready-iso`, and its numbers carry the label `vm` and are never compared with the host's.
+The host part held on the quiet-host runs `r02-run1..3`; the Disruptor's p99 passed its bound with margins of 2.86 to 3.48. A margin of 1.01 in run 1 of the committed set from before S22 (git history, d419992) did not recur. The VM part held on `r02-vm-run1..3`, each from the snapshot `lab-ready-iso`, and its numbers carry the label `vm` and are never compared with the host's.
 
 ## Chapter and source
 
