@@ -1,8 +1,8 @@
-Total duration: 6.5 sec
-Start date: 2026-10-22 19:48:11
-End date: 2026-10-22 19:48:18
-Raw value minimum: 129 ms
-Raw value maximum: 133 ms
+Total duration: 6.6 sec
+Start date: 2026-10-23 02:15:28
+End date: 2026-10-23 02:15:35
+Raw value minimum: 131 ms
+Raw value maximum: 134 ms
 
 Number of calibration run: 1
 Number of run with values: 6
@@ -13,17 +13,25 @@ Number of value per run: 4
 Loop iterations per value: 2^16 (64 outer-loops x 1024 inner-loops)
 Total number of values: 24
 
-Minimum:         1.97 us
-Median +- MAD:   1.98 us +- 0.00 us
-Mean +- std dev: 1.99 us +- 0.02 us
-Maximum:         2.04 us
+Minimum:         2.00 us
+Median +- MAD:   2.02 us +- 0.01 us
+Mean +- std dev: 2.02 us +- 0.01 us
+Maximum:         2.05 us
 
-  0th percentile: 1.97 us (-1% of the mean) -- minimum
-  5th percentile: 1.97 us (-1% of the mean)
- 25th percentile: 1.98 us (-1% of the mean) -- Q1
- 50th percentile: 1.98 us (-0% of the mean) -- median
- 75th percentile: 1.99 us (-0% of the mean) -- Q3
- 95th percentile: 2.02 us (+1% of the mean)
-100th percentile: 2.04 us (+2% of the mean) -- maximum
+  0th percentile: 2.00 us (-1% of the mean) -- minimum
+  5th percentile: 2.00 us (-1% of the mean)
+ 25th percentile: 2.02 us (-0% of the mean) -- Q1
+ 50th percentile: 2.02 us (-0% of the mean) -- median
+ 75th percentile: 2.03 us (+0% of the mean) -- Q3
+ 95th percentile: 2.05 us (+1% of the mean)
+100th percentile: 2.05 us (+1% of the mean) -- maximum
 
-Number of outlier (out of 1.96 us..2.00 us): 5
+Number of outlier (out of 2.00 us..2.04 us): 5
+
+WARNING: the benchmark result may be unstable
+* Not enough samples to get a stable result (95% certainly of less than 1% variation)
+
+Try to rerun the benchmark with more runs, values and/or loops.
+Run 'python -m pyperf system tune' command to reduce the system jitter.
+Use pyperf stats, pyperf dump and pyperf hist to analyze results.
+Use --quiet option to hide these warnings.

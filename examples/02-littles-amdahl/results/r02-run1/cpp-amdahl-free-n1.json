@@ -7,7 +7,7 @@
   "count": 10,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAADB4nJNpmSzMwMDAxwABzFCakYGB2c1gxwIG+w8Qgb2TmJgYWZiYWBiZeJmYAJ9xBc0=",
+  "hdr_histogram": "HISTFAAAADB4nJNpmSzMwMDAxwABzFCakYGB2c1gxwIG+w8Qgb2TmJiY2JiYGJkYmZiZAJ9dBcM=",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
@@ -18,22 +18,22 @@
     "predicted_speedup": 1.0,
     "relative_error": 0.0,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.0951291023021253,
+    "serial_fraction_modelling_input": 0.09508922058070203,
     "sync": "free: no barriers",
-    "wall_p50_ns": 77856767,
-    "wall_p50_ns_n1": 77856767,
+    "wall_p50_ns": 77725695,
+    "wall_p50_ns_n1": 77725695,
     "workers": 1
   },
   "notes": "10 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
   "percentiles": {
-    "max": 78643199,
-    "p50": 77856767,
-    "p90": 78577663,
-    "p99": 78643199,
-    "p99_9": 78643199
+    "max": 78315519,
+    "p50": 77725695,
+    "p90": 78118911,
+    "p99": 78315519,
+    "p99_9": 78315519
   },
   "profile": {
-    "captured_at": "2026-10-22T23:44:25Z",
+    "captured_at": "2026-10-23T06:11:39Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -69,9 +69,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.32,
-      "load15": 0.78,
-      "load5": 0.7,
+      "load1": 0.34,
+      "load15": 0.86,
+      "load5": 0.77,
       "running": 1
     },
     "memory": {
@@ -81,6 +81,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -94,7 +95,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2438967,
+      "pid": 2668633,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

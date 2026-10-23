@@ -7,13 +7,13 @@
   "count" : 20000,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 39,
-    "p90" : 133,
-    "p99" : 538,
-    "p99_9" : 2467,
-    "max" : 13447
+    "p50" : 34,
+    "p90" : 144,
+    "p99" : 655,
+    "p99_9" : 2865,
+    "max" : 18767
   },
-  "hdr_histogram" : "HISTFAAAAkp4nC1RvWsVQRDf/e3c3GazWTfn+d7j8QhBn+kUPyq1UAKKhggGUmgnEhRExMIqpUgqCz9aeQSVNEIQhOAfkCqkTuEXWCgGDaSUFOrMvexxuzNzv4/Zud7jFweNcefMcLn900p46cSHZXN+d1g4TZOv7EaxFpbGd9urvY/t9Xovbpbrbssu/rUb7mfxuVwKg/gmPPVbvEJfsYYV98cNit9uGXv2h920z+3i3QcPr10+NZW7k606507Ik51uv1XHAOYMz+QZQROKhih4qnLK/eNnZ2fuX781Pz1z4d7Nhdvv7MCu2if2pX1kF+Znp3v9/lSn1e9W3ZyqXOcYYzKROaVU+RSCZ4k9RQT2RB5EBgayMYsJpMBevH3KwYdQ0UQdghBSrCvvyeQoQA5KNFC0no5FAV5iEi2onlQMaeSoYMMkNvIO4bLkTmIHJsMsMsyRvfGSi2eC0Ela1ltTCMIUtGiHTBwQJWIv2OiD1Mn7oTekJ6nKa0RaJLUBL1MTjCioZZBbegqsC8pRmvagNs24lUyB9Ku6emlVJLgTUp3qwznVoWpN5JByTFKuFQXByzD1ysO7GXay61g0ITkIhY4CRTMeJ1tJ7IhL0u86LXmE4qj5E044ojEGjEN/ToFRYEQVRlACbTkOgArhOhqlQkloliNy2lLZ0DRx6owmFXu4YU+NjlP8IdWRZEx6c/uAEfVyTcOmwZU4g4v4ZnEUn4Adhx2LG/jncQVfHJ45fLd4DxzDHby12CapX8UcTuIIXjv8soqfwzYr+z97+Uzb",
+  "hdr_histogram" : "HISTFAAAAoN4nDVSPWgUQRideTM7O9lsNpvNep6y+RFEzxCTeAYJR4gxhJAiBAmpQqorLERsbMQy2AVBFCxCCkEERUQFCYIiqbQ0iKWFYK2oja3vm43L7c7Mvu97733vtrp9f1Aps6PqyxyumtulqTcP1cVf9YtJ+PHre/jpPxT7Q1utnfE/Q1+Kl/4AnTLLCufb3Xd6FzvYxWt81ft6S+/p9/ZJ/C06sA/MZ31XL63OXr7S3diYaU/MVNOdleXZk532XGusyOGypCBLWQ3nmYe3zhrnyrQoWnPLK7dudu/p7tpqZ2Z6/lRVDbcmphYW19c3r21eXZtdXB6/0J7vLMy1Jqrh0UajzJqj+fFGVY2VeVGS1efNLMlSnzrnYBU8LKwTDZUh896lPknT3PsSifM+cVbkLRxYqKwNbVCQy1sDeUMaKBde2Uj40MdtBGNjPqMaVt5auUFGxUaF2AbOcCfeslwRVZSiGWut+a/DYloUMajUhpaYpKy0AaUTNsgYFCLshYfOrEiS0Yk7cV/PQEQmh/csZ7x5UmYyccNnvpEnRZmmjKhiCs2s0WwyjqIoGlmWpgwug0sd3aZJYsnA6SGJUFIsKznRPb1FIS3FaUU0ESihQcmCfSEtx5GlKUzquToZwbBJBSqJJqQj4RpGa8S3KOGQKAQUhUikNsQVhU0sh0jGjdATlCSbukwik59FvzhiRSQiIcm6kfn2sDICeuVh6nkEs+FQ89POgPyTQmvqKmOPks4N4Bi/AWP72C/QIEZIcAnn+OwlMoJJDMm3QWQbOI/TOCKbRzE+aqJ/NX4YatzROIFPGv347vEYeKrxyuCZY0kPzuIM1xcaN/BbYzvGc4O3wD91zUsH",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
     "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/on-heap-manifest.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
@@ -21,7 +21,7 @@
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-22T23:57:25Z",
+    "captured_at" : "2026-10-23T06:24:43Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -61,7 +61,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2446814,
+      "pid" : 2676914,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -70,8 +70,8 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.17,
-      "load5" : 0.52,
+      "load1" : 0.06,
+      "load5" : 0.45,
       "load15" : 0.67,
       "running" : 1
     },
@@ -82,7 +82,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]
@@ -98,7 +99,7 @@
       "memlock_kb" : "8192"
     }
   },
-  "notes" : "handoff=agrona_busy_spin; journal=none; manifest=on_heap; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; manifest_entries=1000000; manifest_hits=200000; old_gen_baseline_bytes=3797592",
+  "notes" : "handoff=agrona_busy_spin; journal=none; manifest=on_heap; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; manifest_entries=1000000; manifest_hits=200000; old_gen_baseline_bytes=3797736",
   "runtime" : {
     "gc" : {
       "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],

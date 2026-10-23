@@ -8,19 +8,19 @@
   "dropped" : 0,
   "percentiles" : {
     "p50" : 13,
-    "p90" : 13,
-    "p99" : 30,
-    "p99_9" : 35,
-    "max" : 10487
+    "p90" : 14,
+    "p99" : 37,
+    "p99_9" : 38,
+    "max" : 10639
   },
-  "hdr_histogram" : "HISTFAAAAO94nC2NsS5EQRiF//lmdu5c997d2IsoiAIRlS0oRcdTeAQvQLdBpRA0ColCWIme6CSi2wcQD6AgotGIiLNZk8w55z//mTNTu8e1mf3Y8Ph/dpLrnbtzW/scGjU3r+Hge6V3uty98h2Dgsf20Ynbf+aix+9Od+4je+fJHfrLeB+2x8rJ9kQqy2QpRSNYCjFYZCRIM4CYAI/XaOIGVfBk5AgqamEh27SYFRckIwY9bApUoKs8M0pUbLCkfItpRlkI4/JasKkhpxFyhU2/KKEi9Q22DwgyrhvMs8iW5Jmj73iBL8dezipvBf0mtxl/iroksQ==",
+  "hdr_histogram" : "HISTFAAAAOJ4nC2NMUtCcRTF//f37vu/94yGNJ2KaHCKIBskcGiR+gANIU1+EcG0NQIbGt8QFC1FOIiLONuSq4uzFERTU3Sfdg+Xc+7hHO5Wt1dwzs3caoJ/FpMnB4PUHX+tjOLvgy6uD6f96vdQ0/r9zjz/KqDgwH+Ej/WfkdykMqzMk+7eW+vlTvqXcnv05Ev5nOY09jEWxDurLHt+WSW7QwgM6xQyYXaQeRuGfdbYNh2YqU69qjEax6qRskvFtkiTMhecckZkucRAW+jBRDmnRoNP4Qp70OQ54h06wiShEzLe5A/wRSj1",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-23T00:30:31Z",
+    "captured_at" : "2026-10-23T06:57:51Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2470479,
+      "pid" : 2698681,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,10 +69,10 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 1.25,
-      "load5" : 0.95,
-      "load15" : 0.96,
-      "running" : 2
+      "load1" : 1.0,
+      "load5" : 0.84,
+      "load15" : 0.76,
+      "running" : 1
     },
     "memory" : {
       "mem_total_kb" : 65545544,
@@ -81,7 +81,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]

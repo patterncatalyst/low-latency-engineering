@@ -7,18 +7,18 @@
   "count": 20000,
   "dropped": 0,
   "example": "07-offheap-lockfree",
-  "hdr_histogram": "HISTFAAAAv14nD2UQYhcRRCGp76uV6+np+ft7NuZyWY3bnZlM6vrCps1qCi4IrpG8RAEIXgJBMEkR2/mqMGTh4gQ9aKLSO7Kgp48eBC9rCCCoIIgeNCTIHrwIFL9Jvahu19V919Vf/39Tt14e6nX0/d63QjzVXq9cLD72WFv/4/O8PXD/LnCB4F7+VH4XvlLeEe4xG8hj587kt/lWL6UGxzLoVx/6fmLzz64tnf+yYNrFx85f+6x3fXNU+vrK8vr02nbpCamhLUxxkYtJYhYMlBNoKJmSRH1IaohBUxUB4AgPpupBh1SU7mNAJWvQt+nCUJF0CVWkex2RaKighgGQTUmHN23ojJHDvPVcTxQnxoGbh4UJ9IdCf4VPG8gmGh1J75Ql6yLoyD37ziC1vbEEV/Vry3+s/zR6X9Xj0682d4e/tR/Px7Fz+PN+u/qB/0wfMe7fCE35fqVFy9fOHh8+57Z5va0adq7R7lpc2pTim1KFrNli2amUU01oqipGYJimkwsEkVjyUZLsZpUTTAa/3RjQD09v+EbJzbAULsiA6ZiHX9Om48K0+BElstC5WfLVkWDWlrbfuWW3JZf5FjewOXwrXwih3JLrlw4d7C7tzfb2ZntzXams3bcrOSsDY15FmZpbGub4zavjLK1KY6aJkUML0UwiR5ICrGeqrfTCsVWSgjq2im+0iPUm0egT59VF0rd9b+vddFSamK7nMfjnEcpN6Nk49aixlGjajSakySLqnls4zyypnXNdhx04Yv6wjyZQD0POySkqGZmLuscDVUlqhQuLcZsMU7bmEyIxFIIlVZFLMMCOKEqWlWt59EsFD1qoGLYSarq6mEBhUXvQ9CK/wUspVdiHUDhwxEtlAgDFjue0JqOtBNsICzxMn2HmwdiQqBTd82QCVsENlhgwiL34SSchKeK0WkeUutCOX6SoPfDBgP22aKmz2mEB6g5270pHmWfhxggvEDgKs9QfilbDHld+NVfXcUZzvAq3yiBp/lYuIuzfOp0v+XJ/VzxH3CpVQA=",
+  "hdr_histogram": "HISTFAAAAhF4nD1RMWhUQRC9eTt//mRvbu9fLh4/5kwOEzUeGEQIHookhZxoYRVBLERB0tlYWwWxDIh9EAyCEEEOkSAoIiIiFoJgJ1iIhZWIRTplfoL72N3hLTv73tvunfvtWg1fa7sj7O1Uq4Xh8e0HtaVfu8ST03g5j8/5wZX32JA/9Z3W732j8lX5pbPTflN8bD5t/Khv6gf5lq3zuzAK3/ECP2mHPtE2bdIa3aWVa8Ph3GCh3+tOd+bnut3euE6UqhOWjDlGLhgWkzIEvsQkUEAlMrOwQATMJEISDQoVjgIzi1FZWcTPg7ApmBg5QBBhIQT44BwUGUG8ZjBnjAzwKcQEBzIwB+RghaXeYPnC7Q3aoi16TSN6Tm/pGT2iEa3TGt24tXp19fKVi8unzg5OzC/0p8vDvX6530ozKwrVlIzVXFUhgphU3BQxKZMDECBHcNJXArvSnHOA66i7/AyT7qPhDsacIDeBUAEslsrUSdbrpDSuSaMxe15K7s+9G4smi+OWOrGIIilC4SxXlj3qqvAXWv5G1Vi8SVJWpMRs4rExwAbmxKJq0UyqwtR1qDBIBSQCQt17EKpoaQ+ZcxW9+xlURe++EfwCt5F5Jk33myFDC1TJof84AEITDZ6pbhzCGKZwCTmWMIlF3MR5zGIKZ/CQ0MYsTuIc8qpRwDE0KwUZxjDDR/GYgOs4gkXgXsBf4B9jM0QJ",
   "language": "cpp",
   "notes": "handoff=atomic-spsc; published=200000; overflow=0; reordered=0; rcvbuf_granted=8388608; window=20000; first window is seq < 20000",
   "percentiles": {
-    "max": 526335,
-    "p50": 56639,
-    "p90": 63807,
-    "p99": 84543,
-    "p99_9": 188543
+    "max": 220799,
+    "p50": 56767,
+    "p90": 64063,
+    "p99": 83839,
+    "p99_9": 132735
   },
   "profile": {
-    "captured_at": "2026-10-22T23:57:25Z",
+    "captured_at": "2026-10-23T06:24:43Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.17,
+      "load1": 0.06,
       "load15": 0.67,
-      "load5": 0.52,
+      "load5": 0.45,
       "running": 1
     },
     "memory": {
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2446814,
+      "pid": 2676914,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

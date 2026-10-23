@@ -7,21 +7,21 @@
   "count" : 2000,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 111999,
-    "p90" : 196095,
-    "p99" : 337151,
-    "p99_9" : 13352959,
-    "max" : 15212543
+    "p50" : 188031,
+    "p90" : 238207,
+    "p99" : 420607,
+    "p99_9" : 14409727,
+    "max" : 16236543
   },
-  "hdr_histogram" : "HISTFAAAAv94nD1UO44UMRCteS5Xuz09szMabbBaEEKIAJEgESECMm5AxBW4AwkZIiIg5QoESOw5CFaERAgRACeA98oNPeO2XZ9Xz1XlvvHq7cms/rbxlHXecPn0waf39uTXELx5gXcbVBTcxw4nPAaXFZhxjjNMuMRRkhMMs1dqzLF145ZSesjIub9DScGWQ7odV0YppwmeQnrigrsTlTN3E+cJackpAQ1OTBDw31bDG/c+HoTE8ObhFtG4pgG8OufgLHXhxgKtSEe6DB88YFBunjRJTeSoCSMkFS49VqJpA1mUIJn6n575lk7yZXQkveRM2Jphk9ywzkzNdIfkJTHXCLA2SCZ3voOnQXex9u69gfvWYun73hf3/cFbj94OvfHdg4mw1n1PTdDV25763ukRHFTQam97pslaGJPUlmbcMASTxijdl6XxAJ0mTGXnnzM6RaDHciCcqET0pR8kI7cmZkNODgtaQ7dlrwhtcaWD4JpJIzrTShVBPUSpjXzykXmokkxA8AxN2SAcs9FUr6ayO5oiMgQNI6tVBZEVbQnDMOKvnxrDuxC1sgGtwNY8069WsOyF3A4iSny2hw1qXOv8qgj38sTw9rAsqdokLAyjcsmxqL91NTJkGjEQ6w6MXUt3Ta6SK2CRh6mt1vKrLyKpEWIaHTRayVc+akr1D6F0n8R09tGRVWGj5nqn/qzZY8ELLOAzXdx/jWcJeC4kHzcy25psfZvtmXEzhxUjJ1BEI3deokSBIlS1amTrI7NavI7Lpei7PL386JKn07BxrVDXezKOntwH+xEql6s5zyngCTUGkfUmerIrCZ1UzOdRqUiD6tNao7znpk9KHjpTL8004FhNCib2Y0asWRZHfqCcX77RKTgqDw1rinQqGyWeJJtFMEmXbISR10r5jJtMhmXC9NXbDoiL/FLu+L7keEh3fi3xjOM2Hc7SZot7tDtydZdWfuJkeIlbeITXG2p/bvA8lR+P+HPE1YwPE75WfC64LvhScFXwfaP/j/x/y/X1Bn8Bzsgu2Q==",
+  "hdr_histogram" : "HISTFAAAArx4nE1UO47UQBBtvy6Xy22Pd5ZFICQQIiAigHQjot2ME3AKzgA3QEQILXsL7kCIENoDIIRIkLgA71UbiZmxu7t+XfVe1dx/8/aslPGi9E/d14Hby2efPpbnv7vg5hVeOx7hLl5ixEPMVlFR+Jzl+xTFqOAePqIEzLzw5PzS1E0SmtDCaANDTDKuNksuYYNsqXepTd5c4fSy5qaArnAojpHqcFvS1RSW1iUUmRZKTGdGL4pXwJhFsamuwQtpwmxH03X7PbJMz1RK5uhxq0xGiUZMnkEkZ9i5XzTZkn7yrFgIzgSlyPAPhMphT2YRQqxm6dEy0ERcquSMwveCjqFwUrKCqqcjRKx7/fuVPd+EaukHXl11ifJY6Lpjw2SotioFohLMiLW1xhURbV3hd8xbc9IQK0VOtG11qkkAT27NjNBFE/4hO7QIUzC4uN64hFiyfumtUB7egeSGgJFfKkOE6aE5Azm7JYm1GNOzoDOqblDXQMAzG1jypdJ1KHTXxWytRFXFVnWFOoLipiDMkE3oGYjtEau1dWM+bue6ojK36sm7d8RLRG8f+al5XE2kAHx5/mJrBMS21VuvbI1W1sayjhvxKbYdiW47EkeuPIZH4YFACEcVHWh2O3K3MXVn1t64Nn3XQlTEgBXJaNRcXKhqnVSsl5beKj4rFh8mTJpAFquqNxkjR+as0oWe5WwFEaVe9JRsfnaGyqw7M9nI3bj3mtcc8OSlYp+WZCpn1/p09IlL9YnlDPdZmjNOdewDUDplVJqUlB84CKWTKM3E+2bkOPShyvYebZ9iOVE28+9IBt5HwPJ/CP+Ng8ls0pgyy0Mf+ymp7bN0oolG9g03vNY0No8peUrBjHs8nXO/4Akz/DPgM3A94IVeVxuuT/FuxtWEDyO+VdxUfK14X/FrwPcBPwZt+P6Zxy8D/gLT4yxF",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.aJjION/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cz8eDD/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-23T00:10:42Z",
+    "captured_at" : "2026-10-23T06:38:00Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -61,7 +61,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2458050,
+      "pid" : 2685966,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -70,9 +70,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 1.13,
-      "load5" : 0.89,
-      "load15" : 0.8,
+      "load1" : 0.5,
+      "load5" : 0.62,
+      "load15" : 0.72,
       "running" : 1
     },
     "memory" : {
@@ -82,7 +82,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]
@@ -107,19 +108,19 @@
     },
     "jit" : {
       "startup" : {
-        "compilations" : 442,
-        "c2_compilations" : 40,
-        "deoptimizations" : 26
+        "compilations" : 445,
+        "c2_compilations" : 43,
+        "deoptimizations" : 34
       },
       "first-2000" : {
         "compilations" : 246,
-        "c2_compilations" : 19,
+        "c2_compilations" : 18,
         "deoptimizations" : 1
       },
       "steady" : {
-        "compilations" : 66,
+        "compilations" : 65,
         "c2_compilations" : 58,
-        "deoptimizations" : 4
+        "deoptimizations" : 3
       }
     }
   }

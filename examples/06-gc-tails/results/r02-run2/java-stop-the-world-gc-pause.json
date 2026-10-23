@@ -7,20 +7,20 @@
   "count" : 13,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 157941759,
-    "p90" : 161611775,
-    "p99" : 169607167,
-    "p99_9" : 169607167,
-    "max" : 169607167
+    "p50" : 154796031,
+    "p90" : 159383551,
+    "p99" : 160956415,
+    "p99_9" : 160956415,
+    "max" : 160956415
   },
-  "hdr_histogram" : "HISTFAAAADh4nJNpmSzMwMAgwQABzFCaEch0M9ixgMH+A0TgdxsT00lpJiYGNnEmXiZmIBRlYmAqZwIA9LgHmg==",
+  "hdr_histogram" : "HISTFAAAADl4nJNpmSzMwMAgyQABzFCaEch0M9ixgMH+A0TgZysTU6cMEzsLLxMrEy+TJJDmZuJkEmUCAPbkBxg=",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-23T00:12:57Z",
+    "captured_at" : "2026-10-23T06:40:15Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2460574,
+      "pid" : 2688149,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,10 +69,10 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.57,
-      "load5" : 0.84,
-      "load15" : 0.8,
-      "running" : 2
+      "load1" : 0.71,
+      "load5" : 0.72,
+      "load15" : 0.75,
+      "running" : 1
     },
     "memory" : {
       "mem_total_kb" : 65545544,
@@ -81,7 +81,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]

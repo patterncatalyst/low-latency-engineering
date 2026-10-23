@@ -4,23 +4,23 @@
   "language" : "java",
   "variant" : "shenandoah-gen-gc-pause",
   "unit" : "ns",
-  "count" : 113,
+  "count" : 91,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 72767,
-    "p90" : 354047,
-    "p99" : 478719,
-    "p99_9" : 525823,
-    "max" : 525823
+    "p50" : 87935,
+    "p90" : 395519,
+    "p99" : 646143,
+    "p99_9" : 646143,
+    "max" : 646143
   },
-  "hdr_histogram" : "HISTFAAAAPR4nC2OoUtDURjF3/k9t+eYBnkMgzMsmWSKGBZkQVRMBjEYDA+DLJj8C0QNyy8aFESWxeCKLIosilkMIktqMInguZv34977fYfz/TjV0zyNIo1HoxP//3K7vtC9jJqfI6FXpUUvZokDrsQcFyJhmiYfogMZD1hI2GeSGt8x19ARgwka3JVoxyx7OeNWpLyKH7FGXxyLRWKeoB8ouTw0GIi3MW5EW8zyGDx54LdMX+WIFQu7lIaVseObUGDLZcAvVlOmeC7wUmSGewXgJl8BsefwFScvO06Kt8rU7d8YvjUbDk0/EydiPqSss21UhXPxDn8ySS/a",
+  "hdr_histogram" : "HISTFAAAAN94nC2OsUtCYRTFv/v73kMcJB6PeFBGOEZDgTiJRIu7Qzg4ODn0JzQ0JURDSDjIQwQXB2l00OaQR2NIU4NDOIgIOklb1/e6F+49nHs552Sbbd8Y822Ssv9bFJYvJ31ztUmIjyPmDmlWFlrQE96FYwLe4BSXO1LaXUuDKXz6jIQXlzU8WM4ocM0BdYaWyOWcCF6Fjij8Eeax2hieY+UFDISl4FMkp/NQfXbCiQJPvcL460bRb4ovR/kGoTCTfZiAjB4q5Mk4Hrd6vCcSnkTdPS6Ur1LDUGK7D/vo8AeELywo",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-23T00:12:57Z",
+    "captured_at" : "2026-10-23T06:40:15Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2460574,
+      "pid" : 2688149,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,10 +69,10 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.57,
-      "load5" : 0.84,
-      "load15" : 0.8,
-      "running" : 2
+      "load1" : 0.71,
+      "load5" : 0.72,
+      "load15" : 0.75,
+      "running" : 1
     },
     "memory" : {
       "mem_total_kb" : 65545544,
@@ -81,7 +81,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]

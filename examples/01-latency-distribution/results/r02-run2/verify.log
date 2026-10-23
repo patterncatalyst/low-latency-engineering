@@ -19,29 +19,29 @@ ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/r
 ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r02-run2/java-batch-32.json
 ok   /home/rsedor/Dev/low-latency-engineering/examples/01-latency-distribution/results/r02-run2/java-bimodal-1pct.json
 example                  language  variant       count  dropped      p50      p90      p99    p99.9      max
-01-latency-distribution  cpp       per-parcel    10000        0    155.9    168.8    186.5    258.9    325.1
-01-latency-distribution  cpp       batch-32      10000        0  15179.8  28164.1  31113.2  31178.8  31211.5
-01-latency-distribution  cpp       bimodal-1pct  10000        0    121.7    170.6   4145.2   6139.9   6828.0
-01-latency-distribution  python    per-parcel    10000        0    181.1    197.1    214.5    246.9    442.6
-01-latency-distribution  python    batch-32      10000        0  15228.9  28213.2  31211.5  31227.9  31260.7
-01-latency-distribution  python    bimodal-1pct  10000        0    146.2    196.2   4329.5   6377.5   7634.9
-01-latency-distribution  java      per-parcel    10000        0    108.4    191.9    278.3   8978.4  18645.0
-01-latency-distribution  java      batch-32      10000        0  15441.9  28262.4  31227.9  31408.1  31866.9
-01-latency-distribution  java      bimodal-1pct  10000        0    109.1    201.3   4997.1  17498.1  27181.1
+01-latency-distribution  cpp       per-parcel    10000        0    156.7    170.4    188.7    246.4    305.9
+01-latency-distribution  cpp       batch-32      10000        0  15188.0  28180.5  31178.8  31195.1  31211.5
+01-latency-distribution  cpp       bimodal-1pct  10000        0     95.4    165.2   2140.2   6012.9   7110.7
+01-latency-distribution  python    per-parcel    10000        0    185.1    200.2    226.3    322.8    443.4
+01-latency-distribution  python    batch-32      10000        0  15237.1  28213.2  31211.5  31244.3  31260.7
+01-latency-distribution  python    bimodal-1pct  10000        0    232.1    463.6   6832.1   7876.6   8323.1
+01-latency-distribution  java      per-parcel    10000        0    187.5    213.4    291.8   8257.5  17874.9
+01-latency-distribution  java      batch-32      10000        0  15417.3  28213.2  31195.1  31309.8  33308.7
+01-latency-distribution  java      bimodal-1pct  10000        0    182.4    212.2   5718.0  19677.2  29360.1
 ━━ criteria: cpp
-✓ cpp A: throughput per-parcel=1000111 mHz vs batch-32=1003210 mHz differs < 1 % (309900 < 1000111)
-✓ cpp A: batch-32 p50 >= 10x per-parcel p50 (155903 ns) (15179775 >= 1559030)
-✓ cpp B: bimodal p99 >= 20x its own p50 (121663 ns) (4145151 >= 2433260)
-✓ cpp B: bimodal p50 stays under 1/4 of its slow path (1997000 ns) (121663 < 499250)
+✓ cpp A: throughput per-parcel=1000101 mHz vs batch-32=1003212 mHz differs < 1 % (311100 < 1000101)
+✓ cpp A: batch-32 p50 >= 10x per-parcel p50 (156671 ns) (15187967 >= 1566710)
+✓ cpp B: bimodal p99 >= 20x its own p50 (95423 ns) (2140159 >= 1908460)
+✓ cpp B: bimodal p50 stays under 1/4 of its slow path (1999000 ns) (95423 < 499750)
 ━━ criteria: python
-✓ python A: throughput per-parcel=1000124 mHz vs batch-32=1003213 mHz differs < 1 % (308900 < 1000124)
-✓ python A: batch-32 p50 >= 10x per-parcel p50 (181119 ns) (15228927 >= 1811190)
-✓ python B: bimodal p99 >= 20x its own p50 (146175 ns) (4329471 >= 2923500)
-✓ python B: bimodal p50 stays under 1/4 of its slow path (2137000 ns) (146175 < 534250)
+✓ python A: throughput per-parcel=1000122 mHz vs batch-32=1003211 mHz differs < 1 % (308900 < 1000122)
+✓ python A: batch-32 p50 >= 10x per-parcel p50 (185087 ns) (15237119 >= 1850870)
+✓ python B: bimodal p99 >= 20x its own p50 (232063 ns) (6832127 >= 4641260)
+✓ python B: bimodal p50 stays under 1/4 of its slow path (2028000 ns) (232063 < 507000)
 ━━ criteria: java
-✓ java A: throughput per-parcel=1001957 mHz vs batch-32=1003225 mHz differs < 1 % (126800 < 1001957)
-✓ java A: batch-32 p50 >= 10x per-parcel p50 (108351 ns) (15441919 >= 1083510)
-✓ java B: bimodal p99 >= 20x its own p50 (109119 ns) (4997119 >= 2182380)
-✓ java B: bimodal p50 stays under 1/4 of its slow path (2009000 ns) (109119 < 502250)
+✓ java A: throughput per-parcel=1001873 mHz vs batch-32=1003373 mHz differs < 1 % (150000 < 1001873)
+✓ java A: batch-32 p50 >= 10x per-parcel p50 (187519 ns) (15417343 >= 1875190)
+✓ java B: bimodal p99 >= 20x its own p50 (182399 ns) (5718015 >= 3647980)
+✓ java B: bimodal p50 stays under 1/4 of its slow path (2009000 ns) (182399 < 502250)
 ✓ 01-latency-distribution: the distribution, not one number, is the result
-profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.78
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.75

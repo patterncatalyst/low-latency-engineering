@@ -7,18 +7,18 @@
   "count": 2000,
   "dropped": 0,
   "example": "05-jvm-costs",
-  "hdr_histogram": "HISTFAAAAe14nD1SQY7TQBB019S0O+PZieNMvCYbshErQLAHuOwZTiD+wi9A4gEcuPIL+BQSEh9APYnWB9vd011dVT2Hr9+3XRfed+cnXL7SdeHD298/u3d/z4lfn3GLP4IH/BDs0AOCAEEPRnrQMyDqgAEBEYhYAQFbDHiONQZsELBj69nhGluIn1MAeo4C9ThggxsIb7D285YX0KAQkvDHUYieypAcQEihECZQJVWTsaihQA2qmVQzQjV5MZA1qdGyWkqeRUo51TFP81KPx/p6qfP+8OzFsR7meX84LXM5pPlY5zrlcdznWpf5tOxzmfan07EsqdTTOJVa57Eu0ziXsqR5qtlyKTlPpOVczCkpoEykWVbVrAYyqQo0UQ1QKJFJA1WLMinVqdPMawuEmmiZFANIKmA0MaqCjkJPQ1ylqpjLFiLQzXWrYnO0FTUrYlvIpaNtofe/FQKeIHDlu8A3z37EHa5whzd4wCd8EWwguMIOW6wd9oqBg0O0pWlAJM+zXFTwLfWPY32bYNtc76/gLNuNOvNw+iSsqVIHdK1UykW1UNHyHlNpbEJdKbzJR0U6UCQpyYcgaCMk6k3e2Qb5YG083Yt2Gb06esy+1QieNktULiEenRu4atc0ImKgOyEY/PQe11zzFe7xEv8S/gOH9B7q",
+  "hdr_histogram": "HISTFAAAAhJ4nC2SQW4TQRBF3a+re2baPT3jsZNM7MQhjjEIJRFhg2CTHVIWCHEMxDW4ARfgGFwAcQpWXIAjoKrxLLqnSl2//v9VF9++L2cz/2U2ff54u9nMf3j988fs8d+U+POVWkqkltz3Q+nH9din05LrkvKqj6mPyUkCkhdx4AGcAOJooggikiI5ZSlRElFyKnHIsRZJOCRKBIeTQEA8HkcQJ55OASscLQ2eOxo+8yQCMcYyvjy82e3vtxfvd6v9enWaSyx1jikPWepU0mkZ1vU4lD6OeSg59ev8LK/7NIyH3Wrcb/e7XHI/rIqT2uGiBLw4Kjwyx7PAKa9G5sRAo9IaToyPU1FEVRpjKqlOeVXWw3B4dX+43W9329vD7mL9bJX6kmNfx6ycpyq1xhGY05lSpzjaPlg6KCRBCFRU01MIqC1LWpGgkbNYnyxoMbQpzeS7dOaoNdAHEo6B0pcHWpYWqqIzzug4oaPhUv9F859wLHhhahcsuILn1vAjGyv4pfiXLKiY2xlgY02VSYuho765aR90ipOSCoKajVPe3jJ6dkbfT6L9hFVNC1VFj82nESetmtgiVLTxaOdm6qdlapEGrSFM42rRiZ5ZRzVN211Bx8b6OiPKEic3lqh4UJqVcjqhsSodzo3txbmhXh5ZLliaYseTxXdWccM73vLXcc01ngfdKm+Ge70lIJwTeDS8347/Rlojxg==",
   "language": "cpp",
   "notes": "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=8388608; window=2000; first window is seq < 2000",
   "percentiles": {
-    "max": 326143,
-    "p50": 95935,
-    "p90": 158719,
-    "p99": 185087,
-    "p99_9": 201983
+    "max": 316671,
+    "p50": 70335,
+    "p90": 131711,
+    "p99": 264447,
+    "p99_9": 287231
   },
   "profile": {
-    "captured_at": "2026-10-23T00:10:42Z",
+    "captured_at": "2026-10-23T06:38:00Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.13,
-      "load15": 0.8,
-      "load5": 0.89,
+      "load1": 0.5,
+      "load15": 0.72,
+      "load5": 0.62,
       "running": 1
     },
     "memory": {
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2458050,
+      "pid": 2685966,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

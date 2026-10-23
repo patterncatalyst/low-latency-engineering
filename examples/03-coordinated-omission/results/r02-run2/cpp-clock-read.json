@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAON4nC2MsUoDQRiE9//237vs5RTPNZgiZzBPIIitCgGx0Pew8x3ESqyUWImkEpEU1yi+gIIiVhYWYiNoIYhYXiWbODAMDPNNZ/84GGNezUT2P8UYu7F0MzRrP5MiXPSO7ufO3lfPq2Jv/mlz9KGnD244kGdXN6ud0QvVG5frCyBE2YRkq87q8q57Mn04+1tel4/L3zMHqYJLwDGlVhFSiogE8JG1eBwydqHxS2hhVTTFq8sAbTcanTxr9xLyHAXRXbbHRNC4DFhaCE2s2kQFz6fw5RnACos4+vS5ErrcCiV/SGEpAA==",
+  "hdr_histogram": "HISTFAAAAOF4nC2OsUoDURBF35w3b95mE1fdGMEgCgFJFlQEQUu7gEXK/JHED7AQBMHSwkI77VXEj7AIiJ2IjWIh8rLOMFzmcrjc1aOTtnPu1dXj/1Wc88Od2wt38FEb7cfN77uV6cPh5dnSffUSpzLstUrNLTP1iiCmqNq1TGyy+N77HfyMnnY/1678s5DpQrm9lwcNKImd7TyCJxCSqmcO87OnQ5NIhEbilIjUZ12xoit5UepyKVqoZl5FPRsEtmjQp0OkImqKXccDoqmcWECMmxYjKsb0ORX2ORa+4FwY89bkD0fMIUY=",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); value = second - first",
   "percentiles": {
-    "max": 1608,
+    "max": 3033,
     "p50": 12,
-    "p90": 17,
-    "p99": 43,
-    "p99_9": 48
+    "p90": 13,
+    "p99": 45,
+    "p99_9": 47
   },
   "profile": {
-    "captured_at": "2026-10-23T00:08:07Z",
+    "captured_at": "2026-10-23T06:35:25Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,8 +54,8 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.25,
-      "load15": 0.79,
+      "load1": 1.2,
+      "load15": 0.81,
       "load5": 0.88,
       "running": 1
     },
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2454141,
+      "pid": 2684418,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

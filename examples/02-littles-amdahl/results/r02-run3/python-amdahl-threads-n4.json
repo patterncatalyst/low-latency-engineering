@@ -7,20 +7,20 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 328728575,
-    "p90": 428605439,
-    "p99": 449839103,
-    "p99_9": 449839103,
-    "max": 449839103
+    "p50": 382992383,
+    "p90": 406585343,
+    "p99": 430702591,
+    "p99_9": 430702591,
+    "max": 430702591
   },
-  "hdr_histogram": "HISTFAAAAGh4nJNpmSzMwMDgygABzFCakYGB2c1gxwIG+w8Qgf3LmZiMmTiZWJlEmZyZfjMyNTMy/WVkCmZSZ1rPyCTJNJmR6TsjUyHTbEYmVqZYJkUmRiZ2JncmTiZfpnAmbyZJJnGmTCYASGgPig==",
+  "hdr_histogram": "HISTFAAAAF54nC3IoQ2AMBQA0f+vQRBoEFUETFUtviQ4FiIMQMIGCCwGxQIswh6MgChnXnLtujkR6SVlflXEjN19yPCmsZzwlODYlZnIpeQoAahpcCgFHjwZhgoLFiUy8QFaXwp5",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:29:13Z",
+    "captured_at": "2026-10-23T06:56:31Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2468975,
+      "pid": 2697127,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.17,
-      "load5": 0.81,
-      "load15": 0.92,
+      "load1": 0.55,
+      "load5": 0.74,
+      "load15": 0.73,
       "running": 1
     },
     "memory": {
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
@@ -105,17 +106,17 @@
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "workers": 4,
     "executor": "ThreadPoolExecutor",
-    "serial_fraction_modelling_input": 0.1000746705810287,
+    "serial_fraction_modelling_input": 0.10065676809470506,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "predicted_speedup": 3.0763929629614992,
-    "measured_speedup_p50": 0.5334928215473814,
-    "relative_error": -0.8265849558328813,
-    "wall_p50_ns_n1": 175374335,
-    "wall_p50_ns": 328728575,
+    "predicted_speedup": 3.0722666921342645,
+    "measured_speedup_p50": 0.47433264749810966,
+    "relative_error": -0.8456082446512491,
+    "wall_p50_ns_n1": 181665791,
+    "wall_p50_ns": 382992383,
     "batch_parcels": 1200,
     "sync": "phased: barriers between the parallel and serial parts of a wave",
     "parcels_per_worker_per_wave": 60,
     "lock": "threading.Lock",
-    "effective_ghz": 3.86
+    "effective_ghz": 3.74
   }
 }

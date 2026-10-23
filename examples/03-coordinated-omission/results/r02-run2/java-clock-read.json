@@ -10,17 +10,17 @@
     "p50" : 12,
     "p90" : 13,
     "p99" : 31,
-    "p99_9" : 32,
-    "max" : 10343
+    "p99_9" : 37,
+    "max" : 10375
   },
-  "hdr_histogram" : "HISTFAAAAPh4nC2MvUoDURCF53737t27a9is2cQfjIIgpBF0C6sUdmIjPoKtr2ClYLCwElIEtBG3SWlp5xNoJdY2YmnwAcTZjcPMmTNnZk5/NC5ETJB52P9ulB7sPt3L/mwuFNy8x9Px8K3afvzhtnftpxx2O3mG8ytXycfR7Ns8vDL6Mr8nF8np1ka/k7VaeZ51Qwg+RcspupAK4j0p4sA5H8B7Ac0aEmIiXQjO1rNglVuWtRZps6AYK297cbWP+BDVp6IXkeIqA9YYQkmh4zqx0wdX6mupi8bdNg7SuE0sL45z9qhijtmkxydUsMNZzYSJUfXOcBl4XuIPs5wj/A==",
+  "hdr_histogram" : "HISTFAAAAMh4nC2IMUtCYRSGz/d8n4cr93IVRERMiKAx0AZXh6LBP9MoQZsNQYODi5M0NDUJglhCf6D1SkNBu4vSlNDQsdt74Lzv8xzcjCoi8iR5/H87mxetxb10t7mo8PWtD1ln8naa7dx5CfTWvdQ/Jm499OMlj91neofzwk95Wrw+SlNNklQtQYEIiRII6hENIYAYBSHYyZ58iMEbxfZLKjStY2q0kT9LkXdHlTPbJwydsckGr56Z59h8nT5X3Hku+XRsIgbKqskvUQQivw==",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-23T00:08:07Z",
+    "captured_at" : "2026-10-23T06:35:25Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2454141,
+      "pid" : 2684418,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,9 +69,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 1.25,
+      "load1" : 1.2,
       "load5" : 0.88,
-      "load15" : 0.79,
+      "load15" : 0.81,
       "running" : 1
     },
     "memory" : {
@@ -81,7 +81,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]

@@ -1,7 +1,16 @@
 ✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
-━━ unit tests: the SPSC ring
+━━ unit tests: the SPSC ring and the decide-loop failure path
 Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
-[==========] 5 tests from 1 test suite ran. (16 ms total)
+[==========] 6 tests from 1 test suite ran. (7 ms total)
+[  PASSED  ] 6 tests.
+Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+decide-thread pid=2677203 tid=2677204
+window-end handled=1000
+decide-thread pid=2677203 tid=2677205
+window-end handled=1000
+decide-thread pid=2677203 tid=2677206
+decide-thread pid=2677203 tid=2677207
+[==========] 5 tests from 1 test suite ran. (6 ms total)
 [  PASSED  ] 5 tests.
 ━━ java / blocking-queue
 ━━ java / linked-queue
@@ -112,155 +121,155 @@ ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/resul
 ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-write-per-parcel.json
 ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-write-per-parcel-steady.json
 example              language  variant                                              count  dropped   p50    p90      p99    p99.9      max
-07-offheap-lockfree  cpp       atomic-spsc-first-20000                              20000        0  56.6   63.8     84.5    188.5    526.3
-07-offheap-lockfree  cpp       atomic-spsc-handoff-first-20000                      20000        0   0.1    0.3      0.3     44.4    464.6
-07-offheap-lockfree  cpp       atomic-spsc-handoff                                 200000        0   0.1    0.3      0.3      0.6    464.6
-07-offheap-lockfree  cpp       atomic-spsc-handoff-steady                          180000        0   0.1    0.3      0.3      0.5     50.7
-07-offheap-lockfree  cpp       atomic-spsc                                         200000        0  56.7   63.8     83.9    141.8    526.3
-07-offheap-lockfree  cpp       atomic-spsc-steady                                  180000        0  56.7   63.8     83.8    139.4    314.9
-07-offheap-lockfree  cpp       atomic-wait-first-20000                              20000        0  58.7   66.9     94.5    139.0    444.7
-07-offheap-lockfree  cpp       atomic-wait-handoff-first-20000                      20000        0   2.0    3.8      9.1     53.3    115.0
-07-offheap-lockfree  cpp       atomic-wait-handoff                                 200000        0   1.9    7.1      9.4     75.5    267.0
-07-offheap-lockfree  cpp       atomic-wait-handoff-steady                          180000        0   1.9    7.1      9.4     76.9    267.0
-07-offheap-lockfree  cpp       atomic-wait                                         200000        0  58.6   67.0     96.4    147.6    444.7
-07-offheap-lockfree  cpp       atomic-wait-steady                                  180000        0  58.6   67.0     96.7    148.2    341.0
-07-offheap-lockfree  java      agrona-spsc-backoff-divert                          200000        0   5.0    5.9     16.5     90.5   2228.2
-07-offheap-lockfree  java      agrona-spsc-backoff-first-20000                      20000        0  95.7  114.2   3530.8  18087.9  19497.0
-07-offheap-lockfree  java      agrona-spsc-backoff-handoff-first-20000              20000        0  32.0   49.2   1600.5   3215.4   3336.2
-07-offheap-lockfree  java      agrona-spsc-backoff-handoff                         200000        0  30.2   49.0     53.9   1600.5   3336.2
-07-offheap-lockfree  java      agrona-spsc-backoff-handoff-steady                  180000        0  30.1   48.9     53.9     60.1    160.8
-07-offheap-lockfree  java      agrona-spsc-backoff                                 200000        0  93.6  110.8    129.5   3530.8  19497.0
-07-offheap-lockfree  java      agrona-spsc-backoff-steady                          180000        0  92.9  110.1    125.3    193.9   1200.1
-07-offheap-lockfree  java      agrona-spsc-divert                                  200000        0   4.6   11.6     13.8     68.3   2077.7
-07-offheap-lockfree  java      agrona-spsc-first-20000                              20000        0  63.1   70.4   1148.9  15720.4  17154.0
-07-offheap-lockfree  java      agrona-spsc-handoff-first-20000                      20000        0   0.2    0.8    536.6   2379.8   2601.0
-07-offheap-lockfree  java      agrona-spsc-handoff                                 200000        0   0.1    0.2      0.9    536.6   2601.0
-07-offheap-lockfree  java      agrona-spsc-handoff-steady                          180000        0   0.1    0.2      0.6      3.9    187.6
-07-offheap-lockfree  java      agrona-spsc                                         200000        0  60.8   65.8     90.7   1412.1  17154.0
-07-offheap-lockfree  java      agrona-spsc-steady                                  180000        0  60.7   63.6     89.0    165.8   1631.2
-07-offheap-lockfree  java      blocking-queue-divert                               200000        0   4.9   11.6     19.0     58.8   2099.2
-07-offheap-lockfree  java      blocking-queue-first-20000                           20000        0  64.6   73.5   3192.8  17891.3  19365.9
-07-offheap-lockfree  java      blocking-queue-handoff-first-20000                   20000        0   2.8    3.6   1931.3   2949.1   3043.3
-07-offheap-lockfree  java      blocking-queue-handoff                              200000        0   2.7    3.1     10.8   1931.3   3043.3
-07-offheap-lockfree  java      blocking-queue-handoff-steady                       180000        0   2.7    3.0     10.7     70.7   1172.5
-07-offheap-lockfree  java      blocking-queue                                      200000        0  63.7   67.8     98.9   3192.8  19365.9
-07-offheap-lockfree  java      blocking-queue-steady                               180000        0  63.7   66.3     96.3    174.3   1274.9
-07-offheap-lockfree  java      chronicle-journal-divert                            200000        0   4.7   11.5     13.4     48.5   2230.3
-07-offheap-lockfree  java      chronicle-journal-first-20000                        20000        0  61.9   72.4  12689.4  20742.1  20955.1
-07-offheap-lockfree  java      chronicle-journal-handoff-first-20000                20000        0   0.2    0.8  11124.7  14688.3  14909.4
-07-offheap-lockfree  java      chronicle-journal-handoff                           200000        0   0.1    0.2      0.9  11124.7  14909.4
-07-offheap-lockfree  java      chronicle-journal-handoff-steady                    180000        0   0.1    0.2      0.5      1.3    494.6
-07-offheap-lockfree  java      chronicle-journal-journal-append-first-20000         20000        0   0.4    2.1     25.0     58.2   7139.3
-07-offheap-lockfree  java      chronicle-journal-journal-append                    200000        0   0.3    0.4      2.8     25.5   7139.3
-07-offheap-lockfree  java      chronicle-journal-journal-append-steady             180000        0   0.3    0.4      0.8      5.3    570.9
-07-offheap-lockfree  java      chronicle-journal                                   200000        0  61.0   65.3     89.1  12689.4  20955.1
-07-offheap-lockfree  java      chronicle-journal-steady                            180000        0  60.9   63.6     83.8    138.9   2617.3
-07-offheap-lockfree  java      chronicle-map-manifest-divert                       200000        0   4.6   11.6     13.1     71.7   2207.7
-07-offheap-lockfree  java      chronicle-map-manifest-first-20000                   20000        0  62.4   73.2   3569.7  15687.7  16556.0
-07-offheap-lockfree  java      chronicle-map-manifest-handoff-first-20000           20000        0   0.2    0.7   3397.6   5468.2   5603.3
-07-offheap-lockfree  java      chronicle-map-manifest-handoff                      200000        0   0.1    0.2      0.7   3397.6   5603.3
-07-offheap-lockfree  java      chronicle-map-manifest-handoff-steady               180000        0   0.1    0.2      0.6      1.2     63.2
-07-offheap-lockfree  java      chronicle-map-manifest                              200000        0  61.3   67.1     91.0   3569.7  16556.0
-07-offheap-lockfree  java      chronicle-map-manifest-manifest-lookup-first-20000   20000        0   0.4    1.2     11.5     28.2   1148.9
-07-offheap-lockfree  java      chronicle-map-manifest-manifest-lookup              200000        0   0.3    0.6      1.3     12.5   1148.9
-07-offheap-lockfree  java      chronicle-map-manifest-manifest-lookup-steady       180000        0   0.3    0.5      0.8      6.5     17.6
-07-offheap-lockfree  java      chronicle-map-manifest-steady                       180000        0  61.2   64.4     89.0    156.9    288.3
-07-offheap-lockfree  java      disruptor-blocking-wait-divert                      200000        0   5.0   10.4     18.8     73.8   2410.5
-07-offheap-lockfree  java      disruptor-blocking-wait-first-20000                  20000        0  64.6   75.8   4612.1  19267.6  20709.4
-07-offheap-lockfree  java      disruptor-blocking-wait-handoff-first-20000          20000        0   3.0    5.0    920.1   3078.1   3207.2
-07-offheap-lockfree  java      disruptor-blocking-wait-handoff                     200000        0   2.9    3.4     12.1    920.1   3207.2
-07-offheap-lockfree  java      disruptor-blocking-wait-handoff-steady              180000        0   2.9    3.3     11.4     78.0    332.3
-07-offheap-lockfree  java      disruptor-blocking-wait                             200000        0  64.1   66.2    105.0   4612.1  20709.4
-07-offheap-lockfree  java      disruptor-blocking-wait-steady                      180000        0  64.1   65.6     99.1    174.1   1579.0
-07-offheap-lockfree  java      disruptor-divert                                    200000        0   4.7   11.5     14.9     77.7   2248.7
-07-offheap-lockfree  java      disruptor-first-20000                                20000        0  62.0   70.4    981.5  15786.0  17137.7
-07-offheap-lockfree  java      disruptor-handoff-first-20000                        20000        0   0.3    0.5    804.9   2777.1   2861.1
-07-offheap-lockfree  java      disruptor-handoff                                   200000        0   0.2    0.5      2.2    804.9   2861.1
-07-offheap-lockfree  java      disruptor-handoff-steady                            180000        0   0.2    0.5      2.1      6.2    299.5
-07-offheap-lockfree  java      disruptor                                           200000        0  61.1   65.9     90.2   1246.2  17137.7
-07-offheap-lockfree  java      disruptor-steady                                    180000        0  61.0   64.6     88.9    158.2   1453.1
-07-offheap-lockfree  java      linked-queue-divert                                 200000        0   5.1   10.0     19.2     81.5   2390.0
-07-offheap-lockfree  java      linked-queue-first-20000                             20000        0  64.7   72.7   6881.3  20889.6  22347.8
-07-offheap-lockfree  java      linked-queue-handoff-first-20000                     20000        0   2.8    3.8   3096.6   4067.3   4165.6
-07-offheap-lockfree  java      linked-queue-handoff                                200000        0   2.7    3.2     11.7   3096.6   4165.6
-07-offheap-lockfree  java      linked-queue-handoff-steady                         180000        0   2.7    3.1     10.8     67.5   1493.0
-07-offheap-lockfree  java      linked-queue                                        200000        0  63.8   67.0    104.8   6881.3  22347.8
-07-offheap-lockfree  java      linked-queue-steady                                 180000        0  63.8   65.7     98.5    165.9   1578.0
-07-offheap-lockfree  java      on-heap-manifest-divert                             200000        0   4.7    7.1     13.6    102.2   2084.9
-07-offheap-lockfree  java      on-heap-manifest-first-20000                         20000        0  61.7   68.4    736.3  14884.9  16220.2
-07-offheap-lockfree  java      on-heap-manifest-handoff-first-20000                 20000        0   0.2    0.6    560.6   2316.3   2400.3
-07-offheap-lockfree  java      on-heap-manifest-handoff                            200000        0   0.1    0.2      0.7   1146.9   2400.3
-07-offheap-lockfree  java      on-heap-manifest-handoff-steady                     180000        0   0.1    0.2      0.6    397.3   1171.5
-07-offheap-lockfree  java      on-heap-manifest                                    200000        0  61.0   64.6     91.8  11272.2  23429.1
-07-offheap-lockfree  java      on-heap-manifest-manifest-lookup-first-20000         20000        0   0.0    0.1      0.5      2.5     13.4
-07-offheap-lockfree  java      on-heap-manifest-manifest-lookup                    200000        0   0.0    0.1      0.4      0.7     18.4
-07-offheap-lockfree  java      on-heap-manifest-manifest-lookup-steady             180000        0   0.0    0.0      0.4      0.6     18.4
-07-offheap-lockfree  java      on-heap-manifest-steady                             180000        0  60.9   64.4     90.5   6512.6  23429.1
-07-offheap-lockfree  java      write-per-parcel-divert                             200000        0   4.8   11.4     13.5     69.1   2197.5
-07-offheap-lockfree  java      write-per-parcel-first-20000                         20000        0  61.9   72.6   4300.8  16719.9  17842.2
-07-offheap-lockfree  java      write-per-parcel-handoff-first-20000                 20000        0   0.2    0.7   2156.5   3231.7   3301.4
-07-offheap-lockfree  java      write-per-parcel-handoff                            200000        0   0.1    0.3      0.7   2156.5   3301.4
-07-offheap-lockfree  java      write-per-parcel-handoff-steady                     180000        0   0.1    0.2      0.6      4.0    152.4
-07-offheap-lockfree  java      write-per-parcel-journal-append-first-20000          20000        0   1.1    1.6      5.2     15.2    152.8
-07-offheap-lockfree  java      write-per-parcel-journal-append                     200000        0   1.1    1.9      3.1      8.5    152.8
-07-offheap-lockfree  java      write-per-parcel-journal-append-steady              180000        0   1.1    1.9      3.0      7.6     61.3
-07-offheap-lockfree  java      write-per-parcel                                    200000        0  61.1   66.3     90.2   4300.8  17842.2
-07-offheap-lockfree  java      write-per-parcel-steady                             180000        0  61.0   63.9     88.1    152.6   1614.8
+07-offheap-lockfree  cpp       atomic-spsc-first-20000                              20000        0  56.8   64.1     83.8    132.7    220.8
+07-offheap-lockfree  cpp       atomic-spsc-handoff-first-20000                      20000        0   0.1    0.3      0.3      0.5      6.1
+07-offheap-lockfree  cpp       atomic-spsc-handoff                                 200000        0   0.1    0.3      0.3      0.5    145.0
+07-offheap-lockfree  cpp       atomic-spsc-handoff-steady                          180000        0   0.1    0.3      0.3      0.5    145.0
+07-offheap-lockfree  cpp       atomic-spsc                                         200000        0  56.8   64.0     83.1    125.4    245.6
+07-offheap-lockfree  cpp       atomic-spsc-steady                                  180000        0  56.8   64.0     83.1    123.8    245.6
+07-offheap-lockfree  cpp       atomic-wait-first-20000                              20000        0  58.6   66.8     88.3    150.3    303.6
+07-offheap-lockfree  cpp       atomic-wait-handoff-first-20000                      20000        0   1.9    3.6      8.8     63.7    118.3
+07-offheap-lockfree  cpp       atomic-wait-handoff                                 200000        0   1.9    6.9      9.0     56.8    147.6
+07-offheap-lockfree  cpp       atomic-wait-handoff-steady                          180000        0   1.9    6.9      9.1     55.9    147.6
+07-offheap-lockfree  cpp       atomic-wait                                         200000        0  58.5   66.8     90.5    145.2    336.6
+07-offheap-lockfree  cpp       atomic-wait-steady                                  180000        0  58.5   66.8     90.8    144.6    336.6
+07-offheap-lockfree  java      agrona-spsc-backoff-divert                          200000        0   5.0    6.2     16.5     86.5   2069.5
+07-offheap-lockfree  java      agrona-spsc-backoff-first-20000                      20000        0  93.8  113.2    252.8  13598.7  15048.7
+07-offheap-lockfree  java      agrona-spsc-backoff-handoff-first-20000              20000        0  31.5   49.8     59.7   2424.8   2768.9
+07-offheap-lockfree  java      agrona-spsc-backoff-handoff                         200000        0  30.0   49.3     53.7     93.6   2768.9
+07-offheap-lockfree  java      agrona-spsc-backoff-handoff-steady                  180000        0  29.8   49.3     53.5     60.3    172.8
+07-offheap-lockfree  java      agrona-spsc-backoff                                 200000        0  93.4  111.7    128.2    343.6  15048.7
+07-offheap-lockfree  java      agrona-spsc-backoff-steady                          180000        0  93.4  111.6    124.7    185.6   1334.3
+07-offheap-lockfree  java      agrona-spsc-divert                                  200000        0   4.6   11.8     14.6     82.8   2895.9
+07-offheap-lockfree  java      agrona-spsc-first-20000                              20000        0  61.6   70.8    187.1  13492.2  14835.7
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000                      20000        0   0.2    0.7     17.2   3272.7   3395.6
+07-offheap-lockfree  java      agrona-spsc-handoff                                 200000        0   0.2    0.2      0.8     75.9   3395.6
+07-offheap-lockfree  java      agrona-spsc-handoff-steady                          180000        0   0.2    0.2      0.7      2.9     99.5
+07-offheap-lockfree  java      agrona-spsc                                         200000        0  60.7   65.2     91.0    336.6  14835.7
+07-offheap-lockfree  java      agrona-spsc-steady                                  180000        0  60.6   63.3     90.1    155.6   1759.2
+07-offheap-lockfree  java      blocking-queue-divert                               200000        0   5.1   11.9     21.9     81.5   2113.5
+07-offheap-lockfree  java      blocking-queue-first-20000                           20000        0  64.9   73.7    203.8  14327.8  15556.6
+07-offheap-lockfree  java      blocking-queue-handoff-first-20000                   20000        0   2.9    4.0     86.5   3495.9   3596.3
+07-offheap-lockfree  java      blocking-queue-handoff                              200000        0   2.7    3.3     11.9    130.9   3596.3
+07-offheap-lockfree  java      blocking-queue-handoff-steady                       180000        0   2.7    3.1     11.7     76.7   1519.6
+07-offheap-lockfree  java      blocking-queue                                      200000        0  63.8   68.8    107.2    502.3  15556.6
+07-offheap-lockfree  java      blocking-queue-steady                               180000        0  63.7   66.4    104.9    183.7   1671.2
+07-offheap-lockfree  java      chronicle-journal-divert                            200000        0   4.6   11.6     13.1     44.1   2129.9
+07-offheap-lockfree  java      chronicle-journal-first-20000                        20000        0  61.9   72.6  13598.7  21741.6  21987.3
+07-offheap-lockfree  java      chronicle-journal-handoff-first-20000                20000        0   0.2    0.6  11395.1  14680.1  14876.7
+07-offheap-lockfree  java      chronicle-journal-handoff                           200000        0   0.1    0.3      0.7  11395.1  14876.7
+07-offheap-lockfree  java      chronicle-journal-handoff-steady                    180000        0   0.1    0.2      0.6      1.3    515.8
+07-offheap-lockfree  java      chronicle-journal-journal-append-first-20000         20000        0   0.4    2.1     24.2     62.5   6664.2
+07-offheap-lockfree  java      chronicle-journal-journal-append                    200000        0   0.3    0.4      2.8     25.8   6664.2
+07-offheap-lockfree  java      chronicle-journal-journal-append-steady             180000        0   0.3    0.3      0.8      5.3    592.4
+07-offheap-lockfree  java      chronicle-journal                                   200000        0  60.8   67.0     89.9  13598.7  21987.3
+07-offheap-lockfree  java      chronicle-journal-steady                            180000        0  60.7   64.3     84.5    143.4   1986.6
+07-offheap-lockfree  java      chronicle-map-manifest-divert                       200000        0   4.6   11.5     13.5     54.7   2172.9
+07-offheap-lockfree  java      chronicle-map-manifest-first-20000                   20000        0  62.1   72.8   4186.1  15138.8  15786.0
+07-offheap-lockfree  java      chronicle-map-manifest-handoff-first-20000           20000        0   0.2    0.8   3997.7   6443.0   6643.7
+07-offheap-lockfree  java      chronicle-map-manifest-handoff                      200000        0   0.1    0.2      0.9   3997.7   6643.7
+07-offheap-lockfree  java      chronicle-map-manifest-handoff-steady               180000        0   0.1    0.2      0.6      1.9    276.2
+07-offheap-lockfree  java      chronicle-map-manifest                              200000        0  61.1   65.1     92.0   4186.1  15786.0
+07-offheap-lockfree  java      chronicle-map-manifest-manifest-lookup-first-20000   20000        0   0.5    1.3     12.7     33.3   1622.0
+07-offheap-lockfree  java      chronicle-map-manifest-manifest-lookup              200000        0   0.3    0.6      1.4     13.3   1622.0
+07-offheap-lockfree  java      chronicle-map-manifest-manifest-lookup-steady       180000        0   0.3    0.5      0.7      5.1     16.8
+07-offheap-lockfree  java      chronicle-map-manifest-steady                       180000        0  61.0   63.8     89.3    148.4    360.7
+07-offheap-lockfree  java      disruptor-blocking-wait-divert                      200000        0   4.9   11.6     19.4     79.6   3344.4
+07-offheap-lockfree  java      disruptor-blocking-wait-first-20000                  20000        0  65.4   70.7   1843.2  15638.5  17023.0
+07-offheap-lockfree  java      disruptor-blocking-wait-handoff-first-20000          20000        0   3.0    3.5   1624.1   4255.7   4431.9
+07-offheap-lockfree  java      disruptor-blocking-wait-handoff                     200000        0   2.8    3.2     11.4   1624.1   4431.9
+07-offheap-lockfree  java      disruptor-blocking-wait-handoff-steady              180000        0   2.8    3.2     11.2     74.0    345.3
+07-offheap-lockfree  java      disruptor-blocking-wait                             200000        0  63.7   67.8    101.2   2075.6  17023.0
+07-offheap-lockfree  java      disruptor-blocking-wait-steady                      180000        0  63.6   66.5     97.9    190.1   2263.0
+07-offheap-lockfree  java      disruptor-divert                                    200000        0   4.6   11.4     13.9     67.8   2797.6
+07-offheap-lockfree  java      disruptor-first-20000                                20000        0  61.8   69.9    420.9  14278.7  15401.0
+07-offheap-lockfree  java      disruptor-handoff-first-20000                        20000        0   0.3    0.6    234.5   3811.3   3864.6
+07-offheap-lockfree  java      disruptor-handoff                                   200000        0   0.2    0.5      0.9    328.7   3864.6
+07-offheap-lockfree  java      disruptor-handoff-steady                            180000        0   0.2    0.5      0.7      5.3    355.8
+07-offheap-lockfree  java      disruptor                                           200000        0  60.8   65.2     92.2   1127.4  15401.0
+07-offheap-lockfree  java      disruptor-steady                                    180000        0  60.8   64.1     90.6    160.4   1892.4
+07-offheap-lockfree  java      linked-queue-divert                                 200000        0   5.1   11.8     19.0     73.9   2392.1
+07-offheap-lockfree  java      linked-queue-first-20000                             20000        0  64.9   72.8    221.2  13508.6  14893.1
+07-offheap-lockfree  java      linked-queue-handoff-first-20000                     20000        0   2.9    3.9     81.7   2879.5   2902.0
+07-offheap-lockfree  java      linked-queue-handoff                                200000        0   2.8    3.3     10.9    123.1   2902.0
+07-offheap-lockfree  java      linked-queue-handoff-steady                         180000        0   2.8    3.2     10.6     59.9    184.3
+07-offheap-lockfree  java      linked-queue                                        200000        0  64.0   67.2    104.6    395.5  14893.1
+07-offheap-lockfree  java      linked-queue-steady                                 180000        0  63.9   65.7     99.9    168.6   1126.4
+07-offheap-lockfree  java      on-heap-manifest-divert                             200000        0   4.7   11.6     13.6     72.3   1995.8
+07-offheap-lockfree  java      on-heap-manifest-first-20000                         20000        0  61.6   70.4    654.8  13525.0  14680.1
+07-offheap-lockfree  java      on-heap-manifest-handoff-first-20000                 20000        0   0.2    0.7    465.2   2498.6   2562.0
+07-offheap-lockfree  java      on-heap-manifest-handoff                            200000        0   0.1    0.2      0.8    722.9   2562.0
+07-offheap-lockfree  java      on-heap-manifest-handoff-steady                     180000        0   0.1    0.2      0.6    347.1    730.1
+07-offheap-lockfree  java      on-heap-manifest                                    200000        0  61.3   65.3     90.3  10502.1  23216.1
+07-offheap-lockfree  java      on-heap-manifest-manifest-lookup-first-20000         20000        0   0.0    0.1      0.7      2.9     18.8
+07-offheap-lockfree  java      on-heap-manifest-manifest-lookup                    200000        0   0.0    0.1      0.5      0.8     18.8
+07-offheap-lockfree  java      on-heap-manifest-manifest-lookup-steady             180000        0   0.0    0.1      0.4      0.6     16.7
+07-offheap-lockfree  java      on-heap-manifest-steady                             180000        0  61.2   63.9     88.6   6094.8  23216.1
+07-offheap-lockfree  java      write-per-parcel-divert                             200000        0   4.7   11.7     17.3     82.5   2193.4
+07-offheap-lockfree  java      write-per-parcel-first-20000                         20000        0  61.8   72.4   2443.3  14385.2  15171.6
+07-offheap-lockfree  java      write-per-parcel-handoff-first-20000                 20000        0   0.2    0.6   2277.4   4431.9   4517.9
+07-offheap-lockfree  java      write-per-parcel-handoff                            200000        0   0.1    0.4      0.7   2277.4   4517.9
+07-offheap-lockfree  java      write-per-parcel-handoff-steady                     180000        0   0.1    0.2      0.5      1.6    229.6
+07-offheap-lockfree  java      write-per-parcel-journal-append-first-20000          20000        0   1.1    1.8      7.1     16.8     72.4
+07-offheap-lockfree  java      write-per-parcel-journal-append                     200000        0   1.1    1.5      3.3      9.9     73.1
+07-offheap-lockfree  java      write-per-parcel-journal-append-steady              180000        0   1.1    1.4      3.2      8.0     73.1
+07-offheap-lockfree  java      write-per-parcel                                    200000        0  60.8   70.1     90.8   2443.3  15171.6
+07-offheap-lockfree  java      write-per-parcel-steady                             180000        0  60.7   70.1     90.4    153.1   1499.1
 ✓ every run: count 200000, dropped 0, no overflow, every divert command received
 ━━ criteria 1: decide-thread context switches
   voluntary / involuntary per run (N = 200000):
-    blocking-queue: 199524 / 1
-    linked-queue: 199487 / 0
-    agrona-spsc: 29 / 317
-    agrona-spsc-backoff: 358831 / 21
-    disruptor: 41 / 324
-    disruptor-blocking-wait: 199497 / 2
-    chronicle-journal: 87 / 258
-    write-per-parcel: 37 / 267
-    chronicle-map-manifest: 33 / 272
-    on-heap-manifest: 25 / 249
-✓ 1: agrona-spsc voluntary ctx switches <= 1 % of parcels (<= 2000) (29 < 2001)
-✓ 1: disruptor voluntary ctx switches <= 1 % of parcels (<= 2000) (41 < 2001)
-✓ 1: blocking-queue voluntary ctx switches >= 25 % of parcels (>= 50000) (199524 >= 50000)
+    blocking-queue: 199485 / 1
+    linked-queue: 199577 / 0
+    agrona-spsc: 47 / 240
+    agrona-spsc-backoff: 358728 / 9
+    disruptor: 25 / 234
+    disruptor-blocking-wait: 199489 / 1
+    chronicle-journal: 92 / 143
+    write-per-parcel: 48 / 347
+    chronicle-map-manifest: 42 / 230
+    on-heap-manifest: 34 / 259
+✓ 1: agrona-spsc voluntary ctx switches <= 1 % of parcels (<= 2000) (47 < 2001)
+✓ 1: disruptor voluntary ctx switches <= 1 % of parcels (<= 2000) (25 < 2001)
+✓ 1: blocking-queue voluntary ctx switches >= 25 % of parcels (>= 50000) (199485 >= 50000)
 ━━ criteria 2: hand-off p99, steady window (parcels >= 20000)
   hand-off p50 / p99 / p99.9 in ns:
-    blocking-queue: 2739 / 10655 / 70719
-    linked-queue: 2729 / 10791 / 67519
-    agrona-spsc: 140 / 576 / 3893
-    agrona-spsc-backoff: 30111 / 53855 / 60127
-    disruptor: 196 / 2117 / 6183
-    disruptor-blocking-wait: 2851 / 11383 / 77951
-    chronicle-journal: 132 / 547 / 1307
-    write-per-parcel: 148 / 573 / 3985
-    chronicle-map-manifest: 139 / 571 / 1223
-    on-heap-manifest: 140 / 572 / 397311
-✓ 2: agrona-spsc hand-off p99 (576 ns) <= 1/5 of blocking-queue (10655 ns) (10655 >= 2880)
-✓ 2: disruptor hand-off p99 (2117 ns) <= 1/5 of blocking-queue (10655 ns) (10655 >= 10585)
+    blocking-queue: 2709 / 11719 / 76735
+    linked-queue: 2825 / 10647 / 59903
+    agrona-spsc: 156 / 674 / 2859
+    agrona-spsc-backoff: 29791 / 53535 / 60287
+    disruptor: 200 / 674 / 5291
+    disruptor-blocking-wait: 2773 / 11199 / 73983
+    chronicle-journal: 137 / 565 / 1261
+    write-per-parcel: 135 / 545 / 1610
+    chronicle-map-manifest: 144 / 566 / 1935
+    on-heap-manifest: 139 / 581 / 347135
+✓ 2: agrona-spsc hand-off p99 (674 ns) <= 1/5 of blocking-queue (11719 ns) (11719 >= 3370)
+✓ 2: disruptor hand-off p99 (674 ns) <= 1/5 of blocking-queue (11719 ns) (11719 >= 3370)
 ━━ criteria 3: JMH gc.alloc.rate.norm (bytes per publish)
-  blocking-queue: 95.579 B/op
-  linked-queue: 97.058 B/op
+  blocking-queue: 98.508 B/op
+  linked-queue: 96.898 B/op
   agrona-spsc: 0 B/op
   disruptor: 0.001 B/op
 ✓ 3: disruptor publish <= 1 B/op (milli-B/op shown) (0 < 1001)
 ✓ 3: agrona-spsc publish <= 1 B/op (milli-B/op shown) (0 < 1001)
-✓ 3: linked-queue publish >= 16 B/op (milli-B/op shown) (97057 >= 16000)
+✓ 3: linked-queue publish >= 16 B/op (milli-B/op shown) (96898 >= 16000)
 ━━ criteria 4: the audit journal
-  chronicle-journal: tailer/readback 200000 events, in order true; append p50 / p99 / p99.9, steady window = 322 / 835 / 5299 ns; whole run p99 = 2823 ns
-  write-per-parcel: tailer/readback 200000 events, in order true; append p50 / p99 / p99.9, steady window = 1072 / 3023 / 7607 ns; whole run p99 = 3147 ns
-  chronicle-journal: decide-thread write syscalls 0, minor faults 1427, journal 15002637 B on btrfs
-  write-per-parcel: decide-thread write syscalls 200000, minor faults 64, journal 8000000 B on btrfs
+  chronicle-journal: tailer/readback 200000 events, in order true; append p50 / p99 / p99.9, steady window = 314 / 813 / 5263 ns; whole run p99 = 2849 ns
+  write-per-parcel: tailer/readback 200000 events, in order true; append p50 / p99 / p99.9, steady window = 1059 / 3177 / 7971 ns; whole run p99 = 3329 ns
+  chronicle-journal: decide-thread write syscalls 0, minor faults 1443, journal 15002637 B on btrfs
+  write-per-parcel: decide-thread write syscalls 200000, minor faults 71, journal 8000000 B on btrfs
   chronicle-journal: block size 67108864 B, roll cycle FAST_DAILY
 ✓ 4: chronicle-journal appends without a write system call (<= 1 % of events) (0 < 2001)
 ✓ 4: write-per-parcel makes at least one write system call per event (exact) (200000 >= 200000)
-✓ 4: chronicle-journal decide-thread minor faults >= first touch of its 3662 pages / 16 (fault-around) (1427 >= 228)
-✓ 4: chronicle-journal decide-thread minor faults >= 5x write-per-parcel's (64) (1427 >= 325)
-  chronicle-journal faults per journal page: 38 %
+✓ 4: chronicle-journal decide-thread minor faults >= first touch of its 3662 pages / 16 (fault-around) (1443 >= 228)
+✓ 4: chronicle-journal decide-thread minor faults >= 5x write-per-parcel's (71) (1443 >= 360)
+  chronicle-journal faults per journal page: 39 %
 ━━ criteria 5: old generation after a full GC, 1,000,000-entry manifest
-  baseline (no manifest, before the run): 3797592 B
-  manifest lookup p50 / p99 in ns: chronicle-map 281 / 1313, on-heap 32 / 445
-✓ 5: chronicle-map-manifest old gen (13989296 B) <= 1/4 of on-heap-manifest (137309272 B) (137309272 >= 55957184)
+  baseline (no manifest, before the run): 3797736 B
+  manifest lookup p50 / p99 in ns: chronicle-map 279 / 1373, on-heap 34 / 485
+✓ 5: chronicle-map-manifest old gen (14427096 B) <= 1/4 of on-heap-manifest (137506816 B) (137506816 >= 57708384)
 ━━ observed: the C++ lane (atomic-spsc spins, atomic-wait parks)
-  atomic-spsc: hand-off p50 / p99 / p99.9 = 123 / 327 / 511 ns; decide-thread ctx switches voluntary 0 involuntary 251
-  atomic-wait: hand-off p50 / p99 / p99.9 = 1930 / 9439 / 76863 ns; decide-thread ctx switches voluntary 199861 involuntary 7
+  atomic-spsc: hand-off p50 / p99 / p99.9 = 132 / 335 / 509 ns; decide-thread ctx switches voluntary 0 involuntary 236
+  atomic-wait: hand-off p50 / p99 / p99.9 = 1888 / 9063 / 55871 ns; decide-thread ctx switches voluntary 199899 involuntary 9
 ✓ 07-offheap-lockfree (host): the hand-off, journal and manifest criteria hold; results in /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1
-profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.17
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.06

@@ -1,7 +1,7 @@
-java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run1/shenandoah-gen.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant shenandoah-gen --jfr /tmp/lowlat-scratch.owgdGF/shenandoah-gen.jfr
-live set 2079185520 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run1/shenandoah-gen.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant shenandoah-gen --jfr /tmp/lowlat-scratch.38DDNM/shenandoah-gen.jfr
+live set 2073851424 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
 gctails-java: variant shenandoah-gen on 127.0.0.1:47260
-line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.6us p99.9=     65.9us max=     182.1us
+line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.6us p99.9=     65.2us max=     208.8us
 received 300000 dropped 0 reordered 0 (stopped: EXPECTED) [0]
-06-gc-tails                java   shenandoah-gen         300000        0       60.4       63.1       87.2      180.4     3530.8
-shenandoah-gen-gc-pause: 91 GC pauses, p99 714751 ns, max 714751 ns
+06-gc-tails                java   shenandoah-gen         300000        0       60.4       62.5       86.3      166.1     2422.8
+shenandoah-gen-gc-pause: 91 GC pauses, p99 611839 ns, max 611839 ns

@@ -4,23 +4,23 @@
   "language": "java",
   "variant": "guarded",
   "unit": "ns",
-  "count": 71339,
+  "count": 68317,
   "dropped": 0,
   "percentiles": {
     "p50": 32,
-    "p90": 36,
-    "p99": 39,
-    "p99_9": 48,
+    "p90": 34,
+    "p99": 37,
+    "p99_9": 42,
     "max": 92
   },
-  "hdr_histogram": "HISTFAAAAH14nJNpmSzMwMAQwQABzFCakYGB2c1gxwIG+w8QAekZMxk32DeZzGFyq9jFvIpFy66D8QvjPL5zvJdk39n8cblgcK6P8cMsxjUJ06zeyK+ynaU2jW0XY4iTkoaGkp6UHA8XDxsbIxsXDzMTCyMTIxMTMxMTO5M0EwsAbtcdDA==",
+  "hdr_histogram": "HISTFAAAAHd4nJNpmSzMwMAQygABzFCakYGB2c1gxwIG+w8QAelD5Qcc7qg3MMnI8HGx2axiPMB4h/UF2z/2OVLrnPdkH+pj+nWVcVHiKYFTbFeYG1hr9MSEBLi4OLhYWNiYWFhYmNjYmBiZmJiYWJhYQDQ7kzgTKxMAfjUYuw==",
   "build": {
     "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
     "gil_enabled": null
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:32:41Z",
+    "captured_at": "2026-10-23T07:00:00Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2471395,
+      "pid": 2699483,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.7,
-      "load5": 0.79,
-      "load15": 0.9,
+      "load1": 0.22,
+      "load5": 0.58,
+      "load15": 0.68,
       "running": 1
     },
     "memory": {
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []

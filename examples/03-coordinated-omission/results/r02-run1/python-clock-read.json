@@ -7,20 +7,20 @@
   "count": 1000000,
   "dropped": 0,
   "percentiles": {
-    "p50": 44,
-    "p90": 46,
-    "p99": 65,
-    "p99_9": 94,
-    "max": 16463
+    "p50": 43,
+    "p90": 45,
+    "p99": 56,
+    "p99_9": 60,
+    "max": 3901
   },
-  "hdr_histogram": "HISTFAAAAZp4nC2QMWsUcRDFd34z+//v5m7dnEcSzzWBIEdyxoAgMY0QtLAx+A2s9SMIlgkWihq0CUdQ0SgWIcVpcYVcYwioUSxEESQcV4mFKEiIVrK7mSlmePPmzWOOLd+vB4H8CcrQgypBoBdOdR8FC79K4GL0U7ZOfPtK+2nl33bjQWey+7fR3Un6e9p7KDfm2umaLl7akLfaj58d6c10zv84u9/8nu5G+9Hz4fbk9sRKsmkrbPKKgQzkg/TlpXyWLenIqnyUngxkmTvcZI8ej7WvG3ZPd1nnk6zJtauLZ05OT08cOjo6fNhGh6pVE6zqnA0JOByRw9SZISAoYBKB8yCWA5JPQiA2gZxUM0WcmidFi/QGCVM5TfHUqBzImZQNYygpvhgXSFJIxeaplAIJx8mglnsYYxwhZZYG48VGSEJMSIYya96UZnEvJC4chiaMEJZe8+KBjIyE9xCTMk8DpYUUB+tUCiJQt9xUkxY1QvdCaOEZ4bZwDs+t/AfXmeMKl6mzJLzL9V4b87xR7gpfYMkR0uS0/c54ovwH7qpOmw==",
+  "hdr_histogram": "HISTFAAAATd4nC2Nv0sCcQDF7/v5fu/Ouq7zsLoUz1JKzfwV1BASLqZBODRE1GiDEP0V0d4QNNRQREvhFkTUGg3R0BD+C0FDODQWxWUPHu/x4MOL7x9GNE00tb7kfwpNk/Xy7ZlW7fWHVZ5kp/V1bVwdjHVvph72Jj/vwkcf6rX2bhyLldjOo/nsX1R7a+e1jv9idkVrt1jfKqdy89lEulxMZfOxbDyeS4RzifFYOp7IT44MDg+FlBESIZQ0JEjDVNhgYyGDAiajRJWHrqJILFwKeCRVBJ0MGZXEYo4GLp7ysXBwiICPjqMK+Jg42EwzgB6AOEgQBBbo6EoisJgIZrb5FpQQysWkwSIeJrYCXGUHiIsSfy8eAedABZaYYR1KzNKmQgbJAj+CNpssk+FecCk4gSZvITY4VfwCiM0xXg==",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T23:45:42Z",
+    "captured_at": "2026-10-23T06:12:59Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2440525,
+      "pid": 2670132,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,10 +72,10 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.86,
-      "load5": 0.76,
-      "load15": 0.8,
-      "running": 1
+      "load1": 0.91,
+      "load5": 0.84,
+      "load15": 0.88,
+      "running": 2
     },
     "memory": {
       "mem_total_kb": 65545544,
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []

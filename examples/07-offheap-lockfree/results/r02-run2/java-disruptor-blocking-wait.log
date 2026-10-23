@@ -1,15 +1,18 @@
 command: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/disruptor-blocking-wait.gc.log:uptime\,level\,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -cp /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar io.patterncatalyst.lowlat.offheap.Handoff --variant disruptor-blocking-wait --bind 127.0.0.1:47270 --journal-dir /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/queue --placement unpinned --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-disruptor-blocking-wait.json
 offheap-lockfree: variant disruptor-blocking-wait listening on /127.0.0.1:47270, commands to /127.0.0.1:47271, window 20000
-decide-thread pid=2464159 tid=2464206
-line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.8us p90=     51.9us p99=     59.4us p99.9=     61.9us max=     214.5us
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+decide-thread pid=2692150 tid=2692203
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.4us p99.9=     62.5us max=     219.5us
 window-end handled=200000
 received 200000 dropped 0 reordered 0 published 200000 overflow 0 (stopped: EXPECTED)
-old-gen bytes_after_gc=12750952 baseline_bytes=3797768
-07-offheap-lockfree        java   disruptor-blocking-wait     200000        0       64.0       67.0      101.6     2838.5    19251.2
+old-gen bytes_after_gc=12945928 baseline_bytes=3797864
+07-offheap-lockfree        java   disruptor-blocking-wait     200000        0       64.0       66.8      105.6      448.8    14598.1
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-disruptor-blocking-wait.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-disruptor-blocking-wait-first-20000.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-disruptor-blocking-wait-steady.json
-07-offheap-lockfree        java   disruptor-blocking-wait-handoff     200000        0        2.8        3.3       11.5      639.5     2674.7
+07-offheap-lockfree        java   disruptor-blocking-wait-handoff     200000        0        3.0        3.5       12.1      134.7     3362.8
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-disruptor-blocking-wait-handoff.json
-07-offheap-lockfree        java   disruptor-blocking-wait-divert     200000        0        5.0        7.2       18.7       66.9     2170.9
+07-offheap-lockfree        java   disruptor-blocking-wait-divert     200000        0        5.1        9.3       19.1       76.5     2408.4
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-disruptor-blocking-wait-divert.json

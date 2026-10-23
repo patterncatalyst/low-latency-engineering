@@ -4,23 +4,23 @@
   "language": "java",
   "variant": "eliminated",
   "unit": "ns",
-  "count": 130208,
+  "count": 138844,
   "dropped": 0,
   "percentiles": {
     "p50": 0,
     "p90": 0,
     "p99": 0,
     "p99_9": 0,
-    "max": 12
+    "max": 19
   },
-  "hdr_histogram": "HISTFAAAAC94nJNpmSzMwMDAywABzFCakYGB2c1gxwIG+w8QgaZP/HJ8TByMLIxMrEwAnRcGIA==",
+  "hdr_histogram": "HISTFAAAAC94nJNpmSzMwMDAywABzFCakYGB2c1gxwIG+w8QgT8/BGQ4mHhYmJiZBJkAo5YGrA==",
   "build": {
     "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
     "gil_enabled": null
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T23:47:51Z",
+    "captured_at": "2026-10-23T06:15:08Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2441338,
+      "pid": 2670896,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,8 +73,8 @@
     },
     "load": {
       "load1": 0.27,
-      "load5": 0.55,
-      "load15": 0.71,
+      "load5": 0.64,
+      "load15": 0.8,
       "running": 1
     },
     "memory": {
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []

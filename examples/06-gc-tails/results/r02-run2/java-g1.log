@@ -1,7 +1,7 @@
-java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/g1.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseG1GC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant g1 --jfr /tmp/lowlat-scratch.cuZqsi/g1.jfr
-live set 1850423832 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/g1.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseG1GC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant g1 --jfr /tmp/lowlat-scratch.Rwe93R/g1.jfr
+live set 1850677232 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
 gctails-java: variant g1 on 127.0.0.1:47260
-line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     74.0us max=    1131.5us
+line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     66.2us max=     811.5us
 received 300000 dropped 0 reordered 0 (stopped: EXPECTED) [0]
-06-gc-tails                java   g1                     300000        0       60.3       61.9      113.6    16441.3    21446.7
-g1-gc-pause: 16 GC pauses, p99 21233663 ns, max 21233663 ns
+06-gc-tails                java   g1                     300000        0       60.4       61.8      105.4    16613.4    21659.6
+g1-gc-pause: 16 GC pauses, p99 21446655 ns, max 21446655 ns

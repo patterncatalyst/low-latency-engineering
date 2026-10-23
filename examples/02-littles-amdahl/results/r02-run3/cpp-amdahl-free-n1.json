@@ -7,7 +7,7 @@
   "count": 10,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAAC54nJNpmSzMwMDAwwABzFCakYGB2c1gxwIG+w8Qgb2TmFiYGFlYmFmYmQCTlgXD",
+  "hdr_histogram": "HISTFAAAADF4nJNpmSzMwMDAzwABzFCakYGB2c1gxwIG+w8QgYOTmJiYWBiZmJjYmZhYmQClmQXQ",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
@@ -18,22 +18,22 @@
     "predicted_speedup": 1.0,
     "relative_error": 0.0,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.09521674223601902,
+    "serial_fraction_modelling_input": 0.09537260330182867,
     "sync": "free: no barriers",
-    "wall_p50_ns": 77791231,
-    "wall_p50_ns_n1": 77791231,
+    "wall_p50_ns": 77987839,
+    "wall_p50_ns_n1": 77987839,
     "workers": 1
   },
   "notes": "10 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
   "percentiles": {
-    "max": 78249983,
-    "p50": 77791231,
-    "p90": 78053375,
-    "p99": 78249983,
-    "p99_9": 78249983
+    "max": 78774271,
+    "p50": 77987839,
+    "p90": 78512127,
+    "p99": 78774271,
+    "p99_9": 78774271
   },
   "profile": {
-    "captured_at": "2026-10-23T00:29:13Z",
+    "captured_at": "2026-10-23T06:56:31Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -69,9 +69,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.17,
-      "load15": 0.92,
-      "load5": 0.81,
+      "load1": 0.55,
+      "load15": 0.73,
+      "load5": 0.74,
       "running": 1
     },
     "memory": {
@@ -81,6 +81,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -94,7 +95,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2468975,
+      "pid": 2697127,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

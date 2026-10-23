@@ -7,13 +7,13 @@
   "count": 30,
   "dropped": 0,
   "percentiles": {
-    "p50": 8807,
-    "p90": 8823,
-    "p99": 8831,
-    "p99_9": 8831,
-    "max": 8831
+    "p50": 8663,
+    "p90": 8703,
+    "p99": 8743,
+    "p99_9": 8743,
+    "max": 8743
   },
-  "hdr_histogram": "HISTFAAAADd4nJNpmSzMwMAgygABzFCakYGB2c1gxwIG+w8QgbUOTIxMTExM6kysTMpMjCwsbAJcLADE7wXa",
+  "hdr_histogram": "HISTFAAAADJ4nJNpmSzMwMAgwAABzFCakYGB2c1gxwIG+w8QgdcOTGwsHCJMLCxMLIxMzEwAqqMFxg==",
   "build": {
     "compiler": "Google Benchmark v1.10.0; C++23 release preset (clang)",
     "gil_enabled": null,
@@ -21,7 +21,7 @@
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:02:25Z",
+    "captured_at": "2026-10-23T06:29:43Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -64,7 +64,7 @@
       ]
     },
     "process": {
-      "pid": 2449203,
+      "pid": 2679363,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,9 +73,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.11,
-      "load5": 0.79,
-      "load15": 0.74,
+      "load1": 1.58,
+      "load5": 0.94,
+      "load15": 0.8,
       "running": 1
     },
     "memory": {
@@ -85,7 +85,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
@@ -101,5 +102,5 @@
       "memlock_kb": "8192"
     }
   },
-  "notes": "Google Benchmark: 30 repetitions, one sample per repetition; each sample is the real time of one iteration = 1024 operation(s), rounded to whole ns. Per-iteration samples are not exposed by the harness."
+  "notes": "Google Benchmark: 30 repetitions, one sample per repetition; each sample is a repetition's mean real time per iteration, taken over 16250 iterations, one iteration = 1024 operation(s), rounded to whole ns. Per-iteration samples are not exposed by the harness."
 }

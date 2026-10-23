@@ -7,21 +7,21 @@
   "count" : 2000,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 157183,
-    "p90" : 196095,
-    "p99" : 228607,
-    "p99_9" : 287487,
-    "max" : 865791
+    "p50" : 207999,
+    "p90" : 430335,
+    "p99" : 466943,
+    "p99_9" : 523775,
+    "max" : 838143
   },
-  "hdr_histogram" : "HISTFAAAAkV4nDWTPW4UQRCFe1/X1tT2tofx+B9ZAuQAIYSEREjgCCRCjkHkS5ATOEZwBTJuwi0QR+CrXnt3p6e6uv76vbfXX+9PSql/y+FTH94bzI9vf/8st/8Ojl93+rbRK93ps470jmerM+21M1VJVg4v7fhW7U2sPhF0oklXOItVVj2RXuAhIg/zt8+FYBVeZlZ4xKZvTQfTolhxmbNhG7P1Fm5L6809el+jt94tZm9NEZZFVlzC2XzxNi9u5uFhXc0adeWh5t1KL9FoluXNWw/vs4hxGnn+yFI0s9msp6WgUdjSaTzLFyagazBBGCY1fM6HHLbdW6jLLbyVcZ2WZYO7lAAzheW1mSf0+CkCqYFAjlXGpUtitNOArCSYSrxrbHPVMe6swiWIoeyxbnAXwN4LAnYj4gzrSu8JmHSrl9gf9OmBg0mjECn7cV5HR3ZWRuWcJ8fKQOXxNNqOHBw2EvPNwZSBlfQtWdMoM3kKgy08yraPVknZPOim2FHuUiVcKltxdxt9K2ykvwz6s/ZkCZgjlelQBIkgCFCGgShqYC7MOdFvDcIb8HdoRCdPzxcWjD6fr2wul9P1+vlpW/vlGnG5wGZbY11PIwiam0MlinM4hs1Y0I6hM7pZZwy4hNNoMabN/wFCyoEZr0Mzw6f4UnJ5TaUnD0EyvBJPIqU0GKUAwkzhI3MN0W8H/4lbIlW9jCoJOCaUptg1kK56pix4Nv6CSfrREAp4vyZwKEYXEFU5+L7h/EI/NvjfoINjEr4Qei/9Odd/+hUhbQ==",
+  "hdr_histogram" : "HISTFAAAAy54nDVVS47VQAzscbvdnyRvNBqh0WjYIdYgcQB2cBb23ABuwIodx2DPKbgFR6CqnDzN5CUdt12uKvd7/f3HYynxt+Snnt93uP30/vev8vFfLnz7atPeWbEP9oy7bm/tsxerdo/7Z/Nu1SteWxQsYB2X4salagjkxzezDY/TGq4N3xNbi/4bEk38H96QR/uw0/VV7IiJra6kuDB7twMbmO5g2aIlQx7Ee9OiYz/LOhacaACOUADIlJbXwHUUQkQKPliCNYa6MlckwF+2QagEgo5boA++6blN1RrStcTvwIEsUdUtLsaOFJbV0W/TvZgsiijoqiRus4eLVRRs4q/iUiJDZ/aBAHV6EGiCADRrfKhKpN7YZcfeTO2kRXuYm/0xC0tVkmXETKKyfktiIR15iH5xNLP+FOWV6Zqiiye7MIAP4gtABmzRWKMGaA9AcTBJwNXylejiZsABCom5RNBkK0UxLBQKsStWMiFfzcr0hzbYAhMMbKlkyoQ3KGzLbQkVngbLyS7ASqPUFMFjYBVLJTxkpSDDjhUfo+7MsYfflu9IhCeEjRFrRODqsWL3gZR2u4211j74Br2vsOHLYgfC8IVHG3HbsX/sDJBAN0AcoerQbrDoWAhk8Zq60pRO2Yl9yWAwJd626Ng10sHsFpT58JJz4NI6qUr3UG33U1dH+48UXYmxLsExrnTgZdmZlB2W0iugCFdN4TSRGo0NxnhRyIuMVSwnhEC3HIwHZ8YNL+jvJhs3AYK+iyv6yEZ2Ch5ycqUZCD5oTLavcyfnDGY72087Yhjd1Wn6qJzTkccNt6ipkiLjiIpsdtAxmhFLlpzPIS45jVSMukFIaOW+xHNoWopC5XfwExItzzeXS3OYGcomI8XoSRMtTWk7R63mFHoauuqoEJE8h64j084TsSu22xNyvuKdzzw9Up3p95KhZQZke7KL12pZsAbHpktxgKA8qjycFvBDADpZYaNxUmwyrDINNBOcJ08r6SgGHZFuA186juKczMHA8wQ4+dHM6QGMVvrXOYNYjsgjt1EKp4VbDnCVUByKKNfvAbwpzPaItjd7Y3/u7At+zn5O+w8faSAY",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/warmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.aJjION/warmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/warmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cz8eDD/warmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-23T00:10:42Z",
+    "captured_at" : "2026-10-23T06:38:00Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -61,7 +61,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2458050,
+      "pid" : 2685966,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -70,9 +70,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 1.13,
-      "load5" : 0.89,
-      "load15" : 0.8,
+      "load1" : 0.5,
+      "load5" : 0.62,
+      "load15" : 0.72,
       "running" : 1
     },
     "memory" : {
@@ -82,7 +82,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]
@@ -107,19 +108,19 @@
     },
     "jit" : {
       "startup" : {
-        "compilations" : 1060,
-        "c2_compilations" : 234,
-        "deoptimizations" : 57
+        "compilations" : 1080,
+        "c2_compilations" : 238,
+        "deoptimizations" : 59
       },
       "first-2000" : {
-        "compilations" : 24,
-        "c2_compilations" : 11,
+        "compilations" : 17,
+        "c2_compilations" : 6,
         "deoptimizations" : 9
       },
       "steady" : {
-        "compilations" : 21,
-        "c2_compilations" : 14,
-        "deoptimizations" : 2
+        "compilations" : 19,
+        "c2_compilations" : 12,
+        "deoptimizations" : 1
       }
     }
   }

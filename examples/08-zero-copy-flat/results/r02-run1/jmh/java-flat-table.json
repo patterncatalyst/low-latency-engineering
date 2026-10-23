@@ -4,16 +4,16 @@
   "language": "java",
   "variant": "flat-table",
   "unit": "ns",
-  "count": 20019,
+  "count": 20602,
   "dropped": 0,
   "percentiles": {
-    "p50": 986623,
-    "p90": 1051647,
-    "p99": 1276927,
-    "p99_9": 1491967,
-    "max": 2032639
+    "p50": 952831,
+    "p90": 1013247,
+    "p99": 1307647,
+    "p99_9": 1543167,
+    "max": 2034687
   },
-  "hdr_histogram": "HISTFAAAAgF4nDWSQUhUURiF5zv3vsfMMD7eTKOMQ0i1GFQihqAWEhUhA0GbwkCkhUiEm6BFSAtXMoRFlJgLcTULkRCJiIghQmIQFxEuxEVEyCBDlLQwVxERce+M78L/zn/+c857j/cfrz4/lkjoV6J9mc6dRMJUyvVa4tJBm3i2hgJLhhBX+zhNmQvcYpwqPIEdWIa/MCdq4o2oi03xyrBi+Cdqhn1D1fBbrBu2xKH4KlpiX3wXu2LG0BTbYl3sebLu+W9i3riEDeO8LcMLw0/DY8tnw6rlo+W95Z1l07JmWbJuNGtpWg4Nu4YDw0vLjqFu+OLbhmHR8MmwbNwjtttvKBrig2+X5L5lXqyKFjThDyyILdiDt1CDBWjABqzAHLz2YIppZuAhzPq6CA+YZJoJxrjPHcaYYJRhbjPiQmpH2qdOeI8bTDLKOMMMU2GEa5ynwhBlLlPiChc5Sz9D9DHIIGcoUaJARIke+jlFgZg8OQqcIE+BIjli0uTJ+xp3+piYiJAMaX8ichSJiMh4d0iOiLzvk0Qk/e+PPQ59gvNGPrFIhtizPV6RDNJ+UdJeHXm3SPr1cSgMLNZjx6T9zC1Y6I+biDCljsp2fCFthUNpwiCDOrMjTzvZsQrCwAZCvTZlU0op0El1KbAp9WpAWWXVpW51C93UOV3XXV3VDzSgRyir/3R5a+k=",
+  "hdr_histogram": "HISTFAAAAgp4nDWSMWgUURCG75ud97K7XJZlPZYrTjmOMwQrhSjhEAXBYBEsxMoinWAVjhSpJBxBgmlEFEIKi2Ah4UwhKBIkiIiFXHWKZQqxEAkih4SQwkJ29vKGmffmn3/mzeNN48HTU5VKcLFSrmC8U6kEc+d3typXRyXw+iUaKWKiVPHENGgzxSWu0eEOi3yEPdiFQ+gHDKQ4/BRGyoGwI2wrR45jYTNg6Hjj6CnvA/Ym2HKsKfvKQUjf8UnZdfyLOFSGyiPP35ANx7Ey8PQm6CtflR+eD45fAaOAZ45VZSdgGPBb+SNsBPQsdCR8Ez4L74S3wqrwxHobwAv4bg3vw3OzfQPvsw1LvLL3bEKXJdbgIYXt8hhWWGGRZbrcpgf3mGWBOZZZ4CbzdLjFLPNMc4M2c8zQocNlztDkHNO0mWGKFk0aNGnRIjE0o01Kk1lmuGJ4wWlSJzNulQZ1y6mRkZnfoEWNhITYsJQaOQ1SUnJqVEnJqJNTx5NQJScnRknIjR9TJcGTUqeGty+uGbuIZCRkeNNkzE8JjePNS2wkqoTWWzbmTJORk1jv5ciEhMi4SnFLISEesW7Mc0nBcmFU4kW8VG9+IUUkdrFVOBnJ2NCyupj15usJH3Uyvk8NVUO8E8SFiBPL1qisKE4v2B6pMUwnxTK0OEdjFJmUSE/LdXFyV5yclfUC+hLIf3HjXcE=",
   "build": {
     "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
     "gil_enabled": null,
@@ -21,7 +21,7 @@
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:02:25Z",
+    "captured_at": "2026-10-23T06:29:43Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -64,7 +64,7 @@
       ]
     },
     "process": {
-      "pid": 2449203,
+      "pid": 2679363,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,9 +73,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.11,
-      "load5": 0.79,
-      "load15": 0.74,
+      "load1": 1.58,
+      "load5": 0.94,
+      "load15": 0.8,
       "running": 1
     },
     "memory": {
@@ -85,7 +85,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
@@ -101,5 +102,5 @@
       "memlock_kb": "8192"
     }
   },
-  "notes": "JMH SampleTime, 2 forks x 5 iterations of 2 s; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns; gc.alloc.rate.norm 36.312 B/op"
+  "notes": "JMH SampleTime, 2 forks x 5 iterations of 2 s; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns; gc.alloc.rate.norm 35.535 B/op"
 }

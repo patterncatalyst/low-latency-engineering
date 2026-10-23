@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAANR4nC2MMUpDURBF35w3//+XH3z6Ei0iiZCABCzEVlIEm1R2FuIChOwgGwjYpNMFZAEKnzQGkgVYBC1ss4CUgmWa8PIz3OEeLnemOX6tG2NWphx7cDHGDm7mU9P/K4N6cb/8uVj/DiZFmJwOr7xDBatYUoCMubyna190Ntezh+/e291XmGWqWBU0djWhGntCBRIsSYQS9QzLMUJV22CjZL/OC7WT1J/XcE2fa57G9ImMQIAWXFLhiIzu/rcKicbzD+Hf8QKBEc88css257PBwrED+aAesw==",
+  "hdr_histogram": "HISTFAAAAP94nDWNMS8EcRDF//P7z+6yuydn97hIUFx1CYVEFCqF0IgP4Au4mk57LhKiuNhGIeIbiFzhskHkJIJwhVJxn0AhEqIQkb1lijdv3nszM95IYmPMp8nL/nUxxi7PtE/MwlsuxEeTzZvo7no+PR1+rzz25GLPvfq2txW/7Rwvvp7TObDd2r7jDsJ619kp1mcPl55fpNmSnydpbKZz9enOVK/6sJpOfAXVYuiOaiigFgUBL0PNWJCPFgdizTIOhczxKCMqWCir16eEqqVIB/xQS6H6kZ9dcS26RiIUGAHb3/z/EMMl7AqJxxYfmVDmTLgXAjZYIXGp0RpijG2fX1nkMzU=",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of lowlat::line::monotonic_ns (clock_gettime CLOCK_MONOTONIC); value = second - first",
   "percentiles": {
-    "max": 9343,
+    "max": 6239,
     "p50": 12,
-    "p90": 13,
-    "p99": 45,
+    "p90": 23,
+    "p99": 46,
     "p99_9": 48
   },
   "profile": {
-    "captured_at": "2026-10-22T23:45:42Z",
+    "captured_at": "2026-10-23T06:12:59Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,10 +54,10 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.86,
-      "load15": 0.8,
-      "load5": 0.76,
-      "running": 1
+      "load1": 0.91,
+      "load15": 0.88,
+      "load5": 0.84,
+      "running": 2
     },
     "memory": {
       "hugepages_free": 0,
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2440525,
+      "pid": 2670132,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

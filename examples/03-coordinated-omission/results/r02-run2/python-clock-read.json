@@ -9,18 +9,18 @@
   "percentiles": {
     "p50": 46,
     "p90": 47,
-    "p99": 48,
+    "p99": 58,
     "p99_9": 61,
-    "max": 12903
+    "max": 8271
   },
-  "hdr_histogram": "HISTFAAAAUZ4nC2PvUoDQRSFd747sz/Z3WRjEiJGjSABISDqFqIiCmIai4BPlMLCQgL+VELEKoWoYGdh4RuYXhGbaKn4BDITpznMud89c2b26LzieerWmxz5V+V50ll5vPZ2fiZGlxv5WHsbyHu/ePWw1BssD3/T4TfHm/1wpHY7F+pS7s2nPHESnkUj6XHJszpcmA+rfjVJilW/kPiZzrJCNpUkhemwmhH6PogGrUDpCBQKQ0oJIUB0iiIgQpFTdlojxaA0TGjRCj9CHDjnNGaViBTrGhoEdgGjW2gMgkDdoW0wbBNToqxtbOSm+5SILVUhhYgIUnKE2F0ETYxd1cYl2yKuD76LvYOuHRtXkJQA+w80Wixbxmg1Ke/i6nZY44CcwJkV93xMly2EBk2aFqnQYo8aG+Ssk9NmDA0W4UVxKrzO8CWMC/wB/m0rsA==",
+  "hdr_histogram": "HISTFAAAATN4nC2PP0/CUBTF+37vPdrSfylthQSREINEjSAhDsbBzU0/hYOTn0I3BwyG6IZORjcGQxgNEzF+A0c2BwcGN01bznD/nJx7z73rV4PIMMSlkUOusjAMebI/GRnHPzlxqpZilvz2xc1Qf4+D0Wft5Wnr7SEZ3pp3UzHtTaKZOn/nozivLtv3B/3efGPsPtMXZxc77biy5sal2LJcv+jHccmt+Pi+75YKFkWFKkgkINIoEKSQylxRgjBnAw7R2GwTUKVKGRMlsYmoYSPpoGngUFb11aRkly4mIQFlBCZ1QqoEaLqogIQmHaWJMDNjB5l5pF2EJt2i0MpDYLNJnUdI0LRybYM9AoQKMzOZHdrMKg8bOgpHeZiZ8ogk/TDEw6GJRjMQtLiWvEr+LBaKrwKLgH84xC3Q",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:08:07Z",
+    "captured_at": "2026-10-23T06:35:25Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2454141,
+      "pid": 2684418,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.25,
+      "load1": 1.2,
       "load5": 0.88,
-      "load15": 0.79,
+      "load15": 0.81,
       "running": 1
     },
     "memory": {
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []

@@ -1,15 +1,15 @@
-[0.003s][info][aot] trying to map /tmp/lowlat-scratch.cnUVZ5/jvm-costs-observed.aot
-[0.003s][info][aot] Opened AOT cache /tmp/lowlat-scratch.cnUVZ5/jvm-costs-observed.aot.
+[0.003s][info][aot] trying to map /tmp/lowlat-scratch.ureLFE/jvm-costs-observed.aot
+[0.003s][info][aot] Opened AOT cache /tmp/lowlat-scratch.ureLFE/jvm-costs-observed.aot.
 [0.003s][info][aot] The AOT cache was created with UseCompressedOops = 1, UseCompressedClassPointers = 1, UseCompactObjectHeaders = 0
 [0.003s][info][aot] Core region alignment: 4096
 [0.003s][info][aot] ArchiveRelocationMode: 1
 [0.003s][info][aot] ArchiveRelocationMode == 1: always map archive(s) at an alternative address
 [0.003s][info][aot] Try to map archive(s) at an alternative address
-[0.003s][info][aot] Reserved archive_space_rs [0x0000000093000000 - 0x0000000095000000] (33554432) bytes (includes protection zone)
-[0.003s][info][aot] Reserved class_space_rs   [0x0000000095000000 - 0x00000000d5000000] (1073741824) bytes
-[0.003s][info][aot] Mapped static  region #0 at base 0x0000000093001000 top 0x0000000093884000 (ReadWrite)
-[0.003s][info][aot] Mapped static  region #1 at base 0x0000000093884000 top 0x000000009460f000 (ReadOnly)
-[0.003s][info][aot] Mapped static  region #2 at base 0x00007fa23e4ab000 top 0x00007fa23e4fd000 (Bitmap)
+[0.003s][info][aot] Reserved archive_space_rs [0x0000000081000000 - 0x0000000083000000] (33554432) bytes (includes protection zone)
+[0.003s][info][aot] Reserved class_space_rs   [0x0000000083000000 - 0x00000000c3000000] (1073741824) bytes
+[0.003s][info][aot] Mapped static  region #0 at base 0x0000000081001000 top 0x0000000081842000 (ReadWrite)
+[0.003s][info][aot] Mapped static  region #1 at base 0x0000000081842000 top 0x0000000082562000 (ReadOnly)
+[0.003s][info][aot] Mapped static  region #2 at base 0x00007f95a9070000 top 0x00007f95a90bf000 (Bitmap)
 [0.005s][info][aot] archived module property jdk.module.main: (null)
 [0.005s][info][aot] archived module property jdk.module.addexports: (null)
 [0.005s][info][aot] archived module property jdk.module.addmods: jdk.jfr
@@ -18,18 +18,18 @@
 [0.005s][info][aot] archived module property jdk.module.addreads: (null)
 [0.005s][info][aot] optimized module handling: enabled
 [0.005s][info][aot] full module graph: enabled
-[0.005s][info][aot] CDS archive was created with max heap size = 256M, and the following configuration:
-[0.005s][info][aot]     narrow_klass_base at mapping start address, narrow_klass_pointer_bits = 32, narrow_klass_shift = 0
-[0.005s][info][aot]     narrow_oop_mode = 0, narrow_oop_base = 0x0000000000000000, narrow_oop_shift = 0
-[0.005s][info][aot] The current max heap size = 256M, G1HeapRegion::GrainBytes = 1048576
-[0.005s][info][aot]     narrow_klass_base = 0x0000000093000000, arrow_klass_pointer_bits = 32, narrow_klass_shift = 0
-[0.005s][info][aot]     narrow_oop_mode = 0, narrow_oop_base = 0x0000000000000000, narrow_oop_shift = 0
-[0.005s][info][aot]     heap range = [0x00000000f0000000 - 0x0000000100000000]
-[0.005s][info][aot] Preferred address to map heap data (to avoid relocation) is 0x00000000ffe00000
-[0.005s][info][aot] Heap data mapped at 0x00000000ffe00000, size =  1212904 bytes
-[0.005s][info][aot] CDS heap data relocation delta = 0 bytes
-[0.005s][info][aot] initial optimized module handling: enabled
-[0.005s][info][aot] initial full module graph: enabled
-[0.005s][info][aot] use_full_module_graph = true; java.base = 0x000000009387ebb8
-[0.006s][info][aot] Unmapping region #2 at base 0x00007fa23e4ab000 (Bitmap)
+[0.006s][info][aot] CDS archive was created with max heap size = 256M, and the following configuration:
+[0.006s][info][aot]     narrow_klass_base at mapping start address, narrow_klass_pointer_bits = 32, narrow_klass_shift = 0
+[0.006s][info][aot]     narrow_oop_mode = 0, narrow_oop_base = 0x0000000000000000, narrow_oop_shift = 0
+[0.006s][info][aot] The current max heap size = 256M, G1HeapRegion::GrainBytes = 1048576
+[0.006s][info][aot]     narrow_klass_base = 0x0000000081000000, arrow_klass_pointer_bits = 32, narrow_klass_shift = 0
+[0.006s][info][aot]     narrow_oop_mode = 0, narrow_oop_base = 0x0000000000000000, narrow_oop_shift = 0
+[0.006s][info][aot]     heap range = [0x00000000f0000000 - 0x0000000100000000]
+[0.006s][info][aot] Preferred address to map heap data (to avoid relocation) is 0x00000000ffe00000
+[0.006s][info][aot] Heap data mapped at 0x00000000ffe00000, size =  1183208 bytes
+[0.006s][info][aot] CDS heap data relocation delta = 0 bytes
+[0.006s][info][aot] initial optimized module handling: enabled
+[0.006s][info][aot] initial full module graph: enabled
+[0.006s][info][aot] use_full_module_graph = true; java.base = 0x000000008183c248
+[0.006s][info][aot] Unmapping region #2 at base 0x00007f95a9070000 (Bitmap)
 [0.006s][info][aot] Using AOT-linked classes: true (static archive: has aot-linked classes)

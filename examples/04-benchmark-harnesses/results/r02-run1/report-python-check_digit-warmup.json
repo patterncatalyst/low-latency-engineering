@@ -7,20 +7,20 @@
   "count": 31,
   "dropped": 0,
   "percentiles": {
-    "p50": 1981,
-    "p90": 2010,
-    "p99": 2024,
-    "p99_9": 2024,
-    "max": 2024
+    "p50": 2000,
+    "p90": 2045,
+    "p99": 2055,
+    "p99_9": 2055,
+    "max": 2055
   },
-  "hdr_histogram": "HISTFAAAAEt4nJNpmSzMwMCgzwABzFCakYGB2c1gxwIG+w8QgbVyTIxMTIxMvEzMTMxMvExMLOwsjEyMLCyMTEycLCAxTiZGJlaIElYmAFl+BeA=",
+  "hdr_histogram": "HISTFAAAAFJ4nJNpmSzMwMBgygABzFCakYGB2c1gxwIG+w8QgeOyTKxM4kyiTPpMwkz8TIxMzExggpmJSZ6JkYWdiZ2JmYmViZGJiYmbiYlJmgXEBgCWuQaS",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-22T23:47:51Z",
+    "captured_at": "2026-10-23T06:15:08Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2441338,
+      "pid": 2670896,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,8 +73,8 @@
     },
     "load": {
       "load1": 0.27,
-      "load5": 0.55,
-      "load15": 0.71,
+      "load5": 0.64,
+      "load15": 0.8,
       "running": 1
     },
     "memory": {
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []

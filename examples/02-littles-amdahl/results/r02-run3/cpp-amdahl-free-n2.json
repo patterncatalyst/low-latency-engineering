@@ -7,33 +7,33 @@
   "count": 10,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAADJ4nJNpmSzMwMAAwiDADKUZGRiY3Qx2LGCw/wAReNjExMTIxMrEyMTMAiKYJJkAvwEF/g==",
+  "hdr_histogram": "HISTFAAAADB4nJNpmSzMwMDAxwABzFCakYGB2c1gxwIG+w8QgadNTCzMTIwsTExMjExMAKDEBds=",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
     "law": "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
     "lock": "std::mutex",
-    "measured_speedup_p50": 1.9571311040472574,
+    "measured_speedup_p50": 1.96856908979188,
     "parcels_per_worker_per_wave": 160,
-    "predicted_speedup": 1.8261225590075945,
-    "relative_error": 0.07174137595171022,
+    "predicted_speedup": 1.8258627191983021,
+    "relative_error": 0.07815832433242144,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.09521674223601902,
+    "serial_fraction_modelling_input": 0.09537260330182867,
     "sync": "free: no barriers",
-    "wall_p50_ns": 39747583,
-    "wall_p50_ns_n1": 77791231,
+    "wall_p50_ns": 39616511,
+    "wall_p50_ns_n1": 77987839,
     "workers": 2
   },
   "notes": "10 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
   "percentiles": {
-    "max": 40402943,
-    "p50": 39747583,
-    "p90": 39944191,
-    "p99": 40402943,
-    "p99_9": 40402943
+    "max": 39813119,
+    "p50": 39616511,
+    "p90": 39780351,
+    "p99": 39813119,
+    "p99_9": 39813119
   },
   "profile": {
-    "captured_at": "2026-10-23T00:29:13Z",
+    "captured_at": "2026-10-23T06:56:31Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -69,9 +69,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.17,
-      "load15": 0.92,
-      "load5": 0.81,
+      "load1": 0.55,
+      "load15": 0.73,
+      "load5": 0.74,
       "running": 1
     },
     "memory": {
@@ -81,6 +81,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -94,7 +95,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2468975,
+      "pid": 2697127,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

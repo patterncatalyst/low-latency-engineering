@@ -7,19 +7,19 @@ WARNING: sun.misc.Unsafe::putLong has been called by com.kenai.jffi.UnsafeMemory
 WARNING: Please consider reporting this to the maintainers of class com.kenai.jffi.UnsafeMemoryIO$UnsafeMemoryIO64
 WARNING: sun.misc.Unsafe::putLong will be removed in a future release
 offheap-lockfree: variant chronicle-journal listening on /127.0.0.1:47270, commands to /127.0.0.1:47271, window 20000
-decide-thread pid=2464329 tid=2464385
-line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.6us p99.9=     64.7us max=     186.5us
+decide-thread pid=2692289 tid=2692360
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.6us p99.9=     61.3us max=     164.6us
 window-end handled=200000
 received 200000 dropped 0 reordered 0 published 200000 overflow 0 (stopped: EXPECTED)
 journal-readback count=200000 in_order=true
-old-gen bytes_after_gc=9348720 baseline_bytes=3795400
-07-offheap-lockfree        java   chronicle-journal      200000        0       60.7       65.9       92.3    15638.5    22200.3
+old-gen bytes_after_gc=9396032 baseline_bytes=3796744
+07-offheap-lockfree        java   chronicle-journal      200000        0       60.7       66.0       95.9    17203.2    23511.0
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-chronicle-journal.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-chronicle-journal-first-20000.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-chronicle-journal-steady.json
-07-offheap-lockfree        java   chronicle-journal-handoff     200000        0        0.1        0.3        0.8    12927.0    16990.2
+07-offheap-lockfree        java   chronicle-journal-handoff     200000        0        0.2        0.3        0.9    14549.0    18939.9
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-chronicle-journal-handoff.json
-07-offheap-lockfree        java   chronicle-journal-journal-append     200000        0        0.3        0.4        2.8       29.2     6836.2
+07-offheap-lockfree        java   chronicle-journal-journal-append     200000        0        0.3        0.4        3.1       31.0     7778.3
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-chronicle-journal-journal-append.json
-07-offheap-lockfree        java   chronicle-journal-divert     200000        0        4.7       11.6       14.0       81.5     2371.6
+07-offheap-lockfree        java   chronicle-journal-divert     200000        0        4.7       11.5       14.4       80.7     2461.7
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-chronicle-journal-divert.json

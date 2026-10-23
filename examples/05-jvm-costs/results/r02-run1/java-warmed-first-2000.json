@@ -7,21 +7,21 @@
   "count" : 2000,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 173951,
-    "p90" : 190463,
-    "p99" : 226047,
-    "p99_9" : 342271,
-    "max" : 1001983
+    "p50" : 178431,
+    "p90" : 192895,
+    "p99" : 233087,
+    "p99_9" : 297983,
+    "max" : 939519
   },
-  "hdr_histogram" : "HISTFAAAAjV4nDVTO44UMRD1PNdU13g8Hk9vbzOwi1YIIbQigJxgRYJEwGG4AxdAXICEgICclHtwCFIyXpV3++OuKrt+71Vff/56kVL+k8aV778biu/f/PqW7v4Ow49PuEPCM74Jr3EjJ8GW4k4zDniEPSZcIeOxcMkycX2BI7aSaL6hdsXD2IFrpiNd5RIUp1AyLij5Fg8lgWSBFtGkydy0ZRZ3AzQxorvQTFn8vIoo75JVULiv/Koa3N2jJc1iKTystdZLNZtrW82u56UXqkuXJ9W/tTJv9dQe05jeTIpakVoKTUWoQpJVNSsqrUkrqpXZWQyEr6fxvCrJ24CNIsWfA9iaN5Thl9tSyGH0E4j2doSQLQZOvjPxHlJGeMiJiLv/PZ4JT4m1R3oF4nrD3R1O8FgHOhwpP8cFaTnhNpwi3q0XBCdw+2B0Fg/0veK759Z+JM8RPWplEAf0ni2WPA02RnVcfBSCqyMNMhgPZRCIVLiod6ogZcVqYKGEmbwRX9qrc08O3MIjXQg4ierLsuq5Ne2lW1vOM9mc17OtS5tbX6jURqqanyznssxrXdbS01y7zWR6bnOppde1117JuHaSy3koisUZrVZs1ooxQSiCBh8DY3kW1Yhf1GApWmAjZUwZtzRIchqKuECQTB6w8ZGKmXU0XJ9EcgAaf0N+OBc07mMYjsFO/B+TDILSmINdDMn4F9x8GWT7/c5RdoPz9zJuWj7StMP3DX5u8IEEX+It/gG/N/hyxn/7SCGf",
+  "hdr_histogram" : "HISTFAAAAd54nC1SQW4TQRAc17bb7fEwmayHZWM2jomQCQILOHDiwA0ewZEvIHHkwg/yAS6IF0TKs+AHVM9mpN2erq7Znq7a6eftNgT8C/PqHuKC209v73+Fj39n4O4bTviBFT7jArLFY1yhwxpEOjAGhk6CgG8mIsInKBFVgsK6WESQYApiphGJFHWiGWImVaAwkZRgKsksahQrKfoBqMGMtaDzsawgjUTWgKBmSrqyBTuxM1uyGzlsz8BTfi8SlyIrv1BwfMkBNkx8Am7xFJd4ifM2z4noC+5eMX+GJ9jgPWtfyNiS+g6PyLnAd7L4DfJO7RuydCkIrEkgsmk6nfEW3mtu6zIxDU0XzJEpxwpQ5bV9JhdEjaIaNCeKIVlyijFz6GQlplyHPg9Fh5j7mnOt1co4lN1wnPr9YXx+nHK9rnWa9sfh9TAeboabsa/X+7qfxn7qrewOZZfGNPjpPtccS01SUso5amGk/hqTmFiS5hjFpJ3iogcT+kKdYUiJylNiRxBDgnsuhLzqpnJxx7FJ6PRhZkZfbko37+i2YKleaTrJssUW6CmJ0kzrqGz74WiM7126jgZ1NAZN+8DKms8Zq16/IvaGWWj/6yUtxYcGr/j+itsFUzfn94L0c/zZ4T/1lCBi",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/warmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.IsciCD/warmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/warmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.PoM1n0/warmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-22T23:48:17Z",
+    "captured_at" : "2026-10-23T06:15:34Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -61,7 +61,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2442077,
+      "pid" : 2671637,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -70,9 +70,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.52,
-      "load5" : 0.58,
-      "load15" : 0.72,
+      "load1" : 0.59,
+      "load5" : 0.69,
+      "load15" : 0.81,
       "running" : 1
     },
     "memory" : {
@@ -82,7 +82,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]
@@ -107,19 +108,19 @@
     },
     "jit" : {
       "startup" : {
-        "compilations" : 1069,
-        "c2_compilations" : 235,
-        "deoptimizations" : 56
+        "compilations" : 1082,
+        "c2_compilations" : 248,
+        "deoptimizations" : 57
       },
       "first-2000" : {
-        "compilations" : 24,
-        "c2_compilations" : 11,
+        "compilations" : 14,
+        "c2_compilations" : 3,
         "deoptimizations" : 9
       },
       "steady" : {
-        "compilations" : 24,
-        "c2_compilations" : 17,
-        "deoptimizations" : 2
+        "compilations" : 25,
+        "c2_compilations" : 16,
+        "deoptimizations" : 3
       }
     }
   }

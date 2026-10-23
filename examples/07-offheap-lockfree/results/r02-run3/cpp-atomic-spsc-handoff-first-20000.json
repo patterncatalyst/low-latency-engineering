@@ -7,18 +7,18 @@
   "count": 20000,
   "dropped": 0,
   "example": "07-offheap-lockfree",
-  "hdr_histogram": "HISTFAAAAVx4nC2Ov0uCURSGv/Pec67X66eZSr8wsY8KsUVMREIqJISiIRrCoamhIaKhobFBoiikoYIogpolIgjCLdD/IEIkGlrbWmqoJaLe5Xl4pje+cxx1HFpy/qb+SY6jypnGlTP1/hdaBMV9E+d0jgtV5Ru+lZqcSFOOZEeu5VDqUpe2fjJtU7P3gWqw01UPHgQf3dfAV6Bjb+2zqflffA1dlSp/4gpN2qXVpVI2HfdCkbANWeMyazaWGTAMq0GANmDSBJDWWrFiBYGAwAKFbh0AFDACZV034mXShVwxuzA3s7GwXNnc2l7fWKnMVOZLa+XFyWKpkJ9OJ1J5L5fqGcgNZ1IpL5NIJpPDuWRiwIuHIonRnpi2sbjbZ2NhNxS27BIbAgD2a/498etBCKIYxBAI41AYwxD72AfCLHrRjzfCt8K+RUtw3I09gzvBRxgfggegC5eMM+CMcAr8AGoTQH0=",
+  "hdr_histogram": "HISTFAAAAXx4nC2QPWgUURhF5zvv2zdvZt4OCQ66LiEZNkNYlhQxQlgWQRAxaBE2W4gsYpEiiAQECxubFCE/laIRUi6C2KQIClHEwqRIEbQwiARJlTpgCpt0ssTbXDjc4nCHll5dCAJZCs5j/rcEgbk18akXXD89B+8EdWqtKmpQjGIsMtC4tixv+G16pa/hvnsfbSeLfjP55bf8F/8y+ew3o2/RRrTuDsPt6Nj13FG47g7CQ/vXbtndUk9PzIH5yQZ78kI6rXojS+NM1cUejRWDEwUBEBWwgE+tcxa1KhZDmVEt9wdlUHGaxc4NaBpnWT6c32m3W91uZ2ZVHjx6OrPQfXhv/v7d9pO5TufG3OTN1tRkc7yoTxV5dayoNi7W8tpEUS/y5nizWqlUxvLacG3IZykxcayp9LUEa9CEhBDBIGog0hJwCdM/RxAlhARhkBEucwUFNNSENWGWhKvc5jtM89ZwBjueZzwvEyGsCB9KvHb8UM4MfyJ24GPGY/4B/a1DOw==",
   "language": "cpp",
   "notes": "handoff=atomic-spsc; published=200000; overflow=0; reordered=0; rcvbuf_granted=8388608; window=20000; first window is seq < 20000",
   "percentiles": {
-    "max": 34015,
-    "p50": 127,
-    "p90": 267,
+    "max": 49919,
+    "p50": 128,
+    "p90": 271,
     "p99": 329,
-    "p99_9": 505
+    "p99_9": 640
   },
   "profile": {
-    "captured_at": "2026-10-23T00:42:14Z",
+    "captured_at": "2026-10-23T07:09:34Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.3,
-      "load15": 0.7,
-      "load5": 0.48,
+      "load1": 0.09,
+      "load15": 0.54,
+      "load5": 0.36,
       "running": 1
     },
     "memory": {
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2476874,
+      "pid": 2705508,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

@@ -1,17 +1,20 @@
 command: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/on-heap-manifest.gc.log:uptime\,level\,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -cp /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar io.patterncatalyst.lowlat.offheap.Handoff --variant on-heap-manifest --bind 127.0.0.1:47270 --journal-dir /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/queue --placement unpinned --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest.json
 offheap-lockfree: variant on-heap-manifest listening on /127.0.0.1:47270, commands to /127.0.0.1:47271, window 20000
-decide-thread pid=2448368 tid=2448427
-line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.6us p99.9=     65.8us max=     175.4us
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+decide-thread pid=2678538 tid=2678614
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.9us p99=     59.6us p99.9=     64.3us max=     185.6us
 window-end handled=200000
 received 200000 dropped 0 reordered 0 published 200000 overflow 0 (stopped: EXPECTED)
-old-gen bytes_after_gc=137309272 baseline_bytes=3797592
-07-offheap-lockfree        java   on-heap-manifest       200000        0       61.0       64.6       91.8    11272.2    23429.1
+old-gen bytes_after_gc=137506816 baseline_bytes=3797736
+07-offheap-lockfree        java   on-heap-manifest       200000        0       61.3       65.3       90.3    10502.1    23216.1
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest-first-20000.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest-steady.json
-07-offheap-lockfree        java   on-heap-manifest-handoff     200000        0        0.1        0.2        0.7     1146.9     2400.3
+07-offheap-lockfree        java   on-heap-manifest-handoff     200000        0        0.1        0.2        0.8      722.9     2562.0
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest-handoff.json
-07-offheap-lockfree        java   on-heap-manifest-manifest-lookup     200000        0        0.0        0.1        0.4        0.7       18.4
+07-offheap-lockfree        java   on-heap-manifest-manifest-lookup     200000        0        0.0        0.1        0.5        0.8       18.8
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest-manifest-lookup.json
-07-offheap-lockfree        java   on-heap-manifest-divert     200000        0        4.7        7.1       13.6      102.2     2084.9
+07-offheap-lockfree        java   on-heap-manifest-divert     200000        0        4.7       11.6       13.6       72.3     1995.8
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/java-on-heap-manifest-divert.json

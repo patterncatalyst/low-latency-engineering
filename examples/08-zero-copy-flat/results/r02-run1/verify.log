@@ -29,38 +29,40 @@ seed 2026: python decodes 8 records identical to golden-seed2026.json
 ✓ 1 C++, Java and Python agree on every field of 3 seeds x 8 records
 ━━ JMH SampleTime with the gc profiler: DecodeBenchmark, TableBenchmark, ClockBenchmark (about 3 minutes)
 ━━ 2. decode: flat-ffm vs protobuf-decode (same JMH run)
-  flat-ffm        0.0012395386578925149 B/op, p50 16 ns
-  protobuf-decode 575.7780114512869 B/op, p50 160 ns
-✓ 2 flat-ffm allocates <= 1 B/op (0.0012395386578925149)
-✓ 2 protobuf-decode allocates >= 100 B/op (575.7780114512869)
-✓ 2 protobuf p50 (160 ns) >= 3x flat p50 (16 ns)
+  flat-ffm        0.0012456731715259277 B/op, p50 16 ns
+  protobuf-decode 575.7791694799242 B/op, p50 162 ns
+✓ 2 flat-ffm allocates <= 1 B/op (0.0012456731715259277)
+✓ 2 protobuf-decode allocates >= 100 B/op (575.7791694799242)
+✓ 2 protobuf p50 (162 ns) >= 3x flat p50 (16 ns)
 ━━ 4. in-flight table sweep of 1,000,000 parcels: flat-table vs object-table (same JMH run)
-  flat-table   p50 986623 ns
+  flat-table   p50 952831 ns
   object-table p50 5009407 ns
-✓ 4 flat-table p50 (986623 ns) <= 1/2 of object-table p50 (5009407 ns)
+✓ 4 flat-table p50 (952831 ns) <= 1/2 of object-table p50 (5009407 ns)
+✓ 4 flatTable ran without a garbage collection (gc.count 0.0)
+✓ 4 objectTable ran without a garbage collection (gc.count 0.0)
 ━━ 5. FFM clock_gettime downcall vs System.nanoTime()
-  per call, p50: nano-time 12 ns, downcall-standard 18 ns, downcall-critical 17 ns (observed)
+  per call, p50: nano-time 12 ns, downcall-standard 19 ns, downcall-critical 17 ns (observed)
 ✓ 5 standard downcall within 1 ms of System.nanoTime() (largest skew outside the nanoTime bracket: 0 ns)
 ✓ 5 critical downcall within 1 ms of System.nanoTime() (largest skew outside the nanoTime bracket: 0 ns)
 ━━ line: protobuf-decode (protobuf wire), 10000 Hz x 10 s, UDP 47281
 ━━ line: flat-ffm (flat wire), 10000 Hz x 10 s, UDP 47282
 ━━ 3. line end-to-end allocation per parcel (receive thread: channel, decode, handler)
-  protobuf-decode 530.98 B/parcel, flat-ffm 8.7632 B/parcel
-✓ 3 flat-ffm allocates <= 5 % of protobuf-decode per parcel (8.7632 vs 530.98 B)
-  protobuf-decode p50 57439 ns, p99 98559 ns, p99.9 12623871 ns, max 19988479 ns
-  flat-ffm p50 57087 ns, p99 93247 ns, p99.9 7426047 ns, max 15286271 ns
+  protobuf-decode 591.42208 B/parcel, flat-ffm 8.7632 B/parcel
+✓ 3 flat-ffm allocates <= 5 % of protobuf-decode per parcel (8.7632 vs 591.42208 B)
+  protobuf-decode p50 57567 ns, p99 91903 ns, p99.9 10543103 ns, max 17563647 ns
+  flat-ffm p50 57087 ns, p99 86911 ns, p99.9 7524351 ns, max 14868479 ns
 ━━ compact-headers (observed): JOL footprint with and without -XX:+UseCompactObjectHeaders
   standard: ParcelState 40 B, protobuf ParcelEvent 80 B, object table of 100000 = 4400016 B, flat table = 2400000 B
   compact-headers: ParcelState 32 B, protobuf ParcelEvent 80 B, object table of 100000 = 3600016 B, flat table = 2400000 B
 ━━ C++ lane (observed): decode variants over std::span<const std::byte>, flat vs pointer table
-  decode-memcpy              p50 9047 ns per 1024 records
-  decode-bit-cast            p50 8807 ns per 1024 records
-  decode-start-lifetime-as   p50 7843 ns per 1024 records
-  flat-table                 p50 912895 ns per sweep of 1,000,000
-  pointer-table              p50 4804607 ns per sweep of 1,000,000
+  decode-memcpy              p50 9247 ns per 1024 records
+  decode-bit-cast            p50 8663 ns per 1024 records
+  decode-start-lifetime-as   p50 7543 ns per 1024 records
+  flat-table                 p50 922623 ns per sweep of 1,000,000
+  pointer-table              p50 4841471 ns per sweep of 1,000,000
 ━━ Python lane (observed): struct.unpack_from over a memoryview vs ParseFromString
-08-zero-copy-flat  python  unpack-from        204800  0  0.3  0.4  0.4  0.5  11.9
-08-zero-copy-flat  python  parse-from-string  204800  0  1.2  1.2  2.2  2.5  66.1
+08-zero-copy-flat  python  unpack-from        204800  0  0.3  0.4  0.4  0.5   54.3
+08-zero-copy-flat  python  parse-from-string  204800  0  1.0  1.0  1.9  2.7  206.8
 unpack-from: 8.7 blocks and 6.7 new int objects per parcel (12 fields read)
 parse-from-string: 8.7 blocks and 6.7 new int objects per parcel (10 fields read)
 ━━ 6. reports: schema, histogram decode, percentile recompute; counts, drops, JVM flags
@@ -68,4 +70,4 @@ parse-from-string: 8.7 blocks and 6.7 new int objects per parcel (10 fields read
 ✓ 6 line runs: count = 100000 and dropped = 0 for both variants
 ✓ 6 every Java report carries build.flags
 ✓ 08-zero-copy-flat: flat records removed the decode allocation; results in /home/rsedor/Dev/low-latency-engineering/examples/08-zero-copy-flat/results/r02-run1
-profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=1.11
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=1.58

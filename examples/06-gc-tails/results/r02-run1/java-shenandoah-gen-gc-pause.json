@@ -7,20 +7,20 @@
   "count" : 91,
   "dropped" : 0,
   "percentiles" : {
-    "p50" : 94207,
-    "p90" : 416255,
-    "p99" : 714751,
-    "p99_9" : 714751,
-    "max" : 714751
+    "p50" : 70719,
+    "p90" : 363007,
+    "p99" : 611839,
+    "p99_9" : 611839,
+    "max" : 611839
   },
-  "hdr_histogram" : "HISTFAAAAOF4nC2OrWuCYRTFn/t7fBkvhjEEx9A6loTJwpAFEUERgxj8C4YsigwximhZkAURg0ENMoYYxorFYDItG0RhQQwi2i274i5czjn349wbrDd9xpiVOYf9R1GauB/3TPRwLqz9LF2O8EBNeBf6wi1JPlGIUcTLK1m+LE2XkT2RrcPewwsNaFuuaHh4ZieUmFqiLOCJqXDNRui4VKElTIQBpLkkz4VmhaOocOmKbhtCfMMM3hx+LENR3xttlMgRUNMIZayOpXlU7fAh6hKgQFiP6fe/nIxSzIUME6hBnDv+ADjYLq8=",
+  "hdr_histogram" : "HISTFAAAANt4nC2OPUtCYRTHn//vchNdIi4igg5OEi1FhERIgxCEY4g4iEQ0+SEcskEiQhpbdGhscAh1cmi4OEQfQKI5HBL6Ap4HPWc4b/+Xk+s+R865hdtEsK2y9uJwMnDnq80izvMFU5HhU/AmLklyZZlmjyZlHsUfVJmLhZhFTFP8g+OWIg2GUOCYn4CRjPMK85ChyLKEOg+BX3U4ocSTd8lyJxJUvG6ZWOzadERfZtaDFzFO8BvyLr7lsT1xzb0/O87MYd+4eU7Ns2ZybSJCDjwwNEiLG/+M+NhhDWlYK5w=",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
     "gil_enabled" : null
   },
   "profile" : {
     "schema" : "lowlat-profile/1",
-    "captured_at" : "2026-10-22T23:50:32Z",
+    "captured_at" : "2026-10-23T06:17:49Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
       "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -60,7 +60,7 @@
       "available_clocksource" : [ "tsc", "acpi_pm" ]
     },
     "process" : {
-      "pid" : 2444127,
+      "pid" : 2673803,
       "cpu_affinity" : "0-15",
       "sched_policy" : "SCHED_OTHER"
     },
@@ -69,9 +69,9 @@
       "product_name" : "XPS 15 9510"
     },
     "load" : {
-      "load1" : 0.49,
-      "load5" : 0.62,
-      "load15" : 0.72,
+      "load1" : 0.97,
+      "load5" : 0.72,
+      "load15" : 0.81,
       "running" : 1
     },
     "memory" : {
@@ -81,7 +81,8 @@
       "hugepagesize_kb" : 2048,
       "transparent_hugepage" : "madvise",
       "thp_enabled" : "madvise",
-      "thp_defrag" : "madvise"
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
     },
     "lab" : {
       "running_domains" : [ ]

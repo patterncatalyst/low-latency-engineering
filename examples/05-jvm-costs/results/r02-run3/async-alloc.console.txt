@@ -31,49 +31,49 @@ WARNING: java.lang.System::load has been called by org.openjdk.jmh.profile.Async
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
-# Warmup Iteration   1: 7.328 ±(99.9%) 1.026 ns/op
-# Warmup Iteration   2: 4.571 ±(99.9%) 0.589 ns/op
-Iteration   1: 4.321 ±(99.9%) 0.463 ns/op
+# Warmup Iteration   1: 7.299 ±(99.9%) 1.128 ns/op
+# Warmup Iteration   2: 4.656 ±(99.9%) 0.526 ns/op
+Iteration   1: 3.494 ±(99.9%) 0.254 ns/op
                  p0.00:   3.000 ns/op
-                 p0.50:   4.000 ns/op
-                 p0.90:   7.000 ns/op
-                 p0.95:   8.000 ns/op
-                 p0.99:   10.000 ns/op
-                 p0.999:  18.000 ns/op
-                 p0.9999: 1298.910 ns/op
-                 p1.00:   1308.000 ns/op
-
-Iteration   2: 3.981 ±(99.9%) 0.116 ns/op
-                 p0.00:   3.000 ns/op
-                 p0.50:   4.000 ns/op
+                 p0.50:   3.000 ns/op
                  p0.90:   4.000 ns/op
                  p0.95:   6.000 ns/op
                  p0.99:   8.000 ns/op
-                 p0.999:  25.945 ns/op
-                 p0.9999: 174.862 ns/op
-                 p1.00:   185.000 ns/op
+                 p0.999:  18.000 ns/op
+                 p0.9999: 622.960 ns/op
+                 p1.00:   1134.000 ns/op
 
-Iteration   3: 4.258 ±(99.9%) 0.320 ns/op
+Iteration   2: 3.679 ±(99.9%) 0.436 ns/op
+                 p0.00:   3.000 ns/op
+                 p0.50:   3.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   6.000 ns/op
+                 p0.99:   8.000 ns/op
+                 p0.999:  18.000 ns/op
+                 p0.9999: 1369.372 ns/op
+                 p1.00:   1470.000 ns/op
+
+Iteration   3: 5.487 ±(99.9%) 0.459 ns/op
                  async:   (text only)
                  p0.00:   3.000 ns/op
-                 p0.50:   4.000 ns/op
-                 p0.90:   6.000 ns/op
-                 p0.95:   6.000 ns/op
-                 p0.99:   9.000 ns/op
-                 p0.999:  19.000 ns/op
-                 p0.9999: 883.092 ns/op
-                 p1.00:   1272.000 ns/op
+                 p0.50:   6.000 ns/op
+                 p0.90:   8.000 ns/op
+                 p0.95:   9.000 ns/op
+                 p0.99:   11.000 ns/op
+                 p0.999:  26.920 ns/op
+                 p0.9999: 1368.256 ns/op
+                 p1.00:   1378.000 ns/op
 
 # Processing profiler results: AsyncProfiler 
 
 
 Result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping":
-  N = 40249
-  mean =      4.182 ±(99.9%) 0.187 ns/op
+  N = 39445
+  mean =      4.071 ±(99.9%) 0.221 ns/op
 
   Histogram, ns/op:
-    [   0.000,  125.000) = 40236 
-    [ 125.000,  250.000) = 10 
+    [   0.000,  125.000) = 39440 
+    [ 125.000,  250.000) = 1 
     [ 250.000,  375.000) = 0 
     [ 375.000,  500.000) = 0 
     [ 500.000,  625.000) = 0 
@@ -81,24 +81,24 @@ Result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping":
     [ 750.000,  875.000) = 0 
     [ 875.000, 1000.000) = 0 
     [1000.000, 1125.000) = 0 
-    [1125.000, 1250.000) = 0 
-    [1250.000, 1375.000) = 3 
-    [1375.000, 1500.000) = 0 
+    [1125.000, 1250.000) = 1 
+    [1250.000, 1375.000) = 1 
+    [1375.000, 1500.000) = 2 
     [1500.000, 1625.000) = 0 
     [1625.000, 1750.000) = 0 
     [1750.000, 1875.000) = 0 
 
   Percentiles, ns/op:
       p(0.0000) =      3.000 ns/op
-     p(50.0000) =      4.000 ns/op
+     p(50.0000) =      3.000 ns/op
      p(90.0000) =      6.000 ns/op
      p(95.0000) =      7.000 ns/op
-     p(99.0000) =      9.000 ns/op
-     p(99.9000) =     20.000 ns/op
-     p(99.9900) =    184.375 ns/op
-     p(99.9990) =   1308.000 ns/op
-     p(99.9999) =   1308.000 ns/op
-    p(100.0000) =   1308.000 ns/op
+     p(99.0000) =     10.000 ns/op
+     p(99.9000) =     19.554 ns/op
+     p(99.9900) =   1140.426 ns/op
+     p(99.9990) =   1470.000 ns/op
+     p(99.9999) =   1470.000 ns/op
+    p(100.0000) =   1470.000 ns/op
 
 Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping:async":
 Async profiler results:
@@ -120,13 +120,13 @@ different JVMs are already problematic, the performance difference caused by dif
 modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
 
 Benchmark                               Mode    Cnt     Score   Error  Units
-AllocationBenchmark.escaping          sample  40249     4.182 ± 0.187  ns/op
+AllocationBenchmark.escaping          sample  39445     4.071 ± 0.221  ns/op
 AllocationBenchmark.escaping:async    sample              NaN            ---
 AllocationBenchmark.escaping:p0.00    sample            3.000          ns/op
-AllocationBenchmark.escaping:p0.50    sample            4.000          ns/op
+AllocationBenchmark.escaping:p0.50    sample            3.000          ns/op
 AllocationBenchmark.escaping:p0.90    sample            6.000          ns/op
 AllocationBenchmark.escaping:p0.95    sample            7.000          ns/op
-AllocationBenchmark.escaping:p0.99    sample            9.000          ns/op
-AllocationBenchmark.escaping:p0.999   sample           20.000          ns/op
-AllocationBenchmark.escaping:p0.9999  sample          184.375          ns/op
-AllocationBenchmark.escaping:p1.00    sample         1308.000          ns/op
+AllocationBenchmark.escaping:p0.99    sample           10.000          ns/op
+AllocationBenchmark.escaping:p0.999   sample           19.554          ns/op
+AllocationBenchmark.escaping:p0.9999  sample         1140.426          ns/op
+AllocationBenchmark.escaping:p1.00    sample         1470.000          ns/op

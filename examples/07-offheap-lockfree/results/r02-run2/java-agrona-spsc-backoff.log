@@ -1,15 +1,18 @@
 command: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/agrona-spsc-backoff.gc.log:uptime\,level\,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -cp /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar io.patterncatalyst.lowlat.offheap.Handoff --variant agrona-spsc-backoff --bind 127.0.0.1:47270 --journal-dir /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/queue --placement unpinned --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-agrona-spsc-backoff.json
 offheap-lockfree: variant agrona-spsc-backoff listening on /127.0.0.1:47270, commands to /127.0.0.1:47271, window 20000
-decide-thread pid=2463857 tid=2463904
-line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.4us p99.9=     64.6us max=     174.1us
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+decide-thread pid=2691890 tid=2691948
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     62.1us max=     479.0us
 window-end handled=200000
 received 200000 dropped 0 reordered 0 published 200000 overflow 0 (stopped: EXPECTED)
-old-gen bytes_after_gc=7839144 baseline_bytes=3797656
-07-offheap-lockfree        java   agrona-spsc-backoff     200000        0       86.5      110.8      132.0     4493.3    20545.5
+old-gen bytes_after_gc=8038408 baseline_bytes=3796792
+07-offheap-lockfree        java   agrona-spsc-backoff     200000        0       85.9      110.2      132.9     2115.6    16752.6
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-agrona-spsc-backoff.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-agrona-spsc-backoff-first-20000.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-agrona-spsc-backoff-steady.json
-07-offheap-lockfree        java   agrona-spsc-backoff-handoff     200000        0       28.3       49.5       53.8      442.6     3434.5
+07-offheap-lockfree        java   agrona-spsc-backoff-handoff     200000        0       29.9       49.0       53.9     1929.2     4096.0
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-agrona-spsc-backoff-handoff.json
-07-offheap-lockfree        java   agrona-spsc-backoff-divert     200000        0        5.1        6.6       18.5       84.0     2032.6
+07-offheap-lockfree        java   agrona-spsc-backoff-divert     200000        0        5.0        6.1       17.2       67.8     2607.1
 report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-agrona-spsc-backoff-divert.json

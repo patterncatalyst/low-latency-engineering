@@ -1,15 +1,15 @@
-[0.206s][info][jfr,startup] Started recording 1. No limit specified, using maxsize=250MB as default.
-[0.206s][info][jfr,startup] 
-[0.206s][info][jfr,startup] Use jcmd 2459312 JFR.dump name=1 to copy recording data to file.
+[0.201s][info][jfr,startup] Started recording 1. No limit specified, using maxsize=250MB as default.
+[0.201s][info][jfr,startup] 
+[0.201s][info][jfr,startup] Use jcmd 2686843 JFR.dump name=1 to copy recording data to file.
 ready: variant unwarmed on 127.0.0.1:47250
 received 20000 dropped 0 reordered 0 (stopped: EXPECTED) in flight 480 lanes [595, 3757, 5962, 3659, 2241, 1330, 2456, 0]
-window-times: first=2026-10-23T00:11:41.488084899Z boundary=2026-10-23T00:11:43.472979132Z end=2026-10-23T00:12:01.472351876Z
-05-jvm-costs               java   unwarmed                20000        0      104.1      171.8      213.8     1770.5    15212.5
-05-jvm-costs               java   unwarmed-first-2000       2000        0      112.0      196.1      337.2    13353.0    15212.5
-05-jvm-costs               java   unwarmed-steady         18000        0      103.4      170.4      204.2      258.0     7000.1
+window-times: first=2026-10-23T06:38:59.825679720Z boundary=2026-10-23T06:39:01.809651178Z end=2026-10-23T06:39:19.809133295Z
+05-jvm-costs               java   unwarmed                20000        0      176.3      208.0      253.2     2144.3    16236.5
+05-jvm-costs               java   unwarmed-first-2000       2000        0      188.0      238.2      420.6    14409.7    16236.5
+05-jvm-costs               java   unwarmed-steady         18000        0      176.0      204.9      233.6      347.1     7082.0
 report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/java-unwarmed.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/java-unwarmed-first-2000.json
 report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/java-unwarmed-steady.json
-jit startup     compilations 442 (c2 40), deoptimizations 26
-jit first-2000  compilations 246 (c2 19), deoptimizations 1
-jit steady      compilations 66 (c2 58), deoptimizations 4
+jit startup     compilations 445 (c2 43), deoptimizations 34
+jit first-2000  compilations 246 (c2 18), deoptimizations 1
+jit steady      compilations 65 (c2 58), deoptimizations 3

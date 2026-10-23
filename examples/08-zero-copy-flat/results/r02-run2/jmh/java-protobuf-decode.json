@@ -4,16 +4,16 @@
   "language": "java",
   "variant": "protobuf-decode",
   "unit": "ns",
-  "count": 29356,
+  "count": 30242,
   "dropped": 0,
   "percentiles": {
-    "p50": 150,
-    "p90": 199,
-    "p99": 222,
-    "p99_9": 504,
-    "max": 1974
+    "p50": 160,
+    "p90": 172,
+    "p99": 193,
+    "p99_9": 343,
+    "max": 1646
   },
-  "hdr_histogram": "HISTFAAAAUF4nC2MP0gCcRzF7/vue7/73T/S00rEwAaHlKKGoD9Q0BARNLQEbWE0BA4R0hgm0tQQZNAQcTU1iIg0XFFNDdEUDc4S1VaINEQUxGHvDQ8e7/MSpYOIotCY0pH6n6Qo6uyw7ynTrU7xS+ZQ/pauyacPKqOq+lrBuI+e9B8nq4ly936XbxzJH9HS2/LJ+JJNvSw8vkKDNqaS6Z6Q69rRWNx2XVcKybabLpGHCp87j6GCrPEz7tBERT3jF34TRaNmNsy26dkPzrdV1y+4gk+qU25pu0i5zfm5bIkKtLVHddqllWw2PzMRi8toiENSSFsAAEODCmINDsKw4AAOMoigFxlYCAMR9IGgYRkqdBAsQFAAChYM4sDBlQZ+BSZxGDwEs0GMIoUBrMLAAtbxDixiDTuEG0IKI0hhHJeEUwqYPxB6RUM=",
+  "hdr_histogram": "HISTFAAAARV4nE1KMUvDUBh8370vL83LS62RmAZERLqYyXYQK6goUnQRHP0BOvgrOthFCoJKcSrBoThIEXFwEHFwcHBwEBEpCA4OoiBOjhKj4B3cHXc3tLk7IASFIoP8dRJC1sbPEjH7kRXb8N9wTfvUpjs6kR2rqR5VV/e8xHvQr+bc9JzEedaf5qhwGbaLN9FWdBCeDnb9W3Oh9/SLqXst9949ztdNUx+qHesKX5TQRm15fTGemplfqMQTk3GlNDpSKpphv2CMzmmwojxADDBLgLNMLBluTiIlCEwgtkAg/An/s5+jzdnCBAs2bFiQIHZBkOjDu0KIACEcPKXHCI1UAhCmsYIqllBFgIbEHAcY436soow1fAMIyDG+",
   "build": {
     "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
     "gil_enabled": null,
@@ -21,7 +21,7 @@
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:24:50Z",
+    "captured_at": "2026-10-23T06:52:08Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -64,7 +64,7 @@
       ]
     },
     "process": {
-      "pid": 2465621,
+      "pid": 2693702,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,9 +73,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.46,
-      "load5": 1.25,
-      "load15": 1.04,
+      "load1": 1.31,
+      "load5": 0.91,
+      "load15": 0.75,
       "running": 1
     },
     "memory": {
@@ -85,7 +85,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
@@ -103,6 +104,6 @@
   },
   "notes": "JMH SampleTime, 2 forks x 5 iterations of 500 ms; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns",
   "runtime": {
-    "alloc_bytes_per_parcel": 543.7777677023005
+    "alloc_bytes_per_parcel": 575.7797251799963
   }
 }

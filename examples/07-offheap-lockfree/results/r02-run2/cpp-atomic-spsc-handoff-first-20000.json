@@ -7,18 +7,18 @@
   "count": 20000,
   "dropped": 0,
   "example": "07-offheap-lockfree",
-  "hdr_histogram": "HISTFAAAAXJ4nC2OzytEURTH3/ne8+7cuXPd+WFmTNMkMabX9NJrkiYpFrJjYWEhS8lCFmgWFoqEhAUbpMhGyUIsyB9gIclWWcnCSmysFL3hnMX5fj+dxaewvNPoOLTk/I34v+Q4YiC4PnJ6P/7AJcEFqVxn9/hkbYXW6JjWaY3O6YYOcCee3VN1q19i+/H75Ffmoukse5TeSp3GH827/lYPkVf3jY/FOzZwQFNj3fnWgrVGWi2VShnWLJWxUhGkhDI2DbYgTlhtFCxrKVmxBsCsmMARgAGCAOAiwlF2w8pgwRQyJk3KKMs6n2vJNVe7/L6R2mRtYXpmnVZom3ZpmSYW5udmRvt7hipetTRQLlcCP9vil4p+R3W4GOTLnR2BVwk8zy96zcVsKpcuGJs2KZNIKA1tLXPdglmC6uuGMhwLDageEdo0IAOBJFxEATQiiiQEMuFDHDG4ELgizOIEaMcgngTa8JnAZgP2gB+JVcJhBIsl/AJ3Vj4k",
+  "hdr_histogram": "HISTFAAAAXV4nC2QsWsTYRiH732+N9999/WSs2c4YgjpEUKRUKTY0kEFS6nFQbBDyJDBwcFBivRPkFJKKYhgpUMHG6gUhCAOoplKoWtnJxE3HRykOFaQa/zBy4/3mR5+jc3dq0EgL4JxzP+WIDArs6NBcPf3GByKGiyCaAlUVBRVJG5uyXuG+qe0bT/Yk/Cn+xbt+EE0cEduJ/rlNqPhxHf/yg/9sX/tP/kv7sx9Dd+Ez8O3dt9e6JFu6LEZmT1zzkfO5UJGsiGP1nrT7WY1TSvWe5tKjFOoOKcOxVpBHFhBuTxVoYSAlikzWcBLT4NBDWAcDvCqcSur53eWlh/f6q8/6a4/63ZXnq71+w96q6vzvfuLs8tLnYWZ660sT1t5WmtXa83OQqN+Y6Zxc7qdxbVOXs+yLK/GdX+FlIqPRS2AYIpVINLixWhUCBUaUjBBuIZBCCGiRELCJBFzjDPFPW6T8BADCQdQ5p1his/CSzhN+DvBD88u/AO2lT8U",
   "language": "cpp",
   "notes": "handoff=atomic-spsc; published=200000; overflow=0; reordered=0; rcvbuf_granted=8388608; window=20000; first window is seq < 20000",
   "percentiles": {
-    "max": 47711,
-    "p50": 121,
-    "p90": 273,
-    "p99": 328,
-    "p99_9": 483
+    "max": 7279,
+    "p50": 128,
+    "p90": 239,
+    "p99": 335,
+    "p99_9": 509
   },
   "profile": {
-    "captured_at": "2026-10-23T00:19:50Z",
+    "captured_at": "2026-10-23T06:47:09Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,9 +54,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.18,
-      "load15": 0.9,
-      "load5": 0.98,
+      "load1": 0.32,
+      "load15": 0.58,
+      "load5": 0.42,
       "running": 1
     },
     "memory": {
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2463169,
+      "pid": 2691139,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

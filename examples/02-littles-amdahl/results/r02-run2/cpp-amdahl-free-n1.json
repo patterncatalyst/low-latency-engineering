@@ -7,7 +7,7 @@
   "count": 10,
   "dropped": 0,
   "example": "02-littles-amdahl",
-  "hdr_histogram": "HISTFAAAAC94nJNpmSzMwMDAzwABzFCakYGB2c1gxwIG+w8Qgb2TmJiYmEGIhYmJkQkApUwFxg==",
+  "hdr_histogram": "HISTFAAAADB4nJNpmSzMwMDAxwABzFCakYGB2c1gxwIG+w8Qgb2TmJiYGJkYWVgYWTiZAJ9XBco=",
   "language": "cpp",
   "model": {
     "batch_parcels": 3200,
@@ -18,22 +18,22 @@
     "predicted_speedup": 1.0,
     "relative_error": 0.0,
     "serial_fraction_basis": "time inside the lock / wall time, one worker, instrumented runs",
-    "serial_fraction_modelling_input": 0.09505316248403149,
+    "serial_fraction_modelling_input": 0.09511152981816796,
     "sync": "free: no barriers",
-    "wall_p50_ns": 78118911,
-    "wall_p50_ns_n1": 78118911,
+    "wall_p50_ns": 77922303,
+    "wall_p50_ns_n1": 77922303,
     "workers": 1
   },
   "notes": "10 repetitions after 3 warm-up; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
   "percentiles": {
-    "max": 78446591,
-    "p50": 78118911,
-    "p90": 78315519,
-    "p99": 78446591,
-    "p99_9": 78446591
+    "max": 78512127,
+    "p50": 77922303,
+    "p90": 78118911,
+    "p99": 78512127,
+    "p99_9": 78512127
   },
   "profile": {
-    "captured_at": "2026-10-23T00:06:49Z",
+    "captured_at": "2026-10-23T06:34:07Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -69,9 +69,9 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.35,
-      "load15": 0.72,
-      "load5": 0.68,
+      "load1": 0.39,
+      "load15": 0.76,
+      "load5": 0.73,
       "running": 1
     },
     "memory": {
@@ -81,6 +81,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -94,7 +95,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2452629,
+      "pid": 2682900,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

@@ -4,16 +4,16 @@
   "language": "java",
   "variant": "object-table",
   "unit": "ns",
-  "count": 3955,
+  "count": 3990,
   "dropped": 0,
   "percentiles": {
-    "p50": 5033983,
-    "p90": 5156863,
-    "p99": 5615615,
-    "p99_9": 6574079,
-    "max": 7475199
+    "p50": 4968447,
+    "p90": 5132287,
+    "p99": 5812223,
+    "p99_9": 6467583,
+    "max": 8097791
   },
-  "hdr_histogram": "HISTFAAAANB4nDWLsWoCQRCG9/tvdzlDtIgiGlKEQ5urxMom2IlPIGJloanzCoEUSSA2acQqpPQJrrSysLQN5BnSppPd02Fgvvm/mbuXz7ox5t+UlZwnxiSjXvFlhn9l8HMkY8YTC8ZMWUMBr2IlCnGIfUz4dewd75Zdwl5sxLc4wBZWMGHKI3NyBvS5JScjp0NGRpMOLe65oUmDazwpnho1vPMIj6WcpbOIq5ikcUujDxzSQIru8iss1ll3IUVvnQ9UUUVdVYWW9jkcP6itN+kDnQBw5B2Z",
+  "hdr_histogram": "HISTFAAAAN54nD2MPUoEQRCF+3td1TTD7LD+BAYrqIjIYqBgsJiYqGfY2FA8hoEmm3gBIyMRTcQTbGQkgngBQ/EI0j2LVcGr+l7VG13droTAeugrLpQQ4tn+6104/u3B5zuZKTPxE3lzZolH58X5NuaRp8hcXIsPuIcHOOeCKZecMGGbHfYYM+aQIzYYscsWy6zSsUZHQ6JhSEMm0yISomVIW0km0WEIq6TDPGP/TlNpWnwXbb3fVbPKnJDbYhdyuXmqiYWn3nENRPYy28D6O6y2NotXiLkOtKRTPaMb9BX1B9XEGns=",
   "build": {
     "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
     "gil_enabled": null,
@@ -21,7 +21,7 @@
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:47:14Z",
+    "captured_at": "2026-10-23T07:14:34Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -64,7 +64,7 @@
       ]
     },
     "process": {
-      "pid": 2479234,
+      "pid": 2708064,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,9 +73,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 1.52,
-      "load5": 0.92,
-      "load15": 0.82,
+      "load1": 1.64,
+      "load5": 1.02,
+      "load15": 0.76,
       "running": 1
     },
     "memory": {
@@ -85,7 +85,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
@@ -101,5 +102,5 @@
       "memlock_kb": "8192"
     }
   },
-  "notes": "JMH SampleTime, 2 forks x 5 iterations of 2 s; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns; gc.alloc.rate.norm 96.635 B/op"
+  "notes": "JMH SampleTime, 2 forks x 5 iterations of 2 s; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns; gc.alloc.rate.norm 96.752 B/op"
 }

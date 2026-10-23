@@ -7,18 +7,18 @@
   "count": 1000000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAI54nC3IsQpBcRSA8XO+c/wvIcPtDnINBkkWZZBJlvsCBm+h7iMoKbNZeQllMhiVwQuYjAaLXbq+5Vdfut7FIpJLkf1VEcuGp4NM38VILvHjll4/8+e+sgmv6OxLXFFXSj8xFJyIKm3GAEqXCSN6IaC1gLtDMAYclQ51jATlXmZBgyYt+qyUrZEz4wvbPhQB",
+  "hdr_histogram": "HISTFAAAAJZ4nC2KMQ7BYBhA/+/931cltAMdpGykEQvpAQwSiURicAqDO3Rwg+6YnMERDCajA1i5AZF6y0teXm9ftp1zhavwf4tzfjG5nNzsXYXkltyv2eGzepztKYUMOk01wCstTLukmBqeNYJRhwQyjD5xIBqFBFFDRQMYkjMnZqk5wm9XweMpQ2pMSWHMliOM2BGz4eX5AnESE8U=",
   "language": "cpp",
   "notes": "1e6 back-to-back pairs of std::chrono::steady_clock::now; value = second - first",
   "percentiles": {
-    "max": 1390,
+    "max": 1557,
     "p50": 13,
     "p90": 13,
     "p99": 14,
-    "p99_9": 15
+    "p99_9": 14
   },
   "profile": {
-    "captured_at": "2026-10-22T23:45:42Z",
+    "captured_at": "2026-10-23T06:12:59Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,10 +54,10 @@
       "running_domains": []
     },
     "load": {
-      "load1": 0.86,
-      "load15": 0.8,
-      "load5": 0.76,
-      "running": 1
+      "load1": 0.91,
+      "load15": 0.88,
+      "load5": 0.84,
+      "running": 2
     },
     "memory": {
       "hugepages_free": 0,
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2440525,
+      "pid": 2670132,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

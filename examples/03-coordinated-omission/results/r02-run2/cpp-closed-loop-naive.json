@@ -7,18 +7,18 @@
   "count": 10000,
   "dropped": 0,
   "example": "03-coordinated-omission",
-  "hdr_histogram": "HISTFAAAAp94nC1TPahdRRC+8+135k0m477NujkcD4/wcouLiIaLhBBIUIuQKqQKwcIiiKWksEwZHhosI1hYPFIEYhWsnhYhpAixFyvB3kLEwiqFyJ7rnAM7zM7PN9/OHBx98+ZqlX5f7ST9f8pqla5vf3q0+vDvneH8+FBe4AH+lSPZXFhvxppNxRKFgFCQgAEJpzDAqa5OEwgISjgVNHPLFpItxmtfy59yLC/1DznmL3jOf9JjvEqP5AWey7d4LV/Ks/Sd/Jbu3XoqN/7CB0/l8xvP5P0HcumL+/LxkWxP5O738lCuncjF1/LJ3WO5eR/bH+TT6ydy8d7mswvbj+L2/PbhdPXczWl9qd3Jl9/d3NlsfJo323Y1vzP7GIcWwUOaajZnzREIL+6Zzeh0NbOgk6DT1A1KhRJdMyqQlYABHotDqCqoahq5jG0Ob5FrKVa8J87lYLI61jrWcWyllVJKmHtde7SDsRzMNjdz98l0Ljk3aLaIXCtzm9frsY1+rtkUUUdzK0UD2at7tmyeqWYakU2Lqoa5hbqX0Yrnyg7Y1aBKdwaMNPY2xJQ0zVyIUHUrmpXd4EKwtw/F0jwhyp0IVSgKiKmAg6L3Tshyqf31ycQ+A4o+IoD1IABhCFUEg3SDpU6heae5eDHXqqWWnEeDa2jA1JyW3VrkXGqU0qaxTe2wtVaKKfp4pQ5zeQ53QzGtXvOUTaMa2WEbAQLg0DEOkK5igQqKdfRdZPlP8wzOQrCPxH0kLMO8i9hN+173wrB8gje4zx7UV+EUBXs9iSztc6+XTYYEiqqRacGxlDPIQtug/QSwLFViJ6rzDegS1zN1diG6K4jdcqWdSln8Bu0LmbTbl6sBSTuGhIHn8R7O4gnw44wr2MdXb+HJafz8q+A/68pMsw==",
+  "hdr_histogram": "HISTFAAAAqN4nC1TPaskVRCdOvdMTU294nK52/YOzTisj8fgDss6GCgsD80eGxi8wFjFyEDQHyAisi6GsoKByiIGZiYGsoHIBiL+hP0DGhmIgcFGUv22g3u7PrqqzjnV23tfXlssyj+Lq6c8u2WxKBfHR98tXn8WeR4f/iyP5dvyVC6jVqsCBynACbkkligoBCEACap2mtJYYYCawhTd/pCH8qR8X+6VT5ef4F99In+VB/LuL+WhfM1f5W98wd/x1fKx/MSn8hvu46P7uPuDHO+80e/euHj58Egu7hxeOb99uX/n8N6bh8/l7OPzy4v9+5vbL569NZ73W7vpONzanZ35wV6bps10rKd9OJ32MbVesZMxumNk31jXcA7d6VGdjeZwpZjC1ZQMh4FmVc0scbiGWklQ6SEJVcJMramnM5SqII0mRjFzdFODetAVlVRmetjQx1aj3RjGbhHRwgZa02rW9mMf+rFutn3abve71jZjbR4Wob33aq4+1NbHybdtqsMmxtZiO0YNr05zc7UcQ2s1Cw1llcogYKRDUzOFUhMBFUQVdzVRApHAS4rIkjmSOZREqibUopKS5zHrnChLFlESohQaUJIazKugCiitAGmUrDrvTIEiF2hOSxJZMO+JZmcTOKsGvam5MtzYhGG+Q3T1KdrQaovmPTQpHccYY6q1ts3W+zANQx+nXk+nWgfr7tSmYbSgR1P33sPDHcmVWsCTMZo1y51WiOf0VAooM2H5Po+b2IlceM4kFCwpLAkKKCpaMHNzda0hWM4nVljmhWV+kPGZkzXWXJPL2VhyRdEMMhOogrVmc8xDYJbjyoRwBczMpzrpsfz7kuFkdy6SvaEsuIaTbLwCXsA81wonuI4PgJewxtv4rODP67iJ5/AqvgF+/E/wP33IRps=",
   "language": "cpp",
   "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep",
   "percentiles": {
     "max": 200278015,
-    "p50": 132,
-    "p90": 499,
-    "p99": 956,
-    "p99_9": 1064
+    "p50": 114,
+    "p90": 622,
+    "p99": 961,
+    "p99_9": 1161
   },
   "profile": {
-    "captured_at": "2026-10-23T00:08:07Z",
+    "captured_at": "2026-10-23T06:35:25Z",
     "clock": {
       "available_clocksource": [
         "tsc",
@@ -54,8 +54,8 @@
       "running_domains": []
     },
     "load": {
-      "load1": 1.25,
-      "load15": 0.79,
+      "load1": 1.2,
+      "load15": 0.81,
       "load5": 0.88,
       "running": 1
     },
@@ -66,6 +66,7 @@
       "mem_total_kb": 65545544,
       "thp_defrag": "madvise",
       "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
       "transparent_hugepage": "madvise"
     },
     "power": {
@@ -79,7 +80,7 @@
     },
     "process": {
       "cpu_affinity": "0-15",
-      "pid": 2454141,
+      "pid": 2684418,
       "sched_policy": "SCHED_OTHER"
     },
     "schema": "lowlat-profile/1",

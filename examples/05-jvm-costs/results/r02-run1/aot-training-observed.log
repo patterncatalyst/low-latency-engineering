@@ -1,12 +1,12 @@
 OpenJDK 64-Bit Server VM warning: JFR will be disabled during CDS dumping
 ready: variant training-observed on 127.0.0.1:47251
 received 3000 dropped 0 reordered 0 (stopped: EXPECTED) in flight 480 lanes [91, 583, 916, 524, 359, 182, 345, 0]
-window-times: first=2026-10-22T23:50:04.378966895Z boundary=null end=2026-10-22T23:50:07.343982534Z
-05-jvm-costs               java   training-observed        3000        0      103.1      272.6     5230.6    31490.0    34275.3
-Temporary AOTConfiguration recorded: /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot.config
-Launching child process /home/rsedor/.sdkman/candidates/java/25.0.5-tem/bin/java to assemble AOT cache /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot using configuration /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar -Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/training-observed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.IsciCD/training-observed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCacheOutput=/tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot -XX:AOTConfiguration=/tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot.config -XX:AOTMode=create
+window-times: first=2026-10-23T06:17:21.426234600Z boundary=null end=2026-10-23T06:17:24.407559417Z
+05-jvm-costs               java   training-observed        3000        0      103.0      202.9      358.9    15564.8    18350.1
+Temporary AOTConfiguration recorded: /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot.config
+Launching child process /home/rsedor/.sdkman/candidates/java/25.0.5-tem/bin/java to assemble AOT cache /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot using configuration /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar -Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/training-observed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.PoM1n0/training-observed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCacheOutput=/tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot -XX:AOTConfiguration=/tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot.config -XX:AOTMode=create
 OpenJDK 64-Bit Server VM warning: JFR will be disabled during CDS dumping
-Reading AOTConfiguration /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot.config and writing AOTCache /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot
-AOTCache creation is complete: /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot 24682496 bytes
-Removed temporary AOT configuration file /tmp/lowlat-scratch.IsciCD/jvm-costs-observed.aot.config
+Reading AOTConfiguration /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot.config and writing AOTCache /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot
+AOTCache creation is complete: /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot 23924736 bytes
+Removed temporary AOT configuration file /tmp/lowlat-scratch.PoM1n0/jvm-costs-observed.aot.config

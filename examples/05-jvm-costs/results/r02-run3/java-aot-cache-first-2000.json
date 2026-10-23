@@ -7,21 +7,21 @@
   "count": 2000,
   "dropped": 0,
   "percentiles": {
-    "p50": 187519,
-    "p90": 219391,
-    "p99": 305919,
-    "p99_9": 3223551,
-    "max": 5115903
+    "p50": 223487,
+    "p90": 440575,
+    "p99": 483071,
+    "p99_9": 1601535,
+    "max": 3479551
   },
-  "hdr_histogram": "HISTFAAAAmp4nDVTO5LUMBAVT+12jyxrvB7jHWanCjbYIiDZjCLaDM5BQEhAcQVuQEjCDSgyUo7ATeAE8Lo92DOyutXf10/nT58PKcl92p58+T7i9vX9j6/p4fem+PsRL3EFvMdzHPAE6DAio8ceifsbKv13Ayp67m7dIiMJIPzw7QEFH6oyBOZioqwJwq8bdaJxmKgUiJhQkZooTKpaaVJEq0gp9IFqMU2aiiUPVWQLh1jEMnNEeqOojOo5xZiBpVH2UlQjb2zAhvjw2IOzetYd9XOROElK1Y6i9SKJ+31kTIgGdt7DFaVr8Xbp/JRLxjWFvYNzh4HnI9cd7uSGcXpKYSsXdxdsoH8fZaRL/A6BX0eAPG7Evw68Mh57mTsvt4tSOwwShVHdR8bLGHoZ+QJb1e7cyV7QR9ueQfIGRowVdGUEJuwoMapn9nxu5lgSM8cp5uTDYFXiCCWCzT/nBKtcVMxE1UxRVZqhtMmslVqqnazUWnWq03mu8+m4LGUu7Xg+rXWd6nlZ2nF6tqxrm+pyXlota7XpXNZ5nsvx1Ja50K3VWRm2MS4TTEWrrYsu5Aklm0qapFQpqxQr5E8jA5w4c1MUEoIUU5XiBZuzAfpAOH1GyZEZAhPiUbvokqwLrtDekfDWnQtkFRXOXTYt/xFxTPI2SSEXUzA0b275Mtvk3PS7Qic/QpDGT7SXGL0Pwyexi6EyyBgVeXlZR4xKmxdkm9OGFzCRak42N7+VmO4Yd/FAZmRx/g2QC6kG/ziRu7i1250Nqu24u43c9AsCufSW+4Pf8gHv8IqBP+ANDb8c8Mfwa8T3Ht96/Mz4B03ZJIg=",
+  "hdr_histogram": "HISTFAAAAzp4nE1VO24VQRAc1/T0rndtbPRkIWQS5ICAhAQJiYAMTsBJOABC4gaInJyIjPsgciQuQFX1rMV7b/fN9vT0r6p7n3z+cmptedXq0+f/GZdvX/z81t78KcGvD/h0hnN0LAEswEDDYzzFc17v8Bon/g/cUqVx3cHFOdACe9xFQzTeOkbyG9GzAaEbQpaCv64b1UbpImij0xit0BufpK6fNOBNrrpjaolykSFbOf2VH0TwgPQHVh6SFuVNUm2XN8qpEAo/Lit+OcsdTrdhR8WzpIyNROe5ZgeKT2HxUhLMUPtIhUC17iQXH5ANX5dOrekbi/YxHKEzlPdQevJnYS6VgE/QpPdWGpThkjbH4dIolLA4FOpQ2lrKsovYXRR+UPFT0J2CYBkK2l5tdLgA9xJ9dhnpmCmYEn7Gw4mdhMLU8XdvutTKwcmWqQkhyJiYvhr+S8cJ56kM4sbSUQrKe1fYMhiHh+ZYOknnrZ5iFYyv60SAWvHFBEIv/66LshbNyntaIrbwhCGXIx1KVi0vjG1MPImE+ECKbikGIPOaJ1dseJAr6YZtzeyJWC9ipTy2TIpXiIrZ+b/KrzQZADf0JZNiXRVXXlSI2SRIk5bP2TcFA/FAW8md2KZkdewCmVH0lUx1b8iKTstlpUgKp5uxFREyh7ib5kuqEmHIsrl1yixwMFVQhPlR99maWo0K1Y/cJTSqDoEgH5c6vSD2alb3fb+naDs0mpFkGDdxVbbIrDQLugkGH4qUC1F4Ytsmr62AVeDFmE+BiWk1fQnlPTgAxBBiRUMmbnpAqHx5sLK7QTyhAlUNMqAas7KIav5YPJiovNpMhps4VMkqvo8veeA5GdXUmkVKExH/jSkYRw+fo3mra7c4RlpPFx/F8/Bkscfh5FRBD7hh8BSvb+5qTGiBKzacm3XHJUE6cJjIa77LmNK89RD2oAhNs0VdFXoPnNPVldmp2Jfq6GJvDXQnUaPO8moni6dOHP1uHnK1GeqY5ChxTxNWnHfd16O+rmKwMTza7gdFHK+KOSPdAprZ1ejW0yx38UaaBjLBcUeG7FyeWJ07vv1e4hHffA3PKH2PH8BHfO/4fY2vO/4m/gF+xCNc",
   "build": {
     "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cnUVZ5/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.cnUVZ5/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.aot.log",
+    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.ureLFE/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.aot.log",
     "gil_enabled": null
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:33:07Z",
+    "captured_at": "2026-10-23T07:00:26Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -64,7 +64,7 @@
       ]
     },
     "process": {
-      "pid": 2472115,
+      "pid": 2700222,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -73,9 +73,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.82,
-      "load5": 0.81,
-      "load15": 0.9,
+      "load1": 0.66,
+      "load5": 0.65,
+      "load15": 0.7,
       "running": 1
     },
     "memory": {
@@ -85,7 +85,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
@@ -124,18 +125,18 @@
     },
     "jit": {
       "startup": {
-        "compilations": 183,
+        "compilations": 194,
         "c2_compilations": 19,
-        "deoptimizations": 17
+        "deoptimizations": 22
       },
       "first-2000": {
-        "compilations": 267,
-        "c2_compilations": 30,
+        "compilations": 266,
+        "c2_compilations": 31,
         "deoptimizations": 0
       },
       "steady": {
-        "compilations": 128,
-        "c2_compilations": 49,
+        "compilations": 130,
+        "c2_compilations": 52,
         "deoptimizations": 4
       }
     }

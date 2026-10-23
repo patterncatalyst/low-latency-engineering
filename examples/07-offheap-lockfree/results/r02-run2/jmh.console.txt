@@ -21,53 +21,68 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 3.486 ops/us
-# Warmup Iteration   2: 3.373 ops/us
-# Warmup Iteration   3: 3.084 ops/us
-Iteration   1: 3.232 ops/us
-                 gc.alloc.rate:      278.456 MB/sec
-                 gc.alloc.rate.norm: 90.355 B/op
+# Warmup Iteration   1: 3.394 ops/us
+# Warmup Iteration   2: 3.360 ops/us
+# Warmup Iteration   3: 3.113 ops/us
+Iteration   1: 3.468 ops/us
+                 accepted:           3468347.000 #
+                 gc.alloc.rate:      300.326 MB/sec
+                 gc.alloc.rate.norm: 90.832 B/op
                  gc.count:           1.000 counts
-                 gc.time:            2.000 ms
+                 gc.time:            1.000 ms
+                 rejected:           ≈ 0 #
 
-Iteration   2: 2.935 ops/us
-                 gc.alloc.rate:      279.676 MB/sec
-                 gc.alloc.rate.norm: 99.942 B/op
+Iteration   2: 3.360 ops/us
+                 accepted:           3361108.000 #
+                 gc.alloc.rate:      300.006 MB/sec
+                 gc.alloc.rate.norm: 93.644 B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   3: 2.917 ops/us
-                 gc.alloc.rate:      278.893 MB/sec
-                 gc.alloc.rate.norm: 100.276 B/op
+Iteration   3: 3.361 ops/us
+                 accepted:           3361212.000 #
+                 gc.alloc.rate:      303.654 MB/sec
+                 gc.alloc.rate.norm: 94.759 B/op
                  gc.count:           1.000 counts
                  gc.time:            2.000 ms
+                 rejected:           ≈ 0 #
 
-Iteration   4: 3.060 ops/us
-                 gc.alloc.rate:      274.242 MB/sec
-                 gc.alloc.rate.norm: 93.986 B/op
+Iteration   4: 3.311 ops/us
+                 accepted:           3310955.000 #
+                 gc.alloc.rate:      301.154 MB/sec
+                 gc.alloc.rate.norm: 95.412 B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   5: 3.089 ops/us
-                 gc.alloc.rate:      276.600 MB/sec
-                 gc.alloc.rate.norm: 93.929 B/op
+Iteration   5: 3.185 ops/us
+                 accepted:           3185589.000 #
+                 gc.alloc.rate:      288.105 MB/sec
+                 gc.alloc.rate.norm: 94.899 B/op
                  gc.count:           1.000 counts
                  gc.time:            2.000 ms
+                 rejected:           ≈ 0 #
 
 
 
 Result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish":
-  3.047 ±(99.9%) 0.494 ops/us [Average]
-  (min, avg, max) = (2.917, 3.047, 3.232), stdev = 0.128
-  CI (99.9%): [2.553, 3.541] (assumes normal distribution)
+  3.337 ±(99.9%) 0.395 ops/us [Average]
+  (min, avg, max) = (3.185, 3.337, 3.468), stdev = 0.103
+  CI (99.9%): [2.942, 3.732] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:accepted":
+  16687211.000 ±(99.9%) 0.001 # [Sum]
+  (min, avg, max) = (3185589.000, 3337442.200, 3468347.000), stdev = 102496.471
+  CI (99.9%): [16687211.000, 16687211.000] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate":
-  277.574 ±(99.9%) 8.390 MB/sec [Average]
-  (min, avg, max) = (274.242, 277.574, 279.676), stdev = 2.179
-  CI (99.9%): [269.184, 285.963] (assumes normal distribution)
+  298.649 ±(99.9%) 23.355 MB/sec [Average]
+  (min, avg, max) = (288.105, 298.649, 303.654), stdev = 6.065
+  CI (99.9%): [275.294, 322.004] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate.norm":
-  95.697 ±(99.9%) 16.515 B/op [Average]
-  (min, avg, max) = (90.355, 95.697, 100.276), stdev = 4.289
-  CI (99.9%): [79.182, 112.213] (assumes normal distribution)
+  93.909 ±(99.9%) 7.073 B/op [Average]
+  (min, avg, max) = (90.832, 93.909, 95.412), stdev = 1.837
+  CI (99.9%): [86.836, 100.982] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.count":
   3.000 ±(99.9%) 0.001 counts [Sum]
@@ -75,9 +90,12 @@ Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.
   CI (99.9%): [3.000, 3.000] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.time":
-  6.000 ±(99.9%) 0.001 ms [Sum]
-  (min, avg, max) = (≈ 0, 1.200, 2.000), stdev = 1.095
-  CI (99.9%): [6.000, 6.000] (assumes normal distribution)
+  5.000 ±(99.9%) 0.001 ms [Sum]
+  (min, avg, max) = (≈ 0, 1.000, 2.000), stdev = 1.000
+  CI (99.9%): [5.000, 5.000] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:rejected":
+  ≈ 0 #
 
 
 # JMH version: 1.37
@@ -99,54 +117,69 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 5.335 ops/us
-# Warmup Iteration   2: 5.183 ops/us
-# Warmup Iteration   3: 5.507 ops/us
-Iteration   1: 5.718 ops/us
-                 gc.alloc.rate:      522.880 MB/sec
-                 gc.alloc.rate.norm: 95.909 B/op
-                 gc.count:           1.000 counts
-                 gc.time:            1.000 ms
-
-Iteration   2: 5.204 ops/us
-                 gc.alloc.rate:      480.357 MB/sec
-                 gc.alloc.rate.norm: 96.807 B/op
+# Warmup Iteration   1: 5.089 ops/us
+# Warmup Iteration   2: 4.950 ops/us
+# Warmup Iteration   3: 5.132 ops/us
+Iteration   1: 5.119 ops/us
+                 accepted:           5120106.000 #
+                 gc.alloc.rate:      475.154 MB/sec
+                 gc.alloc.rate.norm: 97.349 B/op
                  gc.count:           1.000 counts
                  gc.time:            2.000 ms
+                 rejected:           ≈ 0 #
 
-Iteration   3: 5.269 ops/us
-                 gc.alloc.rate:      484.142 MB/sec
-                 gc.alloc.rate.norm: 96.368 B/op
-                 gc.count:           1.000 counts
-                 gc.time:            2.000 ms
-
-Iteration   4: 5.388 ops/us
-                 gc.alloc.rate:      496.428 MB/sec
-                 gc.alloc.rate.norm: 96.638 B/op
+Iteration   2: 5.320 ops/us
+                 accepted:           5320827.000 #
+                 gc.alloc.rate:      492.319 MB/sec
+                 gc.alloc.rate.norm: 97.065 B/op
                  gc.count:           1.000 counts
                  gc.time:            1.000 ms
+                 rejected:           ≈ 0 #
 
-Iteration   5: 5.254 ops/us
-                 gc.alloc.rate:      480.922 MB/sec
-                 gc.alloc.rate.norm: 96.038 B/op
+Iteration   3: 5.451 ops/us
+                 accepted:           5452015.000 #
+                 gc.alloc.rate:      500.646 MB/sec
+                 gc.alloc.rate.norm: 96.332 B/op
+                 gc.count:           1.000 counts
+                 gc.time:            2.000 ms
+                 rejected:           ≈ 0 #
+
+Iteration   4: 5.483 ops/us
+                 accepted:           5483462.000 #
+                 gc.alloc.rate:      505.329 MB/sec
+                 gc.alloc.rate.norm: 96.667 B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
+
+Iteration   5: 5.625 ops/us
+                 accepted:           5626522.000 #
+                 gc.alloc.rate:      514.852 MB/sec
+                 gc.alloc.rate.norm: 96.018 B/op
+                 gc.count:           1.000 counts
+                 gc.time:            1.000 ms
+                 rejected:           ≈ 0 #
 
 
 
 Result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish":
-  5.367 ±(99.9%) 0.800 ops/us [Average]
-  (min, avg, max) = (5.204, 5.367, 5.718), stdev = 0.208
-  CI (99.9%): [4.567, 6.167] (assumes normal distribution)
+  5.399 ±(99.9%) 0.735 ops/us [Average]
+  (min, avg, max) = (5.119, 5.399, 5.625), stdev = 0.191
+  CI (99.9%): [4.665, 6.134] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:accepted":
+  27002932.000 ±(99.9%) 0.001 # [Sum]
+  (min, avg, max) = (5120106.000, 5400586.400, 5626522.000), stdev = 190781.929
+  CI (99.9%): [27002932.000, 27002932.000] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate":
-  492.946 ±(99.9%) 69.117 MB/sec [Average]
-  (min, avg, max) = (480.357, 492.946, 522.880), stdev = 17.949
-  CI (99.9%): [423.829, 562.063] (assumes normal distribution)
+  497.660 ±(99.9%) 57.705 MB/sec [Average]
+  (min, avg, max) = (475.154, 497.660, 514.852), stdev = 14.986
+  CI (99.9%): [439.955, 555.365] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate.norm":
-  96.352 ±(99.9%) 1.470 B/op [Average]
-  (min, avg, max) = (95.909, 96.352, 96.807), stdev = 0.382
-  CI (99.9%): [94.882, 97.822] (assumes normal distribution)
+  96.686 ±(99.9%) 2.069 B/op [Average]
+  (min, avg, max) = (96.018, 96.686, 97.349), stdev = 0.537
+  CI (99.9%): [94.617, 98.755] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.count":
   4.000 ±(99.9%) 0.001 counts [Sum]
@@ -157,6 +190,9 @@ Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.
   6.000 ±(99.9%) 0.001 ms [Sum]
   (min, avg, max) = (≈ 0, 1.200, 2.000), stdev = 0.837
   CI (99.9%): [6.000, 6.000] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:rejected":
+  ≈ 0 #
 
 
 # JMH version: 1.37
@@ -178,40 +214,55 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 18.091 ops/us
-# Warmup Iteration   2: 19.090 ops/us
-# Warmup Iteration   3: 18.825 ops/us
-Iteration   1: 19.019 ops/us
+# Warmup Iteration   1: 16.417 ops/us
+# Warmup Iteration   2: 19.566 ops/us
+# Warmup Iteration   3: 20.230 ops/us
+Iteration   1: 19.132 ops/us
+                 accepted:           19134704.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻³ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   2: 18.127 ops/us
+Iteration   2: 17.595 ops/us
+                 accepted:           17598009.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻³ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   3: 17.316 ops/us
+Iteration   3: 18.116 ops/us
+                 accepted:           18117982.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻³ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   4: 18.251 ops/us
+Iteration   4: 19.410 ops/us
+                 accepted:           19413555.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻³ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   5: 18.296 ops/us
+Iteration   5: 17.069 ops/us
+                 accepted:           17070850.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻³ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
 
 
 Result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish":
-  18.202 ±(99.9%) 2.334 ops/us [Average]
-  (min, avg, max) = (17.316, 18.202, 19.019), stdev = 0.606
-  CI (99.9%): [15.867, 20.536] (assumes normal distribution)
+  18.264 ±(99.9%) 3.834 ops/us [Average]
+  (min, avg, max) = (17.069, 18.264, 19.410), stdev = 0.996
+  CI (99.9%): [14.430, 22.099] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:accepted":
+  91335100.000 ±(99.9%) 0.001 # [Sum]
+  (min, avg, max) = (17070850.000, 18267020.000, 19413555.000), stdev = 995995.575
+  CI (99.9%): [91335100.000, 91335100.000] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate":
   0.007 ±(99.9%) 0.001 MB/sec [Average]
@@ -223,6 +274,9 @@ Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.count":
   ≈ 0 counts
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:rejected":
+  ≈ 0 #
 
 
 # JMH version: 1.37
@@ -244,53 +298,71 @@ WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
 WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-# Warmup Iteration   1: 10.640 ops/us
-# Warmup Iteration   2: 10.952 ops/us
-# Warmup Iteration   3: 27.542 ops/us
-Iteration   1: 27.369 ops/us
+# Warmup Iteration   1: 16.718 ops/us
+# Warmup Iteration   2: 16.823 ops/us
+# Warmup Iteration   3: 26.800 ops/us
+Iteration   1: 27.001 ops/us
+                 accepted:           27004506.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   2: 28.074 ops/us
+Iteration   2: 27.449 ops/us
+                 accepted:           27451899.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   3: 27.719 ops/us
+Iteration   3: 26.909 ops/us
+                 accepted:           26911715.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   4: 27.194 ops/us
+Iteration   4: 26.043 ops/us
+                 accepted:           26047294.000 #
                  gc.alloc.rate:      0.007 MB/sec
                  gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
-Iteration   5: 27.422 ops/us
+Iteration   5: 19.258 ops/us
+                 accepted:           19261939.000 #
                  gc.alloc.rate:      0.066 MB/sec
-                 gc.alloc.rate.norm: 0.003 B/op
+                 gc.alloc.rate.norm: 0.004 B/op
                  gc.count:           ≈ 0 counts
+                 rejected:           ≈ 0 #
 
 
 
 Result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish":
-  27.556 ±(99.9%) 1.331 ops/us [Average]
-  (min, avg, max) = (27.194, 27.556, 28.074), stdev = 0.346
-  CI (99.9%): [26.224, 28.887] (assumes normal distribution)
+  25.332 ±(99.9%) 13.220 ops/us [Average]
+  (min, avg, max) = (19.258, 25.332, 27.449), stdev = 3.433
+  CI (99.9%): [12.112, 38.552] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:accepted":
+  126677353.000 ±(99.9%) 0.001 # [Sum]
+  (min, avg, max) = (19261939.000, 25335470.600, 27451899.000), stdev = 3433073.455
+  CI (99.9%): [126677353.000, 126677353.000] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate":
-  0.018 ±(99.9%) 0.102 MB/sec [Average]
-  (min, avg, max) = (0.007, 0.018, 0.066), stdev = 0.026
-  CI (99.9%): [≈ 0, 0.120] (assumes normal distribution)
+  0.019 ±(99.9%) 0.102 MB/sec [Average]
+  (min, avg, max) = (0.007, 0.019, 0.066), stdev = 0.026
+  CI (99.9%): [≈ 0, 0.121] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.alloc.rate.norm":
-  0.001 ±(99.9%) 0.004 B/op [Average]
-  (min, avg, max) = (≈ 10⁻⁴, 0.001, 0.003), stdev = 0.001
-  CI (99.9%): [≈ 0, 0.005] (assumes normal distribution)
+  0.001 ±(99.9%) 0.006 B/op [Average]
+  (min, avg, max) = (≈ 10⁻⁴, 0.001, 0.004), stdev = 0.001
+  CI (99.9%): [≈ 0, 0.007] (assumes normal distribution)
 
 Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:gc.count":
   ≈ 0 counts
+
+Secondary result "io.patterncatalyst.lowlat.offheap.PublishBenchmark.publish:rejected":
+  ≈ 0 #
 
 
 # Run complete. Total time: 00:00:32
@@ -307,24 +379,32 @@ works, and factor in a small probability of new VM bugs. Additionally, while com
 different JVMs are already problematic, the performance difference caused by different Blackhole
 modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
 
-Benchmark                                       (structure)   Mode  Cnt    Score    Error   Units
-PublishBenchmark.publish                     blocking-queue  thrpt    5    3.047 ±  0.494  ops/us
-PublishBenchmark.publish:gc.alloc.rate       blocking-queue  thrpt    5  277.574 ±  8.390  MB/sec
-PublishBenchmark.publish:gc.alloc.rate.norm  blocking-queue  thrpt    5   95.697 ± 16.515    B/op
-PublishBenchmark.publish:gc.count            blocking-queue  thrpt    5    3.000           counts
-PublishBenchmark.publish:gc.time             blocking-queue  thrpt    5    6.000               ms
-PublishBenchmark.publish                       linked-queue  thrpt    5    5.367 ±  0.800  ops/us
-PublishBenchmark.publish:gc.alloc.rate         linked-queue  thrpt    5  492.946 ± 69.117  MB/sec
-PublishBenchmark.publish:gc.alloc.rate.norm    linked-queue  thrpt    5   96.352 ±  1.470    B/op
-PublishBenchmark.publish:gc.count              linked-queue  thrpt    5    4.000           counts
-PublishBenchmark.publish:gc.time               linked-queue  thrpt    5    6.000               ms
-PublishBenchmark.publish                        agrona-spsc  thrpt    5   18.202 ±  2.334  ops/us
-PublishBenchmark.publish:gc.alloc.rate          agrona-spsc  thrpt    5    0.007 ±  0.001  MB/sec
-PublishBenchmark.publish:gc.alloc.rate.norm     agrona-spsc  thrpt    5   ≈ 10⁻³             B/op
-PublishBenchmark.publish:gc.count               agrona-spsc  thrpt    5      ≈ 0           counts
-PublishBenchmark.publish                          disruptor  thrpt    5   27.556 ±  1.331  ops/us
-PublishBenchmark.publish:gc.alloc.rate            disruptor  thrpt    5    0.018 ±  0.102  MB/sec
-PublishBenchmark.publish:gc.alloc.rate.norm       disruptor  thrpt    5    0.001 ±  0.004    B/op
-PublishBenchmark.publish:gc.count                 disruptor  thrpt    5      ≈ 0           counts
+Benchmark                                       (structure)   Mode  Cnt          Score    Error   Units
+PublishBenchmark.publish                     blocking-queue  thrpt    5          3.337 ±  0.395  ops/us
+PublishBenchmark.publish:accepted            blocking-queue  thrpt    5   16687211.000                #
+PublishBenchmark.publish:gc.alloc.rate       blocking-queue  thrpt    5        298.649 ± 23.355  MB/sec
+PublishBenchmark.publish:gc.alloc.rate.norm  blocking-queue  thrpt    5         93.909 ±  7.073    B/op
+PublishBenchmark.publish:gc.count            blocking-queue  thrpt    5          3.000           counts
+PublishBenchmark.publish:gc.time             blocking-queue  thrpt    5          5.000               ms
+PublishBenchmark.publish:rejected            blocking-queue  thrpt    5            ≈ 0                #
+PublishBenchmark.publish                       linked-queue  thrpt    5          5.399 ±  0.735  ops/us
+PublishBenchmark.publish:accepted              linked-queue  thrpt    5   27002932.000                #
+PublishBenchmark.publish:gc.alloc.rate         linked-queue  thrpt    5        497.660 ± 57.705  MB/sec
+PublishBenchmark.publish:gc.alloc.rate.norm    linked-queue  thrpt    5         96.686 ±  2.069    B/op
+PublishBenchmark.publish:gc.count              linked-queue  thrpt    5          4.000           counts
+PublishBenchmark.publish:gc.time               linked-queue  thrpt    5          6.000               ms
+PublishBenchmark.publish:rejected              linked-queue  thrpt    5            ≈ 0                #
+PublishBenchmark.publish                        agrona-spsc  thrpt    5         18.264 ±  3.834  ops/us
+PublishBenchmark.publish:accepted               agrona-spsc  thrpt    5   91335100.000                #
+PublishBenchmark.publish:gc.alloc.rate          agrona-spsc  thrpt    5          0.007 ±  0.001  MB/sec
+PublishBenchmark.publish:gc.alloc.rate.norm     agrona-spsc  thrpt    5         ≈ 10⁻³             B/op
+PublishBenchmark.publish:gc.count               agrona-spsc  thrpt    5            ≈ 0           counts
+PublishBenchmark.publish:rejected               agrona-spsc  thrpt    5            ≈ 0                #
+PublishBenchmark.publish                          disruptor  thrpt    5         25.332 ± 13.220  ops/us
+PublishBenchmark.publish:accepted                 disruptor  thrpt    5  126677353.000                #
+PublishBenchmark.publish:gc.alloc.rate            disruptor  thrpt    5          0.019 ±  0.102  MB/sec
+PublishBenchmark.publish:gc.alloc.rate.norm       disruptor  thrpt    5          0.001 ±  0.006    B/op
+PublishBenchmark.publish:gc.count                 disruptor  thrpt    5            ≈ 0           counts
+PublishBenchmark.publish:rejected                 disruptor  thrpt    5            ≈ 0                #
 
 Benchmark result is saved to /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/jmh.json

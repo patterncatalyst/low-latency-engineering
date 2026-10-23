@@ -7,20 +7,20 @@
   "count": 1200,
   "dropped": 0,
   "percentiles": {
-    "p50": 99455,
-    "p90": 155519,
-    "p99": 2686975,
-    "p99_9": 143917055,
-    "max": 144048127
+    "p50": 101183,
+    "p90": 157695,
+    "p99": 2570239,
+    "p99_9": 144572415,
+    "max": 146014207
   },
-  "hdr_histogram": "HISTFAAAAiR4nDWTsY7UUAxF4/P8nJdkR6NRtBqtYLTaYoWABglRIqpFQpQU+xEIvoKGen+AhnJLJH6Eipqehh5dv2xGmST29bV97ff4y906DP5+6FfZnjYM5e2Ln9+GN3+74d9nuOSGI8WPOMbISGHlCgoTLL5gYPkbnRJeKXjI5gWQyStGdXBgwi1jvOjRocWTxGOH0DhhnqS6Rhlc8fPoEGJ1rLn5A8SghRJ6EBhREIHCjJbVZIx7r9dpYe7RaZs5s6zV1aZbN7Y2Ey4OrzQVH46FYc3CiZkQk2cJ7rOiakR4U1cJ99YB6lTMGRC6y9aJatR/4CH3bNGURz03kzoKV9IQJhN7CX2oMz+zENpd/M2aHIkkoeJsYWfMraSiLXxTs8suvfTVTC3LyFaRHNYSIRW6zG5Ch4pU5eFouImRDG7KbvQAjRJL/pmiUSRnKqaOS0/T82mq28g1ptrNBaovkqB5X6mudknJJ89hjdTNXjJp4ZBMlaxO46Xvw8jS17V66ZX30KrF1ErnoiTiICOLti+9NbUx5cgqCptJRMVHJnQTS5Oy6ZZZwH4aiuiuYPWTgKpTB+rAB56yA17xiYlfevlh/DE+8vsZu+yvcmfs+WosvGbP3i9FsuPEwp6Vi3xaQi/gWqW+Y+KGcw7KfWTcjvDKSyrn1C1E8+jv9eE479JxYuXUG872mFKW7jQecWLyAyPPRa8Eq3+HW+5vuVcp16w8wfkP/v8hTw==",
+  "hdr_histogram": "HISTFAAAAj54nDWUvYpUQRCFp74+XbfvzgzLMCwTjMMyoCwbCBotImKmgYGhgbGpb2AmGIsvYGYsJr6EsQ9h4iNIVV1nLv1bVef0qeq+9/HLfrXS51X92tLbatVePPr5dfX8by38fk+nc+bIFuNMQ2dnzUlM7OgYa7D4GhMzhneBOrgJl7kxxfYQgKnRoIUPhKWlb49xTjytYtthHUv1mSJ4bliFQJpR/vHRMAnzaBuJNYCEdUMRdHj4SRkr3YwldqArob3JaCoWLeJZMQgztcSrVsVXpj6ah6UzkI0IlRDmXjy0UIYRHD1F85aQ0ki+NQsjuSSNjTxF8dAidBrmssWoXG2kKhqmjYlR56HObDKNPGILi0Qew8fYRBJic5PyW2qtgI1uUsQeNgLKhppflMjpE2Qzs0GlVU5DT3kkXSHchWwUutyTSND1Vn1KIbx70c2ZjSmroSWRKpD0ayUBsW2uXgKEuFVP7LJNcHoE60m0bFLdqIgaU6s9lO9RXGRtMpX+CyrSRA8Zk1qUdSccss7JclgKOMDUY6bGtqAndJkgeR2KQ9MSvf3n1enqjnxK2wDIO9aKT8t6q4A9w4TDnFLESWd27MrUODIz54VcbuKZW4w73vHd+MADfnT+NH7d5xNsecwzXnLmCa84cMWW1zSOeZqJA2uOGCf2HDgx8wZjDseHKYXFeRpXhITxAJjm9DAuq8zjZcCY8rLvSwXTlssc7mhlmI+G5kraOrJwzU1QuOaaHd/ecssNEyeeppZ7/gHdRR/I",
   "build": {
     "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
     "gil_enabled": true
   },
   "profile": {
     "schema": "lowlat-profile/1",
-    "captured_at": "2026-10-23T00:35:21Z",
+    "captured_at": "2026-10-23T07:02:40Z",
     "host_label": "bare-metal-host",
     "cpu": {
       "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
@@ -63,7 +63,7 @@
       ]
     },
     "process": {
-      "pid": 2474175,
+      "pid": 2702454,
       "cpu_affinity": "0-15",
       "sched_policy": "SCHED_OTHER"
     },
@@ -72,9 +72,9 @@
       "product_name": "XPS 15 9510"
     },
     "load": {
-      "load1": 0.34,
-      "load5": 0.64,
-      "load15": 0.83,
+      "load1": 0.57,
+      "load5": 0.6,
+      "load15": 0.67,
       "running": 1
     },
     "memory": {
@@ -84,7 +84,8 @@
       "hugepagesize_kb": 2048,
       "transparent_hugepage": "madvise",
       "thp_enabled": "madvise",
-      "thp_defrag": "madvise"
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
     },
     "lab": {
       "running_domains": []
