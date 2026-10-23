@@ -1,4 +1,4 @@
-"""Figure 1.2 — one slow parcel in 100 makes the distribution bimodal.
+"""Figure 1.2: one slow parcel in 100 makes the distribution bimodal.
 
 Regenerate from the repo root:  python3 diagrams/01-bimodal-tail.py
 """

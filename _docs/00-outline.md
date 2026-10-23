@@ -35,38 +35,38 @@ required.
 
 The arc is below. Chapters link as they ship.
 
-## Part 0 — Prerequisites & the Lab
+## Part 0: Prerequisites & the Lab
 - Ch0 · [Setup: Fedora 44, the three toolchains, Docker Engine, the KVM/libvirt VM lab, a PREEMPT_RT kernel, `linuxptp`, and the line simulator]({{ '/docs/00-prerequisites/' | relative_url }})
 
-## Part 1 — Understanding & Measuring Latency
+## Part 1: Understanding & Measuring Latency
 - Ch1 · [Latency vs bandwidth; latency as a distribution]({{ '/docs/01-latency-distribution/' | relative_url }})
 - Ch2 · [Modeling with Little's Law and Amdahl's Law]({{ '/docs/02-littles-amdahl/' | relative_url }})
 - Ch3 · [Measuring correctly: clocks, percentiles, coordinated omission, HdrHistogram]({{ '/docs/03-coordinated-omission/' | relative_url }})
 - Ch4 · [Benchmark harnesses: Google Benchmark, `pyperf`, JMH]({{ '/docs/04-benchmark-harnesses/' | relative_url }})
 
-## Part 2 — The Managed-Runtime Question
+## Part 2: The Managed-Runtime Question
 - Ch5 · [What the JVM costs: allocation, escape analysis, JIT warmup vs AOT]({{ '/docs/05-jvm-costs/' | relative_url }})
 - Ch6 · [GC for tails: Generational ZGC and Shenandoah]({{ '/docs/06-gc-tails/' | relative_url }})
 - Ch7 · [Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity]({{ '/docs/07-offheap-lockfree/' | relative_url }})
 - Ch8 · [Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison]({{ '/docs/08-zero-copy-flat/' | relative_url }})
 
-## Part 3 — Accelerating Code
+## Part 3: Accelerating Code
 - Ch9 · [Eliminating work: allocation, cache locality, false sharing]({{ '/docs/09-eliminating-work/' | relative_url }})
 - Ch10 · [Lock-free and wait-free synchronization]({{ '/docs/10-lockfree-waitfree/' | relative_url }})
 
-## Part 4 — Threading & I/O Models
+## Part 4: Threading & I/O Models
 - Ch11 · Stackful vs stackless: threads and fibers vs event loops and coroutines
 - Ch12 · I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core
 - Ch13 · Where the code runs: bare metal, VMs and containers, and when not to use containers
 
-## Part 5 — The OS, Isolation & the Network Edge
+## Part 5: The OS, Isolation & the Network Edge
 - Ch14 · PREEMPT_RT: what real-time Linux does and doesn't promise
 - Ch15 · CPU partitioning and the noisy-neighbour problem
 - Ch16 · Measuring jitter with `cyclictest`
 - Ch17 · Kernel bypass: DPDK, AF_XDP/XDP, RDMA
 - Ch18 · Latency config as code: CI/CD, deployment, and rollouts gated on a latency and jitter SLO
 
-## Part 6 — Transports by Latency Budget
+## Part 6: Transports by Latency Budget
 - Ch19 · Match every message to a channel by its budget; separate command and data paths
 - Ch20 · Request and command: gRPC, per-call deadlines and priority
 - Ch21 · The real-time backbone: OMG DDS (Cyclone DDS, Fast DDS) and QoS
@@ -75,17 +75,17 @@ The arc is below. Chapters link as they ship.
 - Ch24 · Streaming and bulk: WebSockets with protobuf, and Kafka
 - Ch25 · Fieldbus and local IPC: Modbus and D-Bus
 
-## Part 7 — Observing Without Wrecking It
+## Part 7: Observing Without Wrecking It
 - Ch26 · Low-overhead measurement: eBPF, USDT, sampling, off-path export
 - Ch27 · What to watch: per-channel latency, jitter, command timing, consumer lag
 
-## Part 8 — Failure: Detect, Withstand, Act, Observe
+## Part 8: Failure: Detect, Withstand, Act, Observe
 - Ch28 · A failure taxonomy for the sortation line
 - Ch29 · Detect: liveliness, heartbeats, watchdogs, deadline misses
 - Ch30 · Withstand and act: restart, failover, redundant paths, graceful degradation
 - Ch31 · Observe: feeding every tier back into observability
 
-## Part 9 — The Whole Line
+## Part 9: The Whole Line
 - Ch32 · A latency-tiered line end to end, holding command latency while the data path is flooded
 
 ## Appendices

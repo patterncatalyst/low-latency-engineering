@@ -1,4 +1,4 @@
-"""Figure 6.2 — headroom decides whether allocation stalls.
+"""Figure 6.2: headroom decides whether allocation stalls.
 
 Regenerate from the repo root:  python3 diagrams/06-headroom-stall.py
 """

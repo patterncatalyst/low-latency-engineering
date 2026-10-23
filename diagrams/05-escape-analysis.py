@@ -1,4 +1,4 @@
-"""Figure 5.2 — escape analysis removes the allocation.
+"""Figure 5.2: escape analysis removes the allocation.
 
 Regenerate from the repo root:  python3 diagrams/05-escape-analysis.py
 """

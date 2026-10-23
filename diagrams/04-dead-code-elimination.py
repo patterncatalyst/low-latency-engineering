@@ -1,4 +1,4 @@
-"""Figure 4.2 — dead-code elimination: guarded vs eliminated.
+"""Figure 4.2: dead-code elimination: guarded vs eliminated.
 
 Regenerate from the repo root:  python3 diagrams/04-dead-code-elimination.py
 """

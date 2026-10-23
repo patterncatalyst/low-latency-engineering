@@ -1,4 +1,4 @@
-"""Figure 4.1 — three harnesses, one check-digit workload.
+"""Figure 4.1: three harnesses, one check-digit workload.
 
 Regenerate from the repo root:  python3 diagrams/04-three-harnesses.py
 """

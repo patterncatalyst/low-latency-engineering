@@ -1,4 +1,4 @@
-"""Figure 5.1 — the JIT tiers and who pays for warm-up.
+"""Figure 5.1: the JIT tiers and who pays for warm-up.
 
 Regenerate from the repo root:  python3 diagrams/05-jit-tiers.py
 """

@@ -1,4 +1,4 @@
-"""Figure 3.2 — a 200 ms stall seen by four clocks.
+"""Figure 3.2: a 200 ms stall seen by four clocks.
 
 Regenerate from the repo root:  python3 diagrams/03-coordinated-omission.py
 """

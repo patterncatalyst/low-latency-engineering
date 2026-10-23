@@ -1,4 +1,4 @@
-"""Figure 1.1 — batch-of-32 against per-parcel handling at the same arrival rate.
+"""Figure 1.1: batch-of-32 against per-parcel handling at the same arrival rate.
 
 Regenerate from the repo root:  python3 diagrams/01-batch-vs-per-parcel.py
 """

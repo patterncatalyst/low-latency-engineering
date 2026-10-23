@@ -1,4 +1,4 @@
-"""Figure 2.2 — one batch as a parallel phase and a serial phase at N = 1, 2, 4.
+"""Figure 2.2: one batch as a parallel phase and a serial phase at N = 1, 2, 4.
 
 Regenerate from the repo root:  python3 diagrams/02-amdahl-phases.py
 """

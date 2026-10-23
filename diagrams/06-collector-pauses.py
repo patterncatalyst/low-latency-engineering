@@ -1,4 +1,4 @@
-"""Figure 6.1 — what each collector stops.
+"""Figure 6.1: what each collector stops.
 
 Regenerate from the repo root:  python3 diagrams/06-collector-pauses.py
 """

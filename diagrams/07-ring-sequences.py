@@ -1,4 +1,4 @@
-"""Figure 7.2 — sequences and slots in a ring buffer.
+"""Figure 7.2: sequences and slots in a ring buffer.
 
 Regenerate from the repo root:  python3 diagrams/07-ring-sequences.py
 """

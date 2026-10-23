@@ -1,4 +1,4 @@
-"""Figure 8.1 — decode by protobuf parse against a flat view.
+"""Figure 8.1: decode by protobuf parse against a flat view.
 
 Regenerate from the repo root:  python3 diagrams/08-zero-copy-decode.py
 """
