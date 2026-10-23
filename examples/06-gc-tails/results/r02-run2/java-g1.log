@@ -1,4 +1,4 @@
-java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/g1.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseG1GC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant g1 --jfr /tmp/lowlat-scratch.Rwe93R/g1.jfr
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=<repo>/examples/06-gc-tails/results/r02-run2/g1.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseG1GC -jar <repo>/examples/06-gc-tails/java/target/gc-tails-java.jar --variant g1 --jfr /tmp/lowlat-scratch.Rwe93R/g1.jfr
 live set 1850677232 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
 gctails-java: variant g1 on 127.0.0.1:47260
 line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     66.2us max=     811.5us

@@ -16,7 +16,7 @@
   "hdr_histogram" : "HISTFAAAAod4nDVTsY7TQBBdvx2P15uNs3GME0KOA6ETSCckELoS0SFR8xU0SKcTXwAdBQUfAH9AQUPPB1Cc0JVUJ4SugD+AN+vgdeKZ2XlvZmdmd2/er5yTe256/P5bUXz64MtH9+TPZDh/iSM8RgO8rnCMGl8rnFJdCFrx4uDgQaEFvzNxAnuEHitucQf8zLj4NGgpOJK4/d41QxmG6rJ4eDk0iigK0SCaQ4gIgW+McZCQNKpq1yenSTUysmGdiCAo1IsYs6VQa9lzsYU4LZlKbbuWjyl8zTtO/oDSykiuMAQvaqBGtLgW3J6ZPHD0Ti5INKYQVJkCXRIpEDUkiSl0KcXcxT5uhz6lcby16TbdzbzZxbwdN2Puu7wLQ86pH4etZOp9n8dh6Dbjru8JIUWXco4pK4lCDjx77gfVMcZtZDHCqBF9Eo0xRaohUXBBWSywepFJSmLJeEiWipkH8FAizLGLVkk7fBQ7AbekJoow6ygX/VgCHsxrqSmroNZPbyIbJNZBMW+Uhjrz0VkpI8FqdjOqddipkYBUWvPfBkUtDsnrfQfNjYxTR+nAEhsp2zehnDQo0UowMQpnvN7iWWZl2Niblk5lsYs2bGSyXNoS0eatRaPTEC4xRcdD/jh9OOS4z+URR2RhoRZyjOsUb+MGB9o47hNRc3A91ja8vBum3ymDTUv9f7zu4oAFWxXJlevQ4oBMzw20pLIm6UVFbYVn3D+ieoJ3dsmcLIzBbpcXYy+XCwy6nG5OY4nYxZvLGdOraaj5nTNUXeyOZETMi7oibE3ACRMzx+8RHypcAb8TPnX43Nj71+PC49zjm8cP4KrCrwqXlQk/y/9lsbytcFbWKdervXyGF/gHVcs49Q==",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.PoM1n0/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run1/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.PoM1n0/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
     "gil_enabled" : null
   },
   "profile" : {
@@ -24,7 +24,7 @@
     "captured_at" : "2026-10-23T06:15:34Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
-      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "model" : "Intel 8-core/16-thread laptop CPU",
       "sockets" : 1,
       "cores_per_socket" : 8,
       "threads_per_core" : 2,
@@ -43,8 +43,8 @@
     },
     "tuned" : "balanced",
     "kernel" : {
-      "release" : "7.2.11-200.fc44.x86_64",
-      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
       "preempt_model" : "PREEMPT_DYNAMIC",
       "realtime" : false,
       "sys_kernel_realtime" : null,
@@ -67,7 +67,7 @@
     },
     "virt" : {
       "type" : "none",
-      "product_name" : "XPS 15 9510"
+      "product_name" : "redacted"
     },
     "load" : {
       "load1" : 0.59,
@@ -104,7 +104,7 @@
     "gc" : {
       "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
       "heap_bytes" : 268435456,
-      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/unwarmed.gc.log:uptime,level,tags", "-XX:+UseG1GC", "-Xms256m", "-Xmx256m" ]
+      "flags" : [ "-Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run1/unwarmed.gc.log:uptime,level,tags", "-XX:+UseG1GC", "-Xms256m", "-Xmx256m" ]
     },
     "jit" : {
       "startup" : {

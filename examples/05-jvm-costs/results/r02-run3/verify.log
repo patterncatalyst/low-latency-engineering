@@ -1,6 +1,6 @@
-✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
 ━━ unit tests: tracker rules
-Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+Running main() from <repo>/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
 [==========] 3 tests from 2 test suites ran. (0 ms total)
 [  PASSED  ] 3 tests.
 ✓ C++ (GoogleTest) and Java (JUnit, ran during package) tracker tests pass
@@ -9,12 +9,12 @@ Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/rele
 ━━ C++ Google Benchmark: value vs allocating vs pmr, 30 repetitions each
 ━━ cpp / tracker
 ━━ java / unwarmed
-java: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/unwarmed.gc.log:uptime\,level\,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/unwarmed.jfr\,dumponexit=true\,settings=default\,jdk.Compilation#threshold=0ms\,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -cp /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar io.patterncatalyst.lowlat.jvmcosts.Costs --variant unwarmed --bind 127.0.0.1:47250 --expect 20000 --window 2000 --report /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed.json
+java: java -Xlog:async -Xlog:gc\*\,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run3/unwarmed.gc.log:uptime\,level\,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/unwarmed.jfr\,dumponexit=true\,settings=default\,jdk.Compilation#threshold=0ms\,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -cp <repo>/examples/05-jvm-costs/java/target/benchmarks.jar io.patterncatalyst.lowlat.jvmcosts.Costs --variant unwarmed --bind 127.0.0.1:47250 --expect 20000 --window 2000 --report <repo>/examples/05-jvm-costs/results/r02-run3/java-unwarmed.json
 jit startup     compilations 440 (c2 42), deoptimizations 25
 jit first-2000  compilations 246 (c2 18), deoptimizations 0
 jit steady      compilations 73 (c2 66), deoptimizations 3
 ━━ java / warmed
-java: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/warmed.gc.log:uptime\,level\,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/warmed.jfr\,dumponexit=true\,settings=default\,jdk.Compilation#threshold=0ms\,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -cp /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar io.patterncatalyst.lowlat.jvmcosts.Costs --variant warmed --bind 127.0.0.1:47250 --expect 20000 --window 2000 --report /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-warmed.json --warm-up 20000
+java: java -Xlog:async -Xlog:gc\*\,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run3/warmed.gc.log:uptime\,level\,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/warmed.jfr\,dumponexit=true\,settings=default\,jdk.Compilation#threshold=0ms\,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -cp <repo>/examples/05-jvm-costs/java/target/benchmarks.jar io.patterncatalyst.lowlat.jvmcosts.Costs --variant warmed --bind 127.0.0.1:47250 --expect 20000 --window 2000 --report <repo>/examples/05-jvm-costs/results/r02-run3/java-warmed.json --warm-up 20000
 jit startup     compilations 1075 (c2 233), deoptimizations 56
 jit first-2000  compilations 25 (c2 15), deoptimizations 6
 jit steady      compilations 14 (c2 9), deoptimizations 0
@@ -22,7 +22,7 @@ jit steady      compilations 14 (c2 9), deoptimizations 0
 ✓ AOT cache (plain) written: 23764992 bytes
 ✓ AOT cache (observed) written: 23928832 bytes
 ━━ java / aot-cache
-java: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.gc.log:uptime\,level\,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/aot-cache.jfr\,dumponexit=true\,settings=default\,jdk.Compilation#threshold=0ms\,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.ureLFE/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.aot.log -cp /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar io.patterncatalyst.lowlat.jvmcosts.Costs --variant aot-cache --bind 127.0.0.1:47250 --expect 20000 --window 2000 --report /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-aot-cache.json
+java: java -Xlog:async -Xlog:gc\*\,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run3/aot-cache.gc.log:uptime\,level\,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/aot-cache.jfr\,dumponexit=true\,settings=default\,jdk.Compilation#threshold=0ms\,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.ureLFE/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=<repo>/examples/05-jvm-costs/results/r02-run3/aot-cache.aot.log -cp <repo>/examples/05-jvm-costs/java/target/benchmarks.jar io.patterncatalyst.lowlat.jvmcosts.Costs --variant aot-cache --bind 127.0.0.1:47250 --expect 20000 --window 2000 --report <repo>/examples/05-jvm-costs/results/r02-run3/java-aot-cache.json
 jit startup     compilations 194 (c2 19), deoptimizations 22
 jit first-2000  compilations 266 (c2 31), deoptimizations 0
 jit steady      compilations 130 (c2 52), deoptimizations 4
@@ -33,18 +33,18 @@ jit steady      compilations 130 (c2 52), deoptimizations 4
   launch 4: no cache 176 ms, AOT cache 50 ms
   launch 5: no cache 176 ms, AOT cache 52 ms
 ━━ checking reports
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/cpp-tracker.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/cpp-tracker-first-2000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/cpp-tracker-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed-first-2000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-warmed.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-warmed-first-2000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-warmed-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-aot-cache.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-aot-cache-first-2000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-aot-cache-steady.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/cpp-tracker.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/cpp-tracker-first-2000.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/cpp-tracker-steady.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-unwarmed.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-unwarmed-first-2000.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-unwarmed-steady.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-warmed.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-warmed-first-2000.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-warmed-steady.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-aot-cache.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-aot-cache-first-2000.json
+ok   <repo>/examples/05-jvm-costs/results/r02-run3/java-aot-cache-steady.json
 example       language  variant               count  dropped    p50    p90      p99    p99.9      max
 05-jvm-costs  cpp       tracker               20000        0  154.6  170.0    189.8    233.9    361.5
 05-jvm-costs  cpp       tracker-first-2000     2000        0  157.4  172.2    193.4    260.2    329.2
@@ -106,5 +106,5 @@ JIT events per window (JFR jdk.Compilation, jdk.Deoptimization; startup = before
   java aot-cache steady: 130 compilations (52 at tier 4), 4 deoptimizations
 C++ (no JIT): first-window p99 193407 ns, steady p99 189055 ns, ratio 1.0
 aot-cache first-window p99: 483071 ns (unwarmed 10354687 ns, warmed 210943 ns)
-✓ 05-jvm-costs: the first parcel pays the JVM's costs; warm-up and the AOT cache move them out of the line; results in /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3
-profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.66
+✓ 05-jvm-costs: the first parcel pays the JVM's costs; warm-up and the AOT cache move them out of the line; results in <repo>/examples/05-jvm-costs/results/r02-run3
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2 load1=0.66

@@ -1,4 +1,4 @@
-command: /home/rsedor/Dev/low-latency-engineering/examples/build/release/07-offheap-lockfree/cpp/offheap-handoff --variant atomic-wait --bind 127.0.0.1:47274 --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait.json
+command: <repo>/examples/build/release/07-offheap-lockfree/cpp/offheap-handoff --variant atomic-wait --bind 127.0.0.1:47274 --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait.json
 offheap-handoff: variant atomic-wait listening on 127.0.0.1:47274
 decide-thread pid=2707453 tid=2707459
 line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     61.3us max=     193.8us
@@ -6,4 +6,4 @@ window-end handled=200000
 received 200000, dropped 0, reordered 0 published 200000 overflow 0 (stopped: expect)
 07-offheap-lockfree      cpp  atomic-wait      count=   200000 dropped=     0 p50=     58.5us p90=     66.9us p99=     87.1us p99.9=    146.7us max=     421.9us
 07-offheap-lockfree      cpp  atomic-wait-handoff count=   200000 dropped=     0 p50=      1.8us p90=      7.0us p99=      8.2us p99.9=     54.0us max=     160.4us
-report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait.json
+report: <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait.json

@@ -1,4 +1,4 @@
-command: /home/rsedor/Dev/low-latency-engineering/examples/build/release/07-offheap-lockfree/cpp/offheap-handoff --variant atomic-spsc --bind 127.0.0.1:47274 --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/cpp-atomic-spsc.json
+command: <repo>/examples/build/release/07-offheap-lockfree/cpp/offheap-handoff --variant atomic-spsc --bind 127.0.0.1:47274 --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report <repo>/examples/07-offheap-lockfree/results/r02-run1/cpp-atomic-spsc.json
 offheap-handoff: variant atomic-spsc listening on 127.0.0.1:47274
 decide-thread pid=2678689 tid=2678695
 window-end handled=200000
@@ -6,4 +6,4 @@ line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p5
 received 200000, dropped 0, reordered 0 published 200000 overflow 0 (stopped: expect)
 07-offheap-lockfree      cpp  atomic-spsc      count=   200000 dropped=     0 p50=     56.8us p90=     64.0us p99=     83.1us p99.9=    125.4us max=     245.6us
 07-offheap-lockfree      cpp  atomic-spsc-handoff count=   200000 dropped=     0 p50=      0.1us p90=      0.3us p99=      0.3us p99.9=      0.5us max=     145.0us
-report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/cpp-atomic-spsc.json
+report: <repo>/examples/07-offheap-lockfree/results/r02-run1/cpp-atomic-spsc.json

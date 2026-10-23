@@ -1,4 +1,4 @@
-✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
 ━━ cpp: stall 200 ms at parcel 5000, port 47230
 ━━ cpp: stall 0 ms at parcel 5000, port 47231 (-control)
 ━━ cpp: clock-read probe (1e6 calls)
@@ -34,35 +34,35 @@ python control: intended=209279 closed-corrected=19087 closed-naive=19087
 ✓ python control intended-time p99 has no stall tail (< 1 ms) (209279 < 1000000)
 ✓ python control closed-loop-corrected within 2x of closed-loop-naive (19087 and 19087)
 ━━ reports (schema, histogram decode, percentile recompute)
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-clock-read.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-clock-read-steady_clock.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-corrected-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-corrected.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-naive-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-naive.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-intended-time-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-intended-time.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-receipt-time-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/cpp-receipt-time.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-clock-read.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-corrected-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-corrected.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-naive-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-naive.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-intended-time-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-intended-time.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-receipt-time-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/java-receipt-time.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-clock-read.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-clock-read-perf_counter_ns.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-corrected-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-corrected.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-naive-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-naive.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-intended-time-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-intended-time.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-receipt-time-control.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/03-coordinated-omission/results/r02-run3/python-receipt-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-clock-read.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-clock-read-steady_clock.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-corrected-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-corrected.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-naive-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-naive.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-intended-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-intended-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-receipt-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-receipt-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-clock-read.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-corrected-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-corrected.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-naive-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-naive.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-intended-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-intended-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-receipt-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-receipt-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-clock-read.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-clock-read-perf_counter_ns.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-corrected-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-corrected.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-naive-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-naive.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-intended-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-intended-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-receipt-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-receipt-time.json
 example                  language  variant                          count  dropped    p50    p90       p99     p99.9       max
 03-coordinated-omission  cpp       clock-read                     1000000        0    0.0    0.0       0.0       0.0       2.4
 03-coordinated-omission  cpp       clock-read-steady_clock        1000000        0    0.0    0.0       0.0       0.0       4.1

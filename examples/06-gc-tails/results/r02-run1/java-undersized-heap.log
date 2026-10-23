@@ -1,4 +1,4 @@
-java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run1/undersized-heap.gc.log:uptime\,level\,tags -Xms1893m -Xmx1893m -XX:+AlwaysPreTouch -XX:+UseZGC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant undersized-heap --jfr /tmp/lowlat-scratch.38DDNM/undersized-heap.jfr
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=<repo>/examples/06-gc-tails/results/r02-run1/undersized-heap.gc.log:uptime\,level\,tags -Xms1893m -Xmx1893m -XX:+AlwaysPreTouch -XX:+UseZGC -jar <repo>/examples/06-gc-tails/java/target/gc-tails-java.jar --variant undersized-heap --jfr /tmp/lowlat-scratch.38DDNM/undersized-heap.jfr
 live set 1895825408 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
 gctails-java: variant undersized-heap on 127.0.0.1:47260
 line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     52.5us p99=     60.0us p99.9=    110.0us max=    1494.0us

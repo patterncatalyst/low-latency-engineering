@@ -1,9 +1,9 @@
-✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
 ━━ unit tests: the SPSC ring and the decide-loop failure path
-Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+Running main() from <repo>/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
 [==========] 6 tests from 1 test suite ran. (7 ms total)
 [  PASSED  ] 6 tests.
-Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+Running main() from <repo>/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
 decide-thread pid=2705790 tid=2705791
 window-end handled=1000
 decide-thread pid=2705790 tid=2705792
@@ -26,100 +26,100 @@ decide-thread pid=2705790 tid=2705794
 ━━ cpp / atomic-wait
 ━━ JMH -prof gc: bytes allocated per publish
 ━━ checking reports
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-manifest-lookup-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-manifest-lookup.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-manifest-lookup-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-manifest-lookup-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-manifest-lookup.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-manifest-lookup-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-divert.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-handoff-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-handoff.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-handoff-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-journal-append-first-20000.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-journal-append.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-journal-append-steady.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-wait-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-backoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-agrona-spsc-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-blocking-queue-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-manifest-lookup-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-manifest-lookup.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-manifest-lookup-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-map-manifest-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-blocking-wait-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-disruptor-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-linked-queue-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-manifest-lookup-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-manifest-lookup.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-manifest-lookup-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-on-heap-manifest-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-divert.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-handoff-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-handoff.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-handoff-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-journal-append-first-20000.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-journal-append.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-journal-append-steady.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel.json
+ok   <repo>/examples/07-offheap-lockfree/results/r02-run3/java-write-per-parcel-steady.json
 example              language  variant                                              count  dropped   p50    p90      p99    p99.9      max
 07-offheap-lockfree  cpp       atomic-spsc-first-20000                              20000        0  56.7   64.0     84.1    132.7    214.3
 07-offheap-lockfree  cpp       atomic-spsc-handoff-first-20000                      20000        0   0.1    0.3      0.3      0.6     49.9
@@ -271,5 +271,5 @@ example              language  variant                                          
 ━━ observed: the C++ lane (atomic-spsc spins, atomic-wait parks)
   atomic-spsc: hand-off p50 / p99 / p99.9 = 129 / 330 / 547 ns; decide-thread ctx switches voluntary 0 involuntary 275
   atomic-wait: hand-off p50 / p99 / p99.9 = 1823 / 8187 / 53855 ns; decide-thread ctx switches voluntary 199879 involuntary 2
-✓ 07-offheap-lockfree (host): the hand-off, journal and manifest criteria hold; results in /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3
-profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=0.09
+✓ 07-offheap-lockfree (host): the hand-off, journal and manifest criteria hold; results in <repo>/examples/07-offheap-lockfree/results/r02-run3
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2 load1=0.09

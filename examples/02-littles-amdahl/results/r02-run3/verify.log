@@ -1,4 +1,4 @@
-✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
 ✓ loadavg at start: 0.55 0.74 0.73 (16 CPUs)
 ━━ Little's Law, cpp: lambda=1000/s for 10s into UDP 47220
 model: lambda=1000/s  L(sampled)=1.047  W-bar(model input)=1.042 ms  predicted L=lambda*W=1.042  error=+0.51%  (samples=10031, max in system=11)
@@ -59,26 +59,26 @@ amdahl-java: batch 3200 parcels, serial fraction s = 0.0986 (time in lock / wall
   N=2: predicted 1.82x, measured 1.97x (p50 wall 39.8 ms), error +8.0%
   N=4: predicted 3.09x, measured 3.53x (p50 wall 22.2 ms), error +14.4%
 ━━ validating reports
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-free-n1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-free-n2.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-free-n4.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-n1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-n2.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-n4.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/cpp-littles.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-amdahl-free-n1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-amdahl-free-n2.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-amdahl-free-n4.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-amdahl-n1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-amdahl-n2.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-amdahl-n4.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/java-littles.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/python-amdahl-processes-n1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/python-amdahl-processes-n2.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/python-amdahl-processes-n4.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/python-amdahl-threads-n1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/python-amdahl-threads-n2.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3/python-amdahl-threads-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-free-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-free-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-free-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-amdahl-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/cpp-littles.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-amdahl-free-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-amdahl-free-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-amdahl-free-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-amdahl-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-amdahl-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-amdahl-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/java-littles.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/python-amdahl-processes-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/python-amdahl-processes-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/python-amdahl-processes-n4.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/python-amdahl-threads-n1.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/python-amdahl-threads-n2.json
+ok   <repo>/examples/02-littles-amdahl/results/r02-run3/python-amdahl-threads-n4.json
 example            language  variant              count  dropped       p50       p90       p99     p99.9       max
 02-littles-amdahl  cpp       amdahl-free-n1          10        0   77987.8   78512.1   78774.3   78774.3   78774.3
 02-littles-amdahl  cpp       amdahl-free-n2          10        0   39616.5   39780.4   39813.1   39813.1   39813.1
@@ -100,5 +100,5 @@ example            language  variant              count  dropped       p50      
 02-littles-amdahl  python    amdahl-threads-n1       30        0  181665.8  185335.8  186908.7  186908.7  186908.7
 02-littles-amdahl  python    amdahl-threads-n2       30        0  180879.4  183500.8  184025.1  184025.1  184025.1
 02-littles-amdahl  python    amdahl-threads-n4       30        0  382992.4  406585.3  430702.6  430702.6  430702.6
-profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
-✓ 02-littles-amdahl verified: every criterion holds (reports in /home/rsedor/Dev/low-latency-engineering/examples/02-littles-amdahl/results/r02-run3)
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+✓ 02-littles-amdahl verified: every criterion holds (reports in <repo>/examples/02-littles-amdahl/results/r02-run3)

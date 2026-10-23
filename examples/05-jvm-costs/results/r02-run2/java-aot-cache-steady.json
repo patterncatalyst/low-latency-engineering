@@ -16,7 +16,7 @@
   "hdr_histogram": "HISTFAAABMl4nDVVUYsbNxBey7KsUxVlT1GFut1sNmbruo4xqWvcYI7LYYxxr1dj0sO4hwnhONLjaEMoIYQjhBBCKKEPhb6U0of2of+hP6t/oNBv5NTr1Yy+mdFqZ77R5q9/uZYkTZ1sf/V3sgZ1dvvvP5K7/2yBv75nO+wz9gn7nN2A9j57j13DXWdXxXWMN1iTAWRXoO2yTzFLaNpkH7AGg77DSN5iPGGc87pECFTJEplACi5Ygyeck5EzQQbGmBAYeCIAJRyrSLgBJx2IgEomISmKSVpRAKAFGYwUsY1McIn4TyIUpzy6kHNcBw+lHRken8xiNMXW4yYIi7tj0RGLcIVF6jTHc2EQtH1sUAgp4SFpM/QCWjMAsCjNDSaKSyeVkSZAepNa56xJASiprNQh1c4o7q2DEoz0zmnpAny8syrLch9C5fKqLArXarXKMCiqVmmD77ky86Vvl95W7axql0WrPR/frkbLwcHe/mxvvD+bH9xZTEYH+9Pp6uxw/3B9dHyyON8s1qeni6OjxaPp8mA+25ufTM4Pz1ar0WaxuHe6me+t948OTjfTO4ib355M+tN+tzsYdkadfDQY9LqdqtPOy7I7KDpFb9jx3aryWdZ2rVCGfl5a51t5kRkPkam8LFQofOGzUFZZyDLYc+8KbdMsBIcgm+qgrTVKF8oHHZRKM61VGpA0qQUcUxVzrEWqDTKNtCpphWGwI/2KwQ2pRLoF10IAlJhJ1BsYpFDcKBQEkopIhVNU1kSQHQWDHskBq4wFR50Fb+CSosFULDhRL9kWPpKDmIJdYagTwb9iN9EaO8R43DtwjLSlJiBu1uFdj1H4E8CJjjFyy1ZG/Em2u2KR73xLex7bg4iFIAmvyF4elyUX1hCxJeIi2/VI8oZoiNg0ZMPbAEZW0GaUB7ye1MYopZkx1mcqeOdt1wZrvdZWg5wgYyhz7WBtaR8y45xPXeZdanQw2ljjQmhpa0Be47SC2aTMOEmx3iqDwhmRGqOV1VKnHh2AmdcutXCx3mhbZUUefJ72XNYty6o9rAbjYdVrdfrD3nCyPzycT+fDxXh2cnL2ePXg6fnF5YvV+ePLixevas9+ri3f1F7X3uB6Cfkb5JOL568wef70x9rl29ryJ0Bva88uf609fFv7vfb8Ze0RjE/O3tS+e7g5P3/2w5OHJ8dPH6/vz84uNpt7D9bHy83q/vpofIhhttzMVpeH0+PlejRdn52s9qYPlvdmh5Pj2Z2j+f7edNQf98eT8bQ/mBTT8XTU7XZ7w0GvPx7k407eb/d7Vf+gbFV5p9OpyqqVDXy/7Qsb8iz0WlnZKWxJbWFdyPIyMybXpsy9RQW8LXKfVqawSCES5lzQWsvU8xSjgGJ8qlKFzrAqMVZzaTVaJIDmQuDMkZzj2EmJ6MRuha5Q8dgE25lKlEgiJxj1kqKTOJ5m75qAbQ/giEBRREo69YhWW1ZHZoLlIGYSlWjg/xOzQTwXjXc+TXC/QXZSyKNOpzEgek4zHsYw4sNCFuqfRoyLPdNk18itjs6iyF0evzEfxhC6dxksV6BeZddh2o39kACpx05sRif6YNGXqgH8KpBb6FTCv8B4Ewi2B3mF3WUf4yP2DfuSfY3d3IDlI/Ytrj932b+c/QdrdZyG",
   "build": {
     "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cz8eDD/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.cz8eDD/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/aot-cache.aot.log",
+    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cz8eDD/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.cz8eDD/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=<repo>/examples/05-jvm-costs/results/r02-run2/aot-cache.aot.log",
     "gil_enabled": null
   },
   "profile": {
@@ -24,7 +24,7 @@
     "captured_at": "2026-10-23T06:38:00Z",
     "host_label": "bare-metal-host",
     "cpu": {
-      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "model": "Intel 8-core/16-thread laptop CPU",
       "sockets": 1,
       "cores_per_socket": 8,
       "threads_per_core": 2,
@@ -43,8 +43,8 @@
     },
     "tuned": "balanced",
     "kernel": {
-      "release": "7.2.11-200.fc44.x86_64",
-      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
       "preempt_model": "PREEMPT_DYNAMIC",
       "realtime": false,
       "sys_kernel_realtime": null,
@@ -70,7 +70,7 @@
     },
     "virt": {
       "type": "none",
-      "product_name": "XPS 15 9510"
+      "product_name": "redacted"
     },
     "load": {
       "load1": 0.5,
@@ -112,7 +112,7 @@
       ],
       "heap_bytes": 268435456,
       "flags": [
-        "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags",
+        "-Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags",
         "-XX:+UseG1GC",
         "-Xms256m",
         "-Xmx256m"

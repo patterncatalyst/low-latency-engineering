@@ -1,4 +1,4 @@
-java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run3/thp.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseZGC -XX:+UseTransparentHugePages -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant thp --jfr /tmp/lowlat-scratch.SzocRN/thp.jfr
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=<repo>/examples/06-gc-tails/results/r02-run3/thp.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseZGC -XX:+UseTransparentHugePages -jar <repo>/examples/06-gc-tails/java/target/gc-tails-java.jar --variant thp --jfr /tmp/lowlat-scratch.SzocRN/thp.jfr
 [0.002s][warning][pagesize] Shared memory transparent huge pages are not enabled in the OS. Set /sys/kernel/mm/transparent_hugepage/shmem_enabled to 'advise' to enable them.
 live set 1893728256 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
 gctails-java: variant thp on 127.0.0.1:47260

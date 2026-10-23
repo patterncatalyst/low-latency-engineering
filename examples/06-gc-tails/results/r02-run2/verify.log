@@ -1,4 +1,4 @@
-✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
 ━━ live set probe (ZGC, 4096 MB heap)
 ✓ live set 1804 MB; --undersized-heap runs ZGC in 1895 MB (105 %)
 ━━ java / stop-the-world (-XX:+UseParallelGC -Xms4096m -Xmx4096m)
@@ -15,28 +15,28 @@
 ━━ cpp / deferred-free
 ━━ cpp / no-free
 ━━ checking reports
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-stop-the-world.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-stop-the-world-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-g1.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-g1-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-zgc.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-zgc-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-shenandoah-gen.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-shenandoah-gen-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-shenandoah.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-shenandoah-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-undersized-heap.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-undersized-heap-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-thp.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-thp-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/java-jfr-off.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/python-cyclic-garbage.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/python-cyclic-garbage-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/python-frozen.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/python-frozen-gc-pause.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/cpp-bulk-free.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/cpp-deferred-free.json
-ok   /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/cpp-no-free.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-stop-the-world.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-stop-the-world-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-g1.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-g1-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-zgc.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-zgc-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah-gen.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah-gen-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-undersized-heap.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-undersized-heap-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-thp.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-thp-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-jfr-off.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-cyclic-garbage.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-cyclic-garbage-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-frozen.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-frozen-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/cpp-bulk-free.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/cpp-deferred-free.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/cpp-no-free.json
 example      language  variant                    count  dropped       p50       p90       p99     p99.9       max
 06-gc-tails  java      stop-the-world            300000        0      60.4      77.5  131792.9  153878.5  160956.4
 06-gc-tails  java      stop-the-world-gc-pause       13        0  154796.0  159383.6  160956.4  160956.4  160956.4
@@ -82,4 +82,4 @@ cpp deferred-free max 0.818 ms, no-free control max 1.178 ms (both are single OS
 zgc (reference): p99.9 0.147 ms, max pause 0.022 ms
 live set: 1804 MB; allocation: 47554 B/parcel on the receive thread, 10000 parcels/s
 ✓ 06-gc-tails: the collector, the headroom and where the frees run set the tail
-profile: bare-metal-host virt=none governor=powersave tuned=balanced thp=madvise kernel=7.2.11-200.fc44.x86_64 load1=0.71
+profile: bare-metal-host virt=none governor=powersave tuned=balanced thp=madvise kernel=7.2 load1=0.71

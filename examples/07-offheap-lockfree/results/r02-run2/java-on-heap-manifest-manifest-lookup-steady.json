@@ -16,7 +16,7 @@
   "hdr_histogram" : "HISTFAAAAz54nC1SXWhcRRS+59vZ2dnJ9GY6uQ7X6+12s6zrdo3rusS1hJhKTEMUlRhiWrRIiFgEK621VEVoY38E09CHtA+hjSEU6VMtolgLSp9CFLF58MEX96HkofgQpA8FXxQ8m3rPnTlzzvnON+dwJj1zoScIMreCB1/mf018HG3cXAn23Hvg2CWse+cufsmvxRv1lYlfjyyeo4XLtLRM7Y/W3zw1MFdt771/7OYiza7QxiX6+uT5j9sfrh7efG3h+Vu7biQ/9lztnt+2rr/Jr+XW5Gr2N9HGOh07OhSXvDZhFEUaChAsgQwgMggEgCyLVD6sPze5SPfoFO5iKbMsVrP/ZH+XV+SG/Cx3X87mruU31Kr6U62rTbWcn8tfzd2Rm4yZzS5lr2f+wh1cw0XMo00/03WapeNn6Es6MDXN/9TM6+OjB/eP9k8cGBt8ZbDa2F1rtRrVarM2VGvVK+VyM60US61Wq94crDf7dw+8ND4yMz1xdJEu0YkbdJHm6DzN05ETy7RAB49PT84cenG82t9qjAwNDBT7+hqVpFpjmnKSpI1aoy+qlOJyHNlK5OI48UmxYGOX+MibOHJFrRJrnE60C20UGqtTV9bOOe8jGxnrvfU2tKViGHrnrYltlBQ4PXI6TVNf8KU04kSfhD51WnsVJx1YFEobmoK1zKSNtdpob2wp8s4qo4RxSmknrREm1MpaFQrPE9EyDK3mbOki54yz3njtuDLew47HyDDx3ocmMoU4NqkvNpNapTVyaHhweHj/1Pjw2OToxORYozXAnVruxzGzkqIz2qAzay0Fj1poqXjuSuit8WuhrBZCdYDaSBVIGAGJQDGSnYxyJlSSz1JLMC5gGo5lmAr8drKim1+NEJ1LcvyGkGHJIQ88iS5WXWwGW2s78uJp0QljLx4DHsJOLiC/Bd/OHBk8wvIMIwNs48XVdpynCa/iNvACWyfxN+FRPAEG/gT8QPic8C/hMuErQg8+QS/exg48y9S9jP+D2NyH7zvFfEd4HB9wiJ1ZfEo4R3ztDr7hPdb7+NSL2wS8j6e4iC7s2aryXY4d7uQG+BZsv4Fujj3M0Z2sX8YF4g7y+IJwGjgr8BbOSvwHQYOgJQ==",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/on-heap-manifest.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run2/on-heap-manifest.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
     "gil_enabled" : null
   },
   "profile" : {
@@ -24,7 +24,7 @@
     "captured_at" : "2026-10-23T06:47:09Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
-      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "model" : "Intel 8-core/16-thread laptop CPU",
       "sockets" : 1,
       "cores_per_socket" : 8,
       "threads_per_core" : 2,
@@ -43,8 +43,8 @@
     },
     "tuned" : "balanced",
     "kernel" : {
-      "release" : "7.2.11-200.fc44.x86_64",
-      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
       "preempt_model" : "PREEMPT_DYNAMIC",
       "realtime" : false,
       "sys_kernel_realtime" : null,
@@ -67,7 +67,7 @@
     },
     "virt" : {
       "type" : "none",
-      "product_name" : "XPS 15 9510"
+      "product_name" : "redacted"
     },
     "load" : {
       "load1" : 0.32,
@@ -104,7 +104,7 @@
     "gc" : {
       "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
       "heap_bytes" : 1073741824,
-      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/on-heap-manifest.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+      "flags" : [ "-Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run2/on-heap-manifest.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
     }
   }
 }

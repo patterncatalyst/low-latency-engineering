@@ -16,7 +16,7 @@
   "hdr_histogram" : "HISTFAAAA+14nFVUT2gcVRif93tv387Ozs5OJuN2nU4342abbtakLiGmzRpjKLHWSGNrgkjwEIvkYD0UkR56s6RFa1WkUBD8exHB1kulVvRgL0GqFE+1Jw9SREElYJCcqr/3NgnpfPO+/9/v+96bt5suX+h1nNwdp/vIDSmoHmxf+9h5bLXr+O8oPvHwAi4DfwlcEHhL4HOBywLXJa5I7IJqLd0U5+Ut9XfutF7Or+rf9EW9oi/l7qrbal3+KT+U5+UNXMU5XMIq7uILuSZ/VHfUT+p7dTb3We47ynX5pVzHL3hdrsjb8pq8Kt+Xa/gXF3Eaa+J38au4Kb4Vt8SKuCE+FcvibXHyxKuHji288syRl08szT6/uDA/c2Bk/4H9rYOdTpa2akP1WpY1a41KUk3qcZJl1bQSVdOqH2dREGVRlsaVShrVk0rcSOppI439alyN05rXqNTCZm202Wp3mkNjeztD7cmZF8+Kky/NLszPTk0fWTq2uDj/7KHnTp06J5ZmZ6Y7kxPTe9udsal6oz3aHBid6kwMTLUn65PNZiutDaVZvZqltUoae0mQBVESVuNa6PtBEFTDahQnA62RsYmJxuRYMjIykgwM1BpJylFajbofhIHn+rUsCCtBmkaVSpJFbuyHKb1hEIWuG7ghXy/wI6U9pZXLQKRCzw20glba9bUiBxQfQLuu57rajTW10FQEboBYuX5QdQNjEs7XnucqGl6gPd/1faJFXhRRBJ6OK+zmeUT3PYI7yvPIuVx42oEDlyakVhKaXR1O4WiXvTmdHckB4Cgw7DKuqSqzyGFCFHkq9NNyNJCDZB1MhklR2jTNGTBlHAbM1VpTKNu/aOLMgJKsYp1kL2Io5RnL5Bt4SpgpTInEDlvRnaBouGRfypwlFFhvgnbugkKJVomqtOAGwFAeKNtCx4xsdkG7gB4i9phJJO5Dr81+wCBazaHWC+QtUME0LyOnCszME2QY99M2OgPsSOwC+sh30ChS5mkX1CD6VIla3vYfZrRIK0fMEnbbVjsJktvYI/fTY+e1+32UVQTuA1sd5yAs72WRaTXHwCM4StrDiofxEIk//2GMYx/+kfhKMH0fHscbAn8ofK3wkcQ3wA/Az8B14ArwGvCuwAcC722+Z+x/yDvC+N+0yhmrH8cTeJBjmjMZx1OWDhN8nHPM4WnSHDMO0/skuSEzmYmNY5ATdmnwHtnPnezmaXdXv1393KtZu0j9G3ZJ9TOja3Xz9mzp2/lOnkOZp1Im9Vheth+36+vZ8t+b1bMtu7zlLVle2PiMpS1PN7ZJmzhFezO6N6Zo7cK2jE3N+Ld7iha9AGfLU7C+0sYq21v8PzXLnsc=",
   "build" : {
     "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
-    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/on-heap-manifest.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run3/on-heap-manifest.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
     "gil_enabled" : null
   },
   "profile" : {
@@ -24,7 +24,7 @@
     "captured_at" : "2026-10-23T07:09:34Z",
     "host_label" : "bare-metal-host",
     "cpu" : {
-      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "model" : "Intel 8-core/16-thread laptop CPU",
       "sockets" : 1,
       "cores_per_socket" : 8,
       "threads_per_core" : 2,
@@ -43,8 +43,8 @@
     },
     "tuned" : "balanced",
     "kernel" : {
-      "release" : "7.2.11-200.fc44.x86_64",
-      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
       "preempt_model" : "PREEMPT_DYNAMIC",
       "realtime" : false,
       "sys_kernel_realtime" : null,
@@ -67,7 +67,7 @@
     },
     "virt" : {
       "type" : "none",
-      "product_name" : "XPS 15 9510"
+      "product_name" : "redacted"
     },
     "load" : {
       "load1" : 0.09,
@@ -104,7 +104,7 @@
     "gc" : {
       "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
       "heap_bytes" : 1073741824,
-      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/on-heap-manifest.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ],
+      "flags" : [ "-Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run3/on-heap-manifest.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ],
       "old_gen_used_bytes" : 137510496
     }
   }
