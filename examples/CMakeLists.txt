@@ -14,6 +14,10 @@ include(cmake/deps.cmake)
 add_library(lowlat_warnings INTERFACE)
 add_library(lowlat::warnings ALIAS lowlat_warnings)
 target_compile_options(lowlat_warnings INTERFACE -Wall -Wextra -Wpedantic)
+# GCC warns that std::hardware_destructive_interference_size is not ABI-stable across compiler
+# flags (-Winterference-size). The padded types are header-only and no layout crosses a build, so
+# the warning carries no information here.
+target_compile_options(lowlat_warnings INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wno-interference-size>)
 
 # -DLOWLAT_SANITIZE=address,undefined (the "sanitize" preset) instruments the
 # first-party targets through the same interface. The generated protobuf code
@@ -44,6 +48,14 @@ protobuf_generate(
 target_include_directories(lowlat_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(lowlat_proto PUBLIC protobuf::libprotobuf)
 add_library(lowlat::proto ALIAS lowlat_proto)
+
+# Flat wire layout (contracts/flat/parcel-v1): a header-only contract, plus its golden files.
+set(LOWLAT_FLAT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../contracts/flat")
+cmake_path(NORMAL_PATH LOWLAT_FLAT_ROOT)
+add_library(lowlat_flat_parcel_v1 INTERFACE)
+add_library(lowlat::flat_parcel_v1 ALIAS lowlat_flat_parcel_v1)
+target_include_directories(lowlat_flat_parcel_v1 INTERFACE "${LOWLAT_FLAT_ROOT}")
+target_compile_features(lowlat_flat_parcel_v1 INTERFACE cxx_std_23)
 
 add_subdirectory(common/proto-smoke)
 add_subdirectory(common/measure-cpp)

@@ -79,6 +79,7 @@ def from_gbench(source: Path, out_dir: Path) -> list[Path]:
     data = json.loads(source.read_text(encoding="utf-8"))
     samples: dict[str, list[float]] = {}
     ops: dict[str, int] = {}
+    iterations: dict[str, int] = {}
     for run in data["benchmarks"]:
         if run.get("run_type") != "iteration":
             continue
@@ -87,6 +88,7 @@ def from_gbench(source: Path, out_dir: Path) -> list[Path]:
             run["real_time"] * _UNIT_NS[f"{run['time_unit']}/op"]
         )
         ops[variant] = int(run.get("ops_per_iteration", 1))
+        iterations[variant] = int(run["iterations"])
     context = data["context"]
     build = {
         "compiler": f"Google Benchmark {context.get('library_version', 'unknown')}; "
@@ -103,7 +105,8 @@ def from_gbench(source: Path, out_dir: Path) -> list[Path]:
         recorder.write_report(
             path,
             f"Google Benchmark: {len(values)} repetitions, one sample per repetition; "
-            f"each sample is the real time of one iteration = {ops[variant]} operation(s), "
+            f"each sample is a repetition's mean real time per iteration, taken over "
+            f"{iterations[variant]} iterations, one iteration = {ops[variant]} operation(s), "
             "rounded to whole ns. Per-iteration samples are not exposed by the harness.",
             language="cpp",
             build=build,

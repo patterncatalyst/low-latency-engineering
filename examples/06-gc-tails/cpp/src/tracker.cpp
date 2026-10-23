@@ -43,6 +43,7 @@ void Reclaimer::run(const std::stop_token& stop) {
 }
 
 void Reclaimer::finish() {
+  if (!thread_.joinable()) return;
   thread_.request_stop();
   thread_.join();
 }

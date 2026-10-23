@@ -14,6 +14,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from lowlat_consumer import flat
+from lowlat_consumer.cli import positive_int
 from lowlat_measure.recorder import require_profile
 from lowlat_measure.table import format_rows
 
@@ -21,7 +22,10 @@ from lowlat_flat import decode, golden, harness_report
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="flat-py", description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        prog="flat-py",
+        description="Ch8 flat-record tools: golden dump, decode lane, report conversion",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     dump = sub.add_parser("dump", help="decode a file of parcel-v1 records, print JSON")
@@ -30,10 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     compare = sub.add_parser("decode", help="unpack_from vs ParseFromString")
     compare.add_argument("--out", type=Path, required=True, help="directory for the reports")
     compare.add_argument(
-        "--parcels", type=int, default=1024, help="distinct parcels (default 1024)"
+        "--parcels", type=positive_int, default=1024, help="distinct parcels (default 1024)"
     )
     compare.add_argument(
-        "--rounds", type=int, default=200, help="passes over the parcels (default 200)"
+        "--rounds", type=positive_int, default=200, help="passes over the parcels (default 200)"
     )
 
     for name, what in (("jmh-to-report", "JMH"), ("gbench-to-report", "Google Benchmark")):
@@ -48,10 +52,11 @@ def run_decode(out: Path, parcels: int, rounds: int) -> int:
         return 2
     out.mkdir(parents=True, exist_ok=True)
     paths = decode.decoders(parcels)
+    for fn in paths.values():
+        fn(0)  # first-call setup is not counted as per-parcel allocation
     observed = {name: decode.observe_allocations(fn, parcels) for name, fn in paths.items()}
     reports = []
     for name, fn in paths.items():
-        fn(0)  # first call outside the samples
         recorder = decode.time_decodes(fn, name, parcels, rounds)
         notes = (
             f"per-call time of decode plus reading every field, {parcels * rounds} calls; "

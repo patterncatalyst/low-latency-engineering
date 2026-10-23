@@ -29,20 +29,7 @@
          access is enabled.
          Chronicle Core also posts usage analytics unless -Dchronicle.analytics.disable=true; the
          surefire and exec arguments below, and verify.sh, add it after this list. -->
-    <chronicle.jvmArgs>
-      --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
-      --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED
-      --add-exports=java.base/jdk.internal.util=ALL-UNNAMED
-      --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
-      --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
-      --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED
-      --add-opens=java.base/java.io=ALL-UNNAMED
-      --add-opens=java.base/java.lang=ALL-UNNAMED
-      --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
-      --add-opens=java.base/java.util=ALL-UNNAMED
-      --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED
-      --enable-native-access=ALL-UNNAMED
-    </chronicle.jvmArgs>
+    <chronicle.jvmArgs>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED</chronicle.jvmArgs>
   </properties>
 
   <dependencies>
@@ -105,13 +92,9 @@
         <configuration>
           <!-- `mvn exec:exec -Dexec.mainClass=...` runs with the same Chronicle arguments. -->
           <executable>java</executable>
-          <arguments>
-            <argument>${chronicle.jvmArgs}</argument>
-            <argument>-Dchronicle.analytics.disable=true</argument>
-            <argument>-classpath</argument>
-            <classpath/>
-            <argument>${exec.mainClass}</argument>
-          </arguments>
+          <!-- commandlineArgs is split at spaces into separate arguments (chronicle.jvmArgs is a
+               single line for that reason); an <argument> element would pass the whole list as one. -->
+          <commandlineArgs>${chronicle.jvmArgs} -Dchronicle.analytics.disable=true -classpath %classpath ${exec.mainClass}</commandlineArgs>
         </configuration>
       </plugin>
       <plugin>

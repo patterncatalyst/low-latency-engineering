@@ -54,6 +54,7 @@ public class EventReceiver<E> implements AutoCloseable {
     private final WindowedRecorders windows; // null without --window
     private final GapTracker gaps;
     private final Completion completion;
+    private final Completion.SeqCell seqCell; // cached: the receive loop never loads completion's fields
     private long received;
     private long malformed;
     private long receiveAllocatedBytes = -1; // -1: not measured
@@ -68,6 +69,7 @@ public class EventReceiver<E> implements AutoCloseable {
                 : null;
         this.gaps = new GapTracker(config.window());
         this.completion = new Completion(recorder, windows);
+        this.seqCell = completion.seqCell();
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET);
         Selector sel = null;
         try {
@@ -162,7 +164,12 @@ public class EventReceiver<E> implements AutoCloseable {
      * received (omitted when unmeasured or nothing was received). Call it after {@code run}.
      */
     public Map<String, Object> runtime() {
-        Map<String, Object> runtime = RuntimeInfo.jvm();
+        return runtime(Map.of());
+    }
+
+    /** As {@link #runtime()}, with {@code extraGc} entries added to the {@code gc} object. */
+    public Map<String, Object> runtime(Map<String, ?> extraGc) {
+        Map<String, Object> runtime = RuntimeInfo.jvm(extraGc);
         if (receiveAllocatedBytes >= 0 && received > 0) {
             runtime.put("alloc_bytes_per_parcel", (double) receiveAllocatedBytes / received);
         }
@@ -176,6 +183,11 @@ public class EventReceiver<E> implements AutoCloseable {
      */
     public Map<String, Object> windowRuntime() {
         return RuntimeInfo.jvm();
+    }
+
+    /** As {@link #windowRuntime()}, with {@code extraGc} entries added to the {@code gc} object. */
+    public Map<String, Object> windowRuntime(Map<String, ?> extraGc) {
+        return RuntimeInfo.jvm(extraGc);
     }
 
     /**
@@ -256,7 +268,7 @@ public class EventReceiver<E> implements AutoCloseable {
                 recorder.addDropped(gaps.lastGap());
             }
             received++;
-            completion.begin(seq);
+            Completion.begin(seqCell, seq);
             handler.onParcel(event, completion);
         }
         return StopReason.REQUESTED;

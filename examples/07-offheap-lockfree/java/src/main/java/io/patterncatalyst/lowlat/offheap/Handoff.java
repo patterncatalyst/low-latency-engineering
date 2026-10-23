@@ -3,12 +3,12 @@ package io.patterncatalyst.lowlat.offheap;
 import io.patterncatalyst.lowlat.line.Config;
 import io.patterncatalyst.lowlat.line.Decoder;
 import io.patterncatalyst.lowlat.line.EventReceiver;
+import io.patterncatalyst.lowlat.line.WindowedRecorders;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
 import io.patterncatalyst.lowlat.measure.RuntimeInfo;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.ref.Reference;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -98,7 +98,6 @@ public final class Handoff {
                 out.printf("journal-readback count=%d in_order=%b%n", readback.count(), readback.inOrder());
             }
             long oldGenAfter = OldGen.usedAfterGc();
-            Reference.reachabilityFence(manifest); // live until the reading above
             out.printf("old-gen bytes_after_gc=%d baseline_bytes=%d%n", oldGenAfter, oldGenBaseline);
 
             diverter.stop(); // joins the listener: its recorder is safe to read
@@ -133,31 +132,29 @@ public final class Handoff {
 
         LatencyRecorder endToEnd = receiver.recorder();
         endToEnd.printSummary();
-        endToEnd.writeReport(report, notes, null, withOldGen(receiver.runtime(), result));
+        endToEnd.writeReport(report, notes, null, receiver.runtime(oldGen(result)));
         out.println("report: " + report);
-        for (Path window : receiver.windows().writeReports(report, notes, withOldGen(receiver.windowRuntime(), result))) {
+        for (Path window : receiver.windows().writeReports(report, notes, receiver.windowRuntime(oldGen(result)))) {
             out.println("report: " + window);
         }
 
         stage.handoff().all().printSummary();
-        writeSplit(stage.handoff(), sibling(report, "-handoff"), notes, out);
+        writeSplit(stage.handoff(), WindowedRecorders.sibling(report, "-handoff"), notes, out);
         if (result.journal() != null) {
             stage.journalAppend().all().printSummary();
-            writeSplit(stage.journalAppend(), sibling(report, "-journal-append"), notes, out);
+            writeSplit(stage.journalAppend(), WindowedRecorders.sibling(report, "-journal-append"), notes, out);
         }
         if (settings.manifest() != Variant.ManifestKind.NONE) {
             stage.manifestLookup().all().printSummary();
-            writeSplit(stage.manifestLookup(), sibling(report, "-manifest-lookup"), notes, out);
+            writeSplit(stage.manifestLookup(), WindowedRecorders.sibling(report, "-manifest-lookup"), notes, out);
         }
         diverter.latency().printSummary();
-        write(diverter.latency(), sibling(report, "-divert"), notes, out);
+        write(diverter.latency(), WindowedRecorders.sibling(report, "-divert"), notes, out);
     }
 
-    /** Adds {@code gc.old_gen_used_bytes}, the old generation after a collection at the end of the run. */
-    @SuppressWarnings("unchecked") // RuntimeInfo.jvm() builds gc as a mutable Map<String, Object>
-    private static Map<String, Object> withOldGen(Map<String, Object> runtime, Result result) {
-        ((Map<String, Object>) runtime.get("gc")).put("old_gen_used_bytes", result.oldGenAfterGcBytes());
-        return runtime;
+    /** {@code gc.old_gen_used_bytes}: the old generation after a collection at the end of the run. */
+    private static Map<String, Long> oldGen(Result result) {
+        return Map.of("old_gen_used_bytes", result.oldGenAfterGcBytes());
     }
 
     private static void writeSplit(SplitRecorder recorder, Path path, String notes, PrintStream out) {
@@ -196,15 +193,6 @@ public final class Handoff {
         }
         notes.append("; old_gen_baseline_bytes=").append(result.oldGenBaselineBytes());
         return notes.toString();
-    }
-
-    /** {@code dir/run.json} with suffix {@code -handoff} is {@code dir/run-handoff.json}. */
-    static Path sibling(Path report, String suffix) {
-        String name = report.getFileName().toString();
-        int dot = name.lastIndexOf('.');
-        String renamed = dot <= 0 ? name + suffix : name.substring(0, dot) + suffix + name.substring(dot);
-        Path parent = report.getParent();
-        return parent == null ? Path.of(renamed) : parent.resolve(renamed);
     }
 
     private static void deleteTree(Path directory) throws IOException {

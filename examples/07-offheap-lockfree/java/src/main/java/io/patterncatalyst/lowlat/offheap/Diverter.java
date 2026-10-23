@@ -36,8 +36,10 @@ final class Diverter implements AutoCloseable {
             throw e;
         }
         this.latency = LatencyRecorder.singleThreaded(example, variant + "-divert");
-        this.thread = Thread.ofPlatform().name("diverter").unstarted(this::listen);
-        thread.setUncaughtExceptionHandler((t, error) -> failure = error);
+        this.thread = Thread.ofPlatform()
+                .name("diverter")
+                .uncaughtExceptionHandler((t, error) -> failure = error)
+                .unstarted(this::listen);
         thread.start();
     }
 
@@ -50,7 +52,13 @@ final class Diverter implements AutoCloseable {
                 long arrivedNs = System.nanoTime();
                 buffer.flip();
                 DivertCommand command = DivertCommand.parseFrom(buffer);
-                latency.record(Math.max(0, arrivedNs - command.getDecidedNs()));
+                long latencyNs = arrivedNs - command.getDecidedNs();
+                if (latencyNs < 0) {
+                    throw new IllegalStateException("negative divert latency " + latencyNs
+                            + " ns: decided_ns is ahead of this JVM's System.nanoTime(); "
+                            + "producer and consumer must run on one host (one CLOCK_MONOTONIC)");
+                }
+                latency.record(latencyNs);
                 received.incrementAndGet();
             }
         } catch (ClosedChannelException closed) {

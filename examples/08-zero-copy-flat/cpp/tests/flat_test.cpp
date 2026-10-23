@@ -7,8 +7,6 @@
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <ranges>
 #include <span>
 #include <string>
@@ -16,6 +14,7 @@
 
 #include "lowlat/flat/decode.hpp"
 #include "lowlat/flat/table.hpp"
+#include "lowlat/line/binary_file.hpp"
 
 namespace {
 
@@ -23,12 +22,8 @@ namespace flat = lowlat::flat;
 namespace p1 = lowlat::flat::parcel_v1;
 
 std::vector<std::byte> read_golden(long seed) {
-  const auto path = std::filesystem::path{LOWLAT_FLAT_GOLDEN_DIR} / ("golden-seed" + std::to_string(seed) + ".bin");
-  std::ifstream in{path, std::ios::binary};
-  EXPECT_TRUE(in) << path;
-  const std::vector<char> raw{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
-  const auto bytes = std::as_bytes(std::span{raw});
-  return {bytes.begin(), bytes.end()};
+  return lowlat::line::read_binary_file(std::filesystem::path{LOWLAT_FLAT_GOLDEN_DIR} /
+                                        ("golden-seed" + std::to_string(seed) + ".bin"));
 }
 
 bool same_bytes(const p1::Parcel& a, const p1::Parcel& b) { return std::memcmp(&a, &b, sizeof a) == 0; }

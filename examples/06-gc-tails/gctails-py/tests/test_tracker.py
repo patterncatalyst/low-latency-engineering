@@ -1,18 +1,8 @@
 import gc
 
-import pytest
 from lowlat_gctails.tracker import Settings, Tracker, synthetic_barcode
 
 SMALL = Settings(rate=1_000, live_entries=500, entry_bytes=32, in_flight_ms=100, samples=4)
-
-
-@pytest.fixture
-def quiet_gc():
-    """No automatic collections while a test counts what a manual one frees."""
-    gc.collect()
-    gc.disable()
-    yield
-    gc.enable()
 
 
 def test_synthetic_barcode_has_the_sscc_shape():

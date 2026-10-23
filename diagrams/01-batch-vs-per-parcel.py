@@ -100,7 +100,8 @@ g.emit("01-batch-vs-per-parcel", 880, 400, bands=bands, nodes=nodes, edges=edges
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "01-batch-vs-per-parcel.svg"))
-    json.load(open(os.path.join(g.OUT, "01-batch-vs-per-parcel.excalidraw")))
+    json.loads((Path(g.OUT) / "01-batch-vs-per-parcel.excalidraw").read_text(encoding="utf-8"))
     print("ok: 01-batch-vs-per-parcel")

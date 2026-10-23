@@ -26,8 +26,10 @@ import org.openjdk.jmh.annotations.Warmup;
  *       The object is allocated again: the saving came from the analysis, not from the loop.
  * </ul>
  *
- * SampleTime mode, like Ch4: the samples are per-invocation times, never an average. This example reads
- * only the allocation counter, which is exact. One invocation decides {@value #BATCH} parcels.
+ * SampleTime mode, like Ch4: the harness times each invocation and reports percentiles of those
+ * samples. One invocation decides {@value #BATCH} parcels and {@code @OperationsPerInvocation}
+ * divides each sample by {@value #BATCH}, so a sample is the invocation's per-parcel average over the
+ * batch, not one parcel's time. This example reads only the allocation counter, which is exact.
  */
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)

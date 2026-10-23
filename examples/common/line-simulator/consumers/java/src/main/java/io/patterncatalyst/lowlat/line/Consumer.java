@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Java line consumer: see {@code examples/common/line-simulator/consumers/README.md}. */
 public final class Consumer {
@@ -51,19 +52,24 @@ public final class Consumer {
         // exit status below.
         FutureTask<LineReceiver.StopReason> receive = new FutureTask<>(receiver::run);
         Thread loop = Thread.ofPlatform().name("line-consumer").unstarted(receive);
-        // Runs on SIGINT/SIGTERM and on System.exit: stop the loop, wait for it (the join is also
-        // the happens-before edge to the single-threaded recorder), then write the report.
+        // The report is written once, by whichever of main (the loop ended by itself) or the
+        // shutdown hook (SIGINT/SIGTERM) gets here first.
+        AtomicBoolean reported = new AtomicBoolean();
+        // SIGINT/SIGTERM: stop the loop, wait for it (the join is also the happens-before edge to
+        // the single-threaded recorder), then write the report. Nothing can set the exit status
+        // from here, so a failed write halts the JVM with status 1.
         Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("line-consumer-shutdown").unstarted(() -> {
             receiver.stop();
             try {
                 loop.join();
-                if (receive.state() != Future.State.FAILED) {
+                if (receive.state() != Future.State.FAILED && reported.compareAndSet(false, true)) {
                     finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+            } catch (IOException | UncheckedIOException e) {
+                System.err.println("line-consumer-java: cannot write report: " + e.getMessage());
+                Runtime.getRuntime().halt(1);
             }
         }));
 
@@ -78,7 +84,17 @@ public final class Consumer {
             }
             System.exit(1);
         }
-        System.exit(0); // runs the shutdown hook, which writes the report
+        if (!reported.compareAndSet(false, true)) {
+            return; // the shutdown hook is writing the report and ends the JVM
+        }
+        int status = 0;
+        try {
+            finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
+        } catch (IOException | UncheckedIOException e) {
+            System.err.println("line-consumer-java: cannot write report: " + e.getMessage());
+            status = 1;
+        }
+        System.exit(status);
     }
 
     private static void finish(Config config, LineReceiver receiver, LineReceiver.StopReason reason)

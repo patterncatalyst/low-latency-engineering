@@ -133,7 +133,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     notes = (
         f"reordered={tracker.reordered}; rcvbuf_requested={args.rcvbuf}; "
-        f"rcvbuf_granted={granted}; single thread, GIL"
+        f"rcvbuf_granted={granted}; single thread, "
+        + ("GIL" if sys._is_gil_enabled() else "free-threaded, GIL off")
     )
     report = rec.write_report(args.report, notes) if args.report else rec.build_report(notes)
     rows = [report]

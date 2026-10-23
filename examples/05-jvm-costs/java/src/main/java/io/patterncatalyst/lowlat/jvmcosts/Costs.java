@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
  * three variants is the JVM, not this code:
  *
  * <ul>
- *   <li>{@code unwarmed}: bind and receive straight away (the r01 behaviour).
+ *   <li>{@code unwarmed}: bind and receive straight away (no warm-up).
  *   <li>{@code warmed}: {@code --warm-up N} replays N synthetic parcels in this JVM before it binds.
  *   <li>{@code aot-cache}: the same as {@code unwarmed}, launched with {@code -XX:AOTCache=...
  *       -XX:AOTMode=on}. A cache the JVM cannot use is then a startup failure, not a silent fallback.

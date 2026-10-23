@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.patterncatalyst.lowlat.line.Lanes;
 import java.lang.management.ManagementFactory;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TrackerTest {
 
@@ -23,13 +25,12 @@ class TrackerTest {
         assertEquals(10, s.samplesPerParcel());
     }
 
-    @Test
-    void syntheticBarcodesAreLaneable() {
-        for (long n : new long[] {0, 1, 123_456_789, 999_999_999, 1_000_000_001}) {
-            String barcode = Tracker.syntheticBarcode(n);
-            assertEquals(18, barcode.length());
-            assertTrue(Lanes.laneOf(barcode) < Lanes.LANES);
-        }
+    @ParameterizedTest
+    @ValueSource(longs = {0, 1, 123_456_789, 999_999_999, 1_000_000_001})
+    void syntheticBarcodesAreLaneable(long n) {
+        String barcode = Tracker.syntheticBarcode(n);
+        assertEquals(18, barcode.length());
+        assertTrue(Lanes.laneOf(barcode) < Lanes.LANES);
     }
 
     @Test

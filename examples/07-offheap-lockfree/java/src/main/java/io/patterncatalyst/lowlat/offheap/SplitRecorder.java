@@ -1,5 +1,6 @@
 package io.patterncatalyst.lowlat.offheap;
 
+import io.patterncatalyst.lowlat.line.WindowedRecorders;
 import io.patterncatalyst.lowlat.measure.LatencyRecorder;
 import io.patterncatalyst.lowlat.measure.RuntimeInfo;
 import java.nio.file.Path;
@@ -43,7 +44,7 @@ final class SplitRecorder {
     void writeReports(Path path, String notes) {
         Map<String, Object> runtime = RuntimeInfo.jvm();
         all.writeReport(path, notes, null, runtime);
-        first.writeReport(Handoff.sibling(path, "-first-" + window), notes, null, runtime);
-        steady.writeReport(Handoff.sibling(path, "-steady"), notes, null, runtime);
+        first.writeReport(WindowedRecorders.sibling(path, "-first-" + window), notes, null, runtime);
+        steady.writeReport(WindowedRecorders.sibling(path, "-steady"), notes, null, runtime);
     }
 }

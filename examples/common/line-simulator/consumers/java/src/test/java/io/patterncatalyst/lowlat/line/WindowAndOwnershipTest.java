@@ -1,6 +1,7 @@
 package io.patterncatalyst.lowlat.line;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -113,14 +114,14 @@ class WindowAndOwnershipTest {
             Path report = dir.resolve("warmed.json");
             receiver.recorder().writeReport(report, "n", null, receiver.runtime());
             assertTrue(receiver.runtime().containsKey("alloc_bytes_per_parcel"));
-            assertTrue(!receiver.windowRuntime().containsKey("alloc_bytes_per_parcel"),
+            assertFalse(receiver.windowRuntime().containsKey("alloc_bytes_per_parcel"),
                     "the whole-run allocation must not be reported as a window's figure");
             List<Path> written = w.writeReports(report, "n", receiver.windowRuntime());
             assertEquals(List.of(dir.resolve("warmed-first-200.json"), dir.resolve("warmed-steady.json")), written);
             String first = Files.readString(written.get(0));
             assertTrue(first.contains("\"variant\" : \"warmed-first-200\""), first);
             assertTrue(Files.readString(written.get(1)).contains("\"variant\" : \"warmed-steady\""));
-            assertTrue(!first.contains("alloc_bytes_per_parcel"), first);
+            assertFalse(first.contains("alloc_bytes_per_parcel"), first);
             assertTrue(Files.readString(report).contains("alloc_bytes_per_parcel"));
         }
     }

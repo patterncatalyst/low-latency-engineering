@@ -83,7 +83,8 @@ g.emit("01-bimodal-tail", 880, 385, bands=bands, nodes=nodes, edges=edges, notes
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "01-bimodal-tail.svg"))
-    json.load(open(os.path.join(g.OUT, "01-bimodal-tail.excalidraw")))
+    json.loads((Path(g.OUT) / "01-bimodal-tail.excalidraw").read_text(encoding="utf-8"))
     print("ok: 01-bimodal-tail")

@@ -9,6 +9,7 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An LMAX Disruptor ring of preallocated {@link Slot}s with a single producer. Publishing claims
@@ -20,7 +21,7 @@ final class DisruptorHandOff implements HandOff {
 
     private final int slots;
     private final WaitStrategy waitStrategy;
-    private volatile Throwable failure;
+    private final AtomicReference<Throwable> failure = new AtomicReference<>();
     private Disruptor<Slot> disruptor;
     private RingBuffer<Slot> ring;
 
@@ -67,31 +68,42 @@ final class DisruptorHandOff implements HandOff {
 
     @Override
     public Throwable failure() {
-        return failure;
+        return failure.get();
     }
 
     @Override
     public void close() {
-        if (disruptor != null) {
+        if (disruptor == null) {
+            return;
+        }
+        if (failure.get() != null) {
+            disruptor.halt(); // the consumer stopped on its failure: shutdown() would wait for a backlog that never drains
+        } else {
             disruptor.shutdown(); // returns once the consumer has handled everything published
         }
     }
 
-    /** Keeps the first failure for {@link #failure()} instead of the default handler's log-and-rethrow. */
+    /**
+     * Keeps the first failure for {@link #failure()} and, like the Disruptor's
+     * {@code FatalExceptionHandler}, rethrows it so the consumer stops, as the ring and queue
+     * variants' decide threads do when they die.
+     */
     private final class RecordingExceptionHandler implements ExceptionHandler<Slot> {
         @Override
         public void handleEventException(Throwable error, long sequence, Slot event) {
-            failure = error;
+            failure.compareAndSet(null, error);
+            throw new IllegalStateException("decide thread failed at sequence " + sequence, error);
         }
 
         @Override
         public void handleOnStartException(Throwable error) {
-            failure = error;
+            failure.compareAndSet(null, error);
+            throw new IllegalStateException("decide thread failed to start", error);
         }
 
         @Override
         public void handleOnShutdownException(Throwable error) {
-            failure = error;
+            failure.compareAndSet(null, error);
         }
     }
 }

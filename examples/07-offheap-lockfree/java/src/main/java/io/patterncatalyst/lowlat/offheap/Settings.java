@@ -78,7 +78,7 @@ record Settings(
                 case "--command-bind" -> commandBind = Config.HostPort.parse(flag, value);
                 case "--manifest-entries" -> manifestEntries = positive(flag, value);
                 case "--slots" -> slots = positive(flag, value);
-                case "--sample-hold-ms" -> holdMs = Long.parseLong(value);
+                case "--sample-hold-ms" -> holdMs = nonNegative(flag, value);
                 case "--placement" -> placement = ThreadPlacement.named(value);
                 default -> throw new IllegalStateException(flag);
             }
@@ -112,6 +112,18 @@ record Settings(
             int v = Integer.parseInt(value);
             if (v < 1) {
                 throw new IllegalArgumentException(flag + " must be at least 1, got " + value);
+            }
+            return v;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(flag + " needs a number, got '" + value + "'", e);
+        }
+    }
+
+    private static long nonNegative(String flag, String value) {
+        try {
+            long v = Long.parseLong(value);
+            if (v < 0) {
+                throw new IllegalArgumentException(flag + " must not be negative, got " + value);
             }
             return v;
         } catch (NumberFormatException e) {

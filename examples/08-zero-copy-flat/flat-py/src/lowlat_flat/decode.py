@@ -87,9 +87,9 @@ def unpack_decoder(wire: bytes) -> Decode:
 def parse_decoder(events: list[parcel_pb2.ParcelEvent]) -> Decode:
     """Decode message ``i`` with ``ParseFromString`` and read the same fields the tuple holds."""
     wires = [e.SerializeToString() for e in events]
+    message = parcel_pb2.ParcelEvent()  # one message reused, as the consumer loop does
 
     def decode(i: int) -> tuple[Any, ...]:
-        message = parcel_pb2.ParcelEvent()
         message.ParseFromString(wires[i])
         dims = message.dims
         return (

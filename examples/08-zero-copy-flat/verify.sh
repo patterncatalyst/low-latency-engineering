@@ -10,17 +10,19 @@
 #   5  FFM downcall clock_gettime(CLOCK_MONOTONIC) agrees with System.nanoTime() within 1 ms
 #      (standard and critical; their per-call cost is observed, not asserted)
 #   6  every report: count, dropped = 0 on the line, lowlat-report check, Java build.flags present
+#   4  also: the two table benchmarks report gc.count 0, so a collection cannot undo the object-table scatter
 # Observed, not asserted: compact object headers (JOL), the C++ decode variants and table layouts,
 # the Python lane (unpack_from vs ParseFromString, allocations per parcel).
 #
 #   ./verify.sh                 build, run, assert
+#   RECHECK=results/<run-id>    re-evaluate the committed reports without building or running anything
 #   ALLOW_BUSY=1 ./verify.sh    measure while a lab VM or other load is running (noisy)
 #   SKIP_BUILD=1 ./verify.sh    reuse existing builds
 #   RESULTS_DIR=DIR             where reports go (default results/latest)
 #   LOWLAT_BUILD=DIR            private C++ build directory
 #
 # UDP ports 47281 (protobuf-decode) and 47282 (flat-ffm) on 127.0.0.1. Never changes the host.
-# The jq programs handed to `holds` are single-quoted on purpose: $a, $f are jq variables, not shell ones.
+# The jq programs handed to `holds` are single-quoted: $a, $f are jq variables, not shell ones.
 # shellcheck disable=SC2016
 set -euo pipefail
 # shellcheck source=../_lib/lib.sh
@@ -39,14 +41,21 @@ PORT_FLAT=47282
 # FFM downcalls are restricted methods: grant them on the command line, as production would.
 NATIVE=(--enable-native-access=ALL-UNNAMED)
 
-require_quiet_host
-OUT=$(results_dir)
-rm -rf "${OUT:?}"/{jmh,cpp,python}
-mkdir -p "$OUT/jmh" "$OUT/cpp" "$OUT/python"
-capture_profile "$OUT"
+if [[ -n ${RECHECK:-} ]]; then
+  OUT=$(cd "$RECHECK" && pwd)
+  export LOWLAT_PROFILE=$OUT/profile.json
+  RUN=0
+else
+  RUN=1
+  require_quiet_host
+  OUT=$(results_dir)
+  # Remove only the three directories this script writes, and only under a real results path.
+  [[ $OUT == /*/*/* ]] || die "refusing to clear subdirectories of $OUT"
+  rm -rf "${OUT:?}"/{jmh,cpp,python}
+  mkdir -p "$OUT/jmh" "$OUT/cpp" "$OUT/python"
+  capture_profile "$OUT"
+fi
 
-failures=0
-bad() { say_bad "$*"; failures=$((failures + 1)); }
 # holds EXPR MESSAGE: EXPR is a jq boolean over --argjson inputs given as the remaining arguments.
 holds() {
   local expr=$1 message=$2
@@ -55,40 +64,42 @@ holds() {
 }
 
 # ---- build ---------------------------------------------------------------------------------
-build_cpp line-simulator flat-dump flat-bench zero-copy-flat-test
-BUILD_JAVA_TESTS=1 build_java "$HERE/java" # the Java tests (layout, golden, allocation, downcall) run on the way
-py_sync
-[[ -f $JAR ]] || die "missing $JAR (build_java first)"
+if ((RUN)); then
+  build_cpp line-simulator flat-dump flat-bench zero-copy-flat-test
+  BUILD_JAVA_TESTS=1 build_java "$HERE/java" # the Java tests (layout, golden, allocation, downcall) run on the way
+  py_sync
+  [[ -f $JAR ]] || die "missing $JAR (build_java first)"
 
-step "unit tests: C++ (GoogleTest) and Python (pytest); Java ran during the package step"
-"$(cpp_bin zero-copy-flat-test)" --gtest_brief=1
-uvrun --package lowlat-flat pytest -q "$HERE/flat-py/tests"
-ok "C++, Java and Python unit tests pass"
+  step "unit tests: C++ (GoogleTest) and Python (pytest); Java ran during the package step"
+  "$(cpp_bin zero-copy-flat-test)" --gtest_brief=1
+  uvrun --package lowlat-flat pytest -q "$HERE/flat-py/tests"
+  ok "C++, Java and Python unit tests pass"
+fi
 
 # ---- 1. golden bytes: C++ writer, Java FFM reader and Python reader agree -------------------
 step "1. golden bytes: three readers, three seeds"
 dump_cpp() { "$(cpp_bin flat-dump)" "$1"; }
 dump_java() { java "${NATIVE[@]}" -cp "$JAR" io.patterncatalyst.lowlat.flat.Main dump "$1"; }
 dump_python() { uvrun --package lowlat-flat flat-py dump "$1"; }
-golden_ok=1
-: >"$OUT/golden-agreement.txt"
-for seed in 1 42 2026; do
-  bin=$CONTRACT/golden-seed$seed.bin
-  want=$(jq -S .records "$CONTRACT/golden-seed$seed.json")
-  records=$(jq 'length' <<<"$want")
-  for reader in cpp java python; do
-    got=$("dump_$reader" "$bin" | jq -S .records)
-    if [[ $got == "$want" ]]; then
-      printf 'seed %s: %s decodes %s records identical to golden-seed%s.json\n' "$seed" "$reader" "$records" "$seed" \
-        >>"$OUT/golden-agreement.txt"
-    else
-      golden_ok=0
-      printf 'seed %s: %s DIFFERS from golden-seed%s.json\n' "$seed" "$reader" "$seed" | tee -a "$OUT/golden-agreement.txt"
-    fi
+if ((RUN)); then
+  : >"$OUT/golden-agreement.txt"
+  for seed in 1 42 2026; do
+    bin=$CONTRACT/golden-seed$seed.bin
+    want=$(jq -S .records "$CONTRACT/golden-seed$seed.json")
+    records=$(jq 'length' <<<"$want")
+    for reader in cpp java python; do
+      got=$("dump_$reader" "$bin" | jq -S .records)
+      if [[ $got == "$want" ]]; then
+        printf 'seed %s: %s decodes %s records identical to golden-seed%s.json\n' "$seed" "$reader" "$records" "$seed" \
+          >>"$OUT/golden-agreement.txt"
+      else
+        printf 'seed %s: %s DIFFERS from golden-seed%s.json\n' "$seed" "$reader" "$seed" >>"$OUT/golden-agreement.txt"
+      fi
+    done
   done
-done
+fi
 cat "$OUT/golden-agreement.txt"
-if ((golden_ok)); then
+if [[ $(grep -c 'identical to' "$OUT/golden-agreement.txt") -eq 9 ]] && ! grep -q DIFFERS "$OUT/golden-agreement.txt"; then
   ok "1 C++, Java and Python agree on every field of 3 seeds x 8 records"
 else
   bad "1 the readers disagree (see above)"
@@ -96,8 +107,10 @@ fi
 
 # ---- 2 and 4. JMH: decode and table sweep (one run), plus the clock benchmarks ---------------
 step "JMH SampleTime with the gc profiler: DecodeBenchmark, TableBenchmark, ClockBenchmark (about 3 minutes)"
-jmh_lock_wait 30 "$OUT/jmh.console.txt" java -jar "$JAR" -rf json -rff "$OUT/jmh.json" -prof gc || die "JMH failed"
-uvrun --package lowlat-flat flat-py jmh-to-report "$OUT/jmh.json" "$OUT/jmh" >/dev/null
+if ((RUN)); then
+  jmh_lock_wait 30 "$OUT/jmh.console.txt" java -jar "$JAR" -rf json -rff "$OUT/jmh.json" -prof gc || die "JMH failed"
+  uvrun --package lowlat-flat flat-py jmh-to-report "$OUT/jmh.json" "$OUT/jmh" >/dev/null
+fi
 jmh_p50() { jget "$OUT/jmh/java-$1.json" .percentiles.p50; }
 jmh_alloc() { jget "$OUT/jmh/java-$1.json" '.runtime.alloc_bytes_per_parcel'; }
 
@@ -119,11 +132,18 @@ object_table=$(jmh_p50 object-table)
 printf '  flat-table   p50 %s ns\n  object-table p50 %s ns\n' "$flat_table" "$object_table"
 holds '2 * $f <= $o' "4 flat-table p50 ($flat_table ns) <= 1/2 of object-table p50 ($object_table ns)" \
   --argjson f "$flat_table" --argjson o "$object_table"
+# A collection during a table run would move the object table's scatter; both must report gc.count 0.
+for method in flatTable objectTable; do
+  collections=$(jq -er --arg m ".$method" '.[] | select(.benchmark | endswith($m)) | .secondaryMetrics["gc.count"].score' "$OUT/jmh.json")
+  holds '$c == 0' "4 $method ran without a garbage collection (gc.count $collections)" --argjson c "$collections"
+done
 
 step "5. FFM clock_gettime downcall vs System.nanoTime()"
 printf '  per call, p50: nano-time %s ns, downcall-standard %s ns, downcall-critical %s ns (observed)\n' \
   "$(jmh_p50 nano-time)" "$(jmh_p50 downcall-standard)" "$(jmh_p50 downcall-critical)"
-java "${NATIVE[@]}" -cp "$JAR" io.patterncatalyst.lowlat.flat.Main clock-check >"$OUT/clock-check.json"
+if ((RUN)); then
+  java "${NATIVE[@]}" -cp "$JAR" io.patterncatalyst.lowlat.flat.Main clock-check >"$OUT/clock-check.json"
+fi
 for linkage in standard critical; do
   skew=$(jget "$OUT/clock-check.json" ".$linkage.max_skew_ns")
   holds '$s < 1000000' "5 $linkage downcall within 1 ms of System.nanoTime() (largest skew outside the nanoTime bracket: $skew ns)" \
@@ -144,8 +164,10 @@ run_line() {
   wait "$pid" || { cat "$log" >&2; die "$variant consumer failed"; }
   bg_forget "$pid"
 }
-run_line protobuf-decode "$PORT_PROTOBUF" protobuf
-run_line flat-ffm "$PORT_FLAT" flat
+if ((RUN)); then
+  run_line protobuf-decode "$PORT_PROTOBUF" protobuf
+  run_line flat-ffm "$PORT_FLAT" flat
+fi
 
 step "3. line end-to-end allocation per parcel (receive thread: channel, decode, handler)"
 line_proto=$(jget "$OUT/java-protobuf-decode.json" .runtime.alloc_bytes_per_parcel)
@@ -164,10 +186,12 @@ step "compact-headers (observed): JOL footprint with and without -XX:+UseCompact
 # JOL reads field offsets with sun.misc.Unsafe (a JDK 25 warning, kept in the .err file; a record class
 # needs -Djol.magicFieldOffset) and wants -Djdk.attach.allowAttachSelf for object-graph sizes.
 JOL=(-Djol.magicFieldOffset=true -Djdk.attach.allowAttachSelf=true)
-java "${NATIVE[@]}" "${JOL[@]}" -cp "$JAR" io.patterncatalyst.lowlat.flat.Main footprint \
-  2>"$OUT/footprint-standard.err" >"$OUT/footprint-standard.json"
-java "${NATIVE[@]}" "${JOL[@]}" -XX:+UseCompactObjectHeaders -cp "$JAR" io.patterncatalyst.lowlat.flat.Main footprint \
-  2>"$OUT/footprint-compact-headers.err" >"$OUT/footprint-compact-headers.json"
+if ((RUN)); then
+  java "${NATIVE[@]}" "${JOL[@]}" -cp "$JAR" io.patterncatalyst.lowlat.flat.Main footprint \
+    2>"$OUT/footprint-standard.err" >"$OUT/footprint-standard.json"
+  java "${NATIVE[@]}" "${JOL[@]}" -XX:+UseCompactObjectHeaders -cp "$JAR" io.patterncatalyst.lowlat.flat.Main footprint \
+    2>"$OUT/footprint-compact-headers.err" >"$OUT/footprint-compact-headers.json"
+fi
 for run in standard compact-headers; do
   jq -r --arg run "$run" '"  \($run): ParcelState \(.parcel_state_instance_bytes) B, protobuf ParcelEvent \(.protobuf_parcel_event_instance_bytes) B, object table of \(.parcels) = \(.object_table_bytes) B, flat table = \(.flat_table_bytes) B"' \
     "$OUT/footprint-$run.json"
@@ -177,10 +201,12 @@ done
 
 # ---- observed: C++ lane -----------------------------------------------------------------------
 step "C++ lane (observed): decode variants over std::span<const std::byte>, flat vs pointer table"
-"$(cpp_bin flat-bench)" --benchmark_out="$OUT/cpp/gbench.json" --benchmark_out_format=json \
-  >"$OUT/cpp/gbench.console.txt" 2>&1
-redact_host "$OUT/cpp/gbench.json"
-uvrun --package lowlat-flat flat-py gbench-to-report "$OUT/cpp/gbench.json" "$OUT/cpp" >/dev/null
+if ((RUN)); then
+  "$(cpp_bin flat-bench)" --benchmark_out="$OUT/cpp/gbench.json" --benchmark_out_format=json \
+    >"$OUT/cpp/gbench.console.txt" 2>&1
+  redact_host "$OUT/cpp/gbench.json"
+  uvrun --package lowlat-flat flat-py gbench-to-report "$OUT/cpp/gbench.json" "$OUT/cpp" >/dev/null
+fi
 for variant in decode-memcpy decode-bit-cast decode-start-lifetime-as; do
   printf '  %-26s p50 %s ns per 1024 records\n' "$variant" "$(jget "$OUT/cpp/cpp-$variant.json" .percentiles.p50)"
 done
@@ -190,24 +216,33 @@ done
 
 # ---- observed: Python lane --------------------------------------------------------------------
 step "Python lane (observed): struct.unpack_from over a memoryview vs ParseFromString"
-uvrun --package lowlat-flat flat-py decode --out "$OUT/python" | tee "$OUT/python/console.txt"
+if ((RUN)); then
+  uvrun --package lowlat-flat flat-py decode --out "$OUT/python" | tee "$OUT/python/console.txt"
+else
+  cat "$OUT/python/console.txt"
+fi
 
 # ---- 6. reports ------------------------------------------------------------------------------
 step "6. reports: schema, histogram decode, percentile recompute; counts, drops, JVM flags"
 mapfile -t reports < <(find "$OUT/jmh" "$OUT/cpp" "$OUT/python" "$OUT" -maxdepth 1 -name '*.json' \
   -exec grep -lE '"schema" ?: ?"lowlat-report/1"' {} + | sort -u)
-report_check "${reports[@]}" >/dev/null || bad "6 lowlat-report check failed"
-ok "6 ${#reports[@]} reports validate (profile embedded: $(jget "${reports[0]}" .profile.host_label))"
+if report_check "${reports[@]}" >/dev/null; then
+  ok "6 ${#reports[@]} reports validate (profile embedded: $(jget "${reports[0]}" .profile.host_label))"
+else
+  bad "6 lowlat-report check failed"
+fi
+line_ok=1
 for variant in protobuf-decode flat-ffm; do
-  [[ $(jget "$OUT/java-$variant.json" .count) -eq $COUNT ]] || bad "6 $variant: count != $COUNT"
-  [[ $(jget "$OUT/java-$variant.json" .dropped) -eq 0 ]] || bad "6 $variant: parcels were dropped"
+  [[ $(jget "$OUT/java-$variant.json" .count) -eq $COUNT ]] || { bad "6 $variant: count != $COUNT"; line_ok=0; }
+  [[ $(jget "$OUT/java-$variant.json" .dropped) -eq 0 ]] || { bad "6 $variant: parcels were dropped"; line_ok=0; }
 done
-ok "6 line runs: count = $COUNT and dropped = 0 for both variants"
+if ((line_ok)); then ok "6 line runs: count = $COUNT and dropped = 0 for both variants"; fi
+flags_ok=1
 for r in "$OUT"/jmh/java-*.json "$OUT"/java-*.json; do
-  jq -e '.build.flags | length > 0' "$r" >/dev/null || bad "6 $(basename "$r"): build.flags missing"
+  jq -e '.build.flags | length > 0' "$r" >/dev/null || { bad "6 $(basename "$r"): build.flags missing"; flags_ok=0; }
 done
-ok "6 every Java report carries build.flags"
+if ((flags_ok)); then ok "6 every Java report carries build.flags"; fi
 
-((failures == 0)) || die "$failures criteria failed: the effect was not (fully) observed"
+((FAILURES == 0)) || die "$FAILURES criteria failed: the effect was not (fully) observed"
 ok "08-zero-copy-flat: flat records removed the decode allocation; results in $OUT"
 jq -r '"profile: \(.host_label) virt=\(.virt.type) governor=\(.power.governor) tuned=\(.tuned) kernel=\(.kernel.release) load1=\(.load.load1)"' "$LOWLAT_PROFILE"

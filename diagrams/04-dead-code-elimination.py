@@ -88,7 +88,8 @@ g.emit("04-dead-code-elimination", 880, 380, bands=bands, nodes=nodes, edges=edg
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "04-dead-code-elimination.svg"))
-    json.load(open(os.path.join(g.OUT, "04-dead-code-elimination.excalidraw")))
+    json.loads((Path(g.OUT) / "04-dead-code-elimination.excalidraw").read_text(encoding="utf-8"))
     print("ok: 04-dead-code-elimination")

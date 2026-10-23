@@ -217,8 +217,6 @@ report_check "${reports[@]}"
 # ---------------------------------------------------------------------------------------------
 # Criteria. Every one is evaluated and printed; the script fails at the end if any did not hold.
 # ---------------------------------------------------------------------------------------------
-FAILED=0
-
 # expect LABEL A OP B [UNIT]: print a check line for the integer comparison A OP B (OP: -ge -le -lt).
 expect() {
   local label=$1 a=$2 op=$3 b=$4 unit=${5:-ns} sign
@@ -231,8 +229,7 @@ expect() {
   if test "$a" "$op" "$b"; then
     ok "$label ($(fmt "$a" "$unit") $sign $(fmt "$b" "$unit"))"
   else
-    say_bad "$label ($(fmt "$a" "$unit"), need $sign $(fmt "$b" "$unit"))"
-    FAILED=1
+    bad "$label ($(fmt "$a" "$unit"), need $sign $(fmt "$b" "$unit"))"
   fi
 }
 
@@ -292,12 +289,13 @@ done
 # thp asks ZGC for large pages; the JVM's own init line says whether it got them. ZGC's heap is shared
 # memory, governed by transparent_hugepage/shmem_enabled, so "Disabled (OS enforced)" is the host
 # refusing, not a flag that was ignored.
-large_pages=$(zcat "$out/thp.gc.log.gz" | sed -n 's/.*Large Page Support: *//p' | head -n 1)
+large_pages=$(zcat "$out/thp.gc.log.gz" | sed -n 's/.*Large Page Support: *//p')
+large_pages=${large_pages%%$'\n'*} # the first line only
 echo "thp: large pages ${large_pages:-not reported} (GC log), shmem_enabled=$(jq -r '.memory.thp_shmem_enabled // "not recorded"' "$LOWLAT_PROFILE")"
 echo "cpp deferred-free max $(fmt "$deferred_max" ns), no-free control max $(fmt "$nofree_max" ns) (both are single OS-noise events)"
 echo "zgc (reference): p99.9 $(fmt "$(p999 java zgc)" ns), max pause $(fmt "$zgc_max" ns)"
 echo "live set: $(($(<"$out/live-set-bytes.txt") >> 20)) MB; allocation: $(jq -r '.runtime.alloc_bytes_per_parcel | floor' "$out/java-zgc.json") B/parcel on the receive thread, $RATE parcels/s"
 
-((FAILED == 0)) || die "06-gc-tails: a criterion did not hold"
+((FAILURES == 0)) || die "06-gc-tails: a criterion did not hold"
 ok "06-gc-tails: the collector, the headroom and where the frees run set the tail"
 jq -r '"profile: \(.host_label) virt=\(.virt.type) governor=\(.power.governor) tuned=\(.tuned) thp=\(.memory.thp_enabled) kernel=\(.kernel.release) load1=\(.load.load1)"' "$LOWLAT_PROFILE"

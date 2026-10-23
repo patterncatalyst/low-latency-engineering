@@ -45,7 +45,7 @@ Options split_args(int argc, char** argv) {
     else if (flag == "--wave-parcels") o.settings.wave_parcels = line::cli::number<std::size_t>(flag, value());
     else if (flag == "--entry-bytes") o.settings.entry_bytes = line::cli::number<std::size_t>(flag, value());
     else if (flag == "--in-flight-ms") o.settings.in_flight_ms = line::cli::number<int>(flag, value());
-    else if (flag == "--warmup") o.warmup = line::cli::number<std::size_t>(flag, value());
+    else if (flag == "--warm-up") o.warmup = line::cli::number<std::size_t>(flag, value());
     else o.rest.push_back(flag);
   }
   if (o.settings.wave_parcels == 0 || o.settings.rate == 0) line::cli::fail("--rate and --wave-parcels must be > 0");

@@ -24,7 +24,7 @@ import java.util.Map;
  *       {@code line-simulator --wire flat}).
  * </ul>
  *
- * Both handlers do the r01 work (the sortation lane from the barcode) and complete the parcel at
+ * Both handlers do the Chapter 0 work (the sortation lane from the barcode) and complete the parcel at
  * once, so the latency is the same measurement as Ch0 to Ch3 and the difference between the two
  * reports is the decode. The report's {@code runtime.alloc_bytes_per_parcel} is what the receive
  * thread allocated per parcel, decode included.

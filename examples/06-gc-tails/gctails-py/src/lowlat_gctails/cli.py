@@ -16,12 +16,20 @@ tracked object that is not frozen.
 import argparse
 import gc
 import platform
+import sys
 import time
 from collections.abc import Sequence
 from pathlib import Path
 
 from lowlat.line.v1.parcel_pb2 import ParcelEvent
-from lowlat_consumer import Completion, GapTracker, install_signal_handlers, open_socket, run
+from lowlat_consumer import (
+    Completion,
+    GapTracker,
+    NegativeLatencyError,
+    install_signal_handlers,
+    open_socket,
+    run,
+)
 from lowlat_consumer.cli import build_parser as build_consumer_parser
 from lowlat_consumer.cli import parse_hostport, positive_int
 from lowlat_measure import Recorder
@@ -33,6 +41,7 @@ from lowlat_gctails.tracker import Settings, Tracker
 
 VARIANTS = ("cyclic-garbage", "frozen")
 DEFAULT_WARMUP = 30_000
+MIN_PYTHON = (3, 14, 5)  # 3.14.0 to 3.14.4 shipped the incremental collector, reverted in 3.14.5
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -72,7 +81,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="scan samples built per parcel",
     )
     p.add_argument(
-        "--warmup",
+        "--warm-up",
+        dest="warmup",
         type=positive_int,
         default=DEFAULT_WARMUP,
         help="synthetic parcels run before the bind",
@@ -95,6 +105,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     install_signal_handlers()
     if not require_profile("gc-tails-py"):
         return 2
+    if sys.version_info < MIN_PYTHON:
+        need = ".".join(map(str, MIN_PYTHON))
+        print(
+            f"gc-tails-py: CPython {platform.python_version()} has the incremental collector; "
+            f"the generational one this example measures needs {need} or later",
+            file=sys.stderr,
+        )
+        return 2
 
     frozen = args.variant == "frozen"
     tracker = Tracker(settings_from(args), cyclic=not frozen)
@@ -111,10 +129,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     sock, granted = open_socket(args.bind, args.rcvbuf)
     rec = Recorder(args.example, args.variant)
     gaps = GapTracker()
-    with sock, GcPauseLog() as pauses:
-        host, port = args.bind
-        print(f"gc-tails-py: variant {args.variant} on {host}:{port}", flush=True)
-        result = run(sock, rec, gaps, on_parcel, args.expect, args.idle_timeout_ms * 1_000_000)
+    try:
+        with sock, GcPauseLog() as pauses:
+            host, port = sock.getsockname()  # the real port when --bind used port 0
+            print(f"gc-tails-py: variant {args.variant} on {host}:{port}", flush=True)
+            result = run(sock, rec, gaps, on_parcel, args.expect, args.idle_timeout_ms * 1_000_000)
+    except NegativeLatencyError as exc:
+        print(f"gc-tails-py: ABORT: {exc}", file=sys.stderr)
+        return 2
 
     gen0, gen1, gen2 = pauses.generation_counts()
     print(
@@ -126,7 +148,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"gc_callbacks_unstored={pauses.overflow}; frozen_objects={gc.get_freeze_count()}; "
         f"gc_thresholds={list(gc.get_threshold())}; live_entries={args.live_entries}; "
         f"samples_per_parcel={args.samples}; cpython={platform.python_version()} generational; "
-        f"rcvbuf_granted={granted}; reordered={gaps.reordered}; single thread, GIL"
+        f"rcvbuf_granted={granted}; reordered={gaps.reordered}; single thread, "
+        + ("GIL" if sys._is_gil_enabled() else "free-threaded, GIL off")
     )
     runtime = {
         "gc": {

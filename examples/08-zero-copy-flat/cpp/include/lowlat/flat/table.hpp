@@ -9,7 +9,6 @@
 // same layout on the JVM (a MemorySegment of structs); this is the contrast, not a language contest.
 #pragma once
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>

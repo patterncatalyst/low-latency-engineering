@@ -156,7 +156,8 @@ g.emit("07-handoff-topology", 880, 430, bands=bands, nodes=nodes, edges=edges, n
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "07-handoff-topology.svg"))
-    json.load(open(os.path.join(g.OUT, "07-handoff-topology.excalidraw")))
+    json.loads((Path(g.OUT) / "07-handoff-topology.excalidraw").read_text(encoding="utf-8"))
     print("ok: 07-handoff-topology")

@@ -21,14 +21,14 @@ record Options(Settings settings, int warmUp, Path jfr, boolean probe, List<Stri
             usage: gctails-java [--variant NAME] [--bind HOST:PORT] [--expect N] [--report FILE]
                                 [--example NAME] [--rcvbuf BYTES] [--idle-timeout-ms MS]
                                 [--rate HZ] [--live-set-mb MB] [--entry-bytes B]
-                                [--alloc-mb-per-s MB] [--in-flight-ms MS] [--warmup N]
+                                [--alloc-mb-per-s MB] [--in-flight-ms MS] [--warm-up N]
                                 [--jfr FILE] [--probe]
               --rate            parcels per second the simulator sends (default 10000)
               --live-set-mb     target size of the rolling shift manifest (default 1750)
               --entry-bytes     label bytes per manifest entry (default 4096)
               --alloc-mb-per-s  scan-history allocation rate in MB/s (default 400)
               --in-flight-ms    time between scanner and diverter (default 480)
-              --warmup          synthetic parcels run before the bind (default 30000)
+              --warm-up         synthetic parcels run before the bind (default 30000)
               --jfr             record the measured run in-process and write the recording here
               --probe           populate, print live_set_bytes and exit (sizes --undersized-heap)
             """;
@@ -52,7 +52,7 @@ record Options(Settings settings, int warmUp, Path jfr, boolean probe, List<Stri
                 case "--entry-bytes" -> entryBytes = Math.toIntExact(number(args, ++i));
                 case "--alloc-mb-per-s" -> allocMbPerS = number(args, ++i);
                 case "--in-flight-ms" -> inFlightMs = Math.toIntExact(number(args, ++i));
-                case "--warmup" -> warmUp = Math.toIntExact(number(args, ++i));
+                case "--warm-up" -> warmUp = Math.toIntExact(number(args, ++i));
                 case "--jfr" -> jfr = Path.of(value(args, ++i));
                 default -> rest.add(args[i]);
             }

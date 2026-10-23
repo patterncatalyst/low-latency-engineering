@@ -1,8 +1,9 @@
 """Shared pytest fixtures for every Python package under examples/ (this is the rootdir)."""
 
+import gc
 import importlib.util
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,22 @@ def lowlat_profile(monkeypatch: pytest.MonkeyPatch) -> Path:
     path = MEASURE_FIXTURES / "profile.json"
     monkeypatch.setenv("LOWLAT_PROFILE", str(path))
     return path
+
+
+@pytest.fixture
+def quiet_gc() -> Iterator[None]:
+    """No automatic collections while a test counts what a manual one does or frees.
+
+    The collector is switched back on only if it was on before the test.
+    """
+    was_enabled = gc.isenabled()
+    gc.collect()
+    gc.disable()
+    try:
+        yield
+    finally:
+        if was_enabled:
+            gc.enable()
 
 
 @pytest.fixture

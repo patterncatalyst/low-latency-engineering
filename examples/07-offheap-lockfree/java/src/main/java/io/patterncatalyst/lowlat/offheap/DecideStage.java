@@ -7,9 +7,8 @@ import io.patterncatalyst.lowlat.line.v1.Lane;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicLong;
+import net.openhft.affinity.Affinity;
 
 /**
  * Everything the decide thread does for one parcel, in order:
@@ -67,22 +66,15 @@ final class DecideStage implements ScanSink {
     /**
      * Prints this thread's id on one parseable line, {@code decide-thread pid=P tid=T}, so a
      * script can read {@code /proc/P/task/T/status} (context switches) from outside. The kernel's
-     * id for the calling thread is the target of {@code /proc/thread-self}, which Java has no
-     * other portable way to ask for: {@code Thread.threadId()} is the JVM's own number.
+     * id for the calling thread comes from OpenHFT Affinity: {@code Thread.threadId()} is the
+     * JVM's own number, not the kernel's.
      */
     @Override
     public void onStart() {
-        try {
-            String self = Files.readSymbolicLink(Path.of("/proc/thread-self")).toString(); // "PID/task/TID"
-            String pid = self.substring(0, self.indexOf('/'));
-            String tid = self.substring(self.lastIndexOf('/') + 1);
-            out.println("decide-thread pid=" + pid + " tid=" + tid);
-            out.flush();
-            if (journal != null) {
-                journal.bindToDecideThread();
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        out.println("decide-thread pid=" + ProcessHandle.current().pid() + " tid=" + Affinity.getThreadId());
+        out.flush();
+        if (journal != null) {
+            journal.bindToDecideThread();
         }
     }
 
@@ -94,9 +86,8 @@ final class DecideStage implements ScanSink {
         boolean onManifest = true;
         if (manifest != null) {
             long t0 = System.nanoTime();
-            String destination = manifest.destination(scan.serial());
+            onManifest = manifest.contains(scan.serial());
             manifestLookup.record(seq, System.nanoTime() - t0);
-            onManifest = destination != null;
             if (onManifest) {
                 manifestHits++;
             }

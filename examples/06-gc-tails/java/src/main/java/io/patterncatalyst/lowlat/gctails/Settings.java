@@ -27,7 +27,9 @@ record Settings(long rate, long liveSetBytes, int entryBytes, long allocBytesPer
     Settings {
         if (rate < 1 || liveSetBytes < 1 || entryBytes < 1 || allocBytesPerSecond < 1 || inFlightMs < 1
                 || retainedSamples < 0) {
-            throw new IllegalArgumentException("every setting must be positive: " + this);
+            throw new IllegalArgumentException("every setting must be positive (retainedSamples may be 0): rate=" + rate
+                    + " liveSetBytes=" + liveSetBytes + " entryBytes=" + entryBytes + " allocBytesPerSecond="
+                    + allocBytesPerSecond + " inFlightMs=" + inFlightMs + " retainedSamples=" + retainedSamples);
         }
     }
 

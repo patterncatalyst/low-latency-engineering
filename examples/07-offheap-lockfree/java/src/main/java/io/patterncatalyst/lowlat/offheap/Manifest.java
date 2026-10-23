@@ -10,6 +10,14 @@ public interface Manifest extends AutoCloseable {
     /** The destination for {@code serial}, or null when the parcel is not on the manifest. */
     String destination(long serial);
 
+    /**
+     * Whether {@code serial} is on the manifest: the lookup the decide thread times. An
+     * implementation may avoid materialising the destination, so this need not allocate.
+     */
+    default boolean contains(long serial) {
+        return destination(serial) != null;
+    }
+
     /** The manifest's entry count. */
     long size();
 

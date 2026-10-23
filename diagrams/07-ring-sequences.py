@@ -108,7 +108,8 @@ g.emit("07-ring-sequences", 880, 360, bands=bands, nodes=nodes, edges=edges, not
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "07-ring-sequences.svg"))
-    json.load(open(os.path.join(g.OUT, "07-ring-sequences.excalidraw")))
+    json.loads((Path(g.OUT) / "07-ring-sequences.excalidraw").read_text(encoding="utf-8"))
     print("ok: 07-ring-sequences")

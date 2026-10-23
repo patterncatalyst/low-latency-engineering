@@ -26,8 +26,7 @@ final class RingHandOff implements HandOff {
     private final OneToOneRingBuffer ring;
     private final Supplier<IdleStrategy> idleStrategy;
     private volatile boolean running = true;
-    private volatile Throwable failure;
-    private Thread decide;
+    private final DecideThread decide = new DecideThread();
 
     /**
      * @param records capacity in records; the ring holds {@code records} of 64 bytes (8-byte
@@ -55,9 +54,7 @@ final class RingHandOff implements HandOff {
 
     @Override
     public void start(ScanSink sink, ThreadPlacement placement) {
-        decide = Thread.ofPlatform().name("decide").unstarted(placement.wrap(() -> consume(sink)));
-        decide.setUncaughtExceptionHandler((thread, error) -> failure = error);
-        decide.start();
+        decide.start(placement, () -> consume(sink));
     }
 
     private void consume(ScanSink sink) {
@@ -73,19 +70,12 @@ final class RingHandOff implements HandOff {
 
     @Override
     public Throwable failure() {
-        return failure;
+        return decide.failure();
     }
 
     @Override
     public void close() {
         running = false;
-        if (decide == null) {
-            return;
-        }
-        try {
-            decide.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        decide.join();
     }
 }

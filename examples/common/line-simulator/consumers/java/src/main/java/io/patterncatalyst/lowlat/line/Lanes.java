@@ -1,6 +1,6 @@
 package io.patterncatalyst.lowlat.line;
 
-/** The r01 "handle" step: map a parcel to one of eight sortation lanes. */
+/** The Chapter 0 "handle" step: map a parcel to one of eight sortation lanes. */
 public final class Lanes {
 
     public static final int LANES = 8;

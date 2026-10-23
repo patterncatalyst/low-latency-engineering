@@ -8,7 +8,7 @@
 #
 # The profile is scripts/lab/guest-profiles/<profile>.conf (PROFILE_ARGS). The arguments go on
 # the PREEMPT_RT boot entry only (grubby --update-kernel=<its index> --args/--remove-args);
-# the stock entry keeps its command line. grubby --set-default is NOT used (it silently does
+# the stock entry keeps its command line. grubby --set-default is not used (it silently does
 # nothing on Fedora Cloud's btrfs /boot); the default entry stays as install-rt-kernel.sh set it.
 # Idempotent: when the entry already matches, nothing is changed and the guest is not rebooted
 # (unless the running /proc/cmdline disagrees). Guest-only: nothing on the host changes.

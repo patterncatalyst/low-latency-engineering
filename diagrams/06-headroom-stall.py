@@ -122,7 +122,8 @@ g.emit("06-headroom-stall", 880, 370, bands=bands, nodes=nodes, edges=edges, not
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "06-headroom-stall.svg"))
-    json.load(open(os.path.join(g.OUT, "06-headroom-stall.excalidraw")))
+    json.loads((Path(g.OUT) / "06-headroom-stall.excalidraw").read_text(encoding="utf-8"))
     print("ok: 06-headroom-stall")

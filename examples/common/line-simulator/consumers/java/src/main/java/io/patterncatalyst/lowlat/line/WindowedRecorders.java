@@ -60,7 +60,7 @@ public final class WindowedRecorders {
     }
 
     /** {@code dir/run.json} with suffix {@code -steady} is {@code dir/run-steady.json}. */
-    static Path sibling(Path report, String suffix) {
+    public static Path sibling(Path report, String suffix) {
         String name = report.getFileName().toString();
         int dot = name.lastIndexOf('.');
         String renamed = dot <= 0 ? name + suffix : name.substring(0, dot) + suffix + name.substring(dot);

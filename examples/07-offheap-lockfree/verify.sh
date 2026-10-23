@@ -55,10 +55,11 @@ else
   QUEUE_DIR=$OUT/queue
   trap '_bg_cleanup; rm -rf "$QUEUE_DIR"' EXIT
 
-  build_cpp offheap-handoff line-simulator offheap-lockfree-test
+  build_cpp offheap-handoff line-simulator offheap-lockfree-test offheap-handoff-test
   BUILD_JAVA_TESTS=1 build_java "$DIR/java" # benchmarks.jar; the unit tests run on the way
-  step "unit tests: the SPSC ring"
+  step "unit tests: the SPSC ring and the decide-loop failure path"
   "$(cpp_bin offheap-lockfree-test)" --gtest_brief=1
+  "$(cpp_bin offheap-handoff-test)" --gtest_brief=1
   py_sync
 fi
 
@@ -125,12 +126,10 @@ run_variant() {
   bg_forget "$pid"
   jq --argjson v $((vol1 - vol0)) --argjson i $((inv1 - inv0)) \
     --arg n "; decide_write_syscalls=$((wr1 - wr0)); decide_minor_faults=$((pf1 - pf0))" \
-    '.runtime.ctx_switches = {voluntary: $v, involuntary: $i} | .notes += $n' "$report" >"$report.tmp" && mv "$report.tmp" "$report"
+    '.runtime.ctx_switches = {voluntary: $v, involuntary: $i} | .notes += $n' "$report" >"$report.tmp" || die "jq failed on $report"
+  mv "$report.tmp" "$report"
   [[ ! -d ${QUEUE_DIR:-/nonexistent} ]] || rmdir --ignore-fail-on-non-empty "$QUEUE_DIR"
 }
-
-# note_of FILE KEY: the integer or word after "KEY=" in a report's notes.
-note_of() { jget "$1" ".notes | capture(\"$2=(?<v>[^;]+)\").v"; }
 
 # check_run LANG VARIANT: the per-run criterion 6 (and the journal and manifest counts of 4 and 5).
 check_run() {
@@ -180,16 +179,6 @@ for variant in "${CPP_VARIANTS[@]}"; do
   check_run cpp "$variant"
 done
 ok "every run: count $COUNT, dropped 0, no overflow, every divert command received"
-
-FAILURES=0
-bad() {
-  say_bad "$*"
-  FAILURES=$((FAILURES + 1))
-}
-# expect_ge A B MESSAGE / expect_lt A B MESSAGE: like assert_ge and assert_lt, but a miss is
-# counted and the run goes on, so one run shows every criterion's measured value against its bound.
-expect_ge() { if (($1 >= $2)); then ok "$3 ($1 >= $2)"; else bad "$3 (got $1, need >= $2)"; fi; }
-expect_lt() { if (($1 < $2)); then ok "$3 ($1 < $2)"; else bad "$3 (got $1, need < $2)"; fi; }
 
 # p99_of FILE: the p99 in ns.
 p99_of() { jget "$1" .percentiles.p99; }

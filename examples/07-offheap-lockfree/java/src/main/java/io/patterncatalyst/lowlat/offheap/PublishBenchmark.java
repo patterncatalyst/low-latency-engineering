@@ -3,6 +3,7 @@ package io.patterncatalyst.lowlat.offheap;
 import io.patterncatalyst.lowlat.line.v1.Dimensions;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -80,8 +81,22 @@ public class PublishBenchmark {
         handOff.close();
     }
 
+    /** Publishes the iteration accepted and rejected (ring full); JMH reports them as extra columns. */
+    @State(Scope.Thread)
+    @AuxCounters(AuxCounters.Type.EVENTS)
+    public static class Outcomes {
+        public long accepted;
+        public long rejected;
+    }
+
     @Benchmark
-    public boolean publish() {
-        return handOff.publish(event, System.nanoTime());
+    public boolean publish(Outcomes outcomes) {
+        boolean accepted = handOff.publish(event, System.nanoTime());
+        if (accepted) {
+            outcomes.accepted++;
+        } else {
+            outcomes.rejected++;
+        }
+        return accepted;
     }
 }

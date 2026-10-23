@@ -78,7 +78,7 @@ class SeqTracker {
 
 inline constexpr unsigned kLanes = 8;
 
-/// The r01 "work": decode the SSCC-18 serial reference (digits 9..17 of the
+/// The per-parcel work: decode the SSCC-18 serial reference (digits 9..17 of the
 /// 18-digit code: extension, 7-digit prefix, 9-digit serial, check digit) and
 /// map it to a lane, serial modulo 8. Throws std::invalid_argument for a
 /// barcode that is not 18 ASCII digits.
@@ -169,10 +169,10 @@ class WindowedRecorders {
 /// loop's `begin` sets the seq the two-argument form uses for its error message
 /// and its window).
 ///
-/// Cache lines. The receive thread writes `seq_` for every parcel and the owner
-/// writes `count_` and the done times for every parcel, so the two groups sit on
-/// separate cache lines: without that, a hand-off to a decide thread would add a
-/// line ping-pong to the very path Ch7 measures.
+/// False sharing. The receive thread writes `seq_` for every parcel and the owner
+/// writes `count_` and the done times for every parcel, so the two groups sit in
+/// separate 128-byte ranges: without that, a hand-off to a decide thread would add a
+/// line ping-pong to the path Ch7 measures.
 class Completion {
  public:
   explicit Completion(measure::Recorder& latency, WindowedRecorders* windows = nullptr) noexcept
@@ -209,21 +209,24 @@ class Completion {
   void begin(std::uint64_t seq) noexcept { seq_.store(seq, std::memory_order_relaxed); }
 
  private:
-  static constexpr std::size_t kLine = std::hardware_destructive_interference_size;
+  // Two destructive-interference sizes (128 bytes on x86-64): the L2 spatial prefetcher on recent
+  // Intel cores fetches the adjacent line of a 128-byte pair, so writers 64 bytes apart still
+  // contend. GCC's -Winterference-size is switched off project-wide (no ABI crosses a build).
+  static constexpr std::size_t kFalseSharingRange = 2 * std::hardware_destructive_interference_size;
 
   measure::Recorder* latency_;   // read-only after construction
   WindowedRecorders* windows_;   // read-only after construction
-  alignas(kLine) std::atomic<std::uint64_t> seq_ = 0;  // written by the receive thread
-  alignas(kLine) std::uint64_t count_ = 0;             // written by the owner thread
+  alignas(kFalseSharingRange) std::atomic<std::uint64_t> seq_ = 0;  // written by the receive thread
+  alignas(kFalseSharingRange) std::uint64_t count_ = 0;             // written by the owner thread
   std::int64_t first_done_ns_ = 0;
   std::int64_t last_done_ns_ = 0;
 
  public:
-  /// True when the receive-written `seq_` and the owner-written fields are on different
-  /// cache lines (checked by a static_assert below and by the tests).
+  /// True when the receive-written `seq_` and the owner-written fields are in different
+  /// false-sharing ranges (checked by a static_assert below and by the tests).
   [[nodiscard]] static constexpr bool writers_on_separate_lines() noexcept {
-    return offsetof(Completion, count_) / kLine != offsetof(Completion, seq_) / kLine &&
-           offsetof(Completion, last_done_ns_) / kLine != offsetof(Completion, seq_) / kLine;
+    return offsetof(Completion, count_) / kFalseSharingRange != offsetof(Completion, seq_) / kFalseSharingRange &&
+           offsetof(Completion, last_done_ns_) / kFalseSharingRange != offsetof(Completion, seq_) / kFalseSharingRange;
   }
 };
 static_assert(Completion::writers_on_separate_lines());
@@ -319,9 +322,13 @@ ConsumerResult consume_with(const ConsumerConfig& cfg, const std::atomic<bool>& 
 }
 
 /// The example 00 consumer: `consume_with` and a handler that looks up the lane
-/// (the r01 "work") and completes the parcel at once. Fills `lane_counts`.
+/// (the per-parcel work) and completes the parcel at once. Fills `lane_counts`.
 ConsumerResult consume(const ConsumerConfig& cfg, const std::atomic<bool>& stop, measure::Recorder& latency,
                        const ReadyFn& on_ready = {}, WindowedRecorders* windows = nullptr);
+
+/// `<stem><suffix><ext>` beside `report`: the naming rule for the extra reports a run writes
+/// (`-handoff`, `-steady`, `-first-N`).
+[[nodiscard]] std::filesystem::path report_sibling(const std::filesystem::path& report, std::string_view suffix);
 
 /// Free-text `notes` for the report.
 [[nodiscard]] std::string notes_for(const ConsumerResult& r, const ConsumerConfig& cfg);

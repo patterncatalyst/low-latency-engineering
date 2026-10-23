@@ -137,7 +137,8 @@ g.emit("08-flat-vs-pointer-layout", 880, 460, bands=bands, nodes=nodes, edges=ed
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "08-flat-vs-pointer-layout.svg"))
-    json.load(open(os.path.join(g.OUT, "08-flat-vs-pointer-layout.excalidraw")))
+    json.loads((Path(g.OUT) / "08-flat-vs-pointer-layout.excalidraw").read_text(encoding="utf-8"))
     print("ok: 08-flat-vs-pointer-layout")

@@ -112,7 +112,8 @@ g.emit("06-refcount-vs-tracing", 880, 456, bands=bands, nodes=nodes, edges=edges
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "06-refcount-vs-tracing.svg"))
-    json.load(open(os.path.join(g.OUT, "06-refcount-vs-tracing.excalidraw")))
+    json.loads((Path(g.OUT) / "06-refcount-vs-tracing.excalidraw").read_text(encoding="utf-8"))
     print("ok: 06-refcount-vs-tracing")

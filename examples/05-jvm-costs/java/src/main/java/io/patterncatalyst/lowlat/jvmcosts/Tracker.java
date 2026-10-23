@@ -2,6 +2,7 @@ package io.patterncatalyst.lowlat.jvmcosts;
 
 import io.patterncatalyst.lowlat.line.v1.Dimensions;
 import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,16 +33,16 @@ public final class Tracker {
     static final int OVERSIZE_G = 30_000;
     static final int WEIGHT_CLASS_G = 1_000;
 
-    private static final int RING = 8_192; // a power of two, above the in-flight count at 1 kHz
-    private static final int MASK = RING - 1;
+    private static final int RING = 8_192; // above the in-flight count at 1 kHz
 
     private record InFlight(long seq, int lane, long deadlineTick) {
     }
 
     private final Map<String, InFlight> inFlight = HashMap.newHashMap(RING);
-    private final String[] ring = new String[RING]; // barcodes in arrival order, oldest at head
-    private int head;
-    private int size;
+    // Barcodes in arrival order, oldest first. Sized for RING elements, so it never grows. Barcodes
+    // are unique among the parcels in flight (one physical label per parcel); a repeated barcode
+    // would make expiry remove the newer parcel's map entry.
+    private final ArrayDeque<String> arrivals = new ArrayDeque<>(RING);
 
     /** The decision for one parcel. Pure: no state, so a caller that only reads it lets the JIT drop the object. */
     public static DivertDecision decide(ParcelEvent event) {
@@ -62,12 +63,12 @@ public final class Tracker {
     public DivertDecision onParcel(ParcelEvent event) {
         DivertDecision decision = decide(event);
         expire(event.getEncoderTick());
-        if (size == RING) {
+        if (arrivals.size() == RING) {
             evictOldest();
         }
         String barcode = event.getBarcode();
         inFlight.put(barcode, new InFlight(event.getSeq(), decision.lane(), decision.deadlineTick()));
-        ring[(head + size++) & MASK] = barcode;
+        arrivals.offerLast(barcode);
         return decision;
     }
 
@@ -81,8 +82,9 @@ public final class Tracker {
     }
 
     private void expire(long tick) {
-        while (size > 0) {
-            InFlight oldest = inFlight.get(ring[head]);
+        String barcode;
+        while ((barcode = arrivals.peekFirst()) != null) {
+            InFlight oldest = inFlight.get(barcode);
             if (oldest != null && oldest.deadlineTick() > tick) {
                 return;
             }
@@ -91,9 +93,6 @@ public final class Tracker {
     }
 
     private void evictOldest() {
-        inFlight.remove(ring[head]);
-        ring[head] = null;
-        head = (head + 1) & MASK;
-        size--;
+        inFlight.remove(arrivals.pollFirst());
     }
 }

@@ -134,7 +134,8 @@ g.emit("03-coordinated-omission", 880, 440, bands=bands, nodes=nodes, edges=edge
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "03-coordinated-omission.svg"))
-    json.load(open(os.path.join(g.OUT, "03-coordinated-omission.excalidraw")))
+    json.loads((Path(g.OUT) / "03-coordinated-omission.excalidraw").read_text(encoding="utf-8"))
     print("ok: 03-coordinated-omission")

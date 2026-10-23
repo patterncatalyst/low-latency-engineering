@@ -39,10 +39,12 @@ env:
     git tar zstd jq which findutils diffutils
     clang gcc-c++ cmake ninja-build zlib-ng-compat-devel
     python3.14 uv
-  # Maven comes from Fedora; the JDK it runs on is the pinned Temurin (Q12), because
-  # Fedora's java-25-openjdk floats (25.0.4 while Temurin is 25.0.5). gzip unpacks the tarball.
+  # Maven comes from Fedora; the JDK it runs on is the pinned Temurin, because Fedora's
+  # java-25-openjdk floats (25.0.4 while Temurin is 25.0.5). maven-unbound is the Maven build
+  # without a JDK dependency: plain `maven` pulls maven-openjdk25 and its JDK, which Maven could
+  # then run on whatever JAVA_HOME says. gzip unpacks the tarball.
   JAVA_PACKAGES: >-
-    git tar gzip curl findutils maven
+    git tar gzip curl findutils maven maven-unbound
 
 jobs:
   # Decides whether the build jobs run. The workflow always runs, so ci-ok always reports.
@@ -208,6 +210,9 @@ jobs:
           java -version
           mvn -v
           [ "$(java -version 2>&1 | head -1 | cut -d'"' -f2)" = "${{ steps.temurin.outputs.version }}" ]
+          # Maven itself must run on the pinned Temurin, not on a JDK that came in with a package.
+          mvn -v | grep -qF "Java version: ${{ steps.temurin.outputs.version }}," || { echo "Maven is not running on Temurin ${{ steps.temurin.outputs.version }}" >&2; exit 1; }
+          mvn -v | grep -qF "runtime: $JAVA_HOME" || { echo "Maven's runtime is not JAVA_HOME ($JAVA_HOME)" >&2; exit 1; }
       - name: Build and test every module
         run: mvn -B -f examples/pom.xml verify
 

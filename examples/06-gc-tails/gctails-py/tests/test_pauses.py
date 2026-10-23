@@ -3,7 +3,7 @@ import gc
 from lowlat_gctails.pauses import GcPauseLog
 
 
-def test_records_each_collection_with_its_generation():
+def test_records_each_collection_with_its_generation(quiet_gc):
     with GcPauseLog(capacity=8) as log:
         gc.collect(0)
         gc.collect(1)
@@ -20,7 +20,7 @@ def test_callback_is_removed_on_exit():
     assert log not in gc.callbacks
 
 
-def test_overflow_counts_what_was_not_stored():
+def test_overflow_counts_what_was_not_stored(quiet_gc):
     with GcPauseLog(capacity=2) as log:
         for _ in range(5):
             gc.collect(0)

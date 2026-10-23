@@ -32,7 +32,11 @@ std::atomic<std::uint64_t> g_bytes{0};
 
 }  // namespace
 
-// Replaceable allocation functions: count, then defer to malloc.
+// Replaceable allocation functions: count, then defer to malloc. GCC 16 cannot see that operator
+// new is malloc-backed in this translation unit and reports the free() in the matching operator
+// delete as a mismatch (-Wmismatched-new-delete); the pair is consistent.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmismatched-new-delete"
 void* operator new(std::size_t size) {
   g_allocations.fetch_add(1, std::memory_order_relaxed);
   g_bytes.fetch_add(size, std::memory_order_relaxed);
@@ -41,6 +45,7 @@ void* operator new(std::size_t size) {
 }
 void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
+#pragma GCC diagnostic pop
 
 namespace {
 
@@ -72,14 +77,6 @@ std::vector<v1::ParcelEvent> make_parcels() {
 }
 
 const std::vector<v1::ParcelEvent> kEvents = make_parcels();
-
-// Nearest-rank percentile over the per-repetition values.
-double p99(const std::vector<double>& values) {
-  std::vector<double> sorted(values);
-  std::ranges::sort(sorted);
-  const auto rank = static_cast<std::size_t>(std::ceil(0.99 * static_cast<double>(sorted.size())));
-  return sorted[rank - 1];
-}
 
 // Reports the global allocator's calls and bytes since `start`, per iteration.
 class AllocationCounter {
@@ -134,8 +131,8 @@ void BM_Decide_Pmr(benchmark::State& state) {
 
 }  // namespace
 
-BENCHMARK(BM_Decide_Value)->Repetitions(kRepetitions)->MinTime(0.1)->ComputeStatistics("p99", p99);
-BENCHMARK(BM_Decide_Allocating)->Repetitions(kRepetitions)->MinTime(0.1)->ComputeStatistics("p99", p99);
-BENCHMARK(BM_Decide_Pmr)->Repetitions(kRepetitions)->MinTime(0.1)->ComputeStatistics("p99", p99);
+BENCHMARK(BM_Decide_Value)->Repetitions(kRepetitions)->MinTime(0.1);
+BENCHMARK(BM_Decide_Allocating)->Repetitions(kRepetitions)->MinTime(0.1);
+BENCHMARK(BM_Decide_Pmr)->Repetitions(kRepetitions)->MinTime(0.1);
 
 BENCHMARK_MAIN();

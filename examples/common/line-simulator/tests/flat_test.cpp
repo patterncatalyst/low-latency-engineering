@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "lowlat/line/binary_file.hpp"
 #include "lowlat/line/config.hpp"
 #include "lowlat/line/fd.hpp"
 #include "lowlat/line/simulator.hpp"
@@ -109,15 +110,6 @@ std::filesystem::path golden(std::uint64_t seed, const char* ext) {
   return std::filesystem::path{LOWLAT_FLAT_GOLDEN_DIR} / std::format("golden-seed{}.{}", seed, ext);
 }
 
-std::vector<std::byte> read_bytes(const std::filesystem::path& path) {
-  std::ifstream in{path, std::ios::binary};
-  EXPECT_TRUE(in) << path;
-  const std::vector<char> raw{std::istreambuf_iterator<char>{in}, {}};
-  std::vector<std::byte> out(raw.size());
-  std::ranges::transform(raw, out.begin(), [](char c) { return static_cast<std::byte>(c); });
-  return out;
-}
-
 bool regen() { return std::getenv("LOWLAT_REGEN_GOLDEN") != nullptr; }
 
 }  // namespace
@@ -199,7 +191,7 @@ TEST(FlatParcelV1, GoldenFilesAreRegeneratedOnRequest) {
 
 TEST(FlatParcelV1, GoldenBytesDecodeToTheirJson) {
   for (const auto seed : kGoldenSeeds) {
-    const auto bytes = read_bytes(golden(seed, "bin"));
+    const auto bytes = lowlat::line::read_binary_file(golden(seed, "bin"));
     std::ifstream in{golden(seed, "json")};
     const json doc = json::parse(in);
     ASSERT_EQ(bytes.size(), kGoldenRecords * p1::kSize) << "seed " << seed;

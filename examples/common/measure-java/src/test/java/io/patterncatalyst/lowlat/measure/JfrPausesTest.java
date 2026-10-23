@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import jdk.jfr.Recording;
@@ -70,6 +69,6 @@ class JfrPausesTest {
         assertTrue(json.get("runtime").has("alloc_stalls"));
         assertEquals(0, json.get("runtime").get("alloc_stalls").get("count").asLong());
         assertTrue(json.get("runtime").get("gc").get("collectors").size() >= 1);
-        assertTrue(json.get("percentiles").get("max").asLong() >= Duration.ofNanos(1).toNanos());
+        assertTrue(json.get("percentiles").get("max").asLong() >= 1);
     }
 }

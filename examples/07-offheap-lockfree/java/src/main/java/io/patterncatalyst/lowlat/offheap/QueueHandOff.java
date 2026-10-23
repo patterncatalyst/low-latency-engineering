@@ -17,8 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 final class QueueHandOff implements HandOff {
 
     private final BlockingQueue<Scan> queue;
-    private volatile Throwable failure;
-    private Thread decide;
+    private final DecideThread decide = new DecideThread();
 
     private QueueHandOff(BlockingQueue<Scan> queue) {
         this.queue = queue;
@@ -39,9 +38,7 @@ final class QueueHandOff implements HandOff {
 
     @Override
     public void start(ScanSink sink, ThreadPlacement placement) {
-        decide = Thread.ofPlatform().name("decide").unstarted(placement.wrap(() -> consume(sink)));
-        decide.setUncaughtExceptionHandler((thread, error) -> failure = error);
-        decide.start();
+        decide.start(placement, () -> consume(sink));
     }
 
     private void consume(ScanSink sink) {
@@ -58,19 +55,12 @@ final class QueueHandOff implements HandOff {
 
     @Override
     public Throwable failure() {
-        return failure;
+        return decide.failure();
     }
 
     @Override
     public void close() {
-        if (decide == null) {
-            return;
-        }
         decide.interrupt();
-        try {
-            decide.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        decide.join();
     }
 }

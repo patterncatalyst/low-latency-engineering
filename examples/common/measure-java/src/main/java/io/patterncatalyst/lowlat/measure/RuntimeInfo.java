@@ -37,6 +37,11 @@ public final class RuntimeInfo {
      * and heap-related JVM input arguments. The map is mutable so the caller can add more keys.
      */
     public static Map<String, Object> jvm() {
+        return jvm(Map.of());
+    }
+
+    /** As {@link #jvm()}, with {@code extraGc} entries added to the {@code gc} object after its own keys. */
+    public static Map<String, Object> jvm(Map<String, ?> extraGc) {
         List<String> collectors = ManagementFactory.getGarbageCollectorMXBeans().stream()
                 .map(GarbageCollectorMXBean::getName)
                 .toList();
@@ -49,6 +54,7 @@ public final class RuntimeInfo {
         if (!flags.isEmpty()) {
             gc.put("flags", flags);
         }
+        gc.putAll(extraGc);
         Map<String, Object> runtime = new LinkedHashMap<>();
         runtime.put("gc", gc);
         return runtime;

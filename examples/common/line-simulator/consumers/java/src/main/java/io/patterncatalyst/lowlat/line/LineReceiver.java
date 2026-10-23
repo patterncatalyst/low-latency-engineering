@@ -25,7 +25,7 @@ public final class LineReceiver extends EventReceiver<ParcelEvent> {
     /** Receives with the example 00 handler: the lane lookup, then done. Fills {@link #laneCounts()}. */
     public StopReason run() throws IOException {
         return run((event, done) -> {
-            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the r01 "handle" step
+            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the Chapter 0 "handle" step
             done.complete(event);
         });
     }

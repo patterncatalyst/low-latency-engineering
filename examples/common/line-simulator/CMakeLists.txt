@@ -1,11 +1,5 @@
 # Reference parcel-line simulator (open loop, UDP, protobuf ParcelEvent or flat parcel-v1).
-# Flat wire layout (contracts/flat/parcel-v1): a header-only contract.
-set(LOWLAT_FLAT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../contracts/flat")
-cmake_path(NORMAL_PATH LOWLAT_FLAT_ROOT)
-add_library(lowlat_flat_parcel_v1 INTERFACE)
-add_library(lowlat::flat_parcel_v1 ALIAS lowlat_flat_parcel_v1)
-target_include_directories(lowlat_flat_parcel_v1 INTERFACE "${LOWLAT_FLAT_ROOT}")
-target_compile_features(lowlat_flat_parcel_v1 INTERFACE cxx_std_23)
+# The flat wire layout (lowlat::flat_parcel_v1) is defined in examples/CMakeLists.txt.
 
 add_library(lowlat_line STATIC src/sscc.cpp src/config.cpp src/simulator.cpp)
 add_library(lowlat::line ALIAS lowlat_line)

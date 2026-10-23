@@ -79,12 +79,18 @@ class AotCacheSmokeTest {
         List<String> command = new ArrayList<>();
         command.add(ProcessHandle.current().info().command().orElseThrow());
         command.addAll(List.of(args));
-        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
-        String output = new String(process.getInputStream().readAllBytes());
-        if (!process.waitFor(60, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
-            throw new AssertionError("child JVM timed out: " + command + "\n" + output);
+        // Output goes to a file, not a pipe: waitFor(timeout) then bounds the run even when the
+        // child never exits, which reading a pipe to its end first would not.
+        Path log = Files.createTempFile("aot-smoke", ".log");
+        try {
+            Process process = new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start();
+            if (!process.waitFor(60, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                throw new AssertionError("child JVM timed out: " + command + "\n" + Files.readString(log));
+            }
+            return new Result(process.exitValue(), Files.readString(log));
+        } finally {
+            Files.deleteIfExists(log);
         }
-        return new Result(process.exitValue(), output);
     }
 }

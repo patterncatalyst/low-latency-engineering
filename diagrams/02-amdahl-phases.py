@@ -113,7 +113,8 @@ g.emit("02-amdahl-phases", 880, 405, bands=bands, nodes=nodes, notes=notes)
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "02-amdahl-phases.svg"))
-    json.load(open(os.path.join(g.OUT, "02-amdahl-phases.excalidraw")))
+    json.loads((Path(g.OUT) / "02-amdahl-phases.excalidraw").read_text(encoding="utf-8"))
     print("ok: 02-amdahl-phases")

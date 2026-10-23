@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -50,11 +52,21 @@ struct Decision {
 
 /// decide() plus the in-flight table: a barcode-keyed hash map, expired by encoder tick through a ring
 /// of barcodes in arrival order.
+///
+/// on_parcel() allocates a hash node and an 18-character key (a copy of the barcode, in the map and
+/// again in the ring) for every parcel. That is parity with the Java Tracker's HashMap<String, ...>,
+/// not an allocation-free design: this consumer pays for the allocations the Java one does.
+///
+/// Barcodes are unique among in-flight parcels (an SSCC-18 is a serial number). If one arrived twice
+/// before it expired, insert_or_assign would overwrite the table entry while the ring held two
+/// copies of the key, and evicting the older copy would erase the newer parcel's entry early. The
+/// tracker relies on the invariant and does not guard against a repeat, which keeps the hot path
+/// free of an extra lookup.
 class Tracker {
  public:
   Tracker() : ring_(kRing) { in_flight_.reserve(kRing); }
 
-  Decision on_parcel(const line::v1::ParcelEvent& ev) {
+  [[nodiscard]] Decision on_parcel(const line::v1::ParcelEvent& ev) {
     const Decision decision = decide(ev);
     expire(static_cast<std::int64_t>(ev.encoder_tick()));
     if (size_ == kRing) evict_oldest();
@@ -65,7 +77,7 @@ class Tracker {
   }
 
   [[nodiscard]] std::size_t in_flight_count() const noexcept { return in_flight_.size(); }
-  [[nodiscard]] bool is_in_flight(const std::string& barcode) const { return in_flight_.contains(barcode); }
+  [[nodiscard]] bool is_in_flight(std::string_view barcode) const { return in_flight_.contains(barcode); }
 
  private:
   struct InFlight {
@@ -91,7 +103,13 @@ class Tracker {
     --size_;
   }
 
-  std::unordered_map<std::string, InFlight> in_flight_;
+  // Transparent lookup: is_in_flight() takes a string_view without building a std::string.
+  struct StringHash {
+    using is_transparent = void;
+    [[nodiscard]] std::size_t operator()(std::string_view s) const noexcept { return std::hash<std::string_view>{}(s); }
+  };
+
+  std::unordered_map<std::string, InFlight, StringHash, std::equal_to<>> in_flight_;
   std::vector<std::string> ring_;  // barcodes, oldest at head_
   std::size_t head_ = 0;
   std::size_t size_ = 0;

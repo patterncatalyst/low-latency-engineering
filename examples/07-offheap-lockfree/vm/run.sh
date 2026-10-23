@@ -10,7 +10,7 @@
 #   pinned-isolated   OpenHFT Affinity lock on guest CPU 3,
 # alternated three times inside one boot (u p u p u p), and compare:
 #   1. decide-thread involuntary context switches per run: pinned <= 10, unpinned >= 100.
-#   2. hand-off p99.9 (steady window): pinned <= 1/2 of unpinned (median of the three each).
+#   2. hand-off p99.9 (steady window): pinned <= 1/2 of unpinned (median of the REPS runs of each, three by default).
 #   3. every run: count = N, dropped = 0, no overflow, every divert command arrived, the pinned
 #      decide thread's allowed CPUs are exactly {3}, every report passes lowlat-report check.
 # Results: $RESULTS_DIR/vm/ (default results/latest/vm/), labelled `vm`, with the guest's own
@@ -70,7 +70,8 @@ SIM=$(cpp_bin line-simulator)
 
 step "guest prerequisites"
 "$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm | tee "$VMDIR/check-prereqs.txt"
-java_line=$(lab_ssh 'java -version 2>&1' | tee "$VMDIR/guest-java.txt" | head -n2 | tr '\n' ' ')
+lab_ssh 'java -version 2>&1' >"$VMDIR/guest-java.txt"
+java_line=$(head -n2 "$VMDIR/guest-java.txt" | tr '\n' ' ')
 [[ $java_line == *"Temurin-$TEMURIN_VERSION+"* ]] || die "guest java is not Temurin $TEMURIN_VERSION: $java_line"
 ok "guest runs Temurin $TEMURIN_VERSION"
 cmdline=$(lab_ssh cat /proc/cmdline)
@@ -127,15 +128,6 @@ step "checking reports (on the host)"
 mapfile -t reports < <(find "$VMDIR" -mindepth 2 -name 'java-*.json' | sort)
 report_check "${reports[@]}"
 
-FAILURES=0
-bad() {
-  say_bad "$*"
-  FAILURES=$((FAILURES + 1))
-}
-expect_ge() { if (($1 >= $2)); then ok "$3 ($1 >= $2)"; else bad "$3 (got $1, need >= $2)"; fi; }
-expect_le() { if (($1 <= $2)); then ok "$3 ($1 <= $2)"; else bad "$3 (got $1, need <= $2)"; fi; }
-note_of() { jget "$1" ".notes | capture(\"$2=(?<v>[^;]+)\").v"; }
-
 step "criteria 3: every run"
 for ((rep = 1; rep <= REPS; rep++)); do
   for placement in "${PLACEMENTS[@]}"; do
@@ -160,7 +152,6 @@ vol_of() { jget "$VMDIR/r$1-$2/java-agrona-spsc.json" .runtime.ctx_switches.volu
 p999_of() { jget "$VMDIR/r$1-$2/java-agrona-spsc-handoff-steady.json" .percentiles.p99_9; }
 p99_of() { jget "$VMDIR/r$1-$2/java-agrona-spsc-handoff-steady.json" .percentiles.p99; }
 p50_of() { jget "$VMDIR/r$1-$2/java-agrona-spsc-handoff-steady.json" .percentiles.p50; }
-median3() { printf '%s\n' "$@" | sort -n | sed -n "$((($# + 1) / 2))p"; }
 
 echo "  per run (guest, label vm): decide-thread involuntary / voluntary ctx switches; hand-off p50 / p99 / p99.9 ns, steady window"
 for ((rep = 1; rep <= REPS; rep++)); do
@@ -182,8 +173,8 @@ for ((rep = 1; rep <= REPS; rep++)); do
   unp+=("$(p999_of "$rep" unpinned)")
   pin+=("$(p999_of "$rep" pinned-isolated)")
 done
-unp_med=$(median3 "${unp[@]}")
-pin_med=$(median3 "${pin[@]}")
+unp_med=$(median_ns "${unp[@]}")
+pin_med=$(median_ns "${pin[@]}")
 expect_ge "$unp_med" $((2 * pin_med)) "2: pinned-isolated hand-off p99.9 ($pin_med ns) <= 1/2 of unpinned ($unp_med ns)"
 
 ((FAILURES == 0)) || die "$FAILURES criteria not met; results in $VMDIR"

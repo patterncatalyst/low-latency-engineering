@@ -105,7 +105,8 @@ g.emit("08-zero-copy-decode", 880, 410, bands=bands, nodes=nodes, edges=edges, n
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "08-zero-copy-decode.svg"))
-    json.load(open(os.path.join(g.OUT, "08-zero-copy-decode.excalidraw")))
+    json.loads((Path(g.OUT) / "08-zero-copy-decode.excalidraw").read_text(encoding="utf-8"))
     print("ok: 08-zero-copy-decode")

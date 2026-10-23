@@ -131,7 +131,8 @@ g.emit("00-lab-topology", 880, 425, bands=bands, nodes=nodes, edges=edges, notes
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "00-lab-topology.svg"))
-    json.load(open(os.path.join(g.OUT, "00-lab-topology.excalidraw")))
+    json.loads((Path(g.OUT) / "00-lab-topology.excalidraw").read_text(encoding="utf-8"))
     print("ok: 00-lab-topology")

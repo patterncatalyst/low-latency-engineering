@@ -34,9 +34,12 @@ step() { printf '%s━━ %s%s\n' "$_c_step" "$*" "$_c_off"; }
 ok()   { printf '%s✓ %s%s\n' "$_c_ok" "$*" "$_c_off"; }
 die()  { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off" >&2; exit 1; }
 # say_bad MESSAGE...: print a red ✗ line on stdout and carry on (die prints on stderr and exits).
-# Redirect with >&2 for stderr. A verify.sh that counts failures wraps it:
-#   bad() { say_bad "$*"; failures=$((failures + 1)); }
+# Redirect with >&2 for stderr.
 say_bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; }
+# bad MESSAGE...: say_bad and count it in FAILURES. A verify.sh that evaluates every criterion
+# before it fails ends with `((FAILURES == 0)) || die ...`.
+FAILURES=0
+bad() { say_bad "$*"; FAILURES=$((FAILURES + 1)); }
 
 # Background consumers: track each one so that a die mid-run (or Ctrl-C) never leaves it holding
 # its UDP port. bg_track PID after starting one, bg_forget PID once it has been waited for.
@@ -59,13 +62,28 @@ _bg_cleanup() {
 }
 trap _bg_cleanup EXIT
 
-# wait_udp_bound PORT PID LOG [TRIES]: wait (TRIES x 0.1 s, default 300) until a UDP socket is
-# bound to PORT. Dies, printing LOG, if the background process PID exits first or never binds.
-# Readiness comes from the kernel (ss), not from what the consumer prints.
+# pid_descends_from PID ANCESTOR: true when PID is ANCESTOR or one of its descendants (walks PPid).
+# A launcher such as `uv run` may fork the process that binds, so the socket's owner is matched to
+# the tracked PID through its parents.
+pid_descends_from() {
+  local p=$1
+  while [[ -n $p ]] && ((p > 1)); do
+    [[ $p == "$2" ]] && return 0
+    p=$(awk '/^PPid:/ {print $2}' "/proc/$p/status" 2>/dev/null) || return 1
+  done
+  return 1
+}
+
+# wait_udp_bound PORT PID LOG [TRIES]: wait (TRIES x 0.1 s, default 300) until a UDP socket owned by
+# PID (or a child of it) is bound to PORT. Dies, printing LOG, if the background process PID exits
+# first or never binds. Readiness comes from the kernel (ss), not from what the consumer prints, and
+# a socket held by some other process on the same port does not count.
 wait_udp_bound() {
-  local port=$1 pid=$2 log=$3 tries=${4:-300} i
+  local port=$1 pid=$2 log=$3 tries=${4:-300} i owner
   for ((i = 0; i < tries; i++)); do
-    [[ -z $(ss -ulnH "sport = :$port") ]] || return 0
+    while read -r owner; do
+      ! pid_descends_from "$owner" "$pid" || return 0
+    done < <(ss -ulnpH "sport = :$port" | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u)
     kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "consumer exited before binding UDP $port"; }
     sleep 0.1
   done
@@ -97,7 +115,8 @@ redact_host() {
   label=$(jq -r .host_label "$LOWLAT_PROFILE")
   for f in "$@"; do
     jq --arg h "$host" --arg l "$label" \
-      'walk(if type == "string" then split($h) | join($l) else . end)' "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+      'walk(if type == "string" then split($h) | join($l) else . end)' "$f" >"$f.tmp" || die "redact_host: jq failed on $f"
+    mv "$f.tmp" "$f"
   done
 }
 
@@ -185,6 +204,18 @@ assert_lt() {
   (($1 < $2)) || die "$3 (got $1, need < $2)"
   ok "$3 ($1 < $2)"
 }
+
+# expect_ge A B MESSAGE / expect_le / expect_lt: like assert_ge and assert_lt for integers, but a
+# miss is counted by bad and the run goes on, so one run shows every criterion's value against its bound.
+expect_ge() { if (($1 >= $2)); then ok "$3 ($1 >= $2)"; else bad "$3 (got $1, need >= $2)"; fi; }
+expect_le() { if (($1 <= $2)); then ok "$3 ($1 <= $2)"; else bad "$3 (got $1, need <= $2)"; fi; }
+expect_lt() { if (($1 < $2)); then ok "$3 ($1 < $2)"; else bad "$3 (got $1, need < $2)"; fi; }
+
+# note_of FILE KEY: the value after "KEY=" (up to the next ";") in a report's notes.
+note_of() { jget "$1" ".notes | capture(\"$2=(?<v>[^;]+)\").v"; }
+
+# median_ns VALUE...: the middle value of the sorted integers (the lower middle for an even count).
+median_ns() { printf '%s\n' "$@" | sort -n | sed -n "$((($# + 1) / 2))p"; }
 
 # simulate ARGS...: run the reference line simulator (C++).
 simulate() { "$(cpp_bin line-simulator)" "$@"; }
@@ -274,6 +305,15 @@ task_io_faults() {
   echo "$writes $faults"
 }
 
+# task_cpu PID TID: print the CPU the thread last ran on, from /proc/PID/task/TID/stat (field 39).
+# The comm field may hold spaces, so the line is cut after its closing parenthesis first; the
+# fields after "(comm) " start at 3 (state), which puts field 39 at position 37.
+task_cpu() {
+  local stat
+  stat=$(<"/proc/$1/task/$2/stat") || die "no such thread: $1/$2"
+  awk '{print $37}' <<<"${stat##*) }"
+}
+
 # jmh_lock_wait MINUTES CONSOLE CMD...: run a JMH command (java ... -jar benchmarks.jar ...) with
 # its output in CONSOLE, retrying every 20 s for up to MINUTES while another JMH instance holds
 # the lock. JMH 1.37 takes ${java.io.tmpdir}/jmh.lock so that two benchmark runs never share the
@@ -308,19 +348,23 @@ jmh_lock_wait() {
 # here: NTP slews at 500 ppm at most (50 us over 100 ms), and only a clock step during the launch
 # would skew one number, which shows up as an outlier among the repeated launches. The
 # duration is a coarse startup figure, not a latency sample.
-time_to_ready() {
-  local pattern=${READY_PATTERN:-ready} timeout=${READY_TIMEOUT:-60}
-  local fdir fifo fd pid line seen='' t0 t1 deadline
-  # Own temp dir, removed on every path: the call is normally inside $(...), where the EXIT
-  # trap of the calling script does not run.
+time_to_ready() (
+  # A subshell body: its own EXIT/INT/TERM trap stops the process and removes the FIFO dir on every
+  # path, a Ctrl-C included, and the call is normally inside $(...), where the calling script's
+  # trap does not run. The variables are plain (no local) so the trap still sees them at exit.
+  pattern=${READY_PATTERN:-ready}
+  timeout=${READY_TIMEOUT:-60}
+  seen=''
   fdir=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-ready.XXXXXX")
-  fifo=$fdir/fifo
-  mkfifo "$fifo"
-  exec {fd}<>"$fifo"
+  pid=''
+  trap 'kill "$pid" 2>/dev/null || true; rm -rf "$fdir"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  mkfifo "$fdir/fifo"
+  exec {fd}<>"$fdir/fifo"
   t0=${EPOCHREALTIME/./}
   "$@" >&"$fd" 2>&1 &
   pid=$!
-  bg_track "$pid"
   deadline=$((SECONDS + timeout))
   while :; do
     if IFS= read -r -t 1 -u "$fd" line; then
@@ -330,24 +374,14 @@ time_to_ready() {
         break
       fi
     elif ! kill -0 "$pid" 2>/dev/null; then
-      exec {fd}<&-
-      rm -rf "$fdir"
-      bg_forget "$pid"
       printf '%s' "$seen" >&2
       die "time_to_ready: '$*' exited before printing '$pattern'"
     elif ((SECONDS >= deadline)); then
-      kill "$pid" 2>/dev/null || true
-      exec {fd}<&-
-      rm -rf "$fdir"
-      bg_forget "$pid"
       printf '%s' "$seen" >&2
       die "time_to_ready: '$*' not ready within ${timeout} s"
     fi
   done
   kill "$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
-  bg_forget "$pid"
-  exec {fd}<&-
-  rm -rf "$fdir"
   echo $(((t1 - t0) * 1000))
-}
+)

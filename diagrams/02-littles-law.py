@@ -116,7 +116,8 @@ g.emit("02-littles-law", 880, 460, bands=bands, nodes=nodes, edges=edges, notes=
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "02-littles-law.svg"))
-    json.load(open(os.path.join(g.OUT, "02-littles-law.excalidraw")))
+    json.loads((Path(g.OUT) / "02-littles-law.excalidraw").read_text(encoding="utf-8"))
     print("ok: 02-littles-law")

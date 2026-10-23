@@ -52,7 +52,11 @@ const std::vector<std::byte>& wire() {
   return bytes;
 }
 
-std::span<const std::byte> record(std::size_t i) { return std::span{wire()}.subspan(i * p1::kSize, p1::kSize); }
+// Record `i` of `all`. The caller takes `all` once before its timed loop, so the function-local
+// static behind wire() is not consulted per record.
+std::span<const std::byte> record(std::span<const std::byte> all, std::size_t i) {
+  return all.subspan(i * p1::kSize, p1::kSize);
+}
 
 // The fields the line reads, the same in every variant.
 std::uint64_t work(const p1::Parcel& p) {
@@ -60,27 +64,30 @@ std::uint64_t work(const p1::Parcel& p) {
 }
 
 void BM_DecodeMemcpy(benchmark::State& state) {
+  const std::span<const std::byte> all{wire()};
   for (auto _ : state) {
     std::uint64_t sum = 0;
-    for (std::size_t i = 0; i < kBatch; ++i) sum += work(*flat::decode_memcpy(record(i)));
+    for (std::size_t i = 0; i < kBatch; ++i) sum += work(*flat::decode_memcpy(record(all, i)));
     benchmark::DoNotOptimize(sum);
   }
   state.counters["ops_per_iteration"] = kBatch;
 }
 
 void BM_DecodeBitCast(benchmark::State& state) {
+  const std::span<const std::byte> all{wire()};
   for (auto _ : state) {
     std::uint64_t sum = 0;
-    for (std::size_t i = 0; i < kBatch; ++i) sum += work(*flat::decode_bit_cast(record(i)));
+    for (std::size_t i = 0; i < kBatch; ++i) sum += work(*flat::decode_bit_cast(record(all, i)));
     benchmark::DoNotOptimize(sum);
   }
   state.counters["ops_per_iteration"] = kBatch;
 }
 
 void BM_DecodeStartLifetimeAs(benchmark::State& state) {
+  const std::span<const std::byte> all{wire()};
   for (auto _ : state) {
     std::uint64_t sum = 0;
-    for (std::size_t i = 0; i < kBatch; ++i) sum += work(**flat::view_start_lifetime_as(record(i)));
+    for (std::size_t i = 0; i < kBatch; ++i) sum += work(**flat::view_start_lifetime_as(record(all, i)));
     benchmark::DoNotOptimize(sum);
   }
   state.counters["ops_per_iteration"] = kBatch;
@@ -112,10 +119,10 @@ void BM_PointerTable(benchmark::State& state) {
 
 }  // namespace
 
-BENCHMARK(BM_DecodeMemcpy)->Repetitions(30)->MinTime(0.1)->ReportAggregatesOnly(false);
-BENCHMARK(BM_DecodeBitCast)->Repetitions(30)->MinTime(0.1)->ReportAggregatesOnly(false);
-BENCHMARK(BM_DecodeStartLifetimeAs)->Repetitions(30)->MinTime(0.1)->ReportAggregatesOnly(false);
-BENCHMARK(BM_FlatTable)->Repetitions(10)->MinTime(0.3)->ReportAggregatesOnly(false);
-BENCHMARK(BM_PointerTable)->Repetitions(10)->MinTime(0.3)->ReportAggregatesOnly(false);
+BENCHMARK(BM_DecodeMemcpy)->Repetitions(30)->MinTime(0.1);
+BENCHMARK(BM_DecodeBitCast)->Repetitions(30)->MinTime(0.1);
+BENCHMARK(BM_DecodeStartLifetimeAs)->Repetitions(30)->MinTime(0.1);
+BENCHMARK(BM_FlatTable)->Repetitions(10)->MinTime(0.3);
+BENCHMARK(BM_PointerTable)->Repetitions(10)->MinTime(0.3);
 
 BENCHMARK_MAIN();

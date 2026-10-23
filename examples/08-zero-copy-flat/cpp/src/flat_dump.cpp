@@ -4,17 +4,16 @@
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <print>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "lowlat/flat/decode.hpp"
+#include "lowlat/line/binary_file.hpp"
 
 namespace {
 
@@ -45,14 +44,12 @@ int main(int argc, char** argv) {
     return 2;
   }
   try {
-    std::ifstream in{argv[1], std::ios::binary};
-    if (!in) throw std::runtime_error(std::string{"cannot open "} + argv[1]);
-    const std::vector<char> raw{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
-    if (raw.size() % p1::kSize != 0) {
-      std::println(stderr, "flat-dump: {} bytes is not a whole number of {}-byte records", raw.size(), p1::kSize);
+    const std::vector<std::byte> raw = lowlat::line::read_binary_file(argv[1]);
+    const std::span<const std::byte> bytes{raw};
+    if (bytes.size() % p1::kSize != 0) {
+      std::println(stderr, "flat-dump: {} bytes is not a whole number of {}-byte records", bytes.size(), p1::kSize);
       return 1;
     }
-    const std::span<const std::byte> bytes = std::as_bytes(std::span{raw});
     nlohmann::json records = nlohmann::json::array();
     for (std::size_t at = 0; at < bytes.size(); at += p1::kSize) {
       const auto parcel = lowlat::flat::decode_memcpy(bytes.subspan(at, p1::kSize));

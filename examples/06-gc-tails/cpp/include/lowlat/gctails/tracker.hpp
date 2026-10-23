@@ -87,7 +87,7 @@ class Tracker {
 
   /// Handles one parcel: lane lookup, manifest entry, in-flight table. Returns the lane. When the
   /// parcel closes a wave, the wave before it is disposed of according to the policy, inside this call.
-  unsigned track(std::string_view barcode, std::uint64_t seq);
+  [[nodiscard]] unsigned track(std::string_view barcode, std::uint64_t seq);
 
   /// Waves closed so far.
   [[nodiscard]] std::uint64_t waves_closed() const noexcept { return waves_closed_; }

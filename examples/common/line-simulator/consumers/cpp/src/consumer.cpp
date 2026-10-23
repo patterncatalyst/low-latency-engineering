@@ -166,7 +166,7 @@ struct LaneHandler {
   std::array<std::uint64_t, kLanes> counts{};
 
   void operator()(const v1::ParcelEvent& ev, Completion& done) {
-    ++counts[lane_for(ev.barcode())];  // the r01 "work"
+    ++counts[lane_for(ev.barcode())];  // the per-parcel work
     done.complete(ev);
   }
 };
@@ -181,13 +181,15 @@ ConsumerResult consume(const ConsumerConfig& cfg, const std::atomic<bool>& stop,
   return result;
 }
 
+std::filesystem::path report_sibling(const std::filesystem::path& report, std::string_view suffix) {
+  return report.parent_path() / std::format("{}{}{}", report.stem().string(), suffix, report.extension().string());
+}
+
 std::vector<std::filesystem::path> WindowedRecorders::write_reports(const std::filesystem::path& report,
                                                                     std::string_view notes,
                                                                     const std::optional<nlohmann::json>& runtime) const {
-  const auto sibling = [&](const std::string& suffix) {
-    return report.parent_path() / (report.stem().string() + suffix + report.extension().string());
-  };
-  std::vector<std::filesystem::path> written{sibling(std::format("-first-{}", window_)), sibling("-steady")};
+  std::vector<std::filesystem::path> written{report_sibling(report, std::format("-first-{}", window_)),
+                                             report_sibling(report, "-steady")};
   const std::string window_note = std::format("window={}; first window is seq < {}", window_, window_);
   const std::string text = notes.empty() ? window_note : std::format("{}; {}", notes, window_note);
   first_.write_report(written[0], text, std::nullopt, runtime);

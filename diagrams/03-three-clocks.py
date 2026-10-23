@@ -84,7 +84,8 @@ g.emit("03-three-clocks", 880, 390, nodes=nodes, edges=edges, notes=notes)
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "03-three-clocks.svg"))
-    json.load(open(os.path.join(g.OUT, "03-three-clocks.excalidraw")))
+    json.loads((Path(g.OUT) / "03-three-clocks.excalidraw").read_text(encoding="utf-8"))
     print("ok: 03-three-clocks")

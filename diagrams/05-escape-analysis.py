@@ -90,7 +90,8 @@ g.emit("05-escape-analysis", 880, 408, bands=bands, nodes=nodes, edges=edges, no
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "05-escape-analysis.svg"))
-    json.load(open(os.path.join(g.OUT, "05-escape-analysis.excalidraw")))
+    json.loads((Path(g.OUT) / "05-escape-analysis.excalidraw").read_text(encoding="utf-8"))
     print("ok: 05-escape-analysis")

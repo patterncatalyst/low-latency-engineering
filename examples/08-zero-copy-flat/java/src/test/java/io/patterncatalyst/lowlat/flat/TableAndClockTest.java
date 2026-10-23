@@ -35,7 +35,7 @@ class TableAndClockTest {
 
     @Test
     void slotsAreNotInAllocationOrder() {
-        // The object table is scattered on purpose: arrival order is a permutation of slot order.
+        // The object table is scattered: arrival order is a permutation of slot order.
         ParcelState[] states = new TableData(1000, 9).bySlot();
         int inOrder = 0;
         for (int i = 1; i < states.length; i++) {

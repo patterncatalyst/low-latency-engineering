@@ -1,12 +1,14 @@
 package io.patterncatalyst.lowlat.offheap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.patterncatalyst.lowlat.line.Lanes;
 import io.patterncatalyst.lowlat.line.v1.Lane;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -66,11 +68,44 @@ class StagesTest {
         }
     }
 
+    @ParameterizedTest
+    @EnumSource(value = Variant.ManifestKind.class, names = {"ON_HEAP", "CHRONICLE_MAP"})
+    void containsAgreesWithDestination(Variant.ManifestKind kind) {
+        try (Manifest manifest = kind.open(500)) {
+            assertTrue(manifest.contains(0));
+            assertTrue(manifest.contains(499));
+            assertFalse(manifest.contains(500));
+            assertFalse(manifest.contains(-1));
+        }
+    }
+
+    /** The Chronicle Map lookup reuses its key and value, so a steady run of hits allocates (almost) nothing. */
+    @Test
+    void chronicleMapLookupDoesNotAllocatePerHit() {
+        int lookups = 200_000;
+        try (Manifest manifest = Variant.ManifestKind.CHRONICLE_MAP.open(1_000)) {
+            for (int i = 0; i < lookups; i++) {
+                manifest.contains(i % 1_000); // warm up: class loading, JIT, the reused buffers
+            }
+            var threads = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+            long before = threads.getCurrentThreadAllocatedBytes();
+            int hits = 0;
+            for (int i = 0; i < lookups; i++) {
+                if (manifest.contains(i % 1_000)) {
+                    hits++;
+                }
+            }
+            long bytes = threads.getCurrentThreadAllocatedBytes() - before;
+            assertEquals(lookups, hits);
+            assertTrue(bytes / lookups < 16, bytes + " bytes over " + lookups + " lookups");
+        }
+    }
+
     @Test
     void oldGenerationPoolNames() {
         assertTrue(OldGen.isOldGeneration("G1 Old Gen"));
         assertTrue(OldGen.isOldGeneration("Tenured Gen"));
-        assertTrue(!OldGen.isOldGeneration("G1 Eden Space"));
+        assertFalse(OldGen.isOldGeneration("G1 Eden Space"));
         assertTrue(OldGen.usedAfterGc() > 0);
     }
 }

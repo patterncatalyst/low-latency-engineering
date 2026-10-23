@@ -152,7 +152,8 @@ g.emit("05-jit-tiers", 880, 418, bands=bands, nodes=nodes, edges=edges, notes=no
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "05-jit-tiers.svg"))
-    json.load(open(os.path.join(g.OUT, "05-jit-tiers.excalidraw")))
+    json.loads((Path(g.OUT) / "05-jit-tiers.excalidraw").read_text(encoding="utf-8"))
     print("ok: 05-jit-tiers")

@@ -132,7 +132,8 @@ amdahl() {
   # Record it beside the model (a modelling input / run condition, not a latency).
   local f
   for f in "$RESULTS/$lang"-amdahl-*.json; do
-    jq --arg ghz "$ghz" '.model.effective_ghz = (try ($ghz | tonumber) catch $ghz)' "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+    jq --arg ghz "$ghz" '.model.effective_ghz = (try ($ghz | tonumber) catch $ghz)' "$f" >"$f.tmp" || die "jq failed on $f"
+    mv "$f.tmp" "$f"
   done
 }
 

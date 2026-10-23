@@ -99,6 +99,7 @@ def test_gbench_conversion_has_one_sample_per_repetition(tmp_path: Path) -> None
             "run_type": "iteration",
             "real_time": 8800.0 + i,
             "time_unit": "ns",
+            "iterations": 50000,
             "ops_per_iteration": 1024,
         }
         for i in range(30)
@@ -120,4 +121,5 @@ def test_gbench_conversion_has_one_sample_per_repetition(tmp_path: Path) -> None
     assert path.name == "cpp-decode-bit-cast.json"
     assert report["count"] == 30
     assert report["language"] == "cpp"
+    assert "mean real time per iteration, taken over 50000 iterations" in report["notes"]
     assert lowlat_report(["check", str(path)]) == 0

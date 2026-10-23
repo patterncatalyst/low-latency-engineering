@@ -50,6 +50,19 @@ class Up {
   std::shared_future<std::pair<int, int>> f_ = p_.get_future().share();
 };
 
+// Sets the stop flag when the test scope ends. Declared after the consumer jthread, it runs
+// first on a failed ASSERT, so the jthread destructor joins a consumer that has been told to stop.
+class StopOnExit {
+ public:
+  explicit StopOnExit(std::atomic<bool>& stop) noexcept : stop_(stop) {}
+  StopOnExit(const StopOnExit&) = delete;
+  StopOnExit& operator=(const StopOnExit&) = delete;
+  ~StopOnExit() { stop_.store(true); }
+
+ private:
+  std::atomic<bool>& stop_;
+};
+
 std::string dest_of(int port) { return "127.0.0.1:" + std::to_string(port); }
 
 sockaddr_in loopback(int port) {
@@ -176,6 +189,7 @@ TEST(ConsumerIntegration, OneKilohertzTwoSeconds) {
   std::jthread consumer{[&] {
     result = line::consume(cfg, stop, latency, up.fn());
   }};
+  const StopOnExit stop_guard{stop};
   ASSERT_TRUE(up.wait());
   EXPECT_GT(up.granted(), 0);
 
@@ -208,6 +222,7 @@ TEST(ConsumerIntegration, IdleTimeoutEndsTheRunAfterTheLastDatagram) {
   Up up;
   line::ConsumerResult result;
   std::jthread consumer{[&] { result = line::consume(cfg, stop, latency, up.fn()); }};
+  const StopOnExit stop_guard{stop};
   ASSERT_TRUE(up.wait());
 
   line::Config sim;
@@ -249,6 +264,7 @@ TEST(ConsumerIntegration, NegativeLatencyAborts) {
       threw.set_value(true);
     }
   }};
+  const StopOnExit stop_guard{stop};
   ASSERT_TRUE(up.wait());
 
   // An event stamped an hour in the future: as if from another clock.
@@ -300,6 +316,7 @@ TEST(ConsumerHook, DeferredCompletionAndDrain) {
   HoldTwo handler;
   line::ConsumerResult result;
   std::jthread consumer{[&] { result = line::consume_with(cfg, stop, latency, handler, up.fn()); }};
+  const StopOnExit stop_guard{stop};
   ASSERT_TRUE(up.wait());
 
   line::Fd tx{::socket(AF_INET, SOCK_DGRAM, 0)};
@@ -386,6 +403,7 @@ TEST(ConsumerWindow, TwoWindowsSumToTheTotal) {
   Up up;
   line::ConsumerResult result;
   std::jthread consumer{[&] { result = line::consume(cfg, stop, latency, up.fn(), &windows); }};
+  const StopOnExit stop_guard{stop};
   ASSERT_TRUE(up.wait());
   send_window_run(up.port(), 0.5);
   consumer.join();
@@ -451,9 +469,9 @@ static_assert(line::ParcelHandler<DecideThread>);
 
 }  // namespace
 
-TEST(ConsumerOwnership, ReceiveAndOwnerFieldsAreOnSeparateCacheLines) {
+TEST(ConsumerOwnership, ReceiveAndOwnerFieldsAreInSeparateFalseSharingRanges) {
   EXPECT_TRUE(line::Completion::writers_on_separate_lines());
-  EXPECT_GE(alignof(line::Completion), std::hardware_destructive_interference_size);
+  EXPECT_GE(alignof(line::Completion), 2 * std::hardware_destructive_interference_size);
 }
 
 TEST(ConsumerOwnership, CompletionOnASecondThreadRecordsEveryReceivedParcel) {
@@ -471,6 +489,7 @@ TEST(ConsumerOwnership, CompletionOnASecondThreadRecordsEveryReceivedParcel) {
     receive_thread = std::this_thread::get_id();
     result = line::consume_with(cfg, stop, latency, handler, up.fn(), &windows);
   }};
+  const StopOnExit stop_guard{stop};
   ASSERT_TRUE(up.wait());
   send_window_run(up.port(), 0.4);
   consumer.join();

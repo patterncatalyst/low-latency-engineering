@@ -103,7 +103,8 @@ g.emit("00-measurement-pipeline", 880, 395, bands=bands, nodes=nodes, edges=edge
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "00-measurement-pipeline.svg"))
-    json.load(open(os.path.join(g.OUT, "00-measurement-pipeline.excalidraw")))
+    json.loads((Path(g.OUT) / "00-measurement-pipeline.excalidraw").read_text(encoding="utf-8"))
     print("ok: 00-measurement-pipeline")

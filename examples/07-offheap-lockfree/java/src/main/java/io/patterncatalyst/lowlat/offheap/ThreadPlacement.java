@@ -16,23 +16,15 @@ import net.openhft.affinity.AffinityLock;
  * to the machine. {@link #PINNED_ISOLATED} is the VM part's: it binds the thread to guest CPU 3,
  * which the guest kernel boots with {@code isolcpus=3 nohz_full=3 rcu_nocbs=3}.
  */
-public interface ThreadPlacement {
-
-    /** The CPU the isolated guest profile (scripts/lab/guest-profiles/isolate-cpu3.conf) reserves. */
-    int ISOLATED_CPU = 3;
+public enum ThreadPlacement {
 
     /** The scheduler decides. */
-    ThreadPlacement UNPINNED = new ThreadPlacement() {
+    UNPINNED("unpinned") {
         @Override
         public Runnable wrap(Runnable body) {
             return body;
         }
-
-        @Override
-        public String label() {
-            return "unpinned";
-        }
-    };
+    },
 
     /**
      * An OpenHFT Affinity lock on CPU {@value #ISOLATED_CPU}, held until the thread body returns.
@@ -40,7 +32,7 @@ public interface ThreadPlacement {
      * the thread exists) or when the lock does not land on CPU 3 (checked on the thread itself,
      * where it prints a {@code placement failed:} line and throws).
      */
-    ThreadPlacement PINNED_ISOLATED = new ThreadPlacement() {
+    PINNED_ISOLATED("pinned-isolated") {
         @Override
         public Runnable wrap(Runnable body) {
             requireIsolatedCpu(Path.of("/proc/cmdline"), ISOLATED_CPU);
@@ -57,20 +49,25 @@ public interface ThreadPlacement {
                 }
             };
         }
-
-        @Override
-        public String label() {
-            return "pinned-isolated";
-        }
     };
 
+    /** The CPU the isolated guest profile (scripts/lab/guest-profiles/isolate-cpu3.conf) reserves. */
+    public static final int ISOLATED_CPU = 3;
+
+    private final String label;
+
+    ThreadPlacement(String label) {
+        this.label = label;
+    }
+
     /** The placement for {@code name}, as given to {@code --placement}. */
-    static ThreadPlacement named(String name) {
-        return switch (name) {
-            case "unpinned" -> UNPINNED;
-            case "pinned-isolated" -> PINNED_ISOLATED;
-            default -> throw new IllegalArgumentException("--placement: unpinned | pinned-isolated, got " + name);
-        };
+    public static ThreadPlacement named(String name) {
+        for (ThreadPlacement placement : values()) {
+            if (placement.label.equals(name)) {
+                return placement;
+            }
+        }
+        throw new IllegalArgumentException("--placement: unpinned | pinned-isolated, got " + name);
     }
 
     /**
@@ -113,8 +110,10 @@ public interface ThreadPlacement {
     }
 
     /** The name shown in the report notes. */
-    String label();
+    public String label() {
+        return label;
+    }
 
     /** The body the decide thread runs: {@code body} itself, or {@code body} inside whatever the placement holds. */
-    Runnable wrap(Runnable body);
+    public abstract Runnable wrap(Runnable body);
 }

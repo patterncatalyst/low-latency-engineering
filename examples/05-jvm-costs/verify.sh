@@ -39,9 +39,6 @@ JIT_TOOL=io.patterncatalyst.lowlat.jvmcosts.JitWindows
 JVM_ARGS=(-XX:+UseG1GC -Xms256m -Xmx256m)
 JAVA_VARIANTS=(unwarmed warmed aot-cache)
 
-FAILED=0
-bad() { say_bad "$*"; FAILED=1; }
-
 # verdict DESCRIPTION OP VALUE BOUND: OP is >= or <=; prints one ✓/✗ line with the measured value.
 verdict() {
   local desc=$1 op=$2 value=$3 bound=$4 shown
@@ -53,8 +50,20 @@ verdict() {
   fi
 }
 
-# ratio A B: A / B to one decimal.
+# ratio A B: A / B to one decimal, for display only; verdict_ratio compares the unrounded quotient.
 ratio() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.1f", a / b }'; }
+
+# verdict_ratio DESCRIPTION OP A B BOUND: like verdict, for the quotient A / B. The comparison uses the
+# unrounded quotient, so 4.96 does not pass a bound of 5 by displaying as 5.0.
+verdict_ratio() {
+  local desc=$1 op=$2 a=$3 b=$4 bound=$5 shown
+  shown=$(awk -v a="$a" -v b="$b" 'BEGIN { printf "%.4g", a / b }')
+  if awk -v a="$a" -v b="$b" -v bound="$bound" -v op="$op" 'BEGIN { q = a / b; exit !(op == ">=" ? q >= bound : q <= bound) }'; then
+    ok "$desc (measured $shown, bound $op $bound)"
+  else
+    bad "$desc (measured $shown, bound $op $bound)"
+  fi
+}
 
 if [[ -n ${RECHECK:-} ]]; then
   OUT=$(cd "$RECHECK" && pwd)
@@ -143,9 +152,6 @@ train_aot() {
   ok "AOT cache ($name) written: $(stat -c %s "$cache") bytes"
 }
 
-# median_ns VALUE...: the middle of an odd number of values.
-median_ns() { printf '%s\n' "$@" | sort -n | sed -n "$((($# + 1) / 2))p"; }
-
 if [[ -z ${RECHECK:-} ]]; then
   # ---- 1. JMH: bytes per decision ------------------------------------------------------------
   step "JMH -prof gc: heap bytes per decision (2 forks x (3 warm-up + 5 measured) iterations each)"
@@ -153,14 +159,16 @@ if [[ -z ${RECHECK:-} ]]; then
   if [[ ${ALLOW_BUSY:-0} == 1 ]]; then
     jmh_jvm+=(-Djmh.ignoreLock=true) # JMH's /tmp/jmh.lock refuses a second harness; ALLOW_BUSY accepts the noise
   fi
-  java "${jmh_jvm[@]}" -jar "$JAR" AllocationBenchmark -prof gc -rf json -rff "$OUT/jmh-alloc.json" >"$OUT/jmh-alloc.console.txt" 2>&1 \
-    || { tail -30 "$OUT/jmh-alloc.console.txt" >&2; die "JMH failed"; }
+  jmh_lock_wait 30 "$OUT/jmh-alloc.console.txt" \
+    java "${jmh_jvm[@]}" -jar "$JAR" AllocationBenchmark -prof gc -rf json -rff "$OUT/jmh-alloc.json" || die "JMH failed"
   redact_host "$OUT/jmh-alloc.json"
 
   # Observed: where async-profiler's allocation event puts the same bytes. Only when the pinned release is
   # unpacked under ~/.cache/lowlat (user-local; this script installs nothing).
-  ap_version=$(sed -nE 's/^ASYNC_PROFILER_VERSION="([^"]+)"/\1/p' "$LOWLAT_ROOT/versions.env")
-  AP_LIB=${ASYNC_PROFILER_LIB:-$HOME/.cache/lowlat/async-profiler-$ap_version-linux-x64/lib/libasyncProfiler.so}
+  # shellcheck source=../../versions.env
+  # shellcheck source-path=SCRIPTDIR
+  . "$LOWLAT_ROOT/versions.env"
+  AP_LIB=${ASYNC_PROFILER_LIB:-$HOME/.cache/lowlat/async-profiler-$ASYNC_PROFILER_VERSION-linux-x64/lib/libasyncProfiler.so}
   if [[ -f $AP_LIB ]]; then
     step "async-profiler allocation profile of the escaping benchmark (observed)"
     rm -rf "$OUT/async-alloc"
@@ -187,7 +195,7 @@ if [[ -z ${RECHECK:-} ]]; then
   bg_forget "$pid"
 
   # ---- Java line runs ------------------------------------------------------------------------
-  run_java unwarmed -- # the r01 behaviour: bind at once, the JIT warms on the first parcels
+  run_java unwarmed -- # bind at once, the JIT warms on the first parcels
   run_java warmed -- --warm-up "$WARM_UP" # the JIT warms on 20,000 synthetic parcels before the bind
 
   step "AOT caches: two training runs ($TRAIN_SECONDS s at $RATE Hz each); the JVM writes each cache at exit"
@@ -204,7 +212,8 @@ if [[ -z ${RECHECK:-} ]]; then
   run_java aot-cache "-XX:AOTCache=$AOT_OBSERVED" -XX:AOTMode=on "-Xlog:aot:file=$OUT/aot-cache.aot.log" --
   if grep -q 'Opened AOT cache' "$OUT/aot-cache.aot.log"; then
     for r in "$OUT/java-aot-cache.json" "$OUT/java-aot-cache-first-$WINDOW.json" "$OUT/java-aot-cache-steady.json"; do
-      jq '.runtime.aot.used = true' "$r" >"$r.tmp" && mv "$r.tmp" "$r"
+      jq '.runtime.aot.used = true' "$r" >"$r.tmp" || die "jq failed on $r"
+      mv "$r.tmp" "$r"
     done
   fi
 
@@ -249,8 +258,10 @@ noea=$(jmh_bytes scalarReplacedNoEscapeAnalysis)
 verdict "1: escaping allocates the decision (exact counter)" ">=" "$escaping" 24
 verdict "1: scalar-replaced allocates nothing" "<=" "$scalar" 1
 verdict "1: --no-escape-analysis allocates it again (exact counter)" ">=" "$noea" 24
-jq -n --argjson e "$escaping" --argjson s "$scalar" --argjson n "$noea" \
-  '{unit: "B/op", escaping: $e, "scalar-replaced": $s, "--no-escape-analysis": $n}' >"$OUT/alloc-per-op.json"
+if [[ -z ${RECHECK:-} ]]; then
+  jq -n --argjson e "$escaping" --argjson s "$scalar" --argjson n "$noea" \
+    '{unit: "B/op", escaping: $e, "scalar-replaced": $s, "--no-escape-analysis": $n}' >"$OUT/alloc-per-op.json"
+fi
 
 gb() { jq -er --arg n "$1" --arg c "$2" '.benchmarks[] | select(.run_name | startswith($n)) | select(.aggregate_name == "median") | .[$c]' "$OUT/gbench-alloc.json"; }
 c_value=$(gb BM_Decide_Value 'B/op')
@@ -273,20 +284,20 @@ for v in "${JAVA_VARIANTS[@]}"; do
     "p99.9 ratio $(ratio "$(jget "$OUT/java-$v-first-$WINDOW.json" .percentiles.p99_9)" "$(jget "$OUT/java-$v-steady.json" .percentiles.p99_9)");" \
     "max ratio $(ratio "$(jget "$OUT/java-$v-first-$WINDOW.json" .percentiles.max)" "$(jget "$OUT/java-$v-steady.json" .percentiles.max)")"
 done
-# Criterion 2 is on p99.9: the cold stall delays about 1% of a 2,000-parcel window, so the p99 (the 20th-worst
-# parcel) lands inside or outside it from run to run (1.7x to 52x in S13); the p99.9 ratio is printed above too.
+# Criterion 2 is on p99.9: the cold stall delays about 1% of a 2,000-parcel window, so the p99 (the 21st-worst
+# parcel) lands inside or outside it from run to run (1.7x to 52x across r02-run1..3); the p99.9 ratio is printed above too.
 first=$(jget "$OUT/java-unwarmed-first-$WINDOW.json" .percentiles.p99_9)
 steady=$(jget "$OUT/java-unwarmed-steady.json" .percentiles.p99_9)
-verdict "2: --unwarmed first-window p99.9 over steady p99.9" ">=" "$(ratio "$first" "$steady")" 5
+verdict_ratio "2: --unwarmed first-window p99.9 over steady p99.9" ">=" "$first" "$steady" 5
 first=$(p99_of "$OUT/java-warmed-first-$WINDOW.json")
 steady=$(p99_of "$OUT/java-warmed-steady.json")
-verdict "3: warmed first-window p99 over steady p99" "<=" "$(ratio "$first" "$steady")" 3
+verdict_ratio "3: warmed first-window p99 over steady p99" "<=" "$first" "$steady" 3
 
 step "criterion 4: time to ready"
 median_none=$(jq -r .median_no_cache "$OUT/time-to-ready.json")
 median_cached=$(jq -r .median_aot_cache "$OUT/time-to-ready.json")
 echo "  median time to ready: no cache $((median_none / 1000000)) ms, AOT cache $((median_cached / 1000000)) ms"
-verdict "4: aot-cache median time to ready over the no-cache median" "<=" "$(ratio "$median_cached" "$median_none")" 0.8
+verdict_ratio "4: aot-cache median time to ready over the no-cache median" "<=" "$median_cached" "$median_none" 0.8
 if grep -q 'Opened AOT cache' "$OUT/aot-cache.aot.log"; then
   ok "4: the AOT log shows the cache opened ($(grep -c . "$OUT/aot-cache.aot.log") lines in aot-cache.aot.log)"
 else
@@ -300,6 +311,7 @@ fi
 
 step "criterion 5: build.flags carries the JVM arguments"
 for v in "${JAVA_VARIANTS[@]}"; do
+  flags_ok=1
   for r in "$OUT/java-$v.json" "$OUT/java-$v-first-$WINDOW.json" "$OUT/java-$v-steady.json"; do
     flags=$(jq -r '.build.flags // ""' "$r")
     case $v in
@@ -308,9 +320,9 @@ for v in "${JAVA_VARIANTS[@]}"; do
     esac
     missing=()
     for w in "${want[@]}"; do [[ $flags == *"$w"* ]] || missing+=("$w"); done
-    ((${#missing[@]} == 0)) || bad "5: $(basename "$r") build.flags lacks ${missing[*]}"
+    ((${#missing[@]} == 0)) || { bad "5: $(basename "$r") build.flags lacks ${missing[*]}"; flags_ok=0; }
   done
-  ok "5: java/$v reports carry ${want[*]} in build.flags"
+  if ((flags_ok)); then ok "5: java/$v reports carry ${want[*]} in build.flags"; fi
 done
 
 step "criterion 6: every line run counted $COUNT parcels and dropped none"
@@ -354,7 +366,7 @@ done
 echo "C++ (no JIT): first-window p99 $(p99_of "$OUT/cpp-tracker-first-$WINDOW.json") ns, steady p99 $(p99_of "$OUT/cpp-tracker-steady.json") ns, ratio $(ratio "$(p99_of "$OUT/cpp-tracker-first-$WINDOW.json")" "$(p99_of "$OUT/cpp-tracker-steady.json")")"
 echo "aot-cache first-window p99: $(p99_of "$OUT/java-aot-cache-first-$WINDOW.json") ns (unwarmed $(p99_of "$OUT/java-unwarmed-first-$WINDOW.json") ns, warmed $(p99_of "$OUT/java-warmed-first-$WINDOW.json") ns)"
 
-if ((FAILED)); then
+if ((FAILURES)); then
   say_bad "05-jvm-costs: at least one criterion missed (see ✗ above); results in $OUT" >&2
   exit 1
 fi

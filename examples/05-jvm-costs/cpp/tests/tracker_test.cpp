@@ -39,7 +39,7 @@ TEST(Decide, DeadlineIsTheScanTickPlusTheBeltDistance) {
 TEST(Tracker, ParcelsLeaveTheTableAtTheirDeadline) {
   jvmcosts::Tracker tracker;
   // 2 ticks apart: a parcel is in flight for kDivertTicks / 2 = 600 successors.
-  for (std::uint64_t seq = 0; seq < 2000; ++seq) tracker.on_parcel(parcel(seq, 2500, 400, 990));
+  for (std::uint64_t seq = 0; seq < 2000; ++seq) (void)tracker.on_parcel(parcel(seq, 2500, 400, 990));
   EXPECT_EQ(tracker.in_flight_count(), 600U);
   EXPECT_TRUE(tracker.is_in_flight(parcel(1999, 0, 0, 0).barcode()));
   EXPECT_FALSE(tracker.is_in_flight(parcel(0, 0, 0, 0).barcode()));

@@ -15,7 +15,7 @@ def test_variants_are_the_two_python_lanes():
         build_parser().parse_args(["--variant", "zgc"])
 
 
-@pytest.mark.parametrize("flag", ["--live-entries", "--samples", "--rate", "--warmup"])
+@pytest.mark.parametrize("flag", ["--live-entries", "--samples", "--rate", "--warm-up"])
 def test_sizes_must_be_positive(flag, capsys):
     with pytest.raises(SystemExit) as exc:
         build_parser().parse_args([flag, "0"])

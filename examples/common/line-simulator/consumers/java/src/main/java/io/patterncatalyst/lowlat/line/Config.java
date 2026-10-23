@@ -107,7 +107,7 @@ public record Config(
             try {
                 port = Integer.parseInt(text);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(flag + " port must be a number, got " + text);
+                throw new IllegalArgumentException(flag + " port must be a number, got " + text, e);
             }
             if (port < 0 || port > 65535) {
                 throw new IllegalArgumentException(flag + " port out of range: " + port);

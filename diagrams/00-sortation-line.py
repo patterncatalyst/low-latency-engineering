@@ -105,7 +105,8 @@ g.emit("00-sortation-line", 880, 420, nodes=nodes, edges=edges, notes=notes)
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "00-sortation-line.svg"))
-    json.load(open(os.path.join(g.OUT, "00-sortation-line.excalidraw")))
+    json.loads((Path(g.OUT) / "00-sortation-line.excalidraw").read_text(encoding="utf-8"))
     print("ok: 00-sortation-line")

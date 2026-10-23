@@ -135,7 +135,8 @@ g.emit("07-affinity-vm", 880, 420, bands=bands, nodes=nodes, edges=edges, notes=
 if __name__ == "__main__":
     import json
     import xml.dom.minidom
+    from pathlib import Path
 
     xml.dom.minidom.parse(os.path.join(g.OUT, "07-affinity-vm.svg"))
-    json.load(open(os.path.join(g.OUT, "07-affinity-vm.excalidraw")))
+    json.loads((Path(g.OUT) / "07-affinity-vm.excalidraw").read_text(encoding="utf-8"))
     print("ok: 07-affinity-vm")

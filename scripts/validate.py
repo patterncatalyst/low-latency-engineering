@@ -20,7 +20,8 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
                  each fence's language matches its label (C++ cpp, Python python, Java java)
   shell-syntax   `bash -n` on every *.sh under scripts/ and examples/ (not .venv/build/target)
   chronicle      a pom.xml depending on net.openhft chronicle-* passes
-                 -Dchronicle.analytics.disable=true to surefire (argLine) and to exec;
+                 -Dchronicle.analytics.disable=true to surefire (argLine) and to exec
+                 (an <argument> or the <commandlineArgs> string);
                  a Java source naming net.openhft.chronicle disables analytics itself
   means          "mean latency"/"average latency" fail (unless the sentence negates it);
                  every other use of mean/average in _docs is printed for review
@@ -47,6 +48,7 @@ import tempfile
 import tomllib
 import xml.dom.minidom
 import xml.parsers.expat
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 try:
@@ -232,8 +234,8 @@ def check_codetabs(pages: Pages) -> None:
             if not m:
                 continue
             ntabs += 1
-            want = len(m.group(1).split("|"))
             labels = m.group(1).split("|")
+            want = len(labels)
             got, j = 0, i + 1
             while j < len(lines):
                 if not lines[j].strip():
@@ -292,34 +294,33 @@ JAVA_COMMENT = re.compile(r"/\*.*?\*/|(?<![:\"])//[^\n]*", re.S)
 DEP_MGMT = re.compile(r"<dependencyManagement>.*?</dependencyManagement>", re.S)
 CHRONICLE_DEP = re.compile(r"<artifactId>\s*chronicle-[a-z-]+\s*</artifactId>")
 ARG_LINE = re.compile(r"<argLine>[^<]*" + re.escape(ANALYTICS_FLAG))
-EXEC_ARG = re.compile(r"<argument>\s*" + re.escape(ANALYTICS_FLAG) + r"\s*</argument>")
+EXEC_ARG = re.compile(
+    r"<argument>\s*" + re.escape(ANALYTICS_FLAG) + r"\s*</argument>"
+    r"|<commandlineArgs>[^<]*" + re.escape(ANALYTICS_FLAG)
+)
 JAVA_GUARD = ("ChronicleAnalytics.disable(", "chronicle.analytics.disable")
 
 
-def check_chronicle() -> None:
+def check_chronicle(root: Path) -> None:
     poms = javas = 0
-    for p in sorted(ROOT.rglob("pom.xml")):
-        if SKIP_DIRS & set(p.relative_to(ROOT).parts):
-            continue
+    for p in walk(root, "pom.xml"):
         text = XML_COMMENT.sub("", p.read_text(encoding="utf-8"))
         if not CHRONICLE_DEP.search(DEP_MGMT.sub("", text)):
             continue
         poms += 1
         if not ARG_LINE.search(text):
-            fail("chronicle", f"{rel(p)}: surefire <argLine> lacks {ANALYTICS_FLAG}")
+            fail("chronicle", f"{relto(root, p)}: surefire <argLine> lacks {ANALYTICS_FLAG}")
         if "exec-maven-plugin" in text and not EXEC_ARG.search(text):
-            fail("chronicle", f"{rel(p)}: exec <argument> lacks {ANALYTICS_FLAG}")
-    for p in sorted(ROOT.rglob("*.java")):
-        if SKIP_DIRS & set(p.relative_to(ROOT).parts):
-            continue
-        raw = p.read_text(encoding="utf-8")
-        if "net.openhft.chronicle" not in JAVA_COMMENT.sub("", raw):
+            fail("chronicle", f"{relto(root, p)}: exec arguments lack {ANALYTICS_FLAG}")
+    for p in walk(root, "*.java"):
+        code = JAVA_COMMENT.sub("", p.read_text(encoding="utf-8"))
+        if "net.openhft.chronicle" not in code:
             continue
         javas += 1
-        if not any(g in raw for g in JAVA_GUARD):
+        if not any(g in code for g in JAVA_GUARD):
             fail(
                 "chronicle",
-                f"{rel(p)}: names net.openhft.chronicle but never calls "
+                f"{relto(root, p)}: names net.openhft.chronicle but never calls "
                 "ChronicleAnalytics.disable() or sets chronicle.analytics.disable",
             )
     print(f"chronicle: {poms} pom(s), {javas} source file(s) checked")
@@ -358,13 +359,16 @@ def relto(root: Path, p: Path) -> str:
 
 def tracked_files(root: Path) -> list[str]:
     """Paths git tracks under root; without a repository, every file below it."""
-    res = subprocess.run(["git", "-C", str(root), "ls-files"], capture_output=True, text=True)
-    if res.returncode == 0:
+    try:
+        res = subprocess.run(["git", "-C", str(root), "ls-files"], capture_output=True, text=True)
+    except FileNotFoundError:  # git is not installed
+        res = None
+    if res is not None and res.returncode == 0:
         return res.stdout.splitlines()
     return [relto(root, p) for p in root.rglob("*") if p.is_file()]
 
 
-def walk(root: Path, pattern: str):
+def walk(root: Path, pattern: str) -> Iterator[Path]:
     """rglob that skips build, venv and VCS directories."""
     for p in sorted(root.rglob(pattern)):
         if p.is_file() and not SKIP_DIRS & set(p.relative_to(root).parts):
@@ -413,7 +417,7 @@ def check_java_flags(root: Path) -> None:
 
 def check_vm_runs(root: Path) -> None:
     runs = 0
-    for run in sorted((root / "examples").glob("*/results/*vm-run*")):
+    for run in sorted((root / "examples").glob("*/results/**/*vm-run*")):
         if not run.is_dir():
             continue
         runs += 1
@@ -427,8 +431,16 @@ def check_vm_runs(root: Path) -> None:
                 data = json.loads(path.read_text(encoding="utf-8"))
             except ValueError:
                 continue
-            prof = data.get("profile", data) if isinstance(data, dict) else None
-            if not isinstance(prof, dict) or str(prof.get("schema", "")) != "lowlat-profile/1":
+            if not isinstance(data, dict):
+                continue
+            if load_report(path) is not None:
+                prof = data.get("profile")
+                if not isinstance(prof, dict):
+                    fail("vm-runs", f"{relto(root, path)}: report has no profile")
+                    continue
+            else:
+                prof = data
+            if str(prof.get("schema", "")) != "lowlat-profile/1":
                 continue
             virt = (prof.get("virt") or {}).get("type")
             if virt != "kvm":
@@ -439,7 +451,7 @@ def check_vm_runs(root: Path) -> None:
 # A version is a prerelease when a separator or digit is followed by one of these words.
 PRERELEASE = re.compile(
     r"(?i)(?:^|[-._+]|(?<=\d))(?:ea|snapshot|alpha|beta|rc|preview|early-access|milestone|dev|"
-    r"jep\d+(?:ea)?|m)(?:\d*)(?=$|[-._+])|\d(?:a|b|rc)\d+(?:$|[-._+])|-ea\b"
+    r"jep\d+(?:ea)?|m|b|pre|nightly)(?:\d*)(?=$|[-._+])|\d(?:a|b|rc)\d+(?:$|[-._+])|-ea\b"
 )
 
 
@@ -499,8 +511,13 @@ def check_prerelease(root: Path) -> None:
         except tomllib.TOMLDecodeError as e:
             fail("prerelease", f"{relto(root, path)}: invalid TOML ({e})")
             continue
-        specs = list(data.get("project", {}).get("dependencies", []))
-        for group in data.get("dependency-groups", {}).values():
+        project = data.get("project", {})
+        specs = list(project.get("dependencies", []))
+        specs += data.get("build-system", {}).get("requires", [])
+        for group in (
+            *project.get("optional-dependencies", {}).values(),
+            *data.get("dependency-groups", {}).values(),
+        ):
             specs += [g for g in group if isinstance(g, str)]
         for spec in specs:
             for v in re.findall(r"(?:==|>=|<=|~=|===|!=|<|>)\s*([^\s,;]+)", spec):
@@ -565,7 +582,7 @@ def check_variant_names(root: Path) -> None:
 
     for path in walk(root / "examples", "*"):
         rp = relto(root, path)
-        if path.suffix == ".json" and "results" in path.parts:
+        if path.suffix == ".json" and "results" in path.relative_to(root).parts:
             n += 1
             if w := banned_name(path.stem):
                 bad(rp, path.name, w)
@@ -605,26 +622,32 @@ def put(root: Path, rel_path: str, content: str | dict) -> None:
     p.write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
 
 
-def planted(tree: dict[str, str | dict], check, git: bool = False) -> list[str]:
-    """Run `check` on a temporary tree holding `tree`; return the failures it raised."""
+def collect_failures(run: Callable[[], None]) -> list[str]:
+    """Run a check and return the failures it raised, leaving the global list untouched."""
     global failures
     saved, failures = failures, []
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            for name, content in tree.items():
-                put(root, name, content)
-            if git:
-                subprocess.run(["git", "-C", tmp, "init", "-q"], check=True)
-                subprocess.run(["git", "-C", tmp, "add", "-A"], check=True)
-            check(root)
+        run()
         return failures
     finally:
         failures = saved
 
 
+def planted(
+    tree: dict[str, str | dict], check: Callable[[Path], None], git: bool = False
+) -> list[str]:
+    """Run `check` on a temporary tree holding `tree`; return the failures it raised."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for name, content in tree.items():
+            put(root, name, content)
+        if git:
+            subprocess.run(["git", "-C", tmp, "init", "-q"], check=True)
+            subprocess.run(["git", "-C", tmp, "add", "-A"], check=True)
+        return collect_failures(lambda: check(root))
+
+
 def self_test() -> int:
-    global failures
     r = "examples/05-jvm-costs/results/r02-run1/java-naive.json"
     vm = "examples/07-offheap-lockfree/results/r02-vm-run1"
     vm_report = {**GOOD_REPORT, "profile": {"schema": "lowlat-profile/1", "virt": {"type": "kvm"}}}
@@ -632,7 +655,7 @@ def self_test() -> int:
         "<project><dependencies><dependency><artifactId>x</artifactId><version>{}</version>"
         "</dependency></dependencies></project>"
     )
-    cases: list[tuple[str, dict, object, bool, str]] = [
+    cases: list[tuple[str, dict, Callable[[Path], None], bool, str]] = [
         # (name, tree, check, git, substring the failure must contain; "" = must pass)
         (
             "no-jfr bad",
@@ -663,6 +686,25 @@ def self_test() -> int:
             check_vm_runs,
             False,
             "no vm/LABEL",
+        ),
+        (
+            "vm-runs report without profile",
+            {
+                f"{vm}/vm/LABEL": "vm\n",
+                f"{vm}/vm/r1/j.json": {k: v for k, v in vm_report.items() if k != "profile"},
+            },
+            check_vm_runs,
+            False,
+            "report has no profile",
+        ),
+        (
+            "vm-runs nested run dir",
+            {
+                "examples/07-offheap-lockfree/results/r02/extra-vm-run2/vm/LABEL": "lab\n",
+            },
+            check_vm_runs,
+            False,
+            "LABEL is not",
         ),
         ("vm-runs wrong LABEL", {f"{vm}/vm/LABEL": "lab\n"}, check_vm_runs, False, "LABEL is not"),
         (
@@ -712,6 +754,64 @@ def self_test() -> int:
                 )
             },
             check_prerelease,
+            False,
+            "",
+        ),
+        (
+            "prerelease pom b01",
+            {"examples/pom.xml": pom.format("2.0.0-b01")},
+            check_prerelease,
+            False,
+            "2.0.0-b01",
+        ),
+        (
+            "prerelease pom nightly",
+            {"examples/pom.xml": pom.format("3.1.0-nightly")},
+            check_prerelease,
+            False,
+            "nightly",
+        ),
+        (
+            "prerelease build-system",
+            {"examples/pyproject.toml": '[build-system]\nrequires=["setuptools==80.0.0rc1"]\n'},
+            check_prerelease,
+            False,
+            "80.0.0rc1",
+        ),
+        (
+            "prerelease optional-dependencies",
+            {
+                "examples/pyproject.toml": (
+                    '[project]\nname="x"\n[project.optional-dependencies]\n'
+                    'extra=["foo>=1.0.0-pre1"]\n'
+                )
+            },
+            check_prerelease,
+            False,
+            "pre1",
+        ),
+        (
+            "chronicle guard only in a comment",
+            {
+                "examples/07-offheap-lockfree/java/A.java": (
+                    "import net.openhft.chronicle.queue.ChronicleQueue;\n"
+                    "// ChronicleAnalytics.disable() would go here\n"
+                )
+            },
+            check_chronicle,
+            False,
+            "never calls",
+        ),
+        (
+            "chronicle guard in code",
+            {
+                "examples/07-offheap-lockfree/java/A.java": (
+                    "import net.openhft.chronicle.queue.ChronicleQueue;\n"
+                    "class A { static { System.setProperty("
+                    '"chronicle.analytics.disable", "true"); } }\n'
+                )
+            },
+            check_chronicle,
             False,
             "",
         ),
@@ -799,7 +899,7 @@ def self_test() -> int:
             "",
         ),
     ]
-    bad = 0
+    bad = checked = 0
     # The page-level checks take parsed pages / names, not a root.
     tabs = '{% include codetabs.html langs="C++|Java" %}\n\n```java\na\n```\n```cpp\nb\n```\n'
     page = {"_docs": {ROOT / "_docs" / "x.md": ({}, tabs)}}
@@ -825,12 +925,11 @@ def self_test() -> int:
         ),
         ("diagrams-yml all have two", lambda: check_diagram_counts([7], ["07-a", "07-b"]), ""),
     ]:
-        saved, failures = failures, []
-        run()
-        got, failures = failures, saved
+        got = collect_failures(run)
         ok = any(want in f for f in got) if want else not got
         print(f"{'ok  ' if ok else 'BAD '} {name}: {got[0].splitlines()[0] if got else 'passes'}")
         bad += not ok
+        checked += 1
     for name, tree, check, git, want in cases:
         got = planted(tree, check, git)
         if want:
@@ -840,8 +939,8 @@ def self_test() -> int:
             ok, shown = not got, (got[0] if got else "passes")
         print(f"{'ok  ' if ok else 'BAD '} {name}: {shown}")
         bad += not ok
-    total = len(cases) + 4
-    print(f"\nself-test: {total - bad}/{total} cases behave")
+        checked += 1
+    print(f"\nself-test: {checked - bad}/{checked} cases behave")
     return 1 if bad else 0
 
 
@@ -854,7 +953,7 @@ def main() -> int:
     check_figures(pages)
     check_codetabs(pages)
     check_shell_syntax()
-    check_chronicle()
+    check_chronicle(ROOT)
     check_means(pages)
     check_no_jfr(ROOT)
     check_java_flags(ROOT)
