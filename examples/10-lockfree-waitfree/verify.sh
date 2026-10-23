@@ -9,14 +9,15 @@
 #      GIL and the free-threaded build) hands out each sequence 0..N-1 once, by the byte map the claimers write and
 #      the log's payload check. Python --racy-claim under the free-threaded build loses or duplicates at least 1.
 #   2  steps and contention (exact, then calibrated): fetch-add takes exactly 1 step per claim; cas-loop fails at least
-#      1 CAS; producers' voluntary context switches: mutex >= 100, fetch-add <= 10 (median of 3), C++ and Java
-#   3  claim p99.9: mutex >= 3x fetch-add (median of 3 alternations), C++ and Java. cas-loop is observed.
+#      1 CAS; voluntary context switches per producer: mutex, the least-switching producer >= 100; fetch-add, the
+#      most-switching producer <= 10 (median of 3 runs), C++ and Java
+#   3  claim p99: mutex >= 3x fetch-add (median of 3 alternations), C++ and Java. p99.9 and cas-loop are observed.
 #   4  --stalled-producer (1 ms sleep between claim and publish): the consumer waits >= 0.5 ms at that sequence in the
 #      fetch-add log, C++ and Java
 #   5  litmus (exact): C++ seq-cst and Java volatile (jcstress) never read 0, 0; C++ release-acquire and Java
 #      setRelease/getAcquire read 0, 0 at least once
-#   6  read side: torn snapshots 0 in every variant (exact); writer p99.9 seqlock <= 1/3 of shared-mutex (C++) and
-#      stamped-lock <= 1/3 of rw-lock (Java), median of 3 alternations
+#   6  read side: torn snapshots 0 in every variant (exact); writer p99 seqlock <= 1/3 of shared-mutex (C++) and
+#      stamped-lock <= 1/3 of rw-lock (Java), median of 3 alternations; p99.9 is observed
 #   7  line, four simulator instances at 2.5 kHz x 20 s (200,000 parcels): count 200,000, dropped 0 per camera, every
 #      divert command received, for C++ mutex and fetch-add, Java blocking-queue and agrona-mpsc. End-to-end
 #      percentiles are observed.
@@ -29,7 +30,7 @@
 #   RECHECK=results/<run-id>    re-evaluate the committed reports without building or running anything
 #   ALLOW_BUSY=1 ./verify.sh    measure while a lab VM or other load is running (noisy)
 #   SKIP_BUILD=1 ./verify.sh    reuse existing builds
-#   SKIP_JCSTRESS=1             skip the jcstress litmus run (its criterion is then not evaluated)
+#   SKIP_JCSTRESS=1             skip the jcstress litmus run (criterion 5, Java half, is then reported as not met)
 #   RESULTS_DIR=DIR             where reports go (default results/latest)
 #   LOWLAT_BUILD=DIR            private C++ build directory
 #
@@ -131,11 +132,14 @@ crit_ratio() {
   fi
 }
 
+p99() { jget "$1" .percentiles.p99; }
 p999() { jget "$1" .percentiles.p99_9; }
 counter() { jget "$1" ".runtime.counters.$2"; }
 
-# alt_ratio FILE_NUM FILE_DEN: the ratio of two p99.9 values in thousandths.
-alt_ratio() { echo $((1000 * $(p999 "$1") / $(p999 "$2"))); }
+# alt_ratio FILE_NUM FILE_DEN: the ratio of two p99 values in thousandths (the asserted tail).
+alt_ratio() { echo $((1000 * $(p99 "$1") / $(p99 "$2"))); }
+# alt_ratio999 FILE_NUM FILE_DEN: the same at p99.9 (observed: it sits at the host's interrupt floor, a few microseconds).
+alt_ratio999() { echo $((1000 * $(p999 "$1") / $(p999 "$2"))); }
 
 # median_of VALUE...: the middle value of the sorted integers.
 median_of() { median_ns "$@"; }
@@ -178,8 +182,12 @@ each_alt() {
 
 # ---- build and unit tests ------------------------------------------------------------------------------------------
 if ((RUN)); then
-  cores=$(distinct_cores 5) || die "need 5 distinct physical cores"
+  # Six distinct physical cores, the first dropped: CPU 0 takes most interrupts, so the five pinned threads start at the
+  # second core (example 09 does the same).
+  cores=$(distinct_cores 6) || die "need 6 distinct physical cores (5 to pin, the first left alone)"
   mapfile -t CORES <<<"$cores"
+  CORES=("${CORES[@]:1}")
+  cores=$(printf '%s\n' "${CORES[@]}")
   CPUS=$(paste -sd, <<<"$cores")
   uv python find 3.14t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14t (a user-local download)"
   build_cpp lockfree-bench lockfree-line lockfree-store-bench lockfree-test line-simulator
@@ -316,6 +324,9 @@ run_line() {
   bg_track "$pid"
   wait_log_line '^placement-ready$' "$log" "$pid" >/dev/null
   check_pins "$log" 5
+  # The receivers bind before the gate's hold ends, so a bound port does not mean the run has started. "released" is
+  # printed when the hold is over and the threads go; the simulators start then, and no parcel waits in a socket buffer.
+  wait_log_line '^released$' "$log" "$pid" >/dev/null
   for ((i = 0; i < CAMERAS; i++)); do
     wait_udp_bound $((port + i)) "$pid" "$log"
   done
@@ -366,6 +377,20 @@ for build in gil free-threaded; do
   crit_exact "1" "Python lock, $build build: lost or duplicated claims" "$(counter "$f" lost_or_duplicated_claims)" 0
   crit_exact "1" "Python lock, $build build: claims made" "$(counter "$f" claims)" "$PY_CLAIMS"
 done
+gil_off=1
+for r in "$OUT"/python/python-free-threaded-*.json; do
+  if [[ $(note_of "$r" gil_at_start) != false || $(note_of "$r" gil_at_end) != false ]]; then
+    bad "1 $(basename "$r"): the free-threaded measurement ran with the GIL on (gil_at_start $(note_of "$r" gil_at_start), gil_at_end $(note_of "$r" gil_at_end))"
+    gil_off=0
+  fi
+done
+((gil_off)) && ok "1 Python free-threaded build: the GIL stayed off from start to end in every measurement"
+# The racy report keeps the variant name `lock` (a §2 name); its racy_claim counter marks it, and only it.
+for r in "$OUT"/python/python-*.json; do
+  want=0
+  [[ $r == *-racy-claim.json ]] && want=1
+  [[ $(counter "$r" racy_claim) == "$want" ]] || bad "1 $(basename "$r"): counter racy_claim is $(counter "$r" racy_claim), want $want"
+done
 racy_ft=$(counter "$OUT/python/python-free-threaded-lock-racy-claim.json" lost_or_duplicated_claims)
 crit_ge "1" "Python --racy-claim, free-threaded build: lost or duplicated claims (exact, demonstrates the race)" "$racy_ft" 1
 printf '  observed: Python lost or duplicated claims, GIL build: lock %s, itertools-count %s, racy %s; free-threaded build: itertools-count %s, racy %s (of %s)\n' \
@@ -380,24 +405,26 @@ for lang in cpp java; do
   for n in 1 2 3; do
     f=$OUT/$lang-fetch-add-alt$n.json
     crit_exact "2" "$lang fetch-add alt$n: claim steps ($(counter "$f" claim_steps)) per $CLAIMS claims" "$(counter "$f" claim_steps)" "$CLAIMS"
-    vol_mutex+=("$(jget "$OUT/$lang-mutex-alt$n.json" .runtime.ctx_switches.voluntary)")
-    vol_fetch+=("$(jget "$f" .runtime.ctx_switches.voluntary)")
+    vol_mutex+=("$(counter "$OUT/$lang-mutex-alt$n.json" producer_voluntary_ctx_min)")
+    vol_fetch+=("$(counter "$f" producer_voluntary_ctx_max)")
     casfail+=("$(counter "$OUT/$lang-cas-loop-alt$n.json" cas_failures)")
   done
   crit_ge "2" "$lang cas-loop: failed CAS in the least contended of 3 runs (exact count; contention present); largest retry count in one claim, run 1: $(counter "$OUT/$lang-cas-loop-alt1.json" cas_max_retries)" "$(printf '%s\n' "${casfail[@]}" | sort -n | head -1)" 1
-  crit_ge "2" "$lang mutex: producers' voluntary context switches (median of 3: ${vol_mutex[*]})" "$(median_of "${vol_mutex[@]}")" 100
-  crit_le "2" "$lang fetch-add: producers' voluntary context switches (median of 3: ${vol_fetch[*]})" "$(median_of "${vol_fetch[@]}")" 10
+  crit_ge "2" "$lang mutex: voluntary context switches of the least-switching producer (median of 3 runs: ${vol_mutex[*]})" "$(median_of "${vol_mutex[@]}")" 100
+  crit_le "2" "$lang fetch-add: voluntary context switches of the most-switching producer (median of 3 runs: ${vol_fetch[*]})" "$(median_of "${vol_fetch[@]}")" 10
 done
 
-step "criterion 3: claim p99.9, mutex against fetch-add, same run, median of 3 alternations"
+step "criterion 3: claim p99, mutex against fetch-add, same run, median of 3 alternations"
 for lang in cpp java; do
-  ratios=() cas=()
+  ratios=() cas=() tail=()
   for n in 1 2 3; do
     ratios+=("$(alt_ratio "$OUT/$lang-mutex-alt$n.json" "$OUT/$lang-fetch-add-alt$n.json")")
     cas+=("$(alt_ratio "$OUT/$lang-cas-loop-alt$n.json" "$OUT/$lang-fetch-add-alt$n.json")")
+    tail+=("$(alt_ratio999 "$OUT/$lang-mutex-alt$n.json" "$OUT/$lang-fetch-add-alt$n.json")")
   done
-  crit_ratio "3" "$lang claim p99.9" "mutex over fetch-add, per alternation: ${ratios[*]} thousandths" "$(median_of "${ratios[@]}")" 3000
-  printf '  observed: %s cas-loop over fetch-add p99.9 per alternation: %s thousandths (lock-free is not faster; wait-free bounds steps, not time)\n' "$lang" "${cas[*]}"
+  crit_ratio "3" "$lang claim p99" "mutex over fetch-add, per alternation: ${ratios[*]} thousandths" "$(median_of "${ratios[@]}")" 3000
+  printf '  observed: %s mutex over fetch-add p99.9 per alternation: %s thousandths (median %s)\n' "$lang" "${tail[*]}" "$(median_of "${tail[@]}")"
+  printf '  observed: %s cas-loop over fetch-add p99 per alternation: %s thousandths (lock-free is not faster; wait-free bounds steps, not time)\n' "$lang" "${cas[*]}"
   for v in "${CLAIM_VARIANTS[@]}"; do
     printf '  %s %s claim p50 / p99 / p99.9 / max in ns, alternation 1: %s\n' "$lang" "$v" \
       "$(jget "$OUT/$lang-$v-alt1.json" '"\(.percentiles.p50) / \(.percentiles.p99) / \(.percentiles.p99_9) / \(.percentiles.max)"')"
@@ -426,7 +453,7 @@ if [[ -f $OUT/java-jcstress-summary.txt ]]; then
   printf '  Java volatile samples with all outcomes seen: 0,1 = %s; 1,0 = %s; 1,1 = %s\n' \
     "$(jcstress_samples StoreBufferVolatile '0, 1')" "$(jcstress_samples StoreBufferVolatile '1, 0')" "$(jcstress_samples StoreBufferVolatile '1, 1')"
 else
-  echo "  jcstress skipped (SKIP_JCSTRESS=1): the Java half of criterion 5 was not evaluated"
+  bad "5 Java litmus not evaluated (SKIP_JCSTRESS or no summary)"
 fi
 printf '  per-store cost, p50 per store in ns (observed): C++ release %s, seq_cst %s; Java release %s, volatile %s\n' \
   "$(jget "$OUT/cpp/cpp-release-acquire.json" .percentiles.p50)" "$(jget "$OUT/cpp/cpp-seq-cst.json" .percentiles.p50)" \
@@ -435,13 +462,15 @@ printf '  per-store cost, p50 per store in ns (observed): C++ release %s, seq_cs
 step "criterion 6: the read side"
 for lang in cpp java; do
   if [[ $lang == cpp ]]; then slow=shared-mutex fast=seqlock; else slow=rw-lock fast=stamped-lock; fi
-  ratios=() torn=0
+  ratios=() tail=() torn=0
   for n in 1 2 3; do
     for v in $slow $fast; do torn=$((torn + $(counter "$OUT/$lang-cell-$v-alt$n.json" torn_snapshots))); done
     ratios+=("$(alt_ratio "$OUT/$lang-cell-$slow-alt$n.json" "$OUT/$lang-cell-$fast-alt$n.json")")
+    tail+=("$(alt_ratio999 "$OUT/$lang-cell-$slow-alt$n.json" "$OUT/$lang-cell-$fast-alt$n.json")")
   done
   crit_exact "6" "$lang torn snapshots, $slow and $fast, 3 alternations each" "$torn" 0
-  crit_ratio "6" "$lang writer p99.9" "$slow over $fast, per alternation: ${ratios[*]} thousandths" "$(median_of "${ratios[@]}")" 3000
+  crit_ratio "6" "$lang writer p99" "$slow over $fast, per alternation: ${ratios[*]} thousandths" "$(median_of "${ratios[@]}")" 3000
+  printf '  observed: %s writer %s over %s p99.9 per alternation: %s thousandths (median %s)\n' "$lang" "$slow" "$fast" "${tail[*]}" "$(median_of "${tail[@]}")"
   printf '  %s writer update p50 / p99 / p99.9 in ns, alternation 1: %s %s; %s %s\n' "$lang" \
     "$slow" "$(jget "$OUT/$lang-cell-$slow-alt1.json" '"\(.percentiles.p50) / \(.percentiles.p99) / \(.percentiles.p99_9)"')" \
     "$fast" "$(jget "$OUT/$lang-cell-$fast-alt1.json" '"\(.percentiles.p50) / \(.percentiles.p99) / \(.percentiles.p99_9)"')"

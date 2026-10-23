@@ -32,6 +32,7 @@
 #include "lowlat/lockfree/claim.hpp"
 #include "lowlat/lockfree/claim_log.hpp"
 #include "lowlat/lockfree/litmus.hpp"
+#include "lowlat/lockfree/options.hpp"
 #include "lowlat/lockfree/placement.hpp"
 #include "lowlat/lockfree/report_util.hpp"
 #include "lowlat/lockfree/seqlock.hpp"
@@ -50,35 +51,7 @@ constexpr std::uint64_t kPayloadStride = 0x9e3779b97f4a7c15ULL;  // slot payload
 
 // --- options ------------------------------------------------------------------------------------
 
-class Options {
- public:
-  Options(int argc, char** argv) {
-    for (int i = 2; i < argc; ++i) {
-      std::string_view key{argv[i]};
-      if (!key.starts_with("--")) throw std::invalid_argument(std::format("unexpected argument '{}'", key));
-      key.remove_prefix(2);
-      if (key == "stalled-producer") {
-        values_[std::string{key}] = "1";
-      } else if (i + 1 < argc) {
-        values_[std::string{key}] = argv[++i];
-      } else {
-        throw std::invalid_argument(std::format("--{} needs a value", key));
-      }
-    }
-  }
-  [[nodiscard]] bool flag(const std::string& key) const { return values_.contains(key); }
-  [[nodiscard]] std::string text(const std::string& key, std::string fallback) const {
-    const auto it = values_.find(key);
-    return it == values_.end() ? fallback : it->second;
-  }
-  [[nodiscard]] std::uint64_t number(const std::string& key, std::uint64_t fallback) const {
-    const auto it = values_.find(key);
-    return it == values_.end() ? fallback : std::stoull(it->second);
-  }
-
- private:
-  std::map<std::string, std::string> values_;
-};
+using lf::Options;
 
 std::vector<int> cpus_for(const Options& o, std::size_t needed) {
   const std::string list = o.text("cpus", "");
@@ -182,7 +155,10 @@ int run_claim(const Options& o, const std::string& variant) {
   }
   const std::uint64_t distinct = std::accumulate(claimed.begin(), claimed.end(), std::uint64_t{0});
   lf::CtxSwitches ctx_total;
+  std::int64_t vol_max = 0, vol_min = ctx.empty() ? 0 : ctx.front().voluntary;
   for (const auto& c : ctx) {
+    vol_max = std::max(vol_max, c.voluntary);
+    vol_min = std::min(vol_min, c.voluntary);
     ctx_total.voluntary += c.voluntary;
     ctx_total.involuntary += c.involuntary;
   }
@@ -198,6 +174,8 @@ int run_claim(const Options& o, const std::string& variant) {
       {"lost_or_duplicated_claims", static_cast<std::int64_t>(total - distinct)},
       {"payload_mismatches", static_cast<std::int64_t>(payload_mismatches)},
       {"consumer_max_wait_ns", static_cast<std::int64_t>(consumer_max_wait_ns)},
+      {"producer_voluntary_ctx_max", vol_max},  // the most any one producer switched voluntarily
+      {"producer_voluntary_ctx_min", vol_min},
   };
   if (stalled) counters["consumer_wait_at_stalled_seq_ns"] = static_cast<std::int64_t>(consumer_wait_at_stalled_ns);
   runtime["counters"] = measure::counters(counters);
@@ -318,7 +296,7 @@ int run_cell(const Options& o, const std::string& variant) {
 int dispatch(int argc, char** argv) {
   if (argc < 2) throw std::invalid_argument("usage: lockfree-bench claim|litmus|seqlock --variant NAME [options]");
   const std::string_view command{argv[1]};
-  const Options o{argc, argv};
+  const Options o{argc, argv, 2, {"stalled-producer"}};
   const std::string variant = o.text("variant", "");
   if (command == "claim") {
     if (variant == "mutex") return run_claim<lf::MutexClaim>(o, variant);

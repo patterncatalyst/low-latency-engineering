@@ -35,6 +35,8 @@ def build_report(raw_dir: Path, out: Path) -> dict[str, Any]:
     counters = {
         "claims": meta["claims"],
         "lost_or_duplicated_claims": meta["lost_or_duplicated_claims"],
+        # The variant stays `lock` (a §2 name); this marks the report whose lock was dropped.
+        "racy_claim": int(meta["racy_claim"]),
     }
     runtime = runtime_block(
         pinned=pinned,

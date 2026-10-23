@@ -39,7 +39,8 @@ final class ClaimRun {
 
     /** What a run measured, for the tests; the report holds the distribution. */
     record Result(long claims, long steps, long casFailures, long maxRetries, long lostOrDuplicated,
-            long payloadMismatches, long consumerMaxWaitNs, long consumerWaitAtStalledNs, long voluntary, long involuntary) {
+            long payloadMismatches, long consumerMaxWaitNs, long consumerWaitAtStalledNs, long voluntary, long involuntary,
+            long producerVoluntaryMax, long producerVoluntaryMin) {
     }
 
     static void execute(String variant, Args args) throws Exception {
@@ -81,6 +82,8 @@ final class ClaimRun {
         counters.put("lost_or_duplicated_claims", result.lostOrDuplicated());
         counters.put("payload_mismatches", result.payloadMismatches());
         counters.put("consumer_max_wait_ns", result.consumerMaxWaitNs());
+        counters.put("producer_voluntary_ctx_max", result.producerVoluntaryMax());
+        counters.put("producer_voluntary_ctx_min", result.producerVoluntaryMin());
         if (stalled) {
             counters.put("consumer_wait_at_stalled_seq_ns", result.consumerWaitAtStalledNs());
         }
@@ -175,6 +178,8 @@ final class ClaimRun {
         long maxRetries = 0;
         long voluntary = 0;
         long involuntary = 0;
+        long voluntaryMax = 0;
+        long voluntaryMin = Long.MAX_VALUE;
         for (int k = 0; k < producers; k++) {
             claims += stats[k].claims;
             steps += stats[k].steps;
@@ -182,6 +187,8 @@ final class ClaimRun {
             maxRetries = Math.max(maxRetries, stats[k].maxRetries);
             voluntary += ctx[k][0];
             involuntary += ctx[k][1];
+            voluntaryMax = Math.max(voluntaryMax, ctx[k][0]);
+            voluntaryMin = Math.min(voluntaryMin, ctx[k][0]);
             merged.histogram().add(claimNs[k].histogram());
         }
         long distinct = 0;
@@ -189,7 +196,7 @@ final class ClaimRun {
             distinct += b;
         }
         return new Result(claims, steps, casFailures, maxRetries, total - distinct, consumer[0], consumer[1], consumer[2], voluntary,
-                involuntary);
+                involuntary, voluntaryMax, voluntaryMin);
     }
 
     private static void sleep(Duration duration) {

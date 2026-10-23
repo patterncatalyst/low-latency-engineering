@@ -79,7 +79,6 @@ final class Placement {
     static Thread.UncaughtExceptionHandler recordTo(AtomicReference<Throwable> failure) {
         return (thread, error) -> {
             System.err.println("thread " + thread.getName() + " failed: " + error);
-            error.printStackTrace();
             failure.compareAndSet(null, error);
         };
     }
@@ -105,8 +104,9 @@ final class Placement {
     /**
      * The calling thread's pin: OpenHFT {@code Affinity.setAffinity(cpu)} (sched_setaffinity on this
      * thread), confirmed against the CPU the thread then runs on, and undone on close. The
-     * higher-level {@code AffinityLock} would also work, but its inventory reserves CPU 0 for the
-     * operating system, and the lowest-numbered CPU of the first core is one of ours to pin to.
+     * higher-level {@code AffinityLock} would also work, but it chooses the CPU from its own inventory;
+     * {@code setAffinity} pins to the CPU the harness chose, so the three languages share one CPU list
+     * ({@code --cpus}, which starts at the second physical core: CPU 0 takes most interrupts).
      */
     static final class Pin implements AutoCloseable {
         private final boolean pinned;
@@ -137,7 +137,8 @@ final class Placement {
      * pins itself and waits. The coordinating thread calls {@link #release}, which waits for all of
      * them, prints one {@code pinned pid=P tid=T cpu=C role=R} line per thread and
      * {@code placement-ready}, holds for {@code holdMs} (a script checks every thread's CPU in
-     * {@code /proc} meanwhile) and lets the workers go together.
+     * {@code /proc} meanwhile), prints {@code released} and lets the workers go together. A script that
+     * starts a load waits for {@code released}, not for the hold to have elapsed.
      */
     static final class Gate {
         private final CyclicBarrier barrier;
@@ -188,6 +189,10 @@ final class Placement {
                 System.out.flush();
             }
             Thread.sleep(holdMs);
+            if (announce) {
+                System.out.println("released");
+                System.out.flush();
+            }
             await();
         }
 

@@ -33,6 +33,7 @@
 #include "lowlat/lockfree/claim.hpp"
 #include "lowlat/lockfree/claim_log.hpp"
 #include "lowlat/lockfree/command.hpp"
+#include "lowlat/lockfree/options.hpp"
 #include "lowlat/lockfree/placement.hpp"
 #include "lowlat/lockfree/report_util.hpp"
 #include "lowlat/measure/recorder.hpp"
@@ -98,27 +99,7 @@ class CameraHandler {
   std::uint64_t published_ = 0;
 };
 
-class Options {
- public:
-  Options(int argc, char** argv) {
-    for (int i = 1; i < argc; ++i) {
-      std::string_view key{argv[i]};
-      if (!key.starts_with("--") || i + 1 >= argc) throw std::invalid_argument(std::format("bad argument '{}'", key));
-      values_[std::string{key.substr(2)}] = argv[++i];
-    }
-  }
-  [[nodiscard]] std::string text(const std::string& key, std::string fallback) const {
-    const auto it = values_.find(key);
-    return it == values_.end() ? fallback : it->second;
-  }
-  [[nodiscard]] std::uint64_t number(const std::string& key, std::uint64_t fallback) const {
-    const auto it = values_.find(key);
-    return it == values_.end() ? fallback : std::stoull(it->second);
-  }
-
- private:
-  std::map<std::string, std::string> values_;
-};
+using lf::Options;
 
 template <lf::SequenceClaim Claim>
 int run(const Options& o, const std::string& variant) {
@@ -250,7 +231,7 @@ int run(const Options& o, const std::string& variant) {
 
 int main(int argc, char** argv) {
   try {
-    const Options o{argc, argv};
+    const Options o{argc, argv, 1};
     const std::string variant = o.text("variant", "");
     if (!o.text("report", "").empty()) (void)measure::load_profile();
     if (variant == "mutex") return run<lf::MutexClaim>(o, variant);

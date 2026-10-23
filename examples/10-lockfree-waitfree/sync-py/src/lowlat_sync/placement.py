@@ -3,8 +3,8 @@
 An experiment control, not isolation; it needs no privilege and changes nothing on the host. The
 start of a pinned run follows the protocol of the C++ and Java lanes: every worker pins itself and
 waits, the coordinating thread prints one `pinned pid=P tid=T cpu=C role=R` line per thread and
-`placement-ready`, holds, and releases them together, so a script can check each thread's CPU in
-/proc.
+`placement-ready`, holds, prints `released` and lets them go together, so a script can check each
+thread's CPU in /proc and start its load on `released`.
 """
 
 import os
@@ -97,6 +97,8 @@ class Gate:
                     print(line)
             print("placement-ready", flush=True)
         time.sleep(self._hold_ms / 1000)
+        if self._announce:
+            print("released", flush=True)
         self._barrier.wait()
 
 

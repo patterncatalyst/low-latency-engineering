@@ -88,3 +88,25 @@ def test_report_is_made_from_the_raw_file(tmp_path: Path, monkeypatch: pytest.Mo
     assert report["count"] == 2_000
     assert report["runtime"]["python_build"] == "gil"
     assert report["runtime"]["counters"]["lost_or_duplicated_claims"] == 0
+    assert report["variant"] == "lock"
+    assert report["runtime"]["counters"]["racy_claim"] == 0
+
+
+@pytest.mark.skipif(
+    FREE_THREADED,
+    reason="lowlat_measure re-enables the GIL; reports are made in the GIL environment",
+)
+def test_racy_report_keeps_the_variant_and_is_marked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fixtures = Path(__file__).resolve().parents[3] / "common" / "measure-fixtures"
+    monkeypatch.setenv("LOWLAT_PROFILE", str(fixtures / "profile.json"))
+    from lowlat_sync.report import build_report
+
+    lane.write_raw(
+        lane.run("lock", racy=True, threads=2, claims_per_thread=1_000, announce=False),
+        tmp_path / "raw",
+    )
+    report = build_report(tmp_path / "raw", tmp_path / "report.json")
+    assert report["variant"] == "lock"  # a §2 variant name; the marker is the counter
+    assert report["runtime"]["counters"]["racy_claim"] == 1

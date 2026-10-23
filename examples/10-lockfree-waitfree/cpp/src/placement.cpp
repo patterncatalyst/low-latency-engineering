@@ -110,6 +110,8 @@ void Gate::release() {
   std::println("placement-ready");
   std::fflush(stdout);
   std::this_thread::sleep_for(hold_);
+  std::println("released");
+  std::fflush(stdout);
   go_.arrive_and_wait();
 }
 

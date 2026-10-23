@@ -17,7 +17,7 @@ their own idiom. Where one has no equivalent, the divergence is the lesson.
   `fetch_add` and `getAndIncrement` are retry loops, so "wait-free" depends on the platform.
   The log makes the point that the guarantee belongs to the operation. Claiming a slot and publishing it are two steps; a
   producer that stalls between them (`--stalled-producer` sleeps 1 ms there) blocks the consumer of a log whose claim is
-  wait-free. The claim is monotonic and 64 bits wide, so a number is never reused: there is no ABA to defend against and
+  wait-free. The claim is monotonic and 64 bits wide, so a number is never reused: there's no ABA to defend against and
   nothing to reclaim. A structure that recycles nodes needs hazard pointers or epochs in C++; the collector does that
   work in Java. C++26's `<hazard_pointer>` and `<rcu>` aren't shipped by GCC 16.2 or Clang 22.1 (the feature macros are
   undefined), so they're prose only.
@@ -28,7 +28,7 @@ their own idiom. Where one has no equivalent, the divergence is the lesson.
   `volatile`, tested with jcstress.
 - **(c) The read side.** The diverter and the HMI read a parcel-state snapshot while the tracker updates it at 1 MHz.
   `shared-mutex` makes readers and the writer take turns. `seqlock` lets the writer ignore the readers: a reader copies
-  the fields and keeps the copy only if the sequence number was even and did not change. In C++ a seqlock over plain
+  the fields and keeps the copy only if the sequence number was even and didn't change. In C++ a seqlock over plain
   fields is a data race, and that's undefined behaviour even when the reader throws the copy away. So the fields are
   `std::atomic_ref<std::uint64_t>` accessed relaxed, with acquire and release fences around them. In Java the idiom is
   `StampedLock.tryOptimisticRead`, the JDK's own seqlock.
@@ -47,20 +47,29 @@ the mechanism; they aren't advice for general code.
 - **(b) Litmus.** 10,000,000 trials, two threads on distinct cores, a spin barrier per trial. The flags are reset by their
   owners after both threads finish a trial, and each result is written by its own thread into its own array.
 - **(c) Read side.** One writer updates an 8-word snapshot (the last word is a checksum) every microsecond, open loop; three
-  readers spin on it; 2 s. A snapshot whose checksum does not match is torn. The writer's time inside `write()` is the
+  readers spin on it; 2 s. A snapshot whose checksum doesn't match is torn. The writer's time inside `write()` is the
   distribution.
 - **Line.** Four simulator instances at 2.5 kHz x 20 s each (four tunnel cameras, 200,000 parcels) to UDP 47300-47303
   (`mutex`, `blocking-queue`) and 47304-47307 (`fetch-add`, `agrona-mpsc`). One receive thread per camera publishes into
   the multi-producer hand-off; one tracker thread reads it, decides the lane and sends the divert command on a separate
-  UDP socket to the diverter. The command path shares no queue with the data path: a flood of scans cannot sit ahead of a
+  UDP socket to the diverter. The command path shares no queue with the data path: a flood of scans can't sit ahead of a
   command. The line simulator and the shared consumers are unchanged. The example runs four instances of the
   simulator instead.
 
 Placement is unprivileged `sched_setaffinity` on our own benchmark threads (`pthread_setaffinity_np`, OpenHFT
 `Affinity.setAffinity`, `os.sched_setaffinity`) on CPUs from `distinct_cores` in `examples/_lib/lib.sh`: one logical CPU per
-physical core, chosen from sysfs topology. It's an experiment control, and it doesn't isolate the cores from the
+physical core, chosen from sysfs topology. `verify.sh` asks for six cores and drops the first, so the pinned threads
+start at the second physical core: CPU 0 carries most of the interrupts, and example 09 leaves it alone too. All three
+languages receive the same list through `--cpus`. It's an experiment control, and it doesn't isolate the cores from the
 scheduler or the timer tick; isolation is Part 5. Every run records `runtime.placement`, and `verify.sh`
 checks each pinned thread's last CPU in `/proc/<pid>/task/<tid>/stat` while the run holds at its start gate.
+
+The start gate has two lines of handshake, printed by the C++, Java and Python gates alike. Each pinned thread pins
+itself and waits. The coordinator prints one `pinned pid=P tid=T cpu=C role=R` line per thread and `placement-ready`,
+and holds for 500 ms (`--hold-ms`) while `verify.sh` checks the pins in `/proc`. It then prints `released` and lets the
+threads go. The line run starts its simulators on `released`, not on a bound port: the receivers bind before the hold
+ends, and simulators started at that point would have parcels waiting in the socket buffer for the rest of the hold,
+which shows up as a start-up stall in the percentiles. (`verify.sh` still waits for the ports too.)
 
 ## Variants
 
@@ -77,14 +86,15 @@ checks each pinned thread's last CPU in `/proc/<pid>/task/<tid>/stat` while the 
 | C++ line | `mutex`, `fetch-add` | the claim in the hand-off between cameras and tracker |
 | Java line | `blocking-queue`, `agrona-mpsc` | `ArrayBlockingQueue` against Agrona's `ManyToOneConcurrentArrayQueue` |
 | Python | `lock`, `itertools-count` | `threading.Lock` against `next()` on one shared `itertools.count` |
-| Python | `--racy-claim` | the lock removed: `seq = n; n += 1` |
+| Python | `--racy-claim` | the lock removed: `seq = n; n += 1`. The report's variant stays `lock`; its `racy_claim` counter is 1 (0 in every other report) |
 
 ### C++
 
 `SequenceClaim` is a concept over three small classes (`claim.hpp`); the multi-producer log (`claim_log.hpp`) is a ring of
 slots, each a stamp and a payload, published with a release store and read with an acquire load. Threads are
-`std::jthread`s, started together through `std::barrier`; the litmus test, the seqlock and the cell types are in
-`litmus.hpp` and `seqlock.hpp`. `lockfree-test` runs the exactly-once, torn-read and forbidden-outcome checks, and runs
+`std::jthread`s, started together through `std::barrier`; the litmus test is in `litmus.hpp`; the seqlock and the
+shared-mutex cell are in `seqlock.hpp`. The store-cost benchmark (`store_bench.cpp`) stores to an atomic with external
+linkage: a local atomic that nothing reads is deleted by clang at `-O2`, and the loops measure nothing. `lockfree-test` runs the exactly-once, torn-read and forbidden-outcome checks, and runs
 under ThreadSanitizer too (see below).
 
 ### Java
@@ -92,11 +102,16 @@ under ThreadSanitizer too (see below).
 `SequenceClaim` is a sealed interface with `Locked`, `CasLoop` and `FetchAdd`; `ClaimLog` publishes with
 `AtomicLongArray.setRelease`. The padded counters use class inheritance for their padding, as the common `Completion`
 does, because `@Contended` is JDK-internal and needs `-XX:-RestrictContended`. Pinning uses OpenHFT
-`Affinity.setAffinity(cpu)` rather than `AffinityLock`: the lock's inventory reserves CPU 0 for the operating system, and
-CPU 0 is the first physical core. The claim run does a discarded warm-up pass on the same code first, so a JIT
-compilation's safepoint is not counted as a context switch of the claim being measured; the line run warms the same way
+`Affinity.setAffinity(cpu)` rather than `AffinityLock`: the lock picks a CPU from its own inventory, and the harness has
+already chosen the list (from the second physical core up) that the C++ and Python lanes use too. The claim run does a discarded warm-up pass on the same code first, so a JIT
+compilation's safepoint isn't counted as a context switch of the claim being measured; the line run warms the same way
 with synthetic parcels on ephemeral ports. Agrona 2.7 reaches `Unsafe` through `jdk.internal.misc`, which needs
 `--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED`; `verify.sh` passes it.
+
+The per-store benchmark (`StoreBenchmark`, JMH) runs with `-XX:LoopUnrollLimit=1`. With C2's default unrolling the
+volatile store looked like 1.2 ns, because C2 kept one fence for four unrolled stores (`mem_inst_retired.lock_loads:u`
+read 0.25 per store). Unrolling off, the counter reads 1.00 per store and the volatile store costs about 4 ns, the
+same instruction cost as C++'s `xchg`.
 
 The litmus tests are two jcstress classes, `StoreBufferVolatile` (`0, 0` is `FORBIDDEN`) and `StoreBufferAcquireRelease`
 (`0, 0` is `ACCEPTABLE_INTERESTING`). `verify.sh` runs them in quick mode with `-t 'io.patterncatalyst.lowlat.lockfree.StoreBuffer.*'`
@@ -140,18 +155,18 @@ examples/10-lockfree-waitfree/verify.sh
 
 Environment (from `examples/_lib/lib.sh`): `ALLOW_BUSY=1`, `SKIP_BUILD=1`, `RESULTS_DIR`, `LOWLAT_BUILD`; also
 `SKIP_JCSTRESS=1` and `RECHECK=results/<run-id>` (evaluate the criteria on committed reports; the placement checks need a
-live run). A full run takes about 15 minutes, and the jcstress step uses every CPU.
+live run). A full run takes about 4 minutes, a clean build included, and the jcstress step uses every CPU.
 
 The Python lane under each build, by hand, from `examples/`:
 
 ```bash
 # GIL build (the default workspace environment)
-uv run sync-py measure --variant lock --cpus 0,1,2,3 --out /tmp/claim-gil
+uv run sync-py measure --variant lock --cpus 1,2,3,4 --out /tmp/claim-gil
 uv run sync-py report /tmp/claim-gil --out /tmp/python-gil-lock.json
 
 # free-threaded build: a separate environment, .venv-ft (ignored by git)
 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14t --package lowlat-sync \
-    sync-py measure --variant lock --racy-claim --cpus 0,1,2,3 --out /tmp/claim-ft
+    sync-py measure --variant lock --racy-claim --cpus 1,2,3,4 --out /tmp/claim-ft
 uv run sync-py report /tmp/claim-ft --out /tmp/python-free-threaded-lock-racy-claim.json   # reporting stays in the GIL build
 
 # unit tests under both builds
@@ -160,17 +175,17 @@ LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
     uv run --python 3.14t --all-packages pytest 10-lockfree-waitfree/sync-py
 ```
 
-The C++ and Java programs by hand (CPUs from `distinct_cores 5` in `lib.sh`; `LOWLAT_PROFILE` from `scripts/profile.sh --out`):
+The C++ and Java programs by hand (CPUs from `distinct_cores 6` in `lib.sh`, without the first; `LOWLAT_PROFILE` from `scripts/profile.sh --out`):
 
 ```bash
 build=examples/build/release/10-lockfree-waitfree/cpp
-$build/lockfree-bench claim --variant fetch-add --stalled-producer --cpus 0,1,2,3,4 --report /tmp/fa.json
-$build/lockfree-bench litmus --variant seq-cst --trials 10000000 --cpus 0,1 --report /tmp/seqcst.json
+$build/lockfree-bench claim --variant fetch-add --stalled-producer --cpus 1,2,3,4,5 --report /tmp/fa.json
+$build/lockfree-bench litmus --variant seq-cst --trials 10000000 --cpus 1,2 --report /tmp/seqcst.json
 java --enable-native-access=ALL-UNNAMED -cp examples/10-lockfree-waitfree/java/target/benchmarks.jar \
-    io.patterncatalyst.lowlat.lockfree.Main seqlock --variant stamped-lock --cpus 0,1,2,3 --report /tmp/sl.json
+    io.patterncatalyst.lowlat.lockfree.Main seqlock --variant stamped-lock --cpus 1,2,3,4 --report /tmp/sl.json
 ```
 
-Under ThreadSanitizer. The `sanitize` preset is AddressSanitizer plus UndefinedBehaviorSanitizer, which cannot be
+Under ThreadSanitizer. The `sanitize` preset is AddressSanitizer plus UndefinedBehaviorSanitizer, which can't be
 combined with ThreadSanitizer, so the thread build overrides the preset's list:
 
 ```bash
@@ -192,22 +207,24 @@ machine profile.
 `verify.sh` evaluates every criterion, prints its measured value, bound and margin, and exits non-zero if any failed.
 Latency ratios compare variants within one run, alternating A B C A B C A B C and taking the median of the three
 per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. The bounds are
-provisional until the calibration step (S7).
+those of the S7 calibration (`_plans/r03-plan.md`, Follow-ups).
 
 1. **Exactly once (exact).** In every synchronised variant, each sequence 0..N-1 is claimed exactly once: C++ and Java
    `mutex`, `cas-loop`, `fetch-add`, Python `lock` in both builds. Python `--racy-claim` under the free-threaded build
    loses or duplicates at least 1.
 2. **Steps and contention.** `fetch-add` takes exactly 1 step per claim (exact); `cas-loop` fails at least 1 CAS in
-   total (exact count, contention present); the producers' voluntary context switches are at least 100 for `mutex` and
-   at most 10 for `fetch-add` (median of 3). C++ and Java.
-3. **Claim tail.** `mutex` claim p99.9 is at least 3x `fetch-add`'s, median of 3 alternations. C++ and Java. `cas-loop`
-   against `fetch-add` is observed: lock-free is not faster, and wait-free bounds steps, not time.
+   total (exact count, contention present); voluntary context switches are counted per producer thread: the
+   least-switching `mutex` producer has at least 100 and the most-switching `fetch-add` producer at most 10 (median of 3
+   runs; `producer_voluntary_ctx_min` and `producer_voluntary_ctx_max` in the report). C++ and Java.
+3. **Claim tail.** `mutex` claim p99 is at least 3x `fetch-add`'s, median of 3 alternations. C++ and Java. The p99.9
+   ratio is observed, not asserted: the tail there is a handful of samples, and the host's interrupts put a floor of a
+   few microseconds under it. `cas-loop` against `fetch-add` is observed: lock-free is not faster, and wait-free bounds steps, not time.
 4. **Stalled producer.** With a 1 ms sleep between claim and publish, the consumer waits at least 0.5 ms at that
-   sequence in the `fetch-add` log. The sleep guarantees at least 1 ms, so the margin is 2x by construction.
+   sequence in the `fetch-add` log. The sleep guarantees at least 1 ms, so the 2x margin is by construction.
 5. **Litmus (exact).** C++ `seq-cst` and Java `volatile` read `0, 0` zero times (the model forbids it); C++
    `release-acquire` and Java `setRelease`/`getAcquire` read `0, 0` at least once.
-6. **Read side.** Torn snapshots 0 in every variant (exact). Writer p99.9 `seqlock` is at most 1/3 of `shared-mutex`
-   (C++), `stamped-lock` at most 1/3 of `rw-lock` (Java), median of 3 alternations.
+6. **Read side.** Torn snapshots 0 in every variant (exact). Writer p99 `seqlock` is at most 1/3 of `shared-mutex`
+   (C++), `stamped-lock` at most 1/3 of `rw-lock` (Java), median of 3 alternations; the p99.9 ratio is observed.
 7. **Line.** 200,000 parcels counted, `dropped` 0 on every camera, every divert command received, for the four line
    variants. End-to-end percentiles are observed; at 2.5 kHz per camera an uncontended lock costs nanoseconds against a
    budget of hundreds of milliseconds, so no difference is expected.
@@ -248,6 +265,11 @@ distributions in the reports. Live observability of the tracker is Part 7.
 | protobuf | per `versions.env` | BSD-3-Clause | the line's wire format and divert commands |
 | nlohmann/json | v3.12.0 | MIT | C++ reports |
 | pytest | 9.1.1 | MIT | Python tests |
+| Jackson (`jackson-databind`, `jackson-core`) | 3.2.4 (`jackson-annotations` 2.22) | Apache-2.0 | JSON reports in the Java measurement kit |
+| slf4j-api | 2.0.17 | MIT | logging facade, pulled in by Affinity |
+| Apache Commons Math (`commons-math3`) | 3.6.1 | Apache-2.0 | statistics, pulled in by JMH |
+| JUnit | 6.1.3 | EPL-2.0 | Java tests |
+| CPython | 3.14.8 and 3.14.8+freethreaded | PSF-2.0 | the Python lanes (GIL and free-threaded builds) |
 
 The GPL-with-Classpath-exception tools are build- and measurement-time only; no hot path links them.
 

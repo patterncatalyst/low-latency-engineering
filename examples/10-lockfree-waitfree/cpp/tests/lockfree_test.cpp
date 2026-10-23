@@ -7,12 +7,15 @@
 #include <chrono>
 #include <cstdint>
 #include <numeric>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <vector>
 
 #include "lowlat/lockfree/claim.hpp"
 #include "lowlat/lockfree/claim_log.hpp"
 #include "lowlat/lockfree/litmus.hpp"
+#include "lowlat/lockfree/options.hpp"
 #include "lowlat/lockfree/placement.hpp"
 #include "lowlat/lockfree/seqlock.hpp"
 
@@ -136,6 +139,29 @@ TEST(Litmus, ReleaseAcquireCountsEveryTrial) {
   const lf::LitmusCounts c = lf::run_litmus<std::memory_order_release, std::memory_order_acquire>(
       50'000, -1, -1, 1000, gate, [](std::int64_t) {});
   EXPECT_EQ(c.r1_0_r2_0 + c.r1_0_r2_1 + c.r1_1_r2_0 + c.r1_1_r2_1, c.trials);
+}
+
+TEST(Options, NumbersAreParsedWhole) {
+  char prog[] = "prog", key[] = "--count", good[] = "42";
+  char* ok_argv[] = {prog, key, good};
+  EXPECT_EQ((lf::Options{3, ok_argv, 1}.number("count", 7)), 42U);
+  EXPECT_EQ((lf::Options{1, ok_argv, 1}.number("count", 7)), 7U);  // absent: the fallback
+
+  for (const char* bad : {"12abc", "-1", "", "1.5"}) {
+    std::string text{bad};
+    char* argv[] = {prog, key, text.data()};
+    const lf::Options o{3, argv, 1};
+    EXPECT_THROW((void)o.number("count", 7), std::invalid_argument) << "'" << bad << "'";
+  }
+}
+
+TEST(Options, FlagsTakeNoValueAndOptionsNeedOne) {
+  char prog[] = "prog", flag[] = "--stalled-producer", key[] = "--cpus";
+  char* with_flag[] = {prog, flag};
+  EXPECT_TRUE((lf::Options{2, with_flag, 1, {"stalled-producer"}}.flag("stalled-producer")));
+  EXPECT_THROW((lf::Options{2, with_flag, 1}), std::invalid_argument);  // not declared a flag: needs a value
+  char* missing[] = {prog, key};
+  EXPECT_THROW((lf::Options{2, missing, 1}), std::invalid_argument);
 }
 
 TEST(Placement, CpuListParses) {

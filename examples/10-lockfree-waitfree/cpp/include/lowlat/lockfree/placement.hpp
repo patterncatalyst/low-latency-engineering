@@ -43,7 +43,8 @@ struct CtxSwitches {
 /// The start of a pinned run. Each of `workers` threads calls worker_ready() first: it pins itself
 /// and waits. The coordinating thread calls release(), which waits for all of them, prints one
 /// "pinned pid=P tid=T cpu=C role=R" line per thread and a "placement-ready" line, holds for `hold`
-/// (a script checks every thread's CPU in /proc meanwhile) and lets the workers go together.
+/// (a script checks every thread's CPU in /proc meanwhile), prints "released" and lets the workers go
+/// together. A script that starts a load waits for "released", not for the hold to have elapsed.
 class Gate {
  public:
   Gate(std::ptrdiff_t workers, std::chrono::milliseconds hold)
