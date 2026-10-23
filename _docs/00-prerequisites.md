@@ -34,7 +34,7 @@ Three toolchains build the examples on Fedora 44.
 
 - **C++20/23** with CMake. The examples tree is one CMake superproject driven by presets. The host reports GCC 16.2.1, Clang 22.1.8 and CMake 4.3.0; CMake 4.3 is the minimum.
 - **Python 3.14** managed by `uv`, which builds the environment from `examples/pyproject.toml`.
-- **Java 25** with Maven on the plain JVM. The host reports OpenJDK 25.0.3.
+- **Java 25** with Maven on the plain JVM. The host reports OpenJDK 25.0.5.
 
 Containers use Docker Engine with the Compose plugin, on the host and in the guest, for control-plane work and throwaway builds, not a hot path.
 
@@ -123,9 +123,16 @@ The loop in `src/simulator.cpp` sleeps to `intended`, stamps `actual`, sends and
 
     const std::int64_t actual = monotonic_ns();
     ev.set_actual_emit_ns(actual);
-    const std::size_t size = ev.ByteSizeLong();
-    if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
-      throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+    std::size_t size = 0;
+    if (cfg.wire == Wire::flat) {
+      const auto bytes = flat::parcel_v1::encode(to_flat(ev));
+      size = bytes.size();
+      std::memcpy(datagram.data(), bytes.data(), size);
+    } else {
+      size = ev.ByteSizeLong();
+      if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
+        throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+      }
     }
     // MSG_DONTWAIT: a full socket buffer drops this parcel instead of stalling the belt.
     if (::send(sock.get(), datagram.data(), size, MSG_DONTWAIT) == static_cast<ssize_t>(size)) {
@@ -141,7 +148,7 @@ The event is built before the sleep, off the wake-up path. `sleep_until_ns` retu
 
 ### The consumer's receive loop and handler hook
 
-Each consumer is split in two. The loop owns what every example shares: bind, receive, parse, check `seq` against the last one seen to detect gaps and reordering, and book the gaps. What an example does with a parcel is a handler that the loop calls once per new parcel. The handler reports the parcel done through a `Completion`, which records `done_ns - intended_emit_ns` and raises an error on a negative latency, because that means the clocks differ. Later chapters swap the handler and keep the loop. The files are `consumers/cpp/include/lowlat/line/consumer.hpp`, `consumers/consumer-py/src/lowlat_consumer/loop.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/LineReceiver.java`.
+Each consumer is split in two. The loop owns what every example shares: bind, receive, parse, check `seq` against the last one seen to detect gaps and reordering, and book the gaps. What an example does with a parcel is a handler that the loop calls once per new parcel. The handler reports the parcel done through a `Completion`, which records `done_ns - intended_emit_ns` and raises an error on a negative latency, because that means the clocks differ. Later chapters swap the handler and keep the loop. The files are `consumers/cpp/include/lowlat/line/consumer.hpp`, `consumers/consumer-py/src/lowlat_consumer/loop.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/EventReceiver.java`.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -228,11 +235,10 @@ Each consumer is split in two. The loop owns what every example shares: bind, re
                 continue;
             }
             buffer.flip();
-            ParcelEvent event;
+            E event;
             try {
-                // Direct, non-array buffer: protobuf-java reads it in place (no copy to byte[]).
-                event = ParcelEvent.parseFrom(buffer);
-            } catch (InvalidProtocolBufferException e) {
+                event = decoder.decode(buffer);
+            } catch (Decoder.MalformedDatagramException e) {
                 malformed++;
                 continue;
             }
@@ -240,14 +246,15 @@ Each consumer is split in two. The loop owns what every example shares: bind, re
             // Stamped on receipt, not on completion: a handler may hold parcels for a while.
             lastRxNs = System.nanoTime();
 
-            if (gaps.observe(event.getSeq()) == GapTracker.Arrival.REORDERED) {
+            long seq = decoder.seq(event);
+            if (gaps.observe(seq) == GapTracker.Arrival.REORDERED) {
                 continue; // reported in notes, not recorded twice
             }
             if (gaps.lastGap() > 0) {
                 recorder.addDropped(gaps.lastGap());
             }
             received++;
-            completion.begin(event.getSeq());
+            Completion.begin(seqCell, seq);
             handler.onParcel(event, completion);
         }
 ```
@@ -256,11 +263,11 @@ The C++ loop makes a blocking `recv` into a reused buffer. `EINTR` returns to th
 
 The hook is a template parameter, not a `std::function` or a virtual interface. The call resolves at compile time and inlines into the loop, so the hook adds no indirect call or allocation to the measured path, for the same reason `std::sort` takes its comparator as a template argument. A handler may also define `drain`, which the loop calls once at the end to complete parcels it still holds.
 
-Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal or idle stream goes unnoticed. The interpreter cost per datagram is on the measured path, so the Python column measures the whole consumer.
+Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal goes unnoticed. The interpreter cost per datagram is on the measured path.
 
-Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first, one syscall when a datagram is waiting, and parks in a `Selector` only when the queue is empty. It parses from a direct `ByteBuffer`, which protobuf-java reads in place, and reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is the `ParcelHandler` interface; the receiver calls one instance, so the call site is monomorphic and the JIT can inline it. All three request a 4 MiB receive buffer and print what the kernel granted.
+Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first and parks in a `Selector` only when the queue is empty. The loop lives in `EventReceiver<E>`, which hands each direct `ByteBuffer` to a `Decoder<E>`; the default is protobuf, read in place, and `LineReceiver` is the protobuf specialisation. It reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is `EventHandler<E>`, which `ParcelHandler` fixes to `ParcelEvent`; one instance, so the JIT can inline it. The loop keeps a reference to the seq cell and never touches the owner-written counters. All three request a 4 MiB receive buffer and print what the kernel granted.
 
-Example 00's handler (`consumer.cpp`, `loop.py`, `LineReceiver.java`) is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the measured latency.
+Example 00's handler (`consumer.cpp`, `loop.py`, `LineReceiver.java`) is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the latency.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -270,7 +277,7 @@ struct LaneHandler {
   std::array<std::uint64_t, kLanes> counts{};
 
   void operator()(const v1::ParcelEvent& ev, Completion& done) {
-    ++counts[lane_for(ev.barcode())];  // the r01 "work"
+    ++counts[lane_for(ev.barcode())];  // the per-parcel work
     done.complete(ev);
   }
 };
@@ -286,14 +293,14 @@ def lane_handler(event: ParcelEvent, complete: Completion) -> None:
 ```java
     public StopReason run() throws IOException {
         return run((event, done) -> {
-            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the r01 "handle" step
+            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the Chapter 0 "handle" step
             done.complete(event);
         });
 ```
 
-C++ keeps its lane counts in the handler object. Python passes the event's intended time and a fresh `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; a later chapter passes its own handler to `run(ParcelHandler)`.
+C++ keeps its lane counts in the handler object. Python passes the intended time and `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; a later chapter passes its own handler to `run(ParcelHandler)`.
 
-Each consumer flushes stdout once its socket is bound, so a run script waiting on a ready line in a redirected stdout sees it at once, not at exit. Example 00's script polls `ss` for the bound socket instead. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
+Each consumer flushes stdout once its socket is bound, so a run script waiting on a ready line sees it at once, not at exit. Example 00's script polls `ss` for the bound socket instead. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
 
 ## Measure
 
@@ -314,15 +321,15 @@ The first form is the host smoke test. The script refuses to run while a `lowlat
 
 ### Host results
 
-Three runs (`r01-run1` to `r01-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, and the Java console shows 625 parcels on each of the 8 lanes. Ranges are across the three runs.
+Three runs (`r02-run1` to `r02-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, and the Java console shows 625 parcels on each of the 8 lanes. Ranges are across the three runs.
 
 | Consumer | p50 (us) | p99 (us) | p99.9 (us) |
 |---|---|---|---|
-| C++ | 150.0 to 155.5 | 180.6 to 182.8 | 202.6 to 233.1 |
-| Python | 105.2 to 186.1 | 202.4 to 217.7 | 236.8 to 293.6 |
-| Java | 102.0 to 186.4 | 212.7 to 325.4 | 9,822.2 to 23,298.0 |
+| C++ | 77.8 to 152.8 | 183.6 to 243.8 | 210.4 to 263.2 |
+| Python | 107.0 to 186.2 | 218.1 to 223.4 | 297.5 to 308.5 |
+| Java | 83.2 to 186.1 | 319.5 to 403.5 | 13,312.0 to 23,740.4 |
 
-The one to read is the Java p99.9, 9.8 to 23.3 ms against p99 0.21 to 0.33 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
+The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
 
 ### Guest result
 
@@ -351,4 +358,4 @@ Next, Chapter 1 uses this workload to show that latency is a distribution.
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r01-run1` to `r01-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r02-run1` to `r02-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*

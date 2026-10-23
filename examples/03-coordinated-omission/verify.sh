@@ -83,12 +83,8 @@ for lang in cpp java python; do
   }
 done
 
-failures=0
-bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; failures=$((failures + 1)); }
-# expect_ge A B MESSAGE / expect_lt A B MESSAGE / expect_within_2x A B MESSAGE: record, do not stop,
+# expect_within_2x A B MESSAGE: like lib.sh's expect_ge and expect_lt, it records a miss and goes on,
 # so one run reports every criterion.
-expect_ge() { if (($1 >= $2)); then ok "$3 ($1 >= $2)"; else bad "$3 (got $1, need >= $2)"; fi; }
-expect_lt() { if (($1 < $2)); then ok "$3 ($1 < $2)"; else bad "$3 (got $1, need < $2)"; fi; }
 expect_within_2x() {
   if (($1 <= 2 * $2 && $2 <= 2 * $1)); then ok "$3 ($1 and $2)"; else bad "$3 (got $1 and $2)"; fi
 }
@@ -123,5 +119,5 @@ printf 'host clocksource: %s (available: %s)\n' \
   "$(jget "$LOWLAT_PROFILE" '.clock.current_clocksource')" \
   "$(jget "$LOWLAT_PROFILE" '.clock.available_clocksource | join(" ")')"
 
-((failures == 0)) || die "$failures criteria failed: the effect was not (fully) observed"
+((FAILURES == 0)) || die "$FAILURES criteria failed: the effect was not (fully) observed"
 ok "coordinated omission observed in C++, Java and Python"

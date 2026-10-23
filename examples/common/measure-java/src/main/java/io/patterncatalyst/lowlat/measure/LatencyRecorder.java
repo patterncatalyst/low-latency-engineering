@@ -125,6 +125,15 @@ public final class LatencyRecorder {
      * time-average may appear. Omitted when null or empty.
      */
     public Report report(String notes, Map<String, Object> model) {
+        return report(notes, model, null);
+    }
+
+    /**
+     * As {@link #report(String, Map)}, with an optional {@code runtime} object (GC, JIT, AOT,
+     * context switches; see {@link RuntimeInfo#jvm()}). Omitted when null or empty; no key
+     * inside it may be a mean.
+     */
+    public Report report(String notes, Map<String, Object> model, Map<String, Object> runtime) {
         Histogram h = histogram();
         return new Report(Report.SCHEMA, example, "java", variant, "ns",
                 h.getTotalCount(), dropped(),
@@ -132,7 +141,8 @@ public final class LatencyRecorder {
                         h.getValueAtPercentile(99), h.getValueAtPercentile(99.9), h.getMaxValue()),
                 encode(h), BuildInfo.current(), loadProfile(),
                 notes == null || notes.isEmpty() ? null : notes,
-                model == null || model.isEmpty() ? null : model);
+                model == null || model.isEmpty() ? null : model,
+                runtime == null || runtime.isEmpty() ? null : runtime);
     }
 
     /** Write the report as JSON and return it. Fails if {@code LOWLAT_PROFILE} is unset. */
@@ -147,7 +157,13 @@ public final class LatencyRecorder {
 
     /** As {@link #writeReport(Path, String)}, with an optional {@code model} object (omitted when null or empty). */
     public Report writeReport(Path path, String notes, Map<String, Object> model) {
-        Report report = report(notes, model);
+        return writeReport(path, notes, model, null);
+    }
+
+    /** As {@link #writeReport(Path, String, Map)}, with an optional {@code runtime} object (omitted when null or empty). */
+    public Report writeReport(Path path, String notes, Map<String, Object> model,
+            Map<String, Object> runtime) {
+        Report report = report(notes, model, runtime);
         try {
             Path parent = path.toAbsolutePath().getParent();
             if (parent != null) {
@@ -160,13 +176,18 @@ public final class LatencyRecorder {
         return report;
     }
 
-    /** One aligned line, microseconds with one decimal. Never a mean. */
+    /**
+     * One aligned line, microseconds with one decimal. Never a mean. Built from the histogram, so
+     * it needs no machine profile: the summary is for a console, the report is the publishable
+     * artifact.
+     */
     public void printSummary() {
-        Report r = report();
-        Percentiles p = r.percentiles();
+        Histogram h = histogram();
         System.out.printf("%-26s %-6s %-18s %10d %8d %10.1f %10.1f %10.1f %10.1f %10.1f%n",
-                r.example(), r.language(), r.variant(), r.count(), r.dropped(),
-                us(p.p50()), us(p.p90()), us(p.p99()), us(p.p999()), us(p.max()));
+                example, "java", variant, h.getTotalCount(), dropped(),
+                us(h.getValueAtPercentile(50)), us(h.getValueAtPercentile(90)),
+                us(h.getValueAtPercentile(99)), us(h.getValueAtPercentile(99.9)),
+                us(h.getMaxValue()));
     }
 
     /** Compressed V2 encoding, base64: the {@code HISTFAAA...} form. */
@@ -196,17 +217,17 @@ public final class LatencyRecorder {
     }
 
     /**
-     * Whether {@link #PROFILE_ENV} is set to something other than blank: the same rule
+     * Whether {@link #PROFILE_ENV} names an existing regular file: the same rule
      * {@link #writeReport} applies, for a CLI to check before it starts a long run.
      */
     public static boolean profileConfigured() {
         String env = System.getenv(PROFILE_ENV);
-        return env != null && !env.isBlank();
+        return env != null && !env.isBlank() && Files.isRegularFile(Path.of(env));
     }
 
     private static JsonNode loadProfile() {
         String env = System.getenv(PROFILE_ENV);
-        if (!profileConfigured()) {
+        if (env == null || env.isBlank()) {
             throw new IllegalStateException(PROFILE_ENV + " is not set: a number without a machine "
                     + "profile is not publishable. Run scripts/profile.sh --out FILE and export "
                     + PROFILE_ENV + "=FILE.");

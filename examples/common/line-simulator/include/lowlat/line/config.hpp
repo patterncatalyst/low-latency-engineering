@@ -1,6 +1,6 @@
 // Simulator configuration and its command-line parser.
 //
-// No third-party argument parser: eight options, all `--name value`, and
+// No third-party argument parser: nine options, all `--name value`, and
 // std::from_chars does the number parsing. A library would be more code than
 // the table below.
 #pragma once
@@ -14,6 +14,10 @@
 
 namespace lowlat::line {
 
+/// What a datagram carries: the protobuf ParcelEvent (default) or the flat
+/// little-endian record of contracts/flat/parcel-v1.
+enum class Wire : std::uint8_t { protobuf, flat };
+
 struct Config {
   std::uint32_t rate_hz = 1000;
   double duration_s = 10.0;
@@ -23,6 +27,7 @@ struct Config {
   std::uint64_t seed = 42;
   std::string dest = "127.0.0.1:47000";  ///< host:port (IPv4).
   std::optional<std::filesystem::path> report;
+  Wire wire = Wire::protobuf;
   bool quiet = false;
 };
 

@@ -27,10 +27,10 @@ examples/03-coordinated-omission/verify.sh
 - Control run: `intended-time-control` p99 is under 1 ms, and the corrected closed loop is within 2x of the naive one.
 - Every report passes `lowlat-report check`.
 
-All of it held on the quiet-host runs `r01-run1..3` in C++, Java and Python.
+All of it held on the quiet-host runs `r02-run1..3` in C++, Java and Python.
 
 ## Chapter and source
 
 - Chapter: [Chapter 3, Measuring correctly: clocks, percentiles and coordinated omission]({{ '/docs/03-coordinated-omission/' | relative_url }})
-- Source: [`examples/03-coordinated-omission/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/03-coordinated-omission), with its `README.md`, the three language directories and the committed `results/r01-run1..3/`.
+- Source: [`examples/03-coordinated-omission/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/03-coordinated-omission), with its `README.md`, the three language directories and the committed `results/r02-run1..3/`.
 

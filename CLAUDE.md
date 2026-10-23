@@ -141,9 +141,10 @@ Future Projects shared standard: _docs/ canonical -> build-manuscript.py ->
 Markua; code included from files; paired SVG+excalidraw; spine hook -> diagram
 -> concept -> how the code works -> measure -> cross-check -> what you learned
 -> verification status; 1,900-2,500 words prose. Conventional Commits, scopes
-§N / demo-NN / rNN.x. Iterations ship as low-latency-engineering_rNN.x.tar.gz.
-Each iteration is its own release/rNN branch and PR, branched from an updated
-main, squash-merged with the branch deleted; tag rNN.x on main after merge.
+§N / demo-NN / rNN.x. An iteration ships as its merged PR plus the rNN.x tag
+and a GitHub release; no tarball or other artifact is built. Each iteration is
+its own release/rNN branch and PR, branched from an updated main, squash-merged
+with the branch deleted; tag rNN.x on main after merge.
 Repo is public; the site deploys to GitHub Pages from main.
 
 ## Do not

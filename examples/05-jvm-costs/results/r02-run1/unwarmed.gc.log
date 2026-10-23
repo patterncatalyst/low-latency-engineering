@@ -1,0 +1,57 @@
+[0.005s][info][gc,init] CardTable entry size: 512
+[0.005s][info][gc     ] Using G1
+[0.007s][info][gc,init] Version: 25.0.5+8-LTS (release)
+[0.007s][info][gc,init] CPUs: 16 total, 16 available
+[0.007s][info][gc,init] Memory: 64009M
+[0.007s][info][gc,init] Large Page Support: Disabled
+[0.007s][info][gc,init] NUMA Support: Disabled
+[0.007s][info][gc,init] Compressed Oops: Enabled (32-bit)
+[0.007s][info][gc,init] Heap Region Size: 1M
+[0.007s][info][gc,init] Heap Min Capacity: 256M
+[0.007s][info][gc,init] Heap Initial Capacity: 256M
+[0.007s][info][gc,init] Heap Max Capacity: 256M
+[0.007s][info][gc,init] Pre-touch: Disabled
+[0.007s][info][gc,init] Parallel Workers: 13
+[0.007s][info][gc,init] Concurrent Workers: 3
+[0.007s][info][gc,init] Concurrent Refinement Workers: 13
+[0.007s][info][gc,init] Periodic GC: Disabled
+[0.009s][info][gc,metaspace] CDS archive(s) mapped at: [0x0000000094000000-0x0000000094d99000-0x0000000094d99000), size 14258176, SharedBaseAddress: 0x0000000094000000, ArchiveRelocationMode: 1.
+[0.009s][info][gc,metaspace] Compressed class space mapped at: 0x0000000095000000-0x00000000d5000000, reserved size: 1073741824
+[0.009s][info][gc,metaspace] UseCompressedClassPointers 1, UseCompactObjectHeaders 0
+[0.009s][info][gc,metaspace] Narrow klass pointer bits 32, Max shift 3
+[0.009s][info][gc,metaspace] Narrow klass base: 0x0000000094000000, Narrow klass shift: 0
+[0.009s][info][gc,metaspace] Encoding Range: [0x0000000094000000 - 0x0000000194000000), (4294967296 bytes)
+[0.009s][info][gc,metaspace] Klass Range:    [0x0000000094001000 - 0x00000000d5000000), (1090514944 bytes)
+[0.009s][info][gc,metaspace] Klass ID Range:  [4096 - 1090519033) (1090514937)
+[0.009s][info][gc,metaspace] Protection zone: [0x0000000094000000 - 0x0000000094001000), (4096 bytes)
+[0.075s][info][safepoint   ] Safepoint "SetNotifyJvmtiEventsMode", Time since last: 61818867 ns, Reaching safepoint: 2180 ns, At safepoint: 3749 ns, Leaving safepoint: 488 ns, Total: 6417 ns, Threads: 0 runnable, 14 total
+[0.197s][info][safepoint   ] Safepoint "JFRSafepointClear", Time since last: 122028262 ns, Reaching safepoint: 65067 ns, At safepoint: 6065 ns, Leaving safepoint: 1257 ns, Total: 72389 ns, Threads: 1 runnable, 18 total
+[0.199s][info][safepoint   ] Safepoint "JFROldObject", Time since last: 1744088 ns, Reaching safepoint: 1253 ns, At safepoint: 2593 ns, Leaving safepoint: 496 ns, Total: 4342 ns, Threads: 0 runnable, 18 total
+[0.202s][info][safepoint   ] Safepoint "ClassLoaderStatsOperation", Time since last: 3034166 ns, Reaching safepoint: 1158 ns, At safepoint: 140905 ns, Leaving safepoint: 1433 ns, Total: 143496 ns, Threads: 0 runnable, 18 total
+[0.202s][info][safepoint   ] Safepoint "PrintThreads", Time since last: 55588 ns, Reaching safepoint: 711 ns, At safepoint: 150243 ns, Leaving safepoint: 1519 ns, Total: 152473 ns, Threads: 0 runnable, 18 total
+[0.202s][info][safepoint   ] Safepoint "FindDeadlocks", Time since last: 8756 ns, Reaching safepoint: 514 ns, At safepoint: 2717 ns, Leaving safepoint: 808 ns, Total: 4039 ns, Threads: 0 runnable, 18 total
+[17.287s][info][gc,start    ] GC(0) Pause Young (Normal) (G1 Evacuation Pause)
+[17.288s][info][gc,task     ] GC(0) Using 6 workers of 13 for evacuation
+[17.293s][info][gc,phases   ] GC(0)   Pre Evacuate Collection Set: 0.28ms
+[17.293s][info][gc,phases   ] GC(0)   Merge Heap Roots: 0.05ms
+[17.293s][info][gc,phases   ] GC(0)   Evacuate Collection Set: 3.90ms
+[17.293s][info][gc,phases   ] GC(0)   Post Evacuate Collection Set: 0.58ms
+[17.293s][info][gc,phases   ] GC(0)   Other: 1.07ms
+[17.293s][info][gc,heap     ] GC(0) Eden regions: 47->0(109)
+[17.293s][info][gc,heap     ] GC(0) Survivor regions: 0->6(6)
+[17.293s][info][gc,heap     ] GC(0) Old regions: 2->2
+[17.293s][info][gc,heap     ] GC(0) Humongous regions: 0->0
+[17.293s][info][gc,metaspace] GC(0) Metaspace: 10211K(10368K)->10211K(10368K) NonClass: 9122K(9216K)->9122K(9216K) Class: 1089K(1152K)->1089K(1152K)
+[17.293s][info][gc          ] GC(0) Pause Young (Normal) (G1 Evacuation Pause) 48M->6M(256M) 6.068ms
+[17.293s][info][gc,cpu      ] GC(0) User=0.02s Sys=0.00s Real=0.01s
+[17.293s][info][safepoint   ] Safepoint "G1CollectForAllocation", Time since last: 17085368965 ns, Reaching safepoint: 4133 ns, At safepoint: 6099358 ns, Leaving safepoint: 4426 ns, Total: 6107917 ns, Threads: 0 runnable, 12 total
+[20.486s][info][safepoint   ] Safepoint "ClassLoaderStatsOperation", Time since last: 3192116771 ns, Reaching safepoint: 2469 ns, At safepoint: 306125 ns, Leaving safepoint: 1364 ns, Total: 309958 ns, Threads: 0 runnable, 15 total
+[20.486s][info][safepoint   ] Safepoint "PrintThreads", Time since last: 188470 ns, Reaching safepoint: 3769 ns, At safepoint: 287373 ns, Leaving safepoint: 1663 ns, Total: 292805 ns, Threads: 0 runnable, 15 total
+[20.487s][info][safepoint   ] Safepoint "FindDeadlocks", Time since last: 191083 ns, Reaching safepoint: 2929 ns, At safepoint: 8062 ns, Leaving safepoint: 1372 ns, Total: 12363 ns, Threads: 0 runnable, 15 total
+[20.487s][info][safepoint   ] Safepoint "JFRSafepointWrite", Time since last: 338451 ns, Reaching safepoint: 2526 ns, At safepoint: 25249 ns, Leaving safepoint: 1513 ns, Total: 29288 ns, Threads: 0 runnable, 15 total
+[20.489s][info][safepoint   ] Safepoint "JFROldObject", Time since last: 1656328 ns, Reaching safepoint: 65530 ns, At safepoint: 8118 ns, Leaving safepoint: 1519 ns, Total: 75167 ns, Threads: 1 runnable, 15 total
+[20.498s][info][gc,exit     ] Heap
+[20.498s][info][gc,exit     ]  garbage-first heap   total reserved 262144K, committed 262144K, used 20900K [0x00000000f0000000, 0x0000000100000000)
+[20.498s][info][gc,exit     ]   region size 1024K, 20 young (20480K), 6 survivors (6144K)
+[20.498s][info][gc,exit     ]  Metaspace       used 12454K, committed 12672K, reserved 1114112K
+[20.498s][info][gc,exit     ]   class space    used 1373K, committed 1472K, reserved 1048576K

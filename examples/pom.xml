@@ -20,6 +20,10 @@
     <module>02-littles-amdahl/java</module>
     <module>03-coordinated-omission/java</module>
     <module>04-benchmark-harnesses/java</module>
+    <module>05-jvm-costs/java</module>
+    <module>06-gc-tails/java</module>
+    <module>07-offheap-lockfree/java</module>
+    <module>08-zero-copy-flat/java</module>
   </modules>
 
   <properties>
@@ -32,6 +36,12 @@
     <hdrhistogram.version>2.2.2</hdrhistogram.version>
     <jackson.version>3.2.4</jackson.version>
     <jmh.version>1.37</jmh.version>
+    <!-- r02 pins (versions.env, _plans/dependency-pins.md "r02 pins") -->
+    <agrona.version>2.7.0</agrona.version>
+    <disruptor.version>4.0.0</disruptor.version>
+    <jol.version>0.17</jol.version>
+    <!-- chronicle-bom 2026.26 manages queue 2026.7, map 2026.1, bytes 2026.4, affinity 2026.2 -->
+    <chronicle-bom.version>2026.26</chronicle-bom.version>
     <junit.version>6.1.3</junit.version>
 
     <!-- Main class of a module's shaded jar; empty for jars with several entry points. -->
@@ -88,6 +98,29 @@
         <groupId>org.openjdk.jmh</groupId>
         <artifactId>jmh-generator-annprocess</artifactId>
         <version>${jmh.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.agrona</groupId>
+        <artifactId>agrona</artifactId>
+        <version>${agrona.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lmax</groupId>
+        <artifactId>disruptor</artifactId>
+        <version>${disruptor.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openjdk.jol</groupId>
+        <artifactId>jol-core</artifactId>
+        <version>${jol.version}</version>
+      </dependency>
+      <!-- OpenHFT: queue, map, bytes and affinity versions come from this BOM. -->
+      <dependency>
+        <groupId>net.openhft</groupId>
+        <artifactId>chronicle-bom</artifactId>
+        <version>${chronicle-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.junit</groupId>

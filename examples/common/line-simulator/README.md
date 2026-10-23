@@ -67,7 +67,7 @@ read it as part of the machine profile: it bounds what any consumer can claim.
 ```
 line-simulator [--rate HZ] [--duration S] [--belt-speed-mps V]
                [--scan-to-divert-m D] [--encoder-ppm N] [--seed N]
-               [--dest HOST:PORT] [--report FILE] [--quiet]
+               [--dest HOST:PORT] [--wire protobuf|flat] [--report FILE] [--quiet]
 ```
 
 | Option | Default | Meaning |
@@ -79,6 +79,7 @@ line-simulator [--rate HZ] [--duration S] [--belt-speed-mps V]
 | `--encoder-ppm` | 1000 | Encoder pulses per metre of belt. |
 | `--seed` | 42 | Seed of the parcel generator. |
 | `--dest` | `127.0.0.1:47000` | UDP destination, `host:port`, IPv4. |
+| `--wire protobuf\|flat` | `protobuf` | Datagram format. `flat` is the fixed 80-byte little-endian record of `contracts/flat/parcel-v1` (same parcels for a seed, no protobuf encode). |
 | `--report FILE` | none | Write the emit-lateness report (`lowlat-report/1`). Requires `LOWLAT_PROFILE`; checked before the run starts. |
 | `--quiet` | off | Print only the final summary line. |
 

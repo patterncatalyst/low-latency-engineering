@@ -1,0 +1,7 @@
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run1/stop-the-world.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseParallelGC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant stop-the-world --jfr /tmp/lowlat-scratch.38DDNM/stop-the-world.jfr
+live set 1865316720 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
+gctails-java: variant stop-the-world on 127.0.0.1:47260
+line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     52.0us p99=     59.7us p99.9=    725.0us max=    3008.5us
+received 300000 dropped 0 reordered 0 (stopped: EXPECTED) [0]
+06-gc-tails                java   stop-the-world         300000        0       60.3       76.1   131268.6   153223.2   161611.8
+stop-the-world-gc-pause: 13 GC pauses, p99 161611775 ns, max 161611775 ns

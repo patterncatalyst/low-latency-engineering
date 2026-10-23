@@ -1,0 +1,102 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "01-latency-distribution",
+  "language" : "java",
+  "variant" : "per-parcel",
+  "unit" : "ns",
+  "count" : 10000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 111871,
+    "p90" : 193279,
+    "p99" : 234751,
+    "p99_9" : 23527423,
+    "max" : 33177599
+  },
+  "hdr_histogram" : "HISTFAAABGZ4nF2VzY7kNBDHMxW34/F6vJ6MN2tZmVbozYTQClHUinqbYdQMK7QHJB6BE0cOCK04cEfiiBAvACceAS48AdoDBw6cOawQFyRegH85vRfaiT+qymWn6md3/dV3V1km/82WX35qz9B9Pv38ffbeP4vg5Sf04zmdU0Z0QZSLG8pRLqkQOT0Vb9GKHtMjekI3qM/pffTehuET2BeyoCuUjFYiFysUkdEDsWI/dIUhoWRSCKmEzkgRr8HWkGckc8oEdwRJiEmopMbaaDKBFlp+cx6igvNcQrnMyHi4WHNHLK4lt+kRlARso9g8rcqeVuxNvLaCY0nSOFtaa4OLLlofqjJ6b9Go0gTrjULlrLRldIZ8KY0wpdHOKmmsUc6X0TinK1uj67zVJbQaTeWc875yUmjhtNfaaKus9bJ0oXa1s87FUFUdqlDXZRN9U5qqC0FHV/sYu64/Ntvat/PUdptDN+ymuZ/6aXfs103b3Q7TPB7vh7m768bbeTrOw+52dxjujkPf7PZ3H+4P4+327vaD/f3h2f3dcH9oD8f52B+Hu3Ge+n3f7YZ20w/j3PV9GOo+dKOPTQybJnb9ul5XsVl7pRpX1s3autjaUEd8na0qWRpXOW+ccqUtg4xO6jIiJr5C0IzVxiqDzzQklXQIF4KFcKEIi0ppaZUmmCE0WiCOWkEmYcPpkpx50lLITBLw0YwRZilC6kSuBGcOD+w4l9ASnCCRkIEjCJRkyyxhoQrGI2PFig2gkeKcpyrGYkUy8YXOAoViLoE0FscL5wlYCZ1IcGLFHK4TgjKxyW7oRGKyFOfsTyaQYZw4x6pZIl+cZOI0I2EvFudJIk7E8wJiwZi/84LkOaWtpXVO52RFBRWKvw9bTmcXBimAOUomZZ7cp5giDhovqxFnyT2EHWKEWvHpIWGUlJnirPE0lTbBaVAiBRcxljqFnnBsOOZWYDa0KMggGY0kI+sCrGtk3ijrhIoeQ+QYfFggbrS3lQshiMb2YVub2tahrIehXXfbvvahCW3f9+0mjDV+024zdn4b+n5ot93Y1E03de223Y/d2O2n3XZsxv0uDtvY3e53YzfF/X4zN4fnm2G+7+bRD920jft5g1OzO/Tz5lk7VutN46tyswm+rqNzTWOqsMa2yrLyQBl7sGHdt6F0UIDqBqdZ18obKwMsvI+lLyucaUCsZekRIoV7ziiDCFkQCdSlVloz/w5hk6LEGUkd1iCYRmAKbEghdGRAqGR00zUFXwwFp2Th+HShicSHZPLSLcd3LuvgSC6X63ITkigWsPArFl4TM0gVZYoHjFmRyErM8FjwaeAuNvA4HY0HdCkewhH/PxSJ1WvInibOHqGHSQ/RPEngrsQlPDykN+mNxX+OAVtd0zvoXcPkBl5WMM/TRgsYXosr2HxE70L3Gf5rPqavz+i3nF4p+oXo5QV9e0E/FfRNQX/k9HvONZ4fiP46o1/P6O/Xz6sz+vOMhV/S5/QC5Yv/1UvvBX1K/wG2unaH",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T06:10:06Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2667442,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.74,
+      "load5" : 0.93,
+      "load15" : 0.91,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "throughput_mhz=1003410; done_span_ns=9966007285; reordered=0; JIT not warmed: first parcels included"
+}

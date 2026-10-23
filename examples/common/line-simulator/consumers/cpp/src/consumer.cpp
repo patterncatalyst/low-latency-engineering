@@ -107,6 +107,9 @@ ConsumerConfig parse_consumer_args(std::span<const std::string_view> args) {
     } else if (opt == "--report") {
       if (val.empty()) fail("--report needs a file name");
       c.report = std::filesystem::path{val};
+    } else if (opt == "--window") {
+      c.window = number<std::uint64_t>(opt, val);
+      if (*c.window == 0) fail("--window must be > 0");
     } else if (opt == "--example") {
       if (val.empty()) fail("--example needs a name");
       c.example = val;
@@ -129,6 +132,8 @@ std::string_view consumer_usage() noexcept {
   --idle-timeout-ms MS   stop after MS with nothing received, once the
                          first datagram has arrived              [2000]
   --report FILE          write the latency report (needs $LOWLAT_PROFILE)
+  --window N             also report parcels seq < N as <variant>-first-N and
+                         the rest as <variant>-steady, beside --report
   --example NAME         report example name                     [00-line-consumer]
   --variant NAME         report variant name                     [baseline]
   -h, --help             this text
@@ -145,6 +150,7 @@ SeqTracker::Kind SeqTracker::observe(std::uint64_t seq) noexcept {
   ++received_;
   const bool gap = seq > next_;
   dropped_ += seq - next_;
+  if (next_ < window_) dropped_below_window_ += std::min(seq, window_) - next_;
   next_ = seq + 1;
   return gap ? Kind::gap : Kind::in_order;
 }
@@ -160,7 +166,7 @@ struct LaneHandler {
   std::array<std::uint64_t, kLanes> counts{};
 
   void operator()(const v1::ParcelEvent& ev, Completion& done) {
-    ++counts[lane_for(ev.barcode())];  // the r01 "work"
+    ++counts[lane_for(ev.barcode())];  // the per-parcel work
     done.complete(ev);
   }
 };
@@ -168,11 +174,27 @@ struct LaneHandler {
 }  // namespace
 
 ConsumerResult consume(const ConsumerConfig& cfg, const std::atomic<bool>& stop, measure::Recorder& latency,
-                       const ReadyFn& on_ready) {
+                       const ReadyFn& on_ready, WindowedRecorders* windows) {
   LaneHandler handler;
-  ConsumerResult result = consume_with(cfg, stop, latency, handler, on_ready);
+  ConsumerResult result = consume_with(cfg, stop, latency, handler, on_ready, windows);
   result.lane_counts = handler.counts;
   return result;
+}
+
+std::filesystem::path report_sibling(const std::filesystem::path& report, std::string_view suffix) {
+  return report.parent_path() / std::format("{}{}{}", report.stem().string(), suffix, report.extension().string());
+}
+
+std::vector<std::filesystem::path> WindowedRecorders::write_reports(const std::filesystem::path& report,
+                                                                    std::string_view notes,
+                                                                    const std::optional<nlohmann::json>& runtime) const {
+  std::vector<std::filesystem::path> written{report_sibling(report, std::format("-first-{}", window_)),
+                                             report_sibling(report, "-steady")};
+  const std::string window_note = std::format("window={}; first window is seq < {}", window_, window_);
+  const std::string text = notes.empty() ? window_note : std::format("{}; {}", notes, window_note);
+  first_.write_report(written[0], text, std::nullopt, runtime);
+  steady_.write_report(written[1], text, std::nullopt, runtime);
+  return written;
 }
 
 std::string notes_for(const ConsumerResult& r, const ConsumerConfig& cfg) {

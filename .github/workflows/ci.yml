@@ -33,12 +33,18 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Packages check-prereqs.sh looks for, as Fedora 44 names them.
+  # Packages check-prereqs.sh looks for, as Fedora 44 names them. No JDK here: the
+  # java job installs the pinned Temurin tarball instead (JAVA_PACKAGES + the steps below).
   FEDORA_PACKAGES: >-
     git tar zstd jq which findutils diffutils
     clang gcc-c++ cmake ninja-build zlib-ng-compat-devel
-    java-25-openjdk-devel maven
     python3.14 uv
+  # Maven comes from Fedora; the JDK it runs on is the pinned Temurin, because Fedora's
+  # java-25-openjdk floats (25.0.4 while Temurin is 25.0.5). maven-unbound is the Maven build
+  # without a JDK dependency: plain `maven` pulls maven-openjdk25 and its JDK, which Maven could
+  # then run on whatever JAVA_HOME says. gzip unpacks the tarball.
+  JAVA_PACKAGES: >-
+    git tar gzip curl findutils maven maven-unbound
 
 jobs:
   # Decides whether the build jobs run. The workflow always runs, so ci-ok always reports.
@@ -66,7 +72,9 @@ jobs:
           fi
 
   # Static checks: front matter, Liquid hygiene, figures against _data/diagrams.yml,
-  # codetabs, shell syntax, no mean latency, and the 1,900-2,500 word chapter gate.
+  # codetabs, shell syntax, no mean latency, no tracked *.jfr, build.flags on every Java report,
+  # vm-run labels, no EA/prerelease pins, defect-named variants, and the 1,900-2,500 word chapter gate.
+  # --self-test plants a bad case for each r02 check in a temporary tree and requires it to fail.
   validate:
     runs-on: ubuntu-latest
     container: fedora:44
@@ -74,8 +82,12 @@ jobs:
       - name: Install packages (container only)
         run: dnf -y --setopt=install_weak_deps=False install git tar zstd python3 python3-pyyaml bash
       - uses: actions/checkout@v7.0.1
+      - name: Trust the workspace (git ls-files in the container)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: validate.py
         run: python3 scripts/validate.py
+      - name: validate.py --self-test
+        run: python3 scripts/validate.py --self-test
       - name: wordcount.sh
         run: scripts/wordcount.sh
 
@@ -150,19 +162,44 @@ jobs:
           uv sync --all-packages
           uv run pytest
           uv run ruff check . ../scripts ../diagrams
+          uv run ruff format --check . ../scripts ../diagrams
 
-  # Java: the aggregator builds every module (kits, simulator consumer, chapter examples) and runs the tests.
+  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-8) and runs the tests,
+  # including the 05 AOT-cache smoke test (a child JVM trains a cache, then runs with -XX:AOTMode=on).
+  # The JDK is the Temurin tarball pinned in versions.env (TEMURIN_URL, SHA-checked), the same
+  # build the lab guest runs; the tarball is cached on its SHA and re-verified on every run.
   java:
     needs: changes
     if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
-    env:
-      JAVA_HOME: /usr/lib/jvm/java-25-openjdk
     steps:
       - name: Install packages (container only)
-        run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
+        run: dnf -y --setopt=install_weak_deps=False install ${{ env.JAVA_PACKAGES }}
       - uses: actions/checkout@v7.0.1
+      - name: Read the Temurin pin
+        id: temurin
+        run: |
+          . ./versions.env
+          echo "sha256=$TEMURIN_SHA256" >> "$GITHUB_OUTPUT"
+          echo "version=$TEMURIN_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6.1.0
+        id: jdk
+        with:
+          path: ~/.cache/lowlat/temurin.tar.gz
+          key: lowlat-temurin-${{ steps.temurin.outputs.sha256 }}
+      - name: Fetch Temurin (skipped on a cache hit), verify the SHA, install
+        run: |
+          . ./versions.env
+          tarball="$HOME/.cache/lowlat/temurin.tar.gz"
+          mkdir -p "$(dirname "$tarball")"
+          [ -f "$tarball" ] || curl -fL --retry 3 -o "$tarball" "$TEMURIN_URL"
+          [ "$(sha256sum "$tarball" | cut -d' ' -f1)" = "$TEMURIN_SHA256" ] || { echo "Temurin SHA256 mismatch" >&2; rm -f "$tarball"; exit 1; }
+          jdk="$HOME/.cache/lowlat/temurin-$TEMURIN_VERSION"
+          mkdir -p "$jdk"
+          tar -xzf "$tarball" -C "$jdk" --strip-components=1
+          echo "JAVA_HOME=$jdk" >> "$GITHUB_ENV"
+          echo "$jdk/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v6.1.0
         with:
           path: ~/.m2/repository
@@ -172,6 +209,10 @@ jobs:
         run: |
           java -version
           mvn -v
+          [ "$(java -version 2>&1 | head -1 | cut -d'"' -f2)" = "${{ steps.temurin.outputs.version }}" ]
+          # Maven itself must run on the pinned Temurin, not on a JDK that came in with a package.
+          mvn -v | grep -qF "Java version: ${{ steps.temurin.outputs.version }}," || { echo "Maven is not running on Temurin ${{ steps.temurin.outputs.version }}" >&2; exit 1; }
+          mvn -v | grep -qF "runtime: $JAVA_HOME" || { echo "Maven's runtime is not JAVA_HOME ($JAVA_HOME)" >&2; exit 1; }
       - name: Build and test every module
         run: mvn -B -f examples/pom.xml verify
 

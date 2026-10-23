@@ -1,0 +1,106 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 20000,
+  "dropped": 0,
+  "example": "07-offheap-lockfree",
+  "hdr_histogram": "HISTFAAAAwx4nC2TPYhkRRDHp35dr6an582bN2/Hud3Zub2dcT/n9sZD9xY9dfUM1vUCT1bQVVBkRQUjIxMTEYOLRHQDTeQCMfHARERFMBLESEz8wNj4QgM5pN7sg37dVVRXV//q36P3P15oNPT1xvwLZ7M0GuHg8re3Go/dmTt+v0EHAVECamUxnM52Dw+eO37mwaPjozePXnnx5Pr+4d7h1cevzu6frM2mw8lsa2eysrI62NgYLfYHO5Nya21vNBpuDfrlyqg/qEZ9S7lVVVnGstRIlSyPRYo5atFHLDBFY0JNoxpmmgIoGaJCVAVDVcBU0ICg1D9fmi9RVDP3tdTqCwQIQAwepDSpdwQ67m8Tak+Te6BNC6GJsE6bBZ5igXWPWqJHR3mVQEaLzOPv5SKPMmabJm2+9H3P8iTXaNGhx0MID9exY15gkzav8RLv8J3wlfAGnwo/BdbTW7f1h/zzwa/Lp0t3q486/8bT+HP7w+7f3ffyz1pf2C/6V7jLTf6Tf+Q3+VpO5e2Tp4/3d6Zrw2owKEarVYx5zMvKUh4rK2OqiGYpxaia1JKqiUqMpgaFqMYanWqmqs4KcBrmjGojODQLOqcpCi0cOaKKOc9sThoccEKsNjzawZso4lZTZY5cy8WtJ47flVtyU/6QT+R7uS3fyAfy8sn1vd3p1u7qdLozWV1c2Sjzsh8pyYlJq+Gwf/mR/dnBbDKdFdVif3XSn/QXzRSLRFwe3npBM60FInWJ9dSqS8iwoF5t8I4FyGifXateeu+9oYh2XFMWU7+IVWl5inleqZZRo+bOLLdoZlGjpVSkMs+LOEwKhVlyqSK4mdVq7TFH4Nl75kBq3Ub1M4jG3IOlaEWRJ4y8iFq435+AWmbOLlNtu/hZ8KKzmmeoRZoBXTpcYJMOTW3SPBMv28zRC+dos41v6tGlVZez7CT8FYzJTNt058mCp8tq7ddJwtlJPeiwQMYDdDVwnmuMWafHEpfoqJ9wkSb3cYPNOd0mV2hxhYx1LrDMNufrXEv8KGwy5hLn+FN4njH/A0omVLo=",
+  "language": "cpp",
+  "notes": "handoff=atomic-spsc; published=200000; overflow=0; reordered=0; rcvbuf_granted=8388608; window=20000; first window is seq < 20000",
+  "percentiles": {
+    "max": 203903,
+    "p50": 56735,
+    "p90": 63903,
+    "p99": 83967,
+    "p99_9": 137087
+  },
+  "profile": {
+    "captured_at": "2026-10-23T06:47:09Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.32,
+      "load15": 0.58,
+      "load5": 0.42,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2691139,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "atomic-spsc-first-20000"
+}

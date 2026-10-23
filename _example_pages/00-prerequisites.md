@@ -27,10 +27,10 @@ examples/00-prerequisites/verify.sh
 - Each report validates against the schema, carries the machine profile and passes `lowlat-report check`.
 - With `VM=1` (and `ALLOW_BUSY=1`, because the guest must be running): the guest passes `check-prereqs.sh --vm`, runs `cyclictest`, and its profile reports a virtual machine. The output is labelled `vm` and is never compared with a bare-metal number.
 
-It held on the quiet-host runs `r01-run1..3`; the VM path ran once (`results/r01-vm-smoke/`, labelled VM).
+It held on the quiet-host runs `r02-run1..3`; the VM path ran once (`results/r01-vm-smoke/`, labelled VM).
 
 ## Chapter and source
 
 - Chapter: [Chapter 0, Setup: toolchains, the VM lab and the line simulator]({{ '/docs/00-prerequisites/' | relative_url }})
-- Source: [`examples/00-prerequisites/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/00-prerequisites), with its `README.md`, the three language directories and the committed `results/r01-run1..3/`.
+- Source: [`examples/00-prerequisites/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/00-prerequisites), with its `README.md`, the three language directories and the committed `results/r02-run1..3/`.
 

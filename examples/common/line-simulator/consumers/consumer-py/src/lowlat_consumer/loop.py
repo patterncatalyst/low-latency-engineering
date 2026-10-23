@@ -1,6 +1,6 @@
 """Line receive loop: receive ``ParcelEvent`` datagrams, record latency from the schedule.
 
-Execution model, stated plainly because it is part of the result:
+Execution model, which is part of the result:
 
 * One thread, one process, under the GIL (``build.gil_enabled`` in the report says
   whether this interpreter is the GIL or the free-threaded build). There is no
@@ -27,6 +27,7 @@ import socket
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from types import FrameType
 from typing import Literal
 
@@ -60,6 +61,39 @@ def install_signal_handlers() -> None:
     signal.signal(signal.SIGTERM, _on_signal)
 
 
+class WindowedRecorders:
+    """Latency of one run split at parcel ``window``: ``seq < window`` into ``first``, the rest
+    into ``steady``. The first window carries the warm-up, the steady one what follows; the two
+    counts add up to the full report's count.
+
+    Recorded in addition to the full recorder, so the full ``<variant>`` report keeps its
+    meaning. Only a run given a window pays the second record.
+    """
+
+    __slots__ = ("first", "steady", "window")
+
+    def __init__(self, example: str, variant: str, window: int) -> None:
+        self.window = window
+        self.first = Recorder(example, f"{variant}-first-{window}")
+        self.steady = Recorder(example, f"{variant}-steady")
+
+    def record(self, seq: int, latency_ns: int) -> None:
+        (self.first if seq < self.window else self.steady).record(latency_ns)
+
+    def write_reports(self, report: str | Path, notes: str | None = None) -> list[Path]:
+        """Write ``<stem>-first-N<ext>`` and ``<stem>-steady<ext>`` beside ``report``."""
+        base = Path(report)
+        note = f"window={self.window}; first window is seq < {self.window}"
+        text = f"{notes}; {note}" if notes else note
+        paths = [
+            base.with_name(f"{base.stem}-first-{self.window}{base.suffix}"),
+            base.with_name(f"{base.stem}-steady{base.suffix}"),
+        ]
+        self.first.write_report(paths[0], text)
+        self.steady.write_report(paths[1], text)
+        return paths
+
+
 class Completion:
     """Where a handler reports that a parcel is done.
 
@@ -67,25 +101,32 @@ class Completion:
     handler call (per-parcel) or later (a batch keeps ``event.intended_emit_ns`` and
     completes every held parcel when the batch is full). It also keeps the first and last
     done time, from which a handler's caller derives throughput.
+
+    ``seq`` decides the window of a windowed run. It defaults to the parcel the loop is
+    handling; a handler that completes parcels later passes the parcel's own ``seq``.
     """
 
-    __slots__ = ("_rec", "count", "first_done_ns", "last_done_ns", "seq")
+    __slots__ = ("_rec", "_windows", "count", "first_done_ns", "last_done_ns", "seq")
 
-    def __init__(self, rec: Recorder) -> None:
+    def __init__(self, rec: Recorder, windows: WindowedRecorders | None = None) -> None:
         self._rec = rec
+        self._windows = windows
         self.seq = 0  # set by the loop: the parcel being handled, for error messages
         self.count = 0
         self.first_done_ns = 0
         self.last_done_ns = 0
 
-    def __call__(self, intended_emit_ns: int, done_ns: int) -> None:
+    def __call__(self, intended_emit_ns: int, done_ns: int, seq: int | None = None) -> None:
         latency = done_ns - intended_emit_ns
+        which = self.seq if seq is None else seq
         if latency < 0:
             raise NegativeLatencyError(
-                f"negative latency {latency} ns for seq {self.seq}: producer and consumer "
+                f"negative latency {latency} ns for seq {which}: producer and consumer "
                 "are not on the same CLOCK_MONOTONIC (same host or VM required)"
             )
         self._rec.record(latency)
+        if self._windows is not None:
+            self._windows.record(which, latency)
         if not self.count:
             self.first_done_ns = done_ns
         self.last_done_ns = done_ns
@@ -136,15 +177,18 @@ def run(
     expect: int | None,
     idle_ns: int,
     drain: Drain | None = None,
+    windows: WindowedRecorders | None = None,
 ) -> RunResult:
     """The receive loop: parse, track gaps, call ``handler`` per new parcel.
 
     Raises NegativeLatencyError; returns on expect, idle timeout or signal, after calling
-    ``drain`` and booking the gaps into ``rec``."""
+    ``drain`` and booking the gaps into ``rec``. With ``windows``, every completion is also
+    recorded into its window, and ``tracker`` must have been made with the same ``window`` so
+    the gaps are booked into the window of the missing parcels."""
     buf = bytearray(MAX_DATAGRAM)  # reused for every datagram
     view = memoryview(buf)
     event = ParcelEvent()  # reused; ParseFromString clears it
-    done = Completion(rec)
+    done = Completion(rec, windows)
     now = time.monotonic_ns
     last_rx_ns = 0
     stopped: Literal["expect", "idle", "signal"] = "signal"
@@ -169,4 +213,7 @@ def run(
     if drain is not None:
         drain(done)
     rec.add_dropped(tracker.dropped)
+    if windows is not None:
+        windows.first.add_dropped(tracker.dropped_below_window)
+        windows.steady.add_dropped(tracker.dropped - tracker.dropped_below_window)
     return RunResult(stopped, done.count, done.first_done_ns, done.last_done_ns)

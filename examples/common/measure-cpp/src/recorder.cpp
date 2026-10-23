@@ -89,7 +89,8 @@ void Recorder::record_corrected(std::int64_t latency_ns, std::int64_t expected_i
   }
 }
 
-nlohmann::json Recorder::report(std::string_view notes, const std::optional<nlohmann::json>& model) const {
+nlohmann::json Recorder::report(std::string_view notes, const std::optional<nlohmann::json>& model,
+                                const std::optional<nlohmann::json>& runtime) const {
   nlohmann::json profile = load_profile();  // fail before doing any other work
   const hdr_histogram* const h = hist_.get();
   nlohmann::json doc{
@@ -113,12 +114,14 @@ nlohmann::json Recorder::report(std::string_view notes, const std::optional<nloh
   };
   if (!notes.empty()) doc["notes"] = std::string{notes};
   if (model && !model->is_null() && !model->empty()) doc["model"] = *model;
+  if (runtime && !runtime->is_null() && !runtime->empty()) doc["runtime"] = *runtime;
   return doc;
 }
 
 nlohmann::json Recorder::write_report(const std::filesystem::path& path, std::string_view notes,
-                                     const std::optional<nlohmann::json>& model) const {
-  nlohmann::json doc = report(notes, model);
+                                     const std::optional<nlohmann::json>& model,
+                                     const std::optional<nlohmann::json>& runtime) const {
+  nlohmann::json doc = report(notes, model, runtime);
   std::ofstream out{path};
   out << doc.dump(2) << '\n';
   out.close();  // flush now: a failed flush must not pass as success

@@ -1,0 +1,106 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 5000,
+  "dropped": 0,
+  "example": "00-prerequisites",
+  "hdr_histogram": "HISTFAAAAy94nDVUwYokRRCdePkqKjo6Jqempmamt2mXWXWXZXfARpZBRFREFk+yDIsssodFZBG8eBDBo+Ddgz/g1T/wJ/wXP0Eis6e7qMzKjIp4+eK92v3+59nR0fDHUf+VwyhHR+X5/p+/jj77ry/8+6Oq6UWd56VGPNpd7K7nZbO16pu5WphPSg/3oKkAJAHmX4CV5hySe+5qVnfzZtkt26vdrm6XmCudvhhVWSCqToEg84CZAJKXYABWwIBjFIVgxYEDTpkbbX3EigUD1igoOMe9fIdUUC5iu7l//fLtz7e3r16+2H/07NmHj+4v2+00RWjEMu2efPrFt7dvv3/z6puPn798cvN4O9fZ3OYwVReFmvqyvLvfXH1yvft8/35dtFZlnlT0DmMCp1BQGm4oBqdaTilUgamCTCZMiWQJKuogi6IoiQIkC2BmglJy0aiLzZvH+/1Xr3/56c0PL777+sub65vdJq4mJL0GFQcHtkIjEkFuDImq4CwLHTcSBchtngDS2BJNMmHSnxNTUplhOM79Rj6HAy7Bqh+Ull3NOSV7VTJhX0j6s+zQMiUVFIzs1cExYY0tvCMauUbRHHtoF1C5wwp0GA3TAE3MiTV57sooTR3Feh9wlyU3inLEiNLjhyYPrBVn7ZVzNI2sgVOOOOE5Cj6A4BQYtAD9xL0G1y3rg0R/wgOTBZc8zXKaJ1o3ojRhaVMlBZZtlnbarpbWc/QHepJvZFONdOPIQS8U72pKF9jQSE9fkK55KQ1GcyUClkuuIWo6M6CtsKdwPeNgGqqVqgp1Q/rZtdYLmyJ8sho1vLrXcLfw8KuJMW3mqXpo1e08xUXUKaouMcdUI1qszVbrTA3TKTxq6FSru24CrOoRpuLMySRqEaQp1c3UGxQ3T+Ob0cUCUHeaKTSc5mRSk1RQ1JWdQ8sRks5Gi8jGC9Ln7CoUwroaD0oAUwC9CSsUjM0qJ/kCUznZ6YFNxdnB0oW1wkMI1l1LPPS7pcEKlxhxlmJaYYWnuIf3cIm/BSN+heA3wVOsWfBO8wHOmtjyoyXNiPmNOmm5upRWzTQ45aDNYP0mByMRIx8mzpTPA+B/6Sg1yQ==",
+  "language": "cpp",
+  "notes": "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=8388608",
+  "percentiles": {
+    "max": 268799,
+    "p50": 77823,
+    "p90": 152191,
+    "p99": 243839,
+    "p99_9": 263167
+  },
+  "profile": {
+    "captured_at": "2026-10-23T06:54:42Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.95,
+      "load15": 0.79,
+      "load5": 0.92,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2695907,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "baseline"
+}

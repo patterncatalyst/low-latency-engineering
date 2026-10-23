@@ -8,6 +8,8 @@ members = [
     "lowlat-bench-harnesses",
     "lowlat-co",
     "lowlat-examples",
+    "lowlat-flat",
+    "lowlat-gc-tails",
     "lowlat-latdist",
     "lowlat-line-consumer",
     "lowlat-measure",
@@ -157,6 +159,40 @@ dev = [
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "pytest", specifier = "==9.1.1" },
     { name = "ruff", specifier = "==0.17.1" },
+]
+
+[[package]]
+name = "lowlat-flat"
+version = "1.0.0"
+source = { editable = "08-zero-copy-flat/flat-py" }
+dependencies = [
+    { name = "lowlat-line-consumer" },
+    { name = "lowlat-measure" },
+    { name = "lowlat-proto" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lowlat-line-consumer", editable = "common/line-simulator/consumers/consumer-py" },
+    { name = "lowlat-measure", editable = "common/measure-py" },
+    { name = "lowlat-proto", editable = "common/proto-py" },
+]
+
+[[package]]
+name = "lowlat-gc-tails"
+version = "1.0.0"
+source = { editable = "06-gc-tails/gctails-py" }
+dependencies = [
+    { name = "lowlat-line-consumer" },
+    { name = "lowlat-measure" },
+    { name = "lowlat-proto" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lowlat-line-consumer", editable = "common/line-simulator/consumers/consumer-py" },
+    { name = "lowlat-measure", editable = "common/measure-py" },
+    { name = "lowlat-proto", editable = "common/proto-py" },
 ]
 
 [[package]]

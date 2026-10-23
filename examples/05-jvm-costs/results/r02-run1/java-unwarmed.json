@@ -1,0 +1,128 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "05-jvm-costs",
+  "language" : "java",
+  "variant" : "unwarmed",
+  "unit" : "ns",
+  "count" : 20000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 111167,
+    "p90" : 189695,
+    "p99" : 220031,
+    "p99_9" : 8880127,
+    "max" : 28114943
+  },
+  "hdr_histogram" : "HISTFAAABYF4nC2VzWskRRTAu19Xaiq1tbW9nba3bduhbcembYZmaIZmGIYxDOs4DCGEEEIYQghRQgwxrLsxLHEJKouHFfayHlwP6kXwtgcPCnrxtKfFo0dPi4gH/RN8r3qnp7uq3nv16uv36sX3H61YVusPq/k5L0obq9Pez99Zb/3XCJ69C0+XAV4CCx9oMXAArmDVYS8zlDpAkuuwRHJgy+wKLOPzKr5LQP8WfT5AlYVWFlw1dktYexuugXHqoLBlFKYHfhgqGLMYFww4WBx7mAInIFBOvhhjAu1QzwSXaMjQ2hICDUBLi0uJ5kIJzoUUkkm0lpxzJkEzraREDdPkFqRgAvtqhlq0ND7NdEFagikzHLlHKec0JA6IBtzCbhajiTIy5yCAdoCjIb64P7QKTjOlTjQ1mjSjhXDGJc4hlNqNom7ghVEYp512J8vzNMrTtFOOozwvik5clkUnipMo7cTtPC3isBNkXtvN01plSRpFfpSG7TCKeVAkvh+FqfKTNBSul3hhHLpuqrzAdeN2nCZxlmbdYVFnRb7eL0dFVVZpv6jyIsuTFKtelCVZEkVJ0s/bSZS0e5NRd7Y93zrePL48u/fQPru8+9D+wb578bn9lX36q/21/dD+0r64b9+9fGCfn59eTh7YB/duPbDPzvc2b+0ebN86+cy+eO/y7Oj2/s759sXl3if23u7W4eHZ4uRo52QfLTYXG5ub04392d5ifLC2OR7tzI53xxuj9enqejFZm1f14OZkOKrG1WA8qqtRuxxkWVZXdVV2e8WwKvM8DtpRkRadbt7xk6KdtNMo8LOiG4dpEHZp8UlXx7IThZ4fxXEYaNyu0Neu60Wh0p72lBYywJ8XKO0iJjKQ3GPClVr7nkaR0JxLjexol0mXIEDghFRcGmZ4AxmViIsRCe4JBIgTLdxSCmWMICYlEgAC4cEW0mghXxbyCYo0FmmJGY5AcQuJxhqzEEQKG0YEU0yggXIQJGaIYw1ZyGgjIz8GUBN/KKQWNliLUGxGaNxjiVGBdYtmSCYNw0sI9hJ30BkB7zBcixAOMc4pelu0EgdI3yLPCLf5ovcWDQRmVawZ1EwS12gWbjFNMYAR6wrcSNw/JTVTGJCBlLiNrlBKa6WDULsKD0apQJJW+1IFSklPC45TlW0lXVfhEUTS8lGOu+8J5rno2dUUyhReQmrluuiDa3QjtB/4AR67jxJ0qTzpuViEGDd09n6cIDxxFpZZ0avLvFitulU3Kef9qp7Vg+56PSlWx4NO1S+mg3ldjiYbi42tjcXO6eJssX9v+xv74vRg9/bh4fHtk4P9o4Ojg/3ZYm9tfWd1Pt+f7PT25mvj6Wa1mE1nk63pcDycDIdZPR5Xw/5oOB71RoNef1zN+hvFIOgh69Wo6leDuj+YVf1eb36znPayXlkPR2mvN+oXdV6GWV7UZSfOe90uXgadLAuLIo3LIsboT8IsiHwZxV6Qa1+HXhC72o+8WIVuLPxIh8J3NVci9MMQ90QrFpo9E1pxFeE+u3ggyhVYQ5w1np+yFO4y3qS4y0xSS+AlKwzQdBk74NJlR5ef4tCwZgFFCkKMV6yk27G52/FqpiZVwJBtQaM0tOA9ThARhYD0IoAOEUTGlH84ZRwLGiGYBIIphy8xpH0Fq+TQMh2uwnX0vITAkomxbNKNA9dQacHrCOwbmKws9iajtPUO3DDJ7Sp+SWoyFIKPLyWmxjfqWqbRZEQwNfTK7mBvMxolwxUwPlom19G4r+GE0TE1V3Bey0CZ8ga8gqXJej8uwbf4t+GZDR9jz38VPGrB4xb87cBTBz5l8MSB3wB+seF7gCc2PAb4yYbfHfgT4B8b/rbhuU2Vv8z3uZF8YcMd83yIz0cv6nfgffgf+QTE+w==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.PoM1n0/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T06:15:34Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2671637,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.59,
+      "load5" : 0.69,
+      "load15" : 0.81,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "warm_up=0; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 268435456,
+      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/unwarmed.gc.log:uptime,level,tags", "-XX:+UseG1GC", "-Xms256m", "-Xmx256m" ]
+    },
+    "alloc_bytes_per_parcel" : 733.2976,
+    "jit" : {
+      "startup" : {
+        "compilations" : 449,
+        "c2_compilations" : 47,
+        "deoptimizations" : 28
+      },
+      "first-2000" : {
+        "compilations" : 241,
+        "c2_compilations" : 19,
+        "deoptimizations" : 1
+      },
+      "steady" : {
+        "compilations" : 66,
+        "c2_compilations" : 60,
+        "deoptimizations" : 3
+      }
+    }
+  }
+}

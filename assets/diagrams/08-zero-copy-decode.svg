@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 410" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="220" y="44" width="640" height="150" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="232" y="64" font-size="12" font-weight="700" fill="#1d1d1d">protobuf-decode: a fresh message per datagram</text>
+<rect x="220" y="210" width="640" height="150" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="232" y="230" font-size="12" font-weight="700" fill="#1d1d1d">flat-ffm: a reused view, parcel-v1 is 80 bytes</text>
+<rect x="40" y="88" width="150" height="226" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="115.0" y="191.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Receive buffer</text>
+<text x="115.0" y="208.5" font-size="11.5" fill="#555555" text-anchor="middle">one direct ByteBuffer</text>
+<text x="115.0" y="223.5" font-size="11.5" fill="#555555" text-anchor="middle">one datagram at a time</text>
+<rect x="250" y="88" width="250" height="70" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="375.0" y="113.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">parseFrom</text>
+<text x="375.0" y="130.5" font-size="11.5" fill="#555555" text-anchor="middle">ParcelEvent + Dimensions</text>
+<text x="375.0" y="145.5" font-size="11.5" fill="#555555" text-anchor="middle">+ String barcode</text>
+<rect x="250" y="254" width="250" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="375.0" y="279.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">FlatView</text>
+<text x="375.0" y="296.5" font-size="11.5" fill="#555555" text-anchor="middle">checks schema, version, size</text>
+<text x="375.0" y="311.5" font-size="11.5" fill="#555555" text-anchor="middle">MemorySegment + VarHandles</text>
+<rect x="580" y="88" width="250" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="705.0" y="121.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">576 B/op, p50 157-162 ns</text>
+<text x="705.0" y="138.0" font-size="11.5" fill="#555555" text-anchor="middle">line: 591 B/parcel</text>
+<rect x="580" y="254" width="250" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="705.0" y="287.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">&lt; 1 B/op, p50 16 ns</text>
+<text x="705.0" y="304.0" font-size="11.5" fill="#555555" text-anchor="middle">line: 8.76 B/parcel</text>
+<path d="M190,123 L250,123" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M190,289 L250,289" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M500,123 L580,123" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M500,289 L580,289" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Read the bytes where they landed instead of building an object</text>
+<text x="440" y="388" font-size="12" fill="#1d1d1d" text-anchor="middle">A read-only view of bytes someone else owns: nothing to parse, under 1 B per decode.</text>
+</svg>

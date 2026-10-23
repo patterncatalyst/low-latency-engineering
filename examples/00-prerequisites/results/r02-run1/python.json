@@ -1,0 +1,105 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "00-prerequisites",
+  "language": "python",
+  "variant": "baseline",
+  "unit": "ns",
+  "count": 5000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 107007,
+    "p90": 194559,
+    "p99": 218111,
+    "p99_9": 299263,
+    "max": 378623
+  },
+  "hdr_histogram": "HISTFAAAAut4nEVUS5LkNBAtPaez0qostVqj0WiMxxhTNDVFR1EMnyD4BMGC2c+KI7AgOAFbbsAFWMAJ2LBnxW04ApGq7sB2WHIqP9J7Lz398uuTzYZ+31yv7mF0m033+vLXb5tv/r0a/vkJb+FnvMG7uMEH2OF93OIl8Bxv4zs49MAA6uGoB/aAQ0cDiIGeBnLkqEOHLeDoBoQeHczZEXXNGfaGe5hiaAEOPXXmTL2Fbq1K8+gwYG8BHQbao6M9sKWBCHtyIIctWTGHHRzEEUAQ77wqVAL5lDlLjElCTD4khc+qWlXVh+K9JgkTcVJI4BAiS61Zx5qSaFBzlRg0FfWemAITsQ+BLblvl+Zc1mU6nOZPxmNNh7qc1+P5dD6dLq/O0zqdlvvToU51SWmaQi1jTOPduhyX43xZz/fzF5+9vl/Wz18tp/vL+W6N6/1lvlvGdZxLiRpKllREc2BS8qw+sTAJw5MTIWIDVhjEQgSihi3BYGA4prbK5MibhQFpJmfIk7AjcmKYw1lURzAqdmRZrtTC0f+s9diyNC7Qky102KEjhwF9I/BD3LYMD+xugZfNx+FT4Alu8TX2GOgdvMDHVuMZ9niBW/SWBzsrusOALZ42TWBnDDuw7ddxjyaLwc5pNR3YYqjtjXrTJLfzmwoZPXfmZxu1u8mM+PGgDYJ2FNgXEbOBCYZYCJEyRxCTUMNZkvjgvZesPiBQDZKD+BKzBO9TjTGPa8khVR1lLWNOU6xxnuZDOfiS8+GuTuVVqHX6ajxOp/k81eM8no9TXY7zeijjZV3n87zktWafSs051pJK0hJzSknHFDRGZWXWmKJPHLyIclChZEKMooGKj8ok6kk8JU8s6lWZ0IQCliYUchBW8gadGFwg9mb21wZyIHHS2stgYZMZP3Zsf+3bhjqj0Y3Hnm7zG8L2oXPb0H4YHXDTgq9ZehPHtfHfw1PsjMfn6LFvEfgWH+F7/OHwIxy+xA1+wB7P8KfD3+35D74IOcQ=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T06:09:50Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2666424,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 0.93,
+      "load5": 0.98,
+      "load15": 0.93,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=8388608; single thread, GIL"
+}

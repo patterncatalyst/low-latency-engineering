@@ -1,0 +1,16 @@
+[0.214s][info][jfr,startup] Started recording 1. No limit specified, using maxsize=250MB as default.
+[0.214s][info][jfr,startup] 
+[0.214s][info][jfr,startup] Use jcmd 2672673 JFR.dump name=1 to copy recording data to file.
+warm-up: replayed 20000 parcels, handled 20000, dropped 0; JIT compile time 1594 ms
+ready: variant warmed on 127.0.0.1:47250
+received 20000 dropped 0 reordered 0 (stopped: EXPECTED) in flight 480 lanes [595, 3757, 5962, 3659, 2241, 1330, 2456, 0]
+window-times: first=2026-10-23T06:16:56.716181564Z boundary=2026-10-23T06:16:58.715406748Z end=2026-10-23T06:17:16.714288669Z
+05-jvm-costs               java   warmed                  20000        0      169.0      186.4      209.8      281.6      939.5
+05-jvm-costs               java   warmed-first-2000        2000        0      178.4      192.9      233.1      298.0      939.5
+05-jvm-costs               java   warmed-steady           18000        0      166.3      185.6      208.3      277.5      382.5
+report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/java-warmed.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/java-warmed-first-2000.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/java-warmed-steady.json
+jit startup     compilations 1082 (c2 248), deoptimizations 57
+jit first-2000  compilations 14 (c2 3), deoptimizations 9
+jit steady      compilations 25 (c2 16), deoptimizations 3

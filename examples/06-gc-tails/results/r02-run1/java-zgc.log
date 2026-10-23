@@ -1,0 +1,7 @@
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run1/zgc.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseZGC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant zgc --jfr /tmp/lowlat-scratch.38DDNM/zgc.jfr
+live set 1897922560 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
+gctails-java: variant zgc on 127.0.0.1:47260
+line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.6us p90=     51.8us p99=     59.5us p99.9=     65.0us max=     225.2us
+received 300000 dropped 0 reordered 0 (stopped: EXPECTED) [0]
+06-gc-tails                java   zgc                    300000        0       60.4       61.9       92.6      147.5     2605.1
+zgc-gc-pause: 38 GC pauses, p99 39167 ns, max 39167 ns

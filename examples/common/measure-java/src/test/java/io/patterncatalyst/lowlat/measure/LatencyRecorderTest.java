@@ -9,13 +9,16 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import org.HdrHistogram.Histogram;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -214,6 +217,95 @@ class LatencyRecorderTest {
         for (String field : List.of("schema", "example", "language", "variant", "unit", "count",
                 "dropped", "percentiles", "hdr_histogram", "build", "profile")) {
             assertTrue(tree.has(field), field);
+        }
+    }
+
+    @Test
+    void runtimeBlockIsCarriedAndOmittedWhenAbsent(@TempDir Path dir) throws IOException {
+        LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "runtime");
+        rec.record(MS);
+        Path plain = dir.resolve("plain.json");
+        Path withRuntime = dir.resolve("runtime.json");
+        rec.writeReport(plain);
+        rec.writeReport(withRuntime, null, null, Map.of());
+        assertFalse(JSON.readTree(plain).has("runtime"));
+        assertFalse(JSON.readTree(withRuntime).has("runtime"));
+        rec.writeReport(withRuntime, null, null, RuntimeInfo.jvm());
+        JsonNode gc = JSON.readTree(withRuntime).get("runtime").get("gc");
+        assertTrue(gc.get("collectors").size() >= 1);
+        assertTrue(gc.get("heap_bytes").asLong() > 0);
+    }
+
+    /** A child JVM launched with -XX:+UseZGC reports the flag in build.flags and ZGC in runtime.gc. */
+    @Test
+    @Timeout(60)
+    void buildFlagsRecordJvmInputArguments(@TempDir Path dir) throws Exception {
+        Path out = dir.resolve("zgc.json");
+        Path log = dir.resolve("child.log");
+        Process child = childJvm(log, false)
+                .command(javaCommand(List.of("-XX:+UseZGC", "-Xmx64m"), ChildReport.class, out.toString()))
+                .start();
+        assertTrue(child.waitFor(60, TimeUnit.SECONDS), "child JVM did not finish");
+        assertEquals(0, child.exitValue(), Files.readString(log));
+        JsonNode tree = JSON.readTree(out);
+        String flags = tree.get("build").get("flags").asString();
+        assertTrue(flags.contains("-XX:+UseZGC"), flags);
+        assertTrue(flags.contains("-Xmx64m"), flags);
+        JsonNode gc = tree.get("runtime").get("gc");
+        assertEquals("-XX:+UseZGC", gc.get("flags").get(0).asString());
+        assertTrue(gc.get("collectors").toString().contains("ZGC"), gc.toString());
+    }
+
+    /** printSummary works without LOWLAT_PROFILE: it reads the histogram, not the machine profile. */
+    @Test
+    @Timeout(60)
+    void summaryNeedsNoProfile(@TempDir Path dir) throws Exception {
+        Path log = dir.resolve("child.log");
+        Process child = childJvm(log, true)
+                .command(javaCommand(List.of(), ChildSummary.class))
+                .start();
+        assertTrue(child.waitFor(60, TimeUnit.SECONDS), "child JVM did not finish");
+        String output = Files.readString(log);
+        assertEquals(0, child.exitValue(), output);
+        String line = output.lines().filter(l -> l.contains("summary-child")).findFirst().orElseThrow();
+        // one record of 1 ms (histogram bucket resolution): every percentile prints about 1000 us
+        assertTrue(line.contains(" 1000."), line);
+    }
+
+    private static ProcessBuilder childJvm(Path log, boolean withoutProfile) {
+        ProcessBuilder pb = new ProcessBuilder()
+                .redirectErrorStream(true)
+                .redirectOutput(log.toFile());
+        if (withoutProfile) {
+            pb.environment().remove(LatencyRecorder.PROFILE_ENV);
+        }
+        return pb;
+    }
+
+    private static List<String> javaCommand(List<String> jvmArgs, Class<?> main, String... args) {
+        List<String> cmd = new ArrayList<>();
+        cmd.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
+        cmd.addAll(jvmArgs);
+        cmd.addAll(List.of("-cp", System.getProperty("java.class.path"), main.getName()));
+        cmd.addAll(List.of(args));
+        return cmd;
+    }
+
+    /** Entry point of the child JVM for the summary test. */
+    public static final class ChildSummary {
+        public static void main(String[] args) {
+            LatencyRecorder rec = LatencyRecorder.singleThreaded("summary-child", "v");
+            rec.record(MS);
+            rec.printSummary();
+        }
+    }
+
+    /** Entry point of the child JVM above: writes one report with the JVM's runtime block. */
+    public static final class ChildReport {
+        public static void main(String[] args) {
+            LatencyRecorder rec = LatencyRecorder.singleThreaded("t", "child");
+            rec.record(MS);
+            rec.writeReport(Path.of(args[0]), null, null, RuntimeInfo.jvm());
         }
     }
 }

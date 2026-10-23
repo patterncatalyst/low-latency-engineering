@@ -1,0 +1,10 @@
+ready: variant training-plain on 127.0.0.1:47251
+received 3000 dropped 0 reordered 0 (stopped: EXPECTED) in flight 480 lanes [91, 583, 916, 524, 359, 182, 345, 0]
+window-times: first=2026-10-23T06:17:17.354673517Z boundary=null end=2026-10-23T06:17:20.333705707Z
+05-jvm-costs               java   training-plain           3000        0      112.8      223.7      362.0    17989.6    20742.1
+Temporary AOTConfiguration recorded: /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot.config
+Launching child process /home/rsedor/.sdkman/candidates/java/25.0.5-tem/bin/java to assemble AOT cache /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot using configuration /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCacheOutput=/tmp/lowlat-scratch.PoM1n0/jvm-costs.aot -XX:AOTConfiguration=/tmp/lowlat-scratch.PoM1n0/jvm-costs.aot.config -XX:AOTMode=create
+Reading AOTConfiguration /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot.config and writing AOTCache /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot
+AOTCache creation is complete: /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot 23769088 bytes
+Removed temporary AOT configuration file /tmp/lowlat-scratch.PoM1n0/jvm-costs.aot.config

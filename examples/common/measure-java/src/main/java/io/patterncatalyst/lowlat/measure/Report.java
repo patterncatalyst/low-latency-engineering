@@ -19,7 +19,8 @@ public record Report(
         BuildInfo build,
         JsonNode profile,
         @JsonInclude(JsonInclude.Include.NON_NULL) String notes,
-        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, Object> model) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, Object> model,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, Object> runtime) {
 
     public static final String SCHEMA = "lowlat-report/1";
 }

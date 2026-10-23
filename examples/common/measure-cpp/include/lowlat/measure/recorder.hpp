@@ -70,12 +70,16 @@ class Recorder {
   /// `notes` is free text for the optional `notes` field, written only when non-empty.
   /// `model` is the optional `model` object (the only place a time-average may appear);
   /// it is written only when it holds a non-empty JSON object.
+  /// `runtime` is the optional `runtime` object (GC, JIT, AOT, context switches; no mean
+  /// anywhere inside), written under the same rule.
   [[nodiscard]] nlohmann::json report(std::string_view notes = {},
-                                      const std::optional<nlohmann::json>& model = std::nullopt) const;
+                                      const std::optional<nlohmann::json>& model = std::nullopt,
+                                      const std::optional<nlohmann::json>& runtime = std::nullopt) const;
 
-  /// Writes report(notes, model) to `path` and returns it.
+  /// Writes report(notes, model, runtime) to `path` and returns it.
   nlohmann::json write_report(const std::filesystem::path& path, std::string_view notes = {},
-                              const std::optional<nlohmann::json>& model = std::nullopt) const;
+                              const std::optional<nlohmann::json>& model = std::nullopt,
+                              const std::optional<nlohmann::json>& runtime = std::nullopt) const;
 
   /// One aligned line: example, language, variant, count, dropped, p50, p90,
   /// p99, p99.9, max in microseconds (1 decimal). Never a mean.

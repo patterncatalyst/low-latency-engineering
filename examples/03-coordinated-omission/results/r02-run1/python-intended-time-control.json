@@ -1,0 +1,105 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "03-coordinated-omission",
+  "language": "python",
+  "variant": "intended-time-control",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 181631,
+    "p90": 194943,
+    "p99": 213375,
+    "p99_9": 286975,
+    "max": 434687
+  },
+  "hdr_histogram": "HISTFAAAA4l4nDVU0WrcRhT1nLm6e3c8O1bGsioLRVEXZWvM4i5La4xxG2OMMSYNpoRgjJ+KMXkwJZjQlmBMCaZ9KX3pD/Qf+tJf6Hf0B/oDgXJnHUloRneuzh2dc3Sb+z9Wl5ay/aXFYR9Gs7Rkj2Z//7n07L9F4N9rrONXA4t/LJ6CMhqADMGQgQEsEwCL9GRgaAANZ1jFE3yCtRQdwoBgmCxgyZAhWsMAwDIsLJaxQssY4SkUXKNPsI5VGiIhAi5hEhgwAiKDj+XFUAZDnJZJd6WLAitaMV0EJp1oOhNJyvNGIMLC5OCEJfdV7Lp+d3dnZ2/+4nS+tzXf6qZ7fTffmcw2p20Tu6aqiq6tYx2qIt8ITezqIoQmlEVXN+1GnTdNH5u+b+u2n8RiXMW6rOqmqduy6ttx0RRlUcSiqiWWZR5jiFUMUpRUSF7GPAQf2DkpCuecR46QF7nzriCXOxcQnHhCTpGiJ+/Eee9cDiLnPIsTxyROWD+GWYgYFiC7IE0fiYSVNjILtlRSJCmRZjpdBSBZkkaJt8hARDpwRrScSBwCj2BpiIySVjSgbMEuBtCqg6S5xYP4UNWhoCsatOk0irymCj/WoEklU0XVz6pL1FrDpB8spRc4lVlOKQ8+Q6ptMYKhIXgAQ/YjjkIsdmDTfvRTM70RBCaSy0WJAnkSzwFemAESw3Bk1DVMzEosgQXMZmFBIgExOAEyOe+ZGELMXhMtMYMNMwhOjFNtdI0VUyWS4FhAQqTYLMReyKgT4cWRcyE4F51v8xDypo31pApNO+lm076dT5vtjcl8ulseHR5O9w+PZtP9452vz3bme6eHu8dHJ6ffnb84eXX78vXVxb25Or96b97evr382by7fndvbn83F5c3d+/N3fVPr38zv5i76+9vb87fXFw+vzk7u3jzw/nLk8PdV2dHxwcn3x4cnD4/+WJ/Npu/2JkfT7enG9O67+fTrX5Sb9WTzWaz7bb66byfbG63G2U3n0368Xjcdm3bbhZdUUxiWcamLvIqxnHblDHE0sc8+EpCKJzPXfC5RB/FBWUpD4G9utRVoJylkGQJgEWYmYm8YyY2TOzJKF/qToj+3UbbAhGrwZV5KzC0aAIGxPbB5AtDZJRGNYhohRGSFTP1tgVGrEk0Uo8+Rka0svDdECN8hi/xCOv4Ec+0K2qXw+fQVO1D3+BTGIzwFT4AfwEfDP4Hm7RffA==",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T06:12:59Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2670132,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 0.91,
+      "load5": 0.84,
+      "load15": 0.88,
+      "running": 2
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep; single thread, GIL"
+}

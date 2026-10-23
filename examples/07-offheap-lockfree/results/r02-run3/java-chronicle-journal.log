@@ -1,0 +1,25 @@
+command: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/chronicle-journal.gc.log:uptime\,level\,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -cp /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar io.patterncatalyst.lowlat.offheap.Handoff --variant chronicle-journal --bind 127.0.0.1:47270 --journal-dir /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/queue --placement unpinned --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal.json
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::putLong has been called by com.kenai.jffi.UnsafeMemoryIO$UnsafeMemoryIO64 (file:/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class com.kenai.jffi.UnsafeMemoryIO$UnsafeMemoryIO64
+WARNING: sun.misc.Unsafe::putLong will be removed in a future release
+offheap-lockfree: variant chronicle-journal listening on /127.0.0.1:47270, commands to /127.0.0.1:47271, window 20000
+decide-thread pid=2706645 tid=2706719
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     52.2us p99=     59.5us p99.9=     64.2us max=     168.6us
+window-end handled=200000
+received 200000 dropped 0 reordered 0 published 200000 overflow 0 (stopped: EXPECTED)
+journal-readback count=200000 in_order=true
+old-gen bytes_after_gc=9342968 baseline_bytes=3798520
+07-offheap-lockfree        java   chronicle-journal      200000        0       61.1       67.6       90.5    11927.6    20529.2
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-first-20000.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-steady.json
+07-offheap-lockfree        java   chronicle-journal-handoff     200000        0        0.1        0.3        0.8    10084.4    13058.0
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-handoff.json
+07-offheap-lockfree        java   chronicle-journal-journal-append     200000        0        0.3        0.4        3.0       24.8     6430.7
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-journal-append.json
+07-offheap-lockfree        java   chronicle-journal-divert     200000        0        4.7       11.6       14.6       84.2     2086.9
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/java-chronicle-journal-divert.json
