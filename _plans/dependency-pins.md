@@ -173,10 +173,11 @@ Sources: Maven Central `maven-metadata.xml` and POMs, `gh api repos/.../releases
 
 | Component | Pinned version | Licence | Source queried | Checked (2026-10-23) | Notes |
 |---|---|---|---|---|---|
-| org.openjdk.jcstress:jcstress-core | 0.16 | GPL-2.0-only; the repo `LICENSE` carries the "Classpath" exception for files whose header designates it (the POM declares no licence) | Maven Central `maven-metadata.xml` (latest/release 0.16, lastUpdated 2023-02-27); `gh api repos/openjdk/jcstress/tags` (newest tag 0.16) | yes | Latest; no GitHub releases, only tags. Test-time harness only (`verify.sh`, not a CI gate, Q4), never on a hot path. Recommended bootstrap is the archetype `org.openjdk.jcstress:jcstress-java-test-archetype` 0.16 (same date) generating a project that depends on `jcstress-core` and builds an uber jar with `mvn clean verify`; S4 wires `jcstress-core` as a module dependency rather than running the archetype. No newer version, no hold. |
+| org.openjdk.jcstress:jcstress-core | 0.16 | GPL-2.0-only WITH Classpath-exception-2.0 (header-designated; the POM declares no licence) | Maven Central `maven-metadata.xml` (latest/release 0.16, lastUpdated 2023-02-27); `gh api repos/openjdk/jcstress/tags` (newest tag 0.16) | yes | Latest; no GitHub releases, only tags. Test-time harness only (`verify.sh`, not a CI gate, Q4), never on a hot path. Recommended bootstrap is the archetype `org.openjdk.jcstress:jcstress-java-test-archetype` 0.16 (same date) generating a project that depends on `jcstress-core` and builds an uber jar with `mvn clean verify`; S4 wires `jcstress-core` as a module dependency rather than running the archetype. No newer version, no hold. |
 | org.agrona:agrona | 2.7.0 | Apache-2.0 | Maven Central metadata (lastUpdated 2026-10-12); `gh api repos/real-logic/agrona/releases/latest` (2.7.0, prerelease=false, 2026-10-12) | yes | Still the latest. Unchanged. |
 | org.openjdk.jol:jol-core | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | Maven Central metadata (lastUpdated 2023-02-27); tags show 0.17 newest | yes | Still the latest. Unchanged. |
 | net.openhft:chronicle-bom / affinity | BOM 2026.26 / affinity 2026.2 | Apache-2.0 | Maven Central metadata: BOM release 2026.26 (2026-10-06), affinity release 2026.2 (2026-01-28) | yes | Current pin equals latest for both; unchanged from r02. |
+| CPython free-threaded (uv) | cpython-3.14.8+freethreaded (python-build-standalone 20261009, via uv 0.13.0) | PSF-2.0 | `uv python install cpython-3.14.8+freethreaded`; install-dir `BUILD` file; docs.python.org/3.14 | yes | User-local, not a system package. Interpreter `python3.14t`. Held at 3.14.8 with the GIL build (see Holds). |
 | abseil-cpp (`absl::flat_hash_map`) | 20250512.1 (held) | Apache-2.0 | Installed prefix `~/.cache/lowlat/prefix` | yes | Hold unchanged (protobuf v36.2 requires it; see Holds). The prefix ships `include/absl/container/flat_hash_map.h` and its `lib64/cmake/absl/abslTargets.cmake` defines the imported target `absl::flat_hash_map`, so S4 can link it without a new dependency. |
 
 ### Recorded, not pinned
@@ -203,7 +204,7 @@ GCC 16.2.1 and Clang 22.1.8 (both using the host libstdc++, the standard library
 
 ### Free-threaded CPython (Q3)
 
-- Installed `cpython-3.14.8+freethreaded` with `uv python install` (user-local, interpreter `python3.14t`). Not a system package. Build string: 3.14.8.
+- Installed `cpython-3.14.8+freethreaded` with `uv python install` (user-local, interpreter `python3.14t`). Not a system package. Build: 3.14.8, python-build-standalone 20261009.
 - `sys._is_gil_enabled()`: `False` on the free-threaded build (`Py_GIL_DISABLED` 1); `True` on the host 3.14.8 (`Py_GIL_DISABLED` 0).
 - Documentation: the CPython 3.14 free-threading howto (docs.python.org/3.14/howto/free-threading-python.html, "Iterators") says "It is generally not thread-safe to access the same iterator object from multiple threads concurrently, and threads may see duplicate or missing elements." The 3.14 `itertools` page makes no thread-safety statement for `count` or its `__next__`. Result: **`itertools.count.__next__` is not documented thread-safe in either build.**
 - Observation (not a documentation claim): 4 threads x 1,000,000 `next(count)` calls, 3 repetitions per build: every repetition yielded exactly 4,000,000 unique values 0..3,999,999 on both the GIL and the free-threaded build.
@@ -214,7 +215,7 @@ GCC 16.2.1 and Clang 22.1.8 (both using the host libstdc++, the standard library
 
 | Component | Held at | Latest stable | Reason | Re-check |
 |---|---|---|---|---|
-| CPython | 3.14.8 | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | No python-build-standalone build of 3.14.9 yet (latest `20261020` ships 3.14.8), so uv cannot provide it; Fedora 44 ships 3.14.8. Promote when a uv-managed 3.14.9 is available; pin it in `examples/.python-version`. | next iteration |
+| CPython | 3.14.8 | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | No python-build-standalone build of 3.14.9 yet (latest `20261020` ships 3.14.8), so uv cannot provide it; Fedora 44 ships 3.14.8. Promote when a uv-managed 3.14.9 is available; pin it in `examples/.python-version`. Applies to the free-threaded build too; promote both to 3.14.9 together. | next iteration |
 | uv | 0.13.0 on this host | 0.13.4 | User-local tool, not changed by the build; r01 uses no 0.13.4-only feature. `uv self update` is the user's call. | next iteration |
 | JDK 27 (non-LTS) | not used | 27 GA (2026-09-15, Temurin 27.0.0+35); jdk.java.net/27 lists 27.0.1.0.2 as the current update (checked 2026-10-22) | Base is LTS 25 (Q1); libraries certify LTS | JDK 28 GA, or next LTS (JDK 29) |
 | JDK 28 / Valhalla EA, jextract EA | not used | EA only | Prerelease policy (Q2) | JDK 28 GA (~2027-03); GA jextract |
