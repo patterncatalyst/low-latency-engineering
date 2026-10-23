@@ -220,10 +220,9 @@ of 1.01. It did not recur in these three runs, and no cause was measured. The bo
 ### What the memory-mapped append removes
 
 It removes the system call, not the first-touch page fault. The appender copies a record into a
-`MAP_SHARED` mapping of the cycle file (`blockSize` 64 MiB, roll cycle `FAST_DAILY`, one 80 MiB file for
-the whole run); the first write to each new 4 KiB page takes a minor fault, about 1.9 us for the
-faulting append against a median of 0.3 us (one calibration run on tmpfs, 2026-10-22, not
-committed). Records are about 75 bytes, so on tmpfs a fault falls on roughly
+`MAP_SHARED` mapping of the cycle file (`blockSize` 64 MiB, roll cycle `FAST_DAILY`); the first write to each new 4 KiB page takes a
+minor fault. In one calibration run on tmpfs (2026-10-22, not committed) the run used one 80 MiB
+file and the faulting append took about 1.9 us against a median of 0.3 us. Records are about 75 bytes, so on tmpfs a fault falls on roughly
 every 55th append (1.9 % of appends, more than the 1 % that a p99 looks at: there the Chronicle p99 is the
 fault); on btrfs it is 0.7 % and the p99 drops below the fault.
 How often it happens depends on the file system under the journal:

@@ -231,7 +231,8 @@ The p50 of the 1 kHz consumers is not constant on this untuned host. The whole-r
 211.3 us across the nine Java line runs and 116.9 to 158.8 us for the C++ tracker (158.8, 116.9 and
 154.6 us), and the three steady p99 values of 461 to 468 us come from runs whose p50 is near 200 us.
 An interleaved A/B of the trees before and after the last change to the measured code found the
-same spread in both (`results/r02-ab/`); the cause is not identified. The criteria are ratios inside
+p50 varying alike in both (Java steady p50 77 to 176 us in each tree, below the near-200 us
+state of the committed runs; `results/r02-ab/`); the cause is not identified. The criteria are ratios inside
 one run, and no p50 or steady p99 is compared across runs.
 
 Not asserted: compilations and deoptimizations per window, bytes per parcel, the C++ split, the

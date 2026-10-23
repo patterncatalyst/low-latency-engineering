@@ -499,7 +499,7 @@ Throughput stays at about 1,000 parcels per second: per-parcel runs measure 1,00
 | per-parcel | 85 to 188 us |
 | batch-32 | 15.2 to 15.4 ms |
 
-Against the same language and run, the batch median is 82 to 180 times larger. The batch p99 is 31.1 to 31.2 ms in all nine batch runs, the fill wait plus handling. 
+Against the same language and run, the batch median is 82 to 180 times larger. The batch p99 is 31.1 to 31.2 ms in all nine batch runs, the fill wait plus handling.
 
 ### B. One parcel in a hundred
 
@@ -517,7 +517,7 @@ The Java runs show a second tail effect. Their notes record `JIT not warmed: fir
 
 ### The median itself moved
 
-The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 164 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed. One binary's median moved by up to 2.2 times. Across the nine per-parcel runs on this untuned host, p50 spread from 85 to 188 us. An interleaved run of the tree before and after the last code change spread the same way in both (`examples/05-jvm-costs/results/r02-ab/`), and the cause is not identified.
+The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 164 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed. One binary's median moved by up to 2.2 times. Across the nine per-parcel runs on this untuned host, p50 spread from 85 to 188 us. An interleaved A/B of the trees before and after the last code change, on the Chapter 0 and 5 consumers, found p50 varying alike in both (`examples/05-jvm-costs/results/r02-ab/`); the cause is unidentified.
 
 Variants in one run differ too: in `r02-run2` the C++ per-parcel p50 was 157 us and the bimodal p50, which does strictly more work, 95 us.
 

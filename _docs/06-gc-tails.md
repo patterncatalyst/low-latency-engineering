@@ -262,7 +262,7 @@ Under Parallel the p99 is already 130.9 to 131.8 ms, while the p50 is 0.06 ms in
 
 ZGC's end-to-end maximum is 2.61 to 6.10 ms while its longest GC pause is under 0.04 ms. The maximum is therefore not a GC pause, and the book does not attribute it.
 
-**Headroom.** With the heap at 1.05 times the live set (1,893 to 1,895 MB), `undersized-heap` recorded 530 to 977 allocation stalls, the longest 61.1 to 139.9 ms, and a p99.9 of 50.4 to 113.0 ms against 0.147 to 0.149 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses were 0.053 ms at most, so stalls, not pauses, make the tail (run 1: longest stall 61.1 ms, end-to-end maximum 56.1 ms).
+**Headroom.** With the heap at 1.05 times the live set (1,893 to 1,895 MB), `undersized-heap` recorded 530 to 977 allocation stalls, the longest 61.1 to 139.9 ms, and a p99.9 of 50.4 to 113.0 ms against 0.147 to 0.149 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses were 0.053 ms at most, so stalls, not pauses, make the tail.
 
 **Observed only.** Non-generational Shenandoah gave a p99.9 of 0.152 to 0.167 ms and a maximum pause of 0.68 to 0.75 ms. `thp`, which got no huge pages, gave a p99.9 of 0.149 to 0.204 ms and a maximum pause of 0.028 to 0.045 ms. With the recording off, `jfr-off` gave a p99.9 of 0.149 to 0.154 ms, 0.001 to 0.007 ms above ZGC's in the same run. ZGC's spread is 0.002 ms, but `thp`, the same collector on 4 KB pages, spans 0.055 ms, so this set cannot tell that difference from noise.
 

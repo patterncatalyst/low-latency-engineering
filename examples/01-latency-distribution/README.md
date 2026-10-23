@@ -149,7 +149,8 @@ three runs, in nanoseconds:
 The per-parcel median itself moves between runs on this untuned host (C++ 164,479,
 156,671 and 160,127 ns, Java 111,871, 187,519 and 85,439 ns across runs 1 to 3). The
 1 kHz consumers spread from 85 to 188 us in per-parcel p50 on this host, and an interleaved
-before-and-after run (`examples/05-jvm-costs/results/r02-ab/`) spread the same way in both; the
+before-and-after A/B on the Chapter 0 and Chapter 5 consumers
+(`examples/05-jvm-costs/results/r02-ab/`) found the p50 varying alike in both trees; the
 cause is not identified. No criterion compares medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU

@@ -3,7 +3,7 @@
 import csv, math, random, statistics, sys
 from collections import Counter, defaultdict
 
-HIGH_US = 130.0  # a steady p50 above this is "high mode" (the p50 distribution splits there)
+HIGH_US = 130.0  # a steady p50 above this counts as "high" (chosen after ab1 ran)
 
 def fisher(a, b, c, d):
     r1, r2, c1, n = a + b, c + d, a + c, a + b + c + d
@@ -71,7 +71,7 @@ def compare(label, var, sets):
     print(f"{label} {var}: high old {ho}/{len(o)} new {hn}/{len(n)}; Fisher p={p_f:.3f}; "
           f"Mann-Whitney p(normal)={p_z:.3f} p(perm)={p_perm:.3f}; median old {med(o):.1f} new {med(n):.1f}")
 
-print("\n## Steady p50: high-mode counts and tests (old vs new)")
+print("\n## Steady p50: high counts and tests (old vs new)")
 for var in ("cpp-tracker", "java-aot-cache", "java-unwarmed", "java-warmed"):
     compare("ab1 (6 pairs)", var, ("ab1",))
 compare("ab2 (12 pairs)", "java-warmed", ("ab2",))

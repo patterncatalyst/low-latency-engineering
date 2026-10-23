@@ -12,7 +12,7 @@ to the measured paths.
 | old | `d419992` | the tree before the last code change to the measured paths |
 | new | `1e0d435` | the tree after it (the tree the committed `r02-run1..3` were taken from) |
 
-`git diff --stat d419992 1e0d435 -- examples` lists the change. The A/B asks
+`git diff --stat d419992 1e0d435 -- examples ':(exclude)examples/*/results/**'` lists the change. The A/B asks
 whether it moved any Chapter 5 percentile.
 
 ## Method
@@ -37,7 +37,7 @@ Two sets:
 | Set | Runs | What |
 |---|---|---|
 | `ab1` | 6 pairs | every Chapter 5 lane (`java-unwarmed`, `java-warmed`, `java-aot-cache`, `cpp-tracker`) from `05-jvm-costs/verify.sh`, plus the Chapter 0 lane as a control. Driven by `drive.sh` (pairs 1-3 of both lanes), then `drive2.sh` (00, pairs 4-6) and `drive3.sh` (05, pairs 4-6). |
-| `ab2` | 12 pairs | only `java-warmed`, because `ab1` showed the old tree in the low mode in 5 of 6 runs and the new tree in the high mode in 4 of 6. Driven by `scripts/ab2/drive.sh`. |
+| `ab2` | 12 pairs | only `java-warmed`, because `ab1` gave a high steady p50 (above 130 us) in 1 of 6 old runs and 4 of 6 new runs. Driven by `scripts/ab2/drive.sh`. |
 
 The Chapter 0 control lane failed in pairs 1-3 after its C++ report: the Python
 consumer exited before binding its UDP port (`No module named 'lowlat'`, the
@@ -55,7 +55,7 @@ values in nanoseconds.
 |---|---|
 | `ab.csv` | one row per report: `set,pair,tree,lane,variant,window,p50_ns,p99_ns,p999_ns,load1` (240 rows). Written by `scripts/extract.py` from the report JSONs, never by hand. |
 | `runs-ab1.log`, `runs-ab2.log` | driver logs: load average before and after every run, and each run's exit code |
-| `scripts/ab1/`, `scripts/ab2/` | build and driver scripts. `AB_DIR` replaces the scratch directory they ran in; it holds `ab-old/`, `ab-new/` and `out/`. |
+| `scripts/ab1/`, `scripts/ab2/` | build and driver scripts. `AB_DIR` replaces the scratch directory they ran in; it holds `ab-old/`, `ab-new/` and `out/`. `scripts/ab2/drive.sh` runs `warm.sh` from its own directory. |
 | `scripts/extract.py` | `ab.csv` from the reports |
 | `scripts/analyze.py` | the tables below from `ab.csv` |
 | `scripts/ab2/stats.py` | the original statistics script of `ab2`, kept for the record. It reads the report JSONs; `analyze.py` gives the same p-values from `ab.csv`. |
@@ -65,8 +65,8 @@ The raw report JSONs (about 5.7 MB) are not committed. To rebuild `ab.csv`:
 
 ## Results
 
-`high` counts steady-window p50s above 130 us. The p50 of a lane splits into a
-group near 100 us and a group at 150 us and above, and some Java runs sit near 200 us. The tests compare
+`high` counts steady-window p50s above 130 us. The cut is a description of this data,
+chosen after `ab1` ran, not a threshold set in advance. The tests compare
 old with new on the steady p50: Fisher's exact test on the high counts, and a
 two-sided Mann-Whitney U test (normal approximation with tie correction, then a
 200,000-draw permutation test with seed 1).
@@ -128,7 +128,7 @@ ab1 java-unwarmed 05 | 156.2 221.5 302.8 4/6 | 153.8 215.7 310.1 4/6
 ab1 java-warmed 05 | 106.6 199.7 241.4 1/6 | 159.0 204.0 246.7 4/6
 ab2 java-warmed 05 | 107.4 207.2 268.0 3/12 | 105.8 203.0 258.6 2/12
 
-## Steady p50: high-mode counts and tests (old vs new)
+## Steady p50: high counts and tests (old vs new)
 ab1 (6 pairs) cpp-tracker: high old 2/6 new 2/6; Fisher p=1.000; Mann-Whitney p(normal)=0.749 p(perm)=0.818; median old 99.6 new 100.9
 ab1 (6 pairs) java-aot-cache: high old 3/6 new 3/6; Fisher p=1.000; Mann-Whitney p(normal)=0.688 p(perm)=0.730; median old 125.4 new 135.5
 ab1 (6 pairs) java-unwarmed: high old 4/6 new 4/6; Fisher p=1.000; Mann-Whitney p(normal)=0.749 p(perm)=0.818; median old 156.2 new 153.8
@@ -147,13 +147,14 @@ ab1+ab2 (18 pairs) java-warmed: high old 4/18 new 6/18; Fisher p=0.711; Mann-Whi
   new (Fisher p = 1.0, Mann-Whitney p = 0.49 to 0.51), with medians of 107.4 and
   105.8 us. Over all 18 pairs it is 4/18 against 6/18 (Fisher p = 0.71,
   Mann-Whitney p = 0.73 to 0.74) and medians of 107.0 and 106.4 us. A 12-pair
-  set cannot rule out a small shift, but a change that doubled the high mode
-  would have shown here.
-- The bimodal p50 is present in both trees, in every Chapter 5 lane and in the
+  set cannot rule out a shift even as large as a doubling of the high count
+  (3/12 to 6/12 gives Fisher p = 0.40); it shows only that the spread is
+  present in both trees.
+- The p50 spread is present in both trees, in every Chapter 5 lane and in the
   Chapter 0 C++ control (C++ p50 102 to 158 us in the old tree, 70 to 157 us in the new one).
   A tree-wide change would not appear in both.
-- The cause of the p50 states is not identified. This A/B shows only that
-  the code change did not cause it.
+- The cause of the p50 states is not identified. This A/B found no sign that
+  the code change caused it.
 
-**Verdict: no regression.** The last change to the measured code did not move
-the latency, and the p50 bimodality is present in both trees.
+**Verdict: no shift detected.** Neither set found a difference between the trees,
+and the p50 spread is present in both.
