@@ -16,7 +16,7 @@ Planned by Opus on 2026-10-23 on `release/r03` (cut from main at `9b0339f`). Sta
 - **Java libraries already pinned:** Agrona 2.7.0 (`Long2LongHashMap`, `ManyToOneConcurrentArrayQueue`), JOL 0.17, OpenHFT Affinity 2026.2 (via `chronicle-bom`), JMH 1.37. New candidate: OpenJDK jcstress (Q4).
 - **JDK idioms in 25:** `LongAdder` (striped cells, padded internally), `StampedLock.tryOptimisticRead` (the JDK's seqlock), `VarHandle` access modes, `Thread.onSpinWait()`. `@jdk.internal.vm.annotation.Contended` is internal (needs `--add-exports` and `-XX:-RestrictContended`): shown in prose as the non-idiomatic route, not used.
 - **C++:** C++23 code only (`std::atomic_ref`, `std::hardware_destructive_interference_size`, `std::barrier`/`std::latch`, `std::jthread`). C++26 `<hazard_pointer>`/`<rcu>` are status only (S0 records whether the pinned GCC 16 / Clang 22 standard libraries ship them).
-- **CPython:** host 3.14.8 (GIL). uv offers `cpython-3.14.8+freethreaded` as a download; it is not installed (Q3). No public atomics API in 3.14.
+- **CPython:** host 3.14.8 (GIL). uv offers `cpython-3.14.8+freethreaded` as a download; Q3 = yes: S0 pins it as a user-local uv download (no system package), and the Python lanes run under both builds. No public atomics API in 3.14.
 - **Shared code not to touch:** `examples/common/line-simulator/**` and the three consumers. r03 changes to the kit are additive (schema fields, `lib.sh` helpers, the converter move). If any step must change the shared receive path, examples 00–08 are re-measured, as r02 S13 did.
 - **Release rule:** merged PR + `r03.x` tag + notes-only GitHub release; no tarball (CLAUDE.md).
 
@@ -25,7 +25,7 @@ Planned by Opus on 2026-10-23 on `release/r03` (cut from main at `9b0339f`). Sta
 C++ leads each technique, because Part 3 is about what the hardware does. Java and Python follow as the same technique in their idiom. Where a technique has no clean equivalent, the divergence is the lesson:
 
 - Python cannot place an object or pad a field.
-- Python under the GIL has no parallel threads to false-share or race.
+- Python under the GIL has no parallel threads to false-share or race; the free-threaded build does, and the same code shows it.
 - Java's collector stands in for hazard pointers.
 - On x86, `getAndAdd` is wait-free because of the instruction it compiles to.
 
@@ -62,7 +62,6 @@ The finding to expect is that at line rates most of these differences fit the bu
 - `@Contended` in code: JDK-internal; `LongAdder` and explicit padding are the idioms.
 - Changing the line simulator to emit multi-camera reads: the shared workload is re-measured on any change, so Ch10 runs four simulator instances instead.
 - A VM lane: placement and counters on the host answer the question; isolation is Part 5.
-- Python free-threaded in measured runs (Q3).
 - Python false sharing as an asserted criterion: interpreter cost hides it, so it is observed only.
 - jcstress in CI as a gate: long and nondeterministic for the allowed outcome; CI runs only deterministic tests.
 - Committing raw cachegrind or jcstress HTML: large; summaries only.
@@ -135,7 +134,7 @@ The finding to expect is that at line rates most of these differences fit the bu
   - (b) jcstress tests with `@Outcome(id = "0, 0", expect = ACCEPTABLE_INTERESTING)` for `setRelease`/`getAcquire` and `FORBIDDEN` for volatile (Q4).
   - (c) `ReentrantReadWriteLock` against `StampedLock.tryOptimisticRead` (the JDK's seqlock: idiomatic).
   - Line: `blocking-queue` (`ArrayBlockingQueue`) against `agrona-mpsc` (`ManyToOneConcurrentArrayQueue`, the library's CAS-claim MPSC).
-- **Python** (the divergence): (a) only: `threading.Lock` against `next()` on a shared `itertools.count` (atomic under the GIL); exactly-once asserted; claim tail observed against `sys.getswitchinterval()` (5 ms). No memory-order lane and no seqlock lane (no API; the GIL serialises bytecode); free threading deferred to Appendix E (Q3).
+- **Python** (the divergence), run under both builds (`gil`, `free-threaded`, recorded in `runtime.python_build` from `sys._is_gil_enabled()`): (a) `threading.Lock` against `next()` on a shared `itertools.count`, plus an unsynchronised `counter += 1` claim (`--racy-claim`). Exactly-once asserted for `lock` in both builds and for `itertools-count` in each build where S0 confirms it is documented thread-safe; `--racy-claim` lost claims observed under the GIL and asserted at least 1 under free threading (exact). Claim tail observed against `sys.getswitchinterval()` (5 ms) under the GIL, and with real parallel contention under free threading. Ch9's thread-based false-sharing counters also run under the free-threaded build (observed: interpreter cost per increment may still hide the line transfer). No memory-order lane and no seqlock lane (no public atomics API in 3.14). Appendix E keeps the full free-threading treatment; Ch10 links to it.
 - **Measured:**
   - claim p50/p99/p99.9 per variant;
   - CAS failures total and the largest retry count in one claim;
@@ -148,7 +147,7 @@ The finding to expect is that at line rates most of these differences fit the bu
   - torn snapshots;
   - line end-to-end p50/p99/p99.9 per variant.
 - **Asserts** (provisional; S7):
-  1. (exact) every variant, every language: each sequence 0..N-1 claimed exactly once (bitmap).
+  1. (exact) every synchronised variant, every language and Python build: each sequence 0..N-1 claimed exactly once (bitmap). Python `--racy-claim` under free threading: lost or duplicated claims at least 1 (exact; it demonstrates the race).
   2. (exact) `fetch-add` steps per claim = 1; `cas-loop` failed CAS at least 1 in total (contention present); `mutex` producers' voluntary context switches at least 100, against `fetch-add` at most 10 (calibrated).
   3. Claim p99.9, same run, median of 3 alternations: `mutex` at least 3x `fetch-add` (C++, Java). `cas-loop` against `fetch-add` observed: lock-free is not "faster", and wait-free bounds steps, not time.
   4. `--stalled-producer` (1 ms sleep): the consumer's wait at that sequence is at least 0.5 ms in the `fetch-add` log. The sleep guarantees at least 1 ms, so the margin is 2x by construction.
@@ -165,8 +164,8 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 
 | id | What | Files | Dep | Runs on | Status |
 |---|---|---|---|---|---|
-| S0 | Upstream survey + exact pins, licences, date, holds: jcstress (Central latest, licence), Agrona (2.7.0 still latest?), JOL, Affinity via `chronicle-bom`, abseil `flat_hash_map` from the held pin; record (not pin) valgrind and perf major.minor; probe `perf stat --control fifo:` with `-D -1`, JMH `-prof perfnorm` with `:u` events, `perf c2c record` at paranoid 2, generic event availability; C++26 `<hazard_pointer>`/`<rcu>` in GCC 16 / Clang 22 (status); `sys._is_gil_enabled()` on 3.14.8 | `_plans/dependency-pins.md` ("r03 pins"), `versions.env` (only if a tarball is added) | – | host (read-only) | todo |
-| S1 | Record answers to Q1–Q9; iteration-plan status (r02 complete, merged #4, tag `r02.x`; r03 in progress); commit this plan | `_plans/iteration-plan.md`, this file, `CLAUDE.md` only if Q1 changes a rule | answers | MAIN | todo |
+| S0 | Upstream survey + exact pins, licences, date, holds: jcstress (Central latest, licence), Agrona (2.7.0 still latest?), JOL, Affinity via `chronicle-bom`, abseil `flat_hash_map` from the held pin; record (not pin) valgrind and perf major.minor; probe `perf stat --control fifo:` with `-D -1`, JMH `-prof perfnorm` with `:u` events, `perf c2c record` at paranoid 2, generic event availability; C++26 `<hazard_pointer>`/`<rcu>` in GCC 16 / Clang 22 (status); `sys._is_gil_enabled()` on 3.14.8; pin `cpython-3.14.8+freethreaded` (uv, user-local) and record whether `itertools.count.__next__` is documented thread-safe in the free-threaded build | `_plans/dependency-pins.md` ("r03 pins"), `versions.env` (only if a tarball is added) | – | host (read-only) | todo |
+| S1 | Record answers to Q1–Q9; iteration-plan status (r02 complete, merged #4, tag `r02.x`; r03 in progress); commit this plan | `_plans/iteration-plan.md`, this file, `CLAUDE.md` only if Q1 changes a rule | answers | MAIN | done |
 | S2 | Report contract, additive in `lowlat-report/1`: `runtime.placement` {`cpus`, `distinct_cores`, `smt_siblings`}, `runtime.hw_counters` {`source` (`perf`, `cachegrind`, `perfnorm`), `ops`, `per_op` {event: number}}, `runtime.counters` {name: integer} (CAS failures, max retries, torn reads, litmus outcomes); `noMean` covers all; `check` validates; fixtures (pass and planted fail); C++ and Java writers fill `placement` | `contracts/measurement/latency-report.schema.json`, `measure-py`, `measure-cpp`, `measure-java`, `measure-fixtures/` | S0 | host | todo |
 | S3 | `profile.sh`: `cpu.caches` (L1d/L2/L3 size, line size from sysfs), `cpu.topology` (core id per logical CPU), `tools.perf` (`7.2`), `tools.valgrind`. `lib.sh`: `distinct_cores N`, `smt_pair`, `assert_placement PID TID CPU`, `perf_region OUT -- CMD` (FIFO-controlled `perf stat -x,` writing `hw_counters`), `cachegrind_run OUT -- CMD` (summary only, scrubbed), `interleave N VARIANTS...`. Promote `harness_report.py` (`from_jmh`/`from_gbench`) from 08 into `lowlat_measure` as `lowlat-report from-jmh`/`from-gbench`; 08 `verify.sh` re-pointed; identity test regenerates 08's committed `r02-run1` JMH reports byte-identical; `RECHECK` on 08 `r02-run1..3` passes. `.gitignore`: `cachegrind.out.*`, `jcstress-results/` | `scripts/profile.sh`, `examples/_lib/lib.sh`, `examples/common/measure-py/**`, `examples/08-zero-copy-flat/{verify.sh,flat-py}`, `.gitignore` | S2 | host | todo |
 | S4 | Build wiring: modules `09-eliminating-work` (Java `*-java` with JMH, Agrona, Affinity, JOL), `10-lockfree-waitfree` (JMH, Agrona, Affinity, jcstress per Q4) in `examples/pom.xml`; `dependencyConvergence` passes without a disabled rule; `-Xlint:all -Werror` kept; C++ targets `lowlat::eliminating_work`, `lowlat::lockfree` linking `absl::flat_hash_map` from the prefix; uv packages `lowlat-locality` (`09-*/locality-py`), `lowlat-sync` (`10-*/sync-py`); one wiring test each | `examples/pom.xml`, `examples/09-*/java/pom.xml`, `examples/10-*/java/pom.xml`, `examples/09-*/cpp/CMakeLists.txt`, `examples/10-*/cpp/CMakeLists.txt`, `*-py/pyproject.toml` | S0, S2 | host | todo |
@@ -252,7 +251,7 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 
 1. **Host thread placement.** r02 recorded "no thread pinning on the host". False sharing, the litmus test and claim contention need threads on known distinct physical cores. Recommendation: allow unprivileged `sched_setaffinity` on the host as an experiment control (no isolation claim, no system change), recorded in `runtime.placement`, the prose saying so. The alternative is unpinned runs with placement only observed (flaky effect, weaker criteria). **Yours to decide**: it revises an r02 decision.
 2. **Hub-scale working set.** 1,000,000 parcels in flight (a whole hub, matching Ch8's sweep) against the line's 4,800. Recommendation: yes, both, with the line-scale result taught as "fits L2, layout barely matters".
-3. **Python free-threaded build.** Downloading `cpython-3.14.8+freethreaded` through uv (user-local, like the r02 SDKMAN JDK upgrade) would let Ch10 show real races and contention in Python. Recommendation: no; Ch10's Python lane is GIL-only with a pointer to Appendix E (r11). **Yours to decide.**
+3. **Python free-threaded build.** Downloading `cpython-3.14.8+freethreaded` through uv (user-local, like the r02 SDKMAN JDK upgrade) would let Ch10 show real races and contention in Python. Recommendation was no; the user chose yes (Follow-ups).
 4. **jcstress.** New Java dependency (OpenJDK, GPL-2.0 with Classpath exception, same family as JMH) for the Java litmus test, against a hand-rolled `VarHandle` harness. Recommendation: jcstress (the established tool).
 5. **Converter promotion.** Move `harness_report.py` from 08 into `lowlat_measure`, touching 08's `verify.sh` with an identity test and `RECHECK` (no re-measure), against duplicating it in 09/10. Recommendation: promote.
 6. **Hardware counters in asserts.** Recommendation: assert cachegrind counts (deterministic, exact) and the generic L1-miss ratio for false sharing; all other perf counters observed.
@@ -264,4 +263,12 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 
 | Item | Decision |
 |---|---|
-| (S1 records Q1–Q9 here) | |
+| Q1 host thread placement (2026-10-23, user) | Allowed: unprivileged per-thread `sched_setaffinity` of our own benchmark threads on the host, as an experiment control, recorded in `runtime.placement` and asserted per thread; prose says it is not isolation. Revises r02's "no host thread pinning" for r03 onward; no system setting changes |
+| Q2 hub-scale working set | Accepted: 1,000,000 hub tracker and the 4,800 line tracker |
+| Q3 free-threaded Python (2026-10-23, user) | Yes: `cpython-3.14.8+freethreaded` via a user-local uv download, pinned in S0; Ch10 Python claim lane and Ch9 thread counters run under both builds (§2 Ch10 Python) |
+| Q4 jcstress | Accepted: OpenJDK jcstress, pinned in S0 with licence; verify.sh only, not a CI gate |
+| Q5 converter promotion | Accepted: promote `harness_report.py` into `lowlat_measure` with the 08 identity test and `RECHECK` |
+| Q6 hardware counters in asserts | Accepted: cachegrind counts and generic L1-miss ratio asserted; other counters observed |
+| Q7 Ch10 scope | Accepted: all three parts within 2,500 words; overflow goes back to the user at S11 |
+| Q8 Ch10 line run | Accepted: four simulator instances, no simulator change |
+| Q9 slugs | Accepted: `09-eliminating-work`, `10-lockfree-waitfree` |
