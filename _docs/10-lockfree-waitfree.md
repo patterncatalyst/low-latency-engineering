@@ -17,7 +17,7 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-Four cameras in the scan tunnel each read every parcel, and every read lands in one tracker log. Each camera thread takes the next slot number, writes its scan there and publishes it. If the thread holding the lock is descheduled, three cameras wait while the belt keeps moving. A parcel has 480 ms from scan to divert (1.2 m at 2.5 m/s), and a stall charges every parcel behind it (Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*).
+Four of the tunnel's cameras each read every parcel, and every read lands in one tracker log. Each camera thread takes the next slot number, writes its scan there and publishes it. If the thread holding the lock is descheduled, three cameras wait while the belt keeps moving. A parcel has 480 ms from scan to divert (1.2 m at 2.5 m/s), and a stall charges every parcel behind it (Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*).
 
 Two more places wait. Two induction stations feed one gap on the belt, and exactly one of them may take it. And the diverter reads a parcel's state while the tracker rewrites it 1,000,000 times a second.
 
@@ -35,11 +35,11 @@ The code is in `examples/10-lockfree-waitfree/`. The run script there builds and
 
 Take the camera threads claiming slots. With a `mutex` around the counter, a thread that finds it locked parks on a futex until the kernel wakes it. That's blocking: one descheduled holder stops everyone. With a compare-and-swap (CAS) loop, a camera reads the counter, tries to swap in `seen + 1`, and retries if another camera got there first. That's lock-free: some camera always completes, but one can lose again and again, and nothing bounds its retries. With `fetch_add`, the claim is a single `lock xadd` on x86-64. Every camera finishes in one step, which is wait-free.
 
-Platform matters: on a load-linked/store-conditional machine (some AArch64 and RISC-V cores) `fetch_add` compiles to a retry loop, and "wait-free" stops being true of the same line. And wait-free bounds steps, not time: a step can wait for a cache line another core owns. It covers the claim only. Claiming a slot and publishing it are two steps, and the consumer reads in order.
+Platform matters: on a load-linked/store-conditional machine (AArch64 without the ARMv8.1 LSE atomics, for example) `fetch_add` compiles to a retry loop, and "wait-free" stops being true of the same source line. And wait-free bounds steps, not time: a step can wait for a cache line another core owns. It covers the claim only. Claiming a slot and publishing it are two steps, and the consumer reads in order.
 
-If the camera that claimed slot 42 sleeps before it publishes, slots 43 and 44 can be full and the tracker still waits at 42 (Figure 10.4, in Measure, draws it). The operation with the guarantee is the claim; the log's read blocks at a stalled producer. Ask of each operation, not of each structure.
+If the camera that claimed slot 42 sleeps before it publishes, slots 43 and 44 can be full and the tracker still waits at 42 (Figure 10.4, in Measure, draws it). The operation with the guarantee is the claim; the log's read blocks at a stalled producer. The guarantee is a property of the operation, not the structure.
 
-A monotonic 64-bit sequence sidesteps two classic traps. A number is never reused, so a CAS can't succeed against a value that went away and came back (ABA), and nothing is freed. A structure that recycles nodes needs hazard pointers or epochs in C++; C++26 specifies `<hazard_pointer>` and `<rcu>`, but GCC 16.2 and Clang 22.1 don't ship them. In Java the collector frees a node only when no thread can reach it, which is that work done for you. In Python, reference counting frees objects and the interpreter keeps the counts consistent.
+A monotonic 64-bit sequence sidesteps two classic traps. A number is never reused, so a CAS can't succeed against a value that went away and came back (ABA), and nothing is freed. A structure that recycles nodes needs hazard pointers or epochs in C++; C++26 specifies `<hazard_pointer>` and `<rcu>`, but libstdc++ (GCC 16.2, also used by Clang 22.1 here) doesn't ship them. In Java the collector frees a node only when no thread can reach it, which is that work done for you. In Python, reference counting frees objects and the interpreter keeps the counts consistent.
 
 ### Memory order: two stations, one gap
 
@@ -47,15 +47,15 @@ Each induction station stores its own flag, then loads the other's. If both read
 
 {% include excalidraw.html file="10-store-buffer" alt="Two induction stations, each with its own store buffer, one gap. Station A stores flagA and loads flagB; station B stores flagB and loads flagA. Each store (amber arrow) goes into the station's store buffer, where flag = 1 is pending, and drains later (dashed) to shared memory, which still holds flagA = 0 and flagB = 0. Each load reads shared memory and sees 0. Under release/acquire both stations read 0 in 2,306,475-9,888,040 of 10,000,000 trials in C++ and in 85.0-98.6 million jcstress samples in Java. Under seq_cst, and Java volatile, both-zero occurs 0 times in 10,000,000 C++ trials and in 0 Java samples." caption="Figure 10.2: Release/acquire lets both stations read the other's flag as 0 while their own store sits in the buffer; seq_cst and volatile forbid it, and the measured count is 0." %}
 
-A store doesn't reach shared memory at once. It waits in its core's store buffer while the same core's next load runs ahead, so each station can read the other's flag before the other's store drains. Release/acquire doesn't forbid that: it orders in one direction, and a store followed by a load is the case it leaves open. On x86-64 both compile to a plain `mov`. `seq_cst` forbids the both-zero outcome, and a `seq_cst` store compiles to `xchg`, which drains the buffer first.
+A store doesn't reach shared memory at once. It waits in its core's store buffer while the same core's next load runs ahead, so each station can read the other's flag before the other's store drains. Release/acquire doesn't forbid that: it orders in one direction, and a store followed by a load is the case it leaves open. On x86-64 both compile to a plain `mov`. `seq_cst` puts all four operations in one total order that respects each station's program order; whichever load comes last follows both stores and reads 1. A `seq_cst` store compiles to `xchg`, which drains the buffer first.
 
-Java names the same orders. `VarHandle.setRelease` and `getAcquire` map to release and acquire; a `volatile` field and `setVolatile` are sequentially consistent. jcstress, the JDK's concurrency stress harness, runs the pair as a test.
+Java names the same orders. `VarHandle.setRelease` and `getAcquire` map to release and acquire; a `volatile` field and `setVolatile` are sequentially consistent, and `getOpaque`/`setOpaque` are close to relaxed. jcstress, OpenJDK's concurrency stress harness, runs the pair as a test.
 
 Python has no memory-order or seqlock lane: CPython 3.14 has no public atomics API, so there's no ordering to choose.
 
 ### The read side: a seqlock
 
-The diverter reads a parcel's state, eight 64-bit words and a checksum, while the tracker rewrites it. A shared mutex makes the write wait for the readers.
+The diverter reads a parcel's state, eight 64-bit words, the last a checksum of the other seven, while the tracker rewrites it. A shared mutex makes the write wait for the readers.
 
 {% include excalidraw.html file="10-seqlock" alt="Two lanes. In the seqlock lane (amber) the writer bumps the sequence to odd, writes the fields, a snapshot with a checksum, and bumps the sequence to even; the writer p99 is 25-32 ns in C++ and 206-234 ns in Java with StampedLock, with 0 torn snapshots. Readers read the sequence s1, copy the data, read the sequence s2, and retry (dashed) if s1 is odd or s1 differs from s2. In the shared-mutex lane the writer takes an exclusive lock, which waits for three readers holding the shared lock, writes the fields and unlocks; the writer p99 is 5,979-6,603 ns in C++ and 8,083-8,287 ns in Java with a ReentrantReadWriteLock." caption="Figure 10.3: Readers retry instead of blocking the writer. The writer p99 is 205.5-231.0x lower with a seqlock in C++ and 34.5-37.1x lower with StampedLock in Java, and no reader sees a torn snapshot." %}
 
@@ -171,9 +171,9 @@ class CountClaim:
     }
 ```
 
-The claim uses relaxed order: it hands out a unique number and publishes nothing. Visibility is the log's job (`claim_log.hpp`): a producer writes the payload into slot `seq & mask`, then release-stores `seq + 1` into the slot's stamp, and the consumer's acquire load of the stamp makes the payload visible. The consumer spins at the first slot whose stamp isn't yet `seq + 1`; Figure 10.4's wait is measured there.
+The claim uses relaxed order: it hands out a unique number and publishes nothing. Visibility is the log's job (`claim_log.hpp`): a producer waits for room if the ring is full, writes the payload into slot `seq & mask`, then release-stores `seq + 1` into the slot's stamp, and the consumer's acquire load of the stamp makes the payload visible. The consumer spins at the first slot not yet published; Figure 10.4's wait is measured there.
 
-Python's two classes differ in what the documentation promises. `threading.Lock` gives exactly-once. `next()` on a shared `itertools.count` isn't documented as thread-safe, and the free-threading howto warns of duplicate or missing elements, so the lane reports what it saw and asserts nothing.
+The two Python classes differ in what the documentation promises. `threading.Lock` gives exactly-once. `next()` on a shared `itertools.count` isn't documented as thread-safe, and the free-threading howto warns of duplicate or missing elements, so the lane reports what it saw and asserts nothing.
 
 ### The induction-gap test
 
@@ -270,7 +270,7 @@ examples/10-lockfree-waitfree/verify.sh
 
 `ALLOW_BUSY=1` measures on a loaded host; `RECHECK=results/<run-id>` re-evaluates committed reports. A latency ratio is the median of three alternations inside one run.
 
-Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, GCC 16.2, Python 3.14.8. Threads sit on distinct physical cores, CPU 0 left out because it takes most interrupts, placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, GCC 16.2, Python 3.14.8. Threads sit on distinct physical cores, CPU 0 left out because it takes most interrupts, placed with `sched_setaffinity`: an experiment control, not isolation (jcstress picks its own CPUs), which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
 
 ### Claims
 
@@ -284,7 +284,7 @@ Voluntary context switches count the futex sleeps. The least-switching `mutex` p
 | `cas-loop` | 478-502 ns | 1,409-1,837 ns |
 | `fetch-add` | 400-468 ns | 516-584 ns |
 
-The asserted ratio is `mutex` over `fetch-add` at p99: 6.10-6.45x in C++ (bound 2.5x, set after calibration) and 14.13-15.23x in Java (bound 3x). At p99.9 the ratios are 5.64-5.92x and 6.24-6.40x, observed only: that tail is a handful of samples on the host's interrupt floor, a few microseconds. `cas-loop` against `fetch-add` is observed too, and lock-free isn't faster than wait-free in the table.
+The asserted ratio is `mutex` over `fetch-add` at p99: 6.10-6.45x in C++ (bound 2.5x) and 14.13-15.23x in Java (bound 3x). At p99.9 the ratios are 5.64-5.92x and 6.24-6.40x, observed only, not asserted. `cas-loop` against `fetch-add` is observed too, and lock-free isn't faster than wait-free in the table.
 
 ### The stalled producer
 
@@ -307,25 +307,27 @@ One writer updates at 1 MHz for 2 s against three spinning readers. Torn snapsho
 | shared lock (`shared_mutex`, `ReentrantReadWriteLock`) | 5,979-6,603 ns | 8,083-8,287 ns |
 | seqlock (`Seqlock`, `StampedLock`) | 25-32 ns | 206-234 ns |
 
-The asserted ratio is 205.5-231.0x in C++ and 34.5-37.1x in Java (bound 3x). The p99.9 ratio is 4.44-5.17x and 2.60-3.01x, observed, on the interrupt floor again.
+The asserted ratio is 205.5-231.0x in C++ and 34.5-37.1x in Java (bound 3x). The p99.9 ratio is 4.44-5.17x and 2.60-3.01x (observed only).
 
 ### Python, both builds
 
-Four threads claim 400,000 slots. `threading.Lock` lost or duplicated 0 claims in the GIL build and in the free-threaded build (3.14.8+freethreaded, GIL off from start to end); `itertools.count` lost 0 in both (observed). Without the lock, `value = n; n += 1` loses 0 claims under the GIL and 97,002-116,017 of 400,000 free-threaded (exact, asserted at least 1). The GIL build isn't safe, it's lucky: the interpreter switches threads every 5 ms (`sys.getswitchinterval()`) and rarely inside that read-modify-write. The lock's p99 is 664-686 ns under the GIL and 13.0-13.4 microseconds free-threaded (observed).
+Four threads claim 400,000 slots. `threading.Lock` lost or duplicated 0 claims in the GIL build and in the free-threaded build (3.14.8+freethreaded, GIL off from start to end); `itertools.count` lost 0 in both (observed). Without the lock, `value = n; n += 1` loses 0 claims under the GIL and 97,002-116,017 of 400,000 free-threaded (exact, asserted at least 1). The GIL doesn't make the read-modify-write atomic; it makes a switch inside it rare, because the interpreter switches threads every 5 ms (`sys.getswitchinterval()`). The lock's p99 is 664-686 ns under the GIL and 13.0-13.4 microseconds free-threaded (observed).
 
 The measured process can't import the measurement kit: its `pyhdrh` extension doesn't declare free-threading support, so importing it turns the GIL back on, and the run would measure a free-threaded build with a GIL. `sync-py measure` writes raw samples and refuses to finish with the GIL on; a separate step converts them. Appendix E, *Free-threaded Python vs the GIL*, treats the build in full.
 
+### The line
+
+The line run uses four simulator instances as four cameras, 2.5 kHz and 20 s each. One receive thread per camera publishes into a multi-producer hand-off (`mutex` or `fetch-add` in C++, `ArrayBlockingQueue` or Agrona's `ManyToOneConcurrentArrayQueue` in Java), and the tracker sends divert commands on their own socket, never through the data queue. The simulators start only when the consumer's start gate opens, so no parcel waits in a socket buffer.
+
+On the line all four variants counted 200,000 parcels, dropped none, and received every command. End-to-end p99 sits near 0.1 ms (observed): 100,479-107,967 ns for the C++ `mutex` and 93,951-116,159 ns for `fetch-add`, 127,423-162,175 ns for the Java blocking queue and 109,503-113,471 ns for Agrona. At 2.5 kHz per camera an uncontended lock costs nanoseconds against a 480 ms budget; only the saturated claim benchmark separates them.
+
 ## Cross-check
 
-jcstress and the C++ harness test the same claim independently, on different memory models and tooling, and agree on both outcomes in all three runs.
+jcstress and the C++ harness test the same litmus outcome independently, on different memory models and tooling, and agree on both outcomes in all three runs.
 
-The context-switch counters explain the claim tails: the `mutex` producers sleep thousands of times, the `fetch-add` producers at most three, and the `mutex` p99 sits 6x to 15x above `fetch-add`'s.
+Context-switch counters explain the claim tails: the `mutex` producers sleep thousands of times, the `fetch-add` producers at most three, and the `mutex` p99 sits 6x to 15x above `fetch-add`'s.
 
-A cross-check also catches a benchmark that measures something else. JMH's `volatile` store looked like 1.2 ns in calibration (not a committed run), because C2 unrolled the loop and kept one fence for four stores: `mem_inst_retired.lock_loads:u` read 0.25 per store. With `-XX:LoopUnrollLimit=1` it read 1.00 and the cost matched C++'s `xchg`.
-
-The line run uses four simulator instances as four cameras, 2.5 kHz and 20 s each. One receive thread per camera publishes into a multi-producer hand-off (`mutex` or `fetch-add` in C++, `ArrayBlockingQueue` or Agrona's `ManyToOneConcurrentArrayQueue` in Java), and the tracker sends divert commands on their own socket, never through the data queue. The simulators start on the gate's `released` line, not on a bound port, or parcels would queue in the socket through the 500 ms hold and the stall would land in the percentiles.
-
-On the line all four variants counted 200,000 parcels, dropped none, and received every command. End-to-end p99 sits near 0.1 ms (observed): 100,479-107,967 ns for the C++ `mutex` and 93,951-116,159 ns for `fetch-add`, 127,423-162,175 ns for the Java blocking queue and 109,503-113,471 ns for Agrona. At 2.5 kHz per camera an uncontended lock costs nanoseconds against a 480 ms budget; the saturated claim benchmark shows where a difference would appear.
+With C2's default loop unrolling, adjacent volatile stores in the JMH loop share one fence and the benchmark under-reports the cost, so `StoreBenchmark` runs with `-XX:LoopUnrollLimit=1`; the 4 ns above is one fence per store.
 
 ## What you learned
 
