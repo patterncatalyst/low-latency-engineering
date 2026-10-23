@@ -11,13 +11,13 @@ they process the same number of parcels per second. The batch variant holds
 parcels until 32 have arrived and then handles them together, the
 "throughput-friendly" design. Each parcel's latency is `done - intended_emit`,
 so a parcel that arrives first waits for 31 more (31 ms at 1 kHz) before it is
-handled. Throughput is equal; p50 is 15.1 to 15.5 ms instead of 0.095 to 0.19 ms (r01-run1..3).
+handled. Throughput is equal; p50 is 15.2 to 15.4 ms instead of 0.106 to 0.182 ms (r02-run1..3).
 
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
 a scanner no-read) takes a slow re-lookup path of about 2 ms. The median does
-not move. p99 jumps by an order of magnitude, because the slow parcel and the
-parcels queued behind it all land in the tail: in r01-run1..3, 3.0 to 5.1 % of
-parcels took 1 ms or more, and p99 was 2,910,207 to 6,049,791 ns. A single summary number
+not move. p99 jumps by 7 to 27 times, because the slow parcel and the
+parcels queued behind it all land in the tail: in r02-run1..3, 2.9 to 4.6 % of
+parcels took 1 ms or more, and p99 was 2,664,447 to 5,611,519 ns. A single summary number
 describes neither group.
 
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
@@ -108,21 +108,21 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
    `notes` as `throughput_mhz` (milli-Hz, integer; `n/a` when fewer than two
    parcels completed, which fails the criterion). The batch variant's first
    completion is 31 ms into the run, so its C++ and Python figures are about
-   0.3 % higher; Java's differ by under 0.04 % in r01-run1..3.
+   0.3 % higher; Java's differ by under 0.13 % in r02-run1..3.
 2. `batch-32` p50 is at least 10x the `per-parcel` p50.
 3. `bimodal-1pct` p99 is at least 20x its own p50.
 4. `bimodal-1pct` p50 is under a quarter of the same run's measured slow-path
    duration (`slow_path_us` in `notes`): the median stays in the fast mode. An
    earlier version compared it with the `per-parcel` run's p50 and failed in one
    quiet-host run (commit `1811055`), because on an untuned host the median itself moves between
-   runs (Python per-parcel p50 116, 186 and 108 us across r01-run1..3). Comparing within one run removes that dependence.
+   runs (C++ per-parcel p50 122, 156 and 157 us across r02-run1..3). Comparing within one run removes that dependence.
 
 All reports must also have `count = 10000`, `dropped = 0`, and pass
 `lowlat-report check`.
 
 Criterion 3 depends on the 1 % boundary: exactly 100 of 10,000 parcels are slow,
 so p99 sits where the slow parcels and the parcels queued behind them meet
-(2.9 to 6.0 ms in r01-run1..3). The ratio therefore also depends on how small the
+(2.7 to 5.6 ms in r02-run1..3). The ratio therefore also depends on how small the
 median is.
 On a loaded host the median grows and the margin shrinks.
 
@@ -135,19 +135,19 @@ differ by less than 1 %; batch-32 p50 is at least 10x the per-parcel p50; bimoda
 p99 is at least 20x its own p50; and the bimodal p50 stays under a quarter of that
 run's measured slow-path duration.
 
-All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor
+All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor
 `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44); each run's `verify.log`
 ends with every criterion passing. Across the
 three runs, in nanoseconds:
 
 | Variant | p50 | p99 |
 |---|---|---|
-| per-parcel (all languages) | 95,103 to 185,599 | 177,535 to 485,887 |
-| batch-32 (all languages) | 15,097,855 to 15,499,263 | 31,080,447 to 31,260,671 |
-| bimodal-1pct (all languages) | 88,511 to 185,727 | 2,910,207 to 6,049,791 |
+| per-parcel (all languages) | 106,111 to 181,759 | 185,343 to 357,119 |
+| batch-32 (all languages) | 15,179,775 to 15,441,919 | 31,080,447 to 31,227,903 |
+| bimodal-1pct (all languages) | 95,487 to 191,231 | 2,664,447 to 5,611,519 |
 
-The per-parcel median itself moves between runs on this untuned host (Python 116,159,
-185,599 and 107,839 ns across runs 1 to 3), which is why no criterion compares
+The per-parcel median itself moves between runs on this untuned host (C++ 122,047,
+155,903 and 156,927 ns across runs 1 to 3), which is why no criterion compares
 medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU

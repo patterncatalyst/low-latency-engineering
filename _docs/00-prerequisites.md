@@ -34,7 +34,7 @@ Three toolchains build the examples on Fedora 44.
 
 - **C++20/23** with CMake. The examples tree is one CMake superproject driven by presets. The host reports GCC 16.2.1, Clang 22.1.8 and CMake 4.3.0; CMake 4.3 is the minimum.
 - **Python 3.14** managed by `uv`, which builds the environment from `examples/pyproject.toml`.
-- **Java 25** with Maven on the plain JVM. The host reports OpenJDK 25.0.3.
+- **Java 25** with Maven on the plain JVM. The host reports OpenJDK 25.0.5.
 
 Containers use Docker Engine with the Compose plugin, on the host and in the guest, for control-plane work and throwaway builds, not a hot path.
 
@@ -321,15 +321,15 @@ The first form is the host smoke test. The script refuses to run while a `lowlat
 
 ### Host results
 
-Three runs (`r01-run1` to `r01-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, and the Java console shows 625 parcels on each of the 8 lanes. Ranges are across the three runs.
+Three runs (`r02-run1` to `r02-run3`) on the bare-metal host above. All nine reports show `count` 5,000 and `dropped` 0, and the Java console shows 625 parcels on each of the 8 lanes. Ranges are across the three runs.
 
 | Consumer | p50 (us) | p99 (us) | p99.9 (us) |
 |---|---|---|---|
-| C++ | 150.0 to 155.5 | 180.6 to 182.8 | 202.6 to 233.1 |
-| Python | 105.2 to 186.1 | 202.4 to 217.7 | 236.8 to 293.6 |
-| Java | 102.0 to 186.4 | 212.7 to 325.4 | 9,822.2 to 23,298.0 |
+| C++ | 93.5 to 153.7 | 177.5 to 281.1 | 212.6 to 293.6 |
+| Python | 98.0 to 182.4 | 175.2 to 238.0 | 190.7 to 358.9 |
+| Java | 110.3 to 188.5 | 313.6 to 339.5 | 21,168.1 to 24,264.7 |
 
-The one to read is the Java p99.9, 9.8 to 23.3 ms against p99 0.21 to 0.33 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
+The one to read is the Java p99.9, 21.2 to 24.3 ms against p99 0.31 to 0.34 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
 
 ### Guest result
 
@@ -358,4 +358,4 @@ Next, Chapter 1 uses this workload to show that latency is a distribution.
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r01-run1` to `r01-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that `check-prereqs.sh` exits 0, that each of the C++, Python and Java consumers exits 0 after receiving 5,000 datagrams at 1 kHz for 5 s with `dropped` 0, and that each report passes `lowlat-report check` and carries the machine profile. It held on the host runs `r02-run1` to `r02-run3`. The `VM=1` guest smoke test ran once against the PREEMPT_RT guest (`r01-vm-smoke`).*

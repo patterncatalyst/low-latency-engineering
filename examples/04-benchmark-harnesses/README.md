@@ -82,9 +82,9 @@ executions, which is why pyperf runs warm-up values first, discards them from th
 records them. For this function the effect is small: pyperf's own output reports
 `2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each value covers 64
 calls of the 1,024-prefix function and the interpreter is warm before the first value
-finishes. The first warm-up of the calibration run (a cold interpreter) was 1,918 to 2,006 ns
-per check digit and the median measured value 2,014 to 2,036 ns across r01-run1..3: 1.1 to
-5.2 percent lower, and below the minimum measured value in runs 1 and 3 (2,002 and 1,967 ns) but not in run 2 (minimum 1,972 ns, first warm-up 2,006 ns). `verify.sh` prints both. A function with a
+finishes. The first warm-up of the calibration run (a cold interpreter) was 1,912 to 1,991 ns
+per check digit and the median measured value 1,977 to 1,989 ns across r02-run1..3: 3.0 and 3.3
+percent lower in runs 2 and 3, 0.4 percent higher in run 1, and below the minimum measured value in runs 2 and 3 (minimum 1,973 and 1,952 ns, first warm-up 1,929 and 1,912 ns) but not in run 1 (minimum 1,966 ns, first warm-up 1,991 ns). `verify.sh` prints both. A function with a
 long first call would show more.
 
 ## Host state and the pyperf warning
@@ -118,15 +118,15 @@ guarded p50 and the JMH console and JSON include p0.99 and p0.999; the pyperf JS
 least 20 values from at least 3 worker processes; the six converted reports pass
 `lowlat-report check` with the profile embedded.
 
-All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor `powersave`,
+All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `powersave`,
 tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning).
 Ranges over the three runs:
 
 | Harness | Result |
 |---|---|
-| Google Benchmark (C++) | guarded median 4.76 to 4.81 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 475 to 481x (divisor floored at 0.01 ns, so a lower bound) |
-| JMH SampleTime (Java) | guarded p50 32 to 33 ns; eliminated p50 0 ns; ratio 3,200 to 3,300x (floored) |
-| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,994 to 2,023 ns |
+| Google Benchmark (C++) | guarded median 4.73 to 4.76 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 473 to 476x (divisor floored at 0.01 ns, so a lower bound) |
+| JMH SampleTime (Java) | guarded p50 32 ns; eliminated p50 0 ns; ratio 3,200x (floored) |
+| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,977 to 1,988 ns |
 
 ## Licences
 

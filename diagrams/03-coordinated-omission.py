@@ -47,7 +47,7 @@ nodes = [
         "w": 220,
         "h": 56,
         "style": "ink",
-        "lines": ["p99 5.5-8.8 us", "C++: stall hidden"],
+        "lines": ["p99 5.1-5.4 us", "C++: stall hidden"],
     },
     {
         "x": 630,
@@ -55,7 +55,7 @@ nodes = [
         "w": 220,
         "h": 56,
         "style": "ink",
-        "lines": ["p99 100.4-100.7 ms", "C++; Java 100.9-101.6 ms"],
+        "lines": ["p99 100.3-100.5 ms", "C++; Java 100.8-101.5 ms"],
     },
     {
         "x": 40,
@@ -87,7 +87,7 @@ nodes = [
         "w": 220,
         "h": 56,
         "style": "ink",
-        "lines": ["p99 1.0 us", "C++; Java 6.8 us"],
+        "lines": ["p99 1.0 us", "C++; Java 6.9-7.0 us"],
     },
     {
         "x": 630,
@@ -95,7 +95,7 @@ nodes = [
         "w": 220,
         "h": 56,
         "style": "ink",
-        "lines": ["p99 98.2 ms", "C++; Java 99.2-99.3 ms"],
+        "lines": ["p99 98.2 ms", "C++; Java 99.1-99.3 ms"],
     },
 ]
 

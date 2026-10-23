@@ -27,10 +27,10 @@ examples/04-benchmark-harnesses/verify.sh
 - Python: the pyperf JSON holds at least 20 values from at least 3 worker processes.
 - The check digit agrees across the C++, Java and Python tests, and the six converted reports pass `lowlat-report check`.
 
-All of it held on the quiet-host runs `r01-run1..3`.
+All of it held on the quiet-host runs `r02-run1..3`.
 
 ## Chapter and source
 
 - Chapter: [Chapter 4, Benchmark harnesses: Google Benchmark, pyperf and JMH]({{ '/docs/04-benchmark-harnesses/' | relative_url }})
-- Source: [`examples/04-benchmark-harnesses/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/04-benchmark-harnesses), with its `README.md`, the three language directories and the committed `results/r01-run1..3/`.
+- Source: [`examples/04-benchmark-harnesses/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/04-benchmark-harnesses), with its `README.md`, the three language directories and the committed `results/r02-run1..3/`.
 

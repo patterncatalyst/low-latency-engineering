@@ -207,6 +207,12 @@ usage analytics unless `-Dchronicle.analytics.disable=true` is set; the scripts 
 6. Every run: `count` = 200,000, `dropped` = 0, no hand-off overflow, every divert command received,
    every report passes `lowlat-report check`, the steady window holds 180,000 parcels.
 
+Observed on the bare-metal host (governor `powersave`, tuned `balanced`, untuned): criterion 2 passed in
+all three `r02-run1..3` runs, run 1 at a margin of 1.01. The Disruptor's steady-window hand-off p99 was
+2,117 ns in run 1 and 641 ns and 670 ns in runs 2 and 3; the `blocking-queue` p99 was 10,655, 10,871
+and 10,495 ns, about 10.5 to 10.9 us throughout. In run 1 the bound was 2,131 ns, one fifth of
+10,655 ns, against the Disruptor's 2,117 ns. The bound stays at one fifth (user decision, 2026-10-22).
+
 ### What the memory-mapped append removes
 
 It removes the system call, not the first-touch page fault. The appender copies a record into a

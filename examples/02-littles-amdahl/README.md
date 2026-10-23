@@ -80,18 +80,18 @@ meet again. That is the strictly serial structure the formula describes, and it 
 a wave-picked sortation plan whose next wave depends on the committed table.
 
 `--sync free` (C++ and Java) removes the barriers. verify.sh runs it as an observation, not a
-criterion: the same work then lands at 3.5 to 3.6x at N = 4 (r01-run1..3) against a predicted 3.1x, because
+criterion: the same work then lands at 3.5 to 3.6x at N = 4 (r02-run1..3) against a predicted 3.1x, because
 the lock sections overlap the other workers' scanning. The bound for a free-running
 lock is not Amdahl's curve but `min(N, 1 / s)`. The lesson for the code: fine-grained locking
 buys back part of what Amdahl charges, and it still cannot pass 1 / s.
 
-Under phased synchronisation the measured speedup sits under the prediction at N = 4: 8.7 to
-8.9 % in C++ and 11.0 to 11.1 % in Java (r01-run1..3): contended lock hand-off, cache-line movement of the shared table and the barriers
+Under phased synchronisation the measured speedup sits under the prediction at N = 4: 8.5 to
+9.1 % in C++ and 10.7 to 11.0 % in Java (r02-run1..3): contended lock hand-off, cache-line movement of the shared table and the barriers
 are costs the formula does not have. Amdahl is an upper bound that is already generous.
 
 ### What the Python pair shows
 
-Threads stay under 1x (0.48 to 0.52x at N = 4 in r01-run1..3; the CPU-bound loop holds the GIL,
+Threads stay under 1x (0.52 to 0.69x at N = 4 in r02-run1..3; the CPU-bound loop holds the GIL,
 `build.gil_enabled` is `true` in the report) because every barrier and lock hand-off also pays
 GIL hand-off. Processes track the prediction. The prediction for threads covers only the lock; the
 GIL is not in the model, which is the point of the comparison. Free-threaded Python is Appendix E.
@@ -132,19 +132,19 @@ Behavioural. `verify.sh` runs both experiments and exits 0 only when every crite
 - The unit tests (C++ model test, Java JUnit, Python pytest) pass, and the reports pass
   `lowlat-report check`.
 
-All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor `powersave`, tuned
+All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned
 `balanced`, kernel 7.2.11-200.fc44, no pinning or isolation; load average at the start 0.17 to
-0.60 on 16 CPUs). The values below are ranges over the three runs.
+0.35 on 16 CPUs). The values below are ranges over the three runs.
 
-| Criterion | Result (r01-run1..3) |
+| Criterion | Result (r02-run1..3) |
 |---|---|
-| A, C++: L within 5 % of lambda x W-bar | PASS: error +0.31 to +1.58 % (L 1.040 to 1.070 against 1.024 to 1.067) |
-| A, Java: L within 5 % of lambda x W-bar | PASS: error +2.41 to +3.57 % (L 1.182 to 1.240 against 1.154 to 1.197) |
-| B, C++ N = 4 within 15 % | PASS: s = 0.0950 to 0.0951, predicted 3.11x, measured 2.83 to 2.84x (-8.7 to -8.9 %) |
-| B, Java N = 4 within 15 % | PASS: s = 0.0987 to 0.0990, predicted 3.08 to 3.09x, measured 2.74x (-11.0 to -11.1 %) |
-| B, Python threads < 1.3x | PASS: 0.48 to 0.52x (GIL enabled) |
-| B, Python processes > 2x | PASS: 2.93 to 3.01x |
-| Effective GHz (user cycles / task-clock) | C++ 4.33 to 4.35, Java 4.35 to 4.36, Python 3.74 to 3.93 (`perf stat`, no root) |
+| A, C++: L within 5 % of lambda x W-bar | PASS: error +0.22 to +0.58 % (L 1.021 to 1.045 against 1.015 to 1.043) |
+| A, Java: L within 5 % of lambda x W-bar | PASS: error +0.75 to +1.99 % (L 1.096 to 1.109 against 1.078 to 1.092) |
+| B, C++ N = 4 within 15 % | PASS: s = 0.0951 to 0.0952, predicted 3.11x, measured 2.83 to 2.85x (-8.5 to -9.1 %) |
+| B, Java N = 4 within 15 % | PASS: s = 0.0987, predicted 3.09x, measured 2.75 to 2.76x (-10.7 to -11.0 %) |
+| B, Python threads < 1.3x | PASS: 0.52 to 0.69x (GIL enabled) |
+| B, Python processes > 2x | PASS: 2.92 to 2.94x |
+| Effective GHz (user cycles / task-clock) | C++ 4.33 to 4.34, Java 4.35 to 4.36, Python 3.82 to 3.90 (`perf stat`, no root) |
 
 The W-bar in the Little's Law rows is the labelled modelling input in the report's `model` block.
 Reported latencies are percentiles.

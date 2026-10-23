@@ -32,7 +32,7 @@ nodes.append(
         "w": 120,
         "h": 56,
         "style": "ink",
-        "lines": ["p50 95-186 us", "C++, Python, Java"],
+        "lines": ["p50 106-182 us", "C++, Python, Java"],
     }
 )
 edges.append({"x1": 664, "y1": 133, "x2": 735, "y2": 133})
@@ -71,7 +71,7 @@ nodes.append(
         "w": 120,
         "h": 46,
         "style": "ink",
-        "lines": ["p50 15.1-15.5 ms", "C++, Python, Java"],
+        "lines": ["p50 15.2-15.4 ms", "C++, Python, Java"],
     }
 )
 edges.append({"x1": 624, "y1": 323, "x2": 735, "y2": 323})

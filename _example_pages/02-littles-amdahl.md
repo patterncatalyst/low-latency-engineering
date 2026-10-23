@@ -27,10 +27,10 @@ examples/02-littles-amdahl/verify.sh
 - Python threads: N = 4 speedup under 1.3x. Python processes: over 2x.
 - The C++, Java and Python unit tests pass, and every report passes `lowlat-report check`.
 
-All of it held on the quiet-host runs `r01-run1..3`.
+All of it held on the quiet-host runs `r02-run1..3`.
 
 ## Chapter and source
 
 - Chapter: [Chapter 2, Modelling with Little's Law and Amdahl's Law]({{ '/docs/02-littles-amdahl/' | relative_url }})
-- Source: [`examples/02-littles-amdahl/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/02-littles-amdahl), with its `README.md`, the three language directories and the committed `results/r01-run1..3/`.
+- Source: [`examples/02-littles-amdahl/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/02-littles-amdahl), with its `README.md`, the three language directories and the committed `results/r02-run1..3/`.
 

@@ -55,7 +55,7 @@ Each language is also a plain program (`run` and `probe` subcommands):
 
 ### Why `intended-time` has a floor the others cannot see
 
-With no stall, `intended-time` p99 is still 0.18 to 0.35 ms while `receipt-time` is a few
+With no stall, `intended-time` p99 is still 0.19 to 0.28 ms while `receipt-time` is a few
 microseconds. `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,
@@ -112,16 +112,16 @@ no-stall control run and the clock probe, then asserts per language:
   within 2x of `closed-loop-naive-control` p99;
 - every report passes `lowlat-report check` (schema, histogram decode, percentile recompute).
 
-All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor
+All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor
 `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2.11-200.fc44). Ranges over
 the three runs, in all three languages:
 
 | Quantity | Range (p99 unless noted) |
 |---|---|
-| `intended-time`, stall | 100,401,151 to 101,580,799 ns |
-| `closed-loop-corrected`, stall | 98,172,927 to 99,287,039 ns |
-| `receipt-time`, stall | 5,495 to 54,143 ns |
-| `closed-loop-naive`, stall | 972 to 19,711 ns |
-| `intended-time-control` | 177,023 to 347,391 ns |
-| `closed-loop-corrected-control` = `closed-loop-naive-control` | 940 to 19,855 ns (identical per language) |
-| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 44 to 46 ns |
+| `intended-time`, stall | 100,335,615 to 102,301,695 ns |
+| `closed-loop-corrected`, stall | 98,107,391 to 99,287,039 ns |
+| `receipt-time`, stall | 5,067 to 52,479 ns |
+| `closed-loop-naive`, stall | 956 to 19,759 ns |
+| `intended-time-control` | 185,855 to 284,159 ns |
+| `closed-loop-corrected-control` = `closed-loop-naive-control` | 953 to 19,503 ns (identical per language) |
+| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 42 to 47 ns |
