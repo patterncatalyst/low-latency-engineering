@@ -163,7 +163,7 @@ TYPED_TEST(TrackerTest, RescanMovesTheDueTick) {
   const el::Keys keys = el::make_keys(1, 1);
   el::Scan scan = el::scan_of(keys, 0);
   scan.tick = 100;
-  tracker.track(scan);
+  (void)tracker.track(scan);
   EXPECT_EQ(tracker.sweep_due(100 + el::kDivertTicks - 1), 0U);
   EXPECT_EQ(tracker.sweep_due(100 + el::kDivertTicks), 1U);
   scan.tick = 5'000;  // scanned again further down the belt: due later
@@ -175,7 +175,7 @@ TYPED_TEST(TrackerTest, RescanMovesTheDueTick) {
 TYPED_TEST(TrackerTest, EraseAndSlotReuse) {
   TypeParam tracker{8};
   const el::Keys keys = el::make_keys(6, 2);
-  for (std::size_t i = 0; i < 4; ++i) tracker.track(el::scan_of(keys, i));
+  for (std::size_t i = 0; i < 4; ++i) (void)tracker.track(el::scan_of(keys, i));
   EXPECT_TRUE(tracker.erase(keys.text[1]));
   EXPECT_FALSE(tracker.erase(keys.text[1]));  // already gone
   EXPECT_EQ(tracker.find_state(keys.text[1]), el::State::empty);
@@ -189,19 +189,19 @@ TYPED_TEST(TrackerTest, EraseAndSlotReuse) {
 TYPED_TEST(TrackerTest, SweepCountsOnlyWhatIsDue) {
   TypeParam tracker{64};
   const el::Keys keys = el::make_keys(50, 3);
-  for (std::size_t i = 0; i < 50; ++i) tracker.track(el::scan_of(keys, i));  // scan tick i, due at i + 1200
+  for (std::size_t i = 0; i < 50; ++i) (void)tracker.track(el::scan_of(keys, i));  // scan tick i, due at i + 1200
   EXPECT_EQ(tracker.sweep_due(el::kDivertTicks - 1), 0U);
   EXPECT_EQ(tracker.sweep_due(el::kDivertTicks), 1U);
   EXPECT_EQ(tracker.sweep_due(el::kDivertTicks + 24), 25U);
   EXPECT_EQ(tracker.sweep_due(1'000'000), 50U);
-  tracker.erase(keys.text[0]);
+  (void)tracker.erase(keys.text[0]);
   EXPECT_EQ(tracker.sweep_due(1'000'000), 49U);  // an erased slot is not due
 }
 
 TYPED_TEST(TrackerTest, ExpireErasesWhatIsDue) {
   TypeParam tracker{64};
   const el::Keys keys = el::make_keys(50, 4);
-  for (std::size_t i = 0; i < 50; ++i) tracker.track(el::scan_of(keys, i));
+  for (std::size_t i = 0; i < 50; ++i) (void)tracker.track(el::scan_of(keys, i));
   EXPECT_EQ(tracker.expire(el::kDivertTicks + 9), 10U);
   EXPECT_EQ(tracker.size(), 40U);
   for (std::size_t i = 0; i < 10; ++i) EXPECT_EQ(tracker.find_state(keys.text[i]), el::State::empty);
@@ -215,7 +215,7 @@ TYPED_TEST(TrackerTest, SlidingWindowKeepsTheLineInFlightCount) {
   constexpr std::size_t kWindow = 100;
   TypeParam tracker{kWindow + 8};
   const el::Keys keys = el::make_keys(kRing, 5);
-  for (std::size_t i = kRing - kWindow; i < kRing; ++i) tracker.track(el::scan_of(keys, i));
+  for (std::size_t i = kRing - kWindow; i < kRing; ++i) (void)tracker.track(el::scan_of(keys, i));
   for (std::size_t i = 0; i < 5 * kRing; ++i) {
     const std::size_t pos = i % kRing;
     ASSERT_EQ(tracker.track(el::scan_of(keys, pos)), el::Tracked::inserted);
@@ -252,22 +252,22 @@ TEST(Allocations, NodeMapAllocatesTwicePerInsertAndFlatMapNeverAfterReserve) {
   el::HotColdTracker flat{kN};
 
   const auto node_before = el::alloc::snapshot();
-  for (std::size_t i = 0; i < kN; ++i) node.track(el::scan_of(keys, i));
+  for (std::size_t i = 0; i < kN; ++i) (void)node.track(el::scan_of(keys, i));
   const auto node_used = el::alloc::since(node_before);
   // One node and one heap buffer for the 18-character key (past libstdc++'s 15-character small string).
   EXPECT_EQ(node_used.allocations, 2 * kN);
 
   const auto flat_before = el::alloc::snapshot();
-  for (std::size_t i = 0; i < kN; ++i) flat.track(el::scan_of(keys, i));
-  for (std::size_t i = 0; i < kN; i += 2) flat.erase(keys.text[i]);
-  for (std::size_t i = 0; i < kN; i += 2) flat.track(el::scan_of(keys, i));
+  for (std::size_t i = 0; i < kN; ++i) (void)flat.track(el::scan_of(keys, i));
+  for (std::size_t i = 0; i < kN; i += 2) (void)flat.erase(keys.text[i]);
+  for (std::size_t i = 0; i < kN; i += 2) (void)flat.track(el::scan_of(keys, i));
   EXPECT_EQ(el::alloc::since(flat_before).allocations, 0U);
 
   // Updates allocate in neither shape.
   const auto update_before = el::alloc::snapshot();
   for (std::size_t i = 0; i < kN; ++i) {
-    node.track(el::scan_of(keys, i));
-    flat.track(el::scan_of(keys, i));
+    (void)node.track(el::scan_of(keys, i));
+    (void)flat.track(el::scan_of(keys, i));
   }
   EXPECT_EQ(el::alloc::since(update_before).allocations, 0U);
 }

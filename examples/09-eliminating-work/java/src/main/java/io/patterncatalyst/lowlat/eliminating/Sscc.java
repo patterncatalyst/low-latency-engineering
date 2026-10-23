@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * SSCC-18 barcode to 64-bit key. The wire carries the barcode as 18 ASCII digits; the primitive map keys
- * on the packed {@code long}, so the packing happens once, at the edge, with {@link Long#parseLong}.
+ * on the packed {@code long}, so the packing happens once, at the edge.
  */
 public final class Sscc {
 
@@ -18,22 +18,23 @@ public final class Sscc {
 
     /**
      * The 18 digits as a {@code long} (below 10^18), or {@link #INVALID}. A leading zero is a digit:
-     * "000000000000000042" packs to 42. {@code Long.parseLong(CharSequence, int, int, int)} reads the
-     * characters in place, so packing allocates nothing.
+     * "000000000000000042" packs to 42. One pass over the characters, accumulating as it validates, so packing
+     * allocates nothing. {@code Character.isDigit} and {@code Long.parseLong} both accept non-ASCII Unicode
+     * digits (Arabic-Indic, for one), which would alias the ASCII barcode, so each character is range-checked.
      */
     public static long pack(CharSequence digits) {
         if (digits.length() != DIGITS) {
             return INVALID;
         }
-        // parseLong accepts a leading sign; an SSCC is digits only.
-        if (!Character.isDigit(digits.charAt(0))) {
-            return INVALID;
+        long value = 0;
+        for (int i = 0; i < DIGITS; i++) {
+            char c = digits.charAt(i);
+            if (c < '0' || c > '9') {
+                return INVALID;
+            }
+            value = value * 10 + (c - '0');
         }
-        try {
-            return Long.parseLong(digits, 0, DIGITS, 10);
-        } catch (NumberFormatException e) {
-            return INVALID;
-        }
+        return value;
     }
 
     /** The inverse: {@code value} as 18 zero-padded digits. */

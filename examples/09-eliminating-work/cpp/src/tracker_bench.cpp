@@ -87,12 +87,12 @@ Outcome run_insert(const Options& o) {
   const Keys keys = make_keys(kInsertKeyRing, kKeySeed);
   const std::size_t window = o.size;  // parcels in flight
   Tracker tracker{window + 64};
-  for (std::size_t i = kInsertKeyRing - window; i < kInsertKeyRing; ++i) tracker.track(scan_of(keys, i));
+  for (std::size_t i = kInsertKeyRing - window; i < kInsertKeyRing; ++i) (void)tracker.track(scan_of(keys, i));
 
   const auto op = [&](std::size_t i) {
     const std::size_t pos = i % kInsertKeyRing;
-    tracker.track(scan_of(keys, pos));
-    tracker.erase(keys.text[(pos + kInsertKeyRing - window) % kInsertKeyRing]);
+    (void)tracker.track(scan_of(keys, pos));
+    (void)tracker.erase(keys.text[(pos + kInsertKeyRing - window) % kInsertKeyRing]);
   };
   for (std::size_t i = 0; i < 20'000; ++i) op(i);  // warm up caches and branch predictors
 
@@ -154,7 +154,7 @@ std::optional<Outcome> run_lookup(const Options& o) {
     const Keys insertion = make_keys(o.size, kKeySeed);  // input to the build, not part of its footprint
     const alloc::Snapshot before_build = alloc::snapshot();
     tracker.emplace(o.size + o.size / 16);
-    for (std::size_t i = 0; i < o.size; ++i) tracker->track(scan_of(insertion, i));
+    for (std::size_t i = 0; i < o.size; ++i) (void)tracker->track(scan_of(insertion, i));
     build = alloc::since(before_build);
   }
   const Keys lookups = make_lookup_keys(o.size, kKeySeed, kOrderSeed);

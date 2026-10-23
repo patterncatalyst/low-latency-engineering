@@ -28,7 +28,10 @@ class SsccTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", "1234567", "12345678901234567", "1234567890123456789", "12345678901234567x",
-            "+23456789012345678", "-23456789012345678", " 23456789012345678"})
+            "+23456789012345678", "-23456789012345678", " 23456789012345678",
+            // 18 Arabic-Indic digits (U+0660..), and one among ASCII: Unicode digits are not ASCII barcodes
+            "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",
+            "12345678901234567\u0669", "\u066012345678901234567"})
     void rejectsAnythingButEighteenDigits(String bad) {
         assertEquals(Sscc.INVALID, Sscc.pack(bad));
     }

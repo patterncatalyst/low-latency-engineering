@@ -105,7 +105,7 @@ int run(const Own& own, line::ConsumerConfig cfg) {
   const el::alloc::Snapshot before_preload = el::alloc::snapshot();
   const el::Keys preloaded = el::make_keys(own.preload, kPreloadSeed);
   Tracker tracker{own.preload + own.preload / 16 + 1'024};
-  for (std::size_t i = 0; i < preloaded.size(); ++i) tracker.track(el::scan_of(preloaded, i));
+  for (std::size_t i = 0; i < preloaded.size(); ++i) (void)tracker.track(el::scan_of(preloaded, i));
   const el::alloc::Snapshot preload_cost = el::alloc::since(before_preload);
   std::println("preloaded {} parcels", tracker.size());
 

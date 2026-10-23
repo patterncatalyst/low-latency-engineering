@@ -37,7 +37,7 @@ class NodeTracker {
  public:
   explicit NodeTracker(std::size_t expected) { map_.reserve(expected); }
 
-  Tracked track(const Scan& scan) {
+  [[nodiscard]] Tracked track(const Scan& scan) {
     const auto sscc = pack_sscc(scan.barcode);
     if (!sscc) return Tracked::rejected;
     if (const auto it = map_.find(scan.barcode); it != map_.end()) {
@@ -48,7 +48,7 @@ class NodeTracker {
     return Tracked::inserted;
   }
 
-  bool erase(std::string_view barcode) {
+  [[nodiscard]] bool erase(std::string_view barcode) {
     const auto it = map_.find(barcode);
     if (it == map_.end()) return false;
     map_.erase(it);
@@ -66,7 +66,7 @@ class NodeTracker {
     return due;
   }
 
-  std::size_t expire(std::uint64_t tick) {
+  [[nodiscard]] std::size_t expire(std::uint64_t tick) {
     return std::erase_if(map_, [tick](const auto& node) {
       return node.second.state == State::in_flight && node.second.due_tick <= tick;
     });
@@ -89,7 +89,7 @@ class FlatTracker {
     table_.reserve(expected);
   }
 
-  Tracked track(const Scan& scan) {
+  [[nodiscard]] Tracked track(const Scan& scan) {
     const auto sscc = pack_sscc(scan.barcode);
     if (!sscc) return Tracked::rejected;
     const auto [it, fresh] = index_.try_emplace(*sscc, 0U);  // one probe for both outcomes
@@ -101,12 +101,12 @@ class FlatTracker {
     return Tracked::updated;
   }
 
-  bool erase(std::string_view barcode) {
+  [[nodiscard]] bool erase(std::string_view barcode) {
     const auto sscc = pack_sscc(barcode);
     return sscc && erase_key(*sscc);
   }
 
-  bool erase_key(std::uint64_t sscc) {
+  [[nodiscard]] bool erase_key(std::uint64_t sscc) {
     const auto it = index_.find(sscc);
     if (it == index_.end()) return false;
     table_.erase(it->second);
@@ -126,7 +126,7 @@ class FlatTracker {
 
   [[nodiscard]] std::size_t sweep_due(std::uint64_t tick) const noexcept { return table_.sweep_due(tick); }
 
-  std::size_t expire(std::uint64_t tick) {
+  [[nodiscard]] std::size_t expire(std::uint64_t tick) {
     std::size_t erased = 0;
     for (std::uint32_t slot = 0; slot < table_.slots(); ++slot) {
       if (table_.state(slot) == State::in_flight && table_.due_tick(slot) <= tick) {

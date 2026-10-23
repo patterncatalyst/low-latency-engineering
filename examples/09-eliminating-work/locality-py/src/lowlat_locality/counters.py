@@ -145,7 +145,12 @@ def run(
     elif mode == "threads":
         mm = mmap.mmap(-1, size)
         cells = memoryview(mm).cast("Q")
-        go, release = threading.Event(), threading.Event()
+        # Two barriers of cameras + 1 parties (the cameras and this thread) replace polling.
+        # The first opens once every camera has announced its placement, and is the start signal;
+        # the second opens when every camera has stored its batch times. This thread sleeps
+        # in both, so it never wakes during the run.
+        go, finished = threading.Barrier(cameras + 1), threading.Barrier(cameras + 1)
+        release = threading.Event()
         lock = threading.Lock()
 
         def announce(info: dict[str, Any]) -> None:
@@ -154,16 +159,14 @@ def run(
 
         def worker(c: int) -> None:
             batch_ns[c] = _camera(cells, c, layout, cpu_of[c], batches, announce, go)
+            finished.wait()
             release.wait()
 
         threads = [threading.Thread(target=worker, args=(c,)) for c in range(cameras)]
         for t in threads:
             t.start()
-        while len(placements) < cameras:
-            time.sleep(0.001)
-        go.set()
-        while len(batch_ns) < cameras:
-            time.sleep(0.001)
+        go.wait()
+        finished.wait()
         totals = [sum(cells[i] for i in cells_of(layout, c)) for c in range(cameras)]
         _announce(placements, pinned=cpus is not None)
         time.sleep(hold_ms / 1000)

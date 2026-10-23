@@ -5,6 +5,7 @@ import io.patterncatalyst.lowlat.measure.RuntimeInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,14 @@ final class CountersRun {
     private record Options(String variant, List<Integer> cpus, int cameras, int batches, int holdMs, boolean rmw, Path out) {
     }
 
+    /** The value after option {@code option}, or a usage error when the command line ends first. */
+    private static String value(Iterator<String> it, String option) {
+        if (!it.hasNext()) {
+            throw new IllegalArgumentException(option + " needs a value");
+        }
+        return it.next();
+    }
+
     private static Options parse(List<String> args) {
         String variant = null;
         List<Integer> cpus = new ArrayList<>();
@@ -46,25 +55,26 @@ final class CountersRun {
         int holdMs = 0;
         boolean rmw = false;
         Path out = null;
-        for (int i = 0; i < args.size(); i++) {
-            String a = args.get(i);
+        Iterator<String> it = args.iterator();
+        while (it.hasNext()) {
+            String a = it.next();
             switch (a) {
-                case "--variant" -> variant = args.get(++i);
+                case "--variant" -> variant = value(it, a);
                 case "--adjacent-counters", "--line-padded", "--smt-siblings" -> variant = a.substring(2);
                 case "--cpus" -> {
-                    for (String c : args.get(++i).split(",")) {
+                    for (String c : value(it, a).split(",")) {
                         cpus.add(Integer.parseInt(c));
                     }
                 }
-                case "--cameras" -> cameras = Integer.parseInt(args.get(++i));
-                case "--batches" -> batches = Integer.parseInt(args.get(++i));
-                case "--hold-ms" -> holdMs = Integer.parseInt(args.get(++i));
-                case "--increment" -> rmw = switch (args.get(++i)) {
+                case "--cameras" -> cameras = Integer.parseInt(value(it, a));
+                case "--batches" -> batches = Integer.parseInt(value(it, a));
+                case "--hold-ms" -> holdMs = Integer.parseInt(value(it, a));
+                case "--increment" -> rmw = switch (value(it, a)) {
                     case "store" -> false;
                     case "rmw" -> true;
                     default -> throw new IllegalArgumentException("--increment must be store or rmw");
                 };
-                case "--out" -> out = Path.of(args.get(++i));
+                case "--out" -> out = Path.of(value(it, a));
                 default -> throw new IllegalArgumentException("unknown option " + a);
             }
         }

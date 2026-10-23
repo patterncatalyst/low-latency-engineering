@@ -45,7 +45,7 @@ class ClaimLog {
   [[nodiscard]] std::size_t capacity() const noexcept { return mask_ + 1; }
 
   /// Producer: the next sequence number (the progress guarantee is Claim's).
-  std::uint64_t claim(ClaimStats& stats) { return claim_.claim(stats); }
+  [[nodiscard]] std::uint64_t claim(ClaimStats& stats) { return claim_.claim(stats); }
 
   // The waits in publish() and read() are busy-spins with a PAUSE hint, not std::atomic::wait. A futex
   // wait and wake costs microseconds of system call and wake-up latency on a path whose claim takes

@@ -41,7 +41,7 @@ The alternative packs the barcode into a `uint64` and maps it to a slot in an `a
 {% include codetabs.html langs="C++|Java" %}
 
 ```cpp
-  Tracked track(const Scan& scan) {
+  [[nodiscard]] Tracked track(const Scan& scan) {
     const auto sscc = pack_sscc(scan.barcode);
     if (!sscc) return Tracked::rejected;
     if (const auto it = map_.find(scan.barcode); it != map_.end()) {
@@ -73,7 +73,7 @@ The alternative packs the barcode into a `uint64` and maps it to a slot in an `a
 {% include codetabs.html langs="C++|Java" %}
 
 ```cpp
-  Tracked track(const Scan& scan) {
+  [[nodiscard]] Tracked track(const Scan& scan) {
     const auto sscc = pack_sscc(scan.barcode);
     if (!sscc) return Tracked::rejected;
     const auto [it, fresh] = index_.try_emplace(*sscc, 0U);  // one probe for both outcomes

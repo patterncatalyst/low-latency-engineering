@@ -34,7 +34,7 @@ struct alignas(2 * std::hardware_destructive_interference_size) ClaimStats {
 
 class MutexClaim {
  public:
-  std::uint64_t claim(ClaimStats& stats) {
+  [[nodiscard]] std::uint64_t claim(ClaimStats& stats) {
     const std::scoped_lock lock{mutex_};
     ++stats.claims;
     ++stats.steps;
@@ -48,7 +48,7 @@ class MutexClaim {
 
 class CasLoopClaim {
  public:
-  std::uint64_t claim(ClaimStats& stats) noexcept {
+  [[nodiscard]] std::uint64_t claim(ClaimStats& stats) noexcept {
     ++stats.claims;
     std::uint64_t seen = next_.load(std::memory_order_relaxed);
     std::uint64_t retries = 0;
@@ -69,7 +69,7 @@ class CasLoopClaim {
 
 class FetchAddClaim {
  public:
-  std::uint64_t claim(ClaimStats& stats) noexcept {
+  [[nodiscard]] std::uint64_t claim(ClaimStats& stats) noexcept {
     ++stats.claims;
     ++stats.steps;
     return next_.fetch_add(1, std::memory_order_relaxed);

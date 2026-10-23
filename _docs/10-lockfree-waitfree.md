@@ -74,7 +74,7 @@ In C++ a seqlock over plain fields is a data race, which is undefined behaviour 
 ```cpp
 class CasLoopClaim {
  public:
-  std::uint64_t claim(ClaimStats& stats) noexcept {
+  [[nodiscard]] std::uint64_t claim(ClaimStats& stats) noexcept {
     ++stats.claims;
     std::uint64_t seen = next_.load(std::memory_order_relaxed);
     std::uint64_t retries = 0;
@@ -97,7 +97,7 @@ class CasLoopClaim {
 
 class FetchAddClaim {
  public:
-  std::uint64_t claim(ClaimStats& stats) noexcept {
+  [[nodiscard]] std::uint64_t claim(ClaimStats& stats) noexcept {
     ++stats.claims;
     ++stats.steps;
     return next_.fetch_add(1, std::memory_order_relaxed);
