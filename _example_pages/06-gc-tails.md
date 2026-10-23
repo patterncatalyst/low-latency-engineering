@@ -10,7 +10,7 @@ description: "On a 4 GB heap with a 1.8 GB live set the maximum GC pause is 158 
 languages: "Java · C++ · Python"
 ---
 
-An in-flight parcel tracker runs at 10 kHz for 30 s with a 1.8 GB live set and about 400 MB/s of scan-history garbage. Eight JVM variants run the same bytecode under Parallel, G1, Generational ZGC and Generational Shenandoah, a heap at 1.05 times the live set, and the observed `thp`, `jfr-off` and non-generational Shenandoah variants. A Python lane (`cyclic-garbage`, `frozen`) and a C++ lane (`bulk-free`, `deferred-free`, `no-free`) ask the same question where there is a cycle collector, and where there is none.
+An in-flight parcel tracker runs at 10 kHz for 30 s with a 1.8 GB live set and about 400 MB/s of scan-history garbage. Eight JVM variants run the same bytecode under Parallel, G1, Generational ZGC and Generational Shenandoah, a heap at 1.05 times the live set, and the observed `thp`, `jfr-off` and non-generational Shenandoah variants. A Python lane (`cyclic-garbage`, `frozen`) and a C++ lane (`bulk-free`, `deferred-free`, `no-free`) repeat the measurement where there is a cycle collector, and where there is none.
 
 ## Run
 

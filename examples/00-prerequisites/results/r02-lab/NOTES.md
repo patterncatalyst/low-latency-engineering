@@ -1,6 +1,6 @@
 # r02-lab
 
-Lab evidence for S5, captured 2026-10-22 on `lowlat-target` (label: VM). Everything is from the
+Lab evidence captured 2026-10-22 on `lowlat-target` (label: VM). Everything is from the
 guest except `vcpupin.txt`, `snapshots.txt` and `domains.txt` (libvirt, read-only). The root
 filesystem UUID is redacted in the command line.
 

@@ -36,7 +36,7 @@ Zero-copy means the datagram is not copied into another structure before it is r
 
 ### The contract
 
-A record can be read in place only if the reader knows where every field is. `contracts/flat/parcel-v1` fixes that and nothing more:
+A record can be read in place only if the reader knows where every field is. `contracts/flat/parcel-v1` fixes that:
 
 - **Fixed size and offsets.** 80 bytes, every field at its natural alignment, no implicit padding. The six `reserved` bytes are a named field, zero on write. Nothing is scanned.
 - **Self-identifying header.** `schema_id` and `version` are the first four bytes, checked before the size, so a later and larger version is reported as unsupported instead of as a bad length.
@@ -229,7 +229,7 @@ C++ gets the flat layout by default: a `std::vector<ParcelState>` is contiguous,
 
 ### Value classes: status at 2026-10-22
 
-> **Status at 2026-10-22.** Project Valhalla would give Java value classes: objects without identity that the JVM may flatten into arrays and fields. JEP 401, *Value Objects (Preview)*, is integrated into the JDK 28 mainline and is a preview feature, so it needs `--enable-preview` even in a GA release. JDK 28 is early access only, with no GA date; the six-month cadence points near March 2027. The Valhalla early-access build is `27-jep401ea3+1-1`, under Oracle's early-access terms. This book pins Temurin 25.0.5 LTS; JDK 27 is GA but not LTS. No build, script or number uses a prerelease. Re-visit at JDK 28 GA.
+> Project Valhalla would give Java value classes: objects without identity that the JVM may flatten into arrays and fields. JEP 401, *Value Objects (Preview)*, is integrated into the JDK 28 mainline and is a preview feature, so it needs `--enable-preview` even in a GA release. JDK 28 is early access only, with no GA date; the six-month cadence points near March 2027. The Valhalla early-access build is `27-jep401ea3+1-1`, under Oracle's early-access terms. This book pins Temurin 25.0.5 LTS; JDK 27 is GA but not LTS. No build, script or number uses a prerelease. Revisit at JDK 28 GA.
 
 Value classes aim at a flat layout on the heap without a hand-written one. That is the dashed ghost box in Figure 8.2; it is not measured. On common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte `ParcelState` needs later null-restricted or non-atomic enhancements. A `FlatView` over a receive buffer would stay a view of bytes someone else owns, and the off-heap table would keep its explicit lifetime. `VALHALLA.md` carries the same status.
 
@@ -285,7 +285,7 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 
 **Table sweep (criterion 4).** In one JMH run, the `flat-table` sweep of 1,000,000 parcels has a p50 of 0.97 to 1.00 ms and the `object-table` sweep 5.01 to 5.03 ms, about 5x. The bound is one half.
 
-**Clock downcall (criterion 5).** Both linkages agree with `System.nanoTime()`: the largest skew outside the `nanoTime()` bracket is 0 ns for standard and for critical in all three runs. Observed, not asserted, the per-call p50 is 12 ns for `nanoTime()`, 18 to 20 ns for the standard downcall and 17 ns for the critical one.
+**Clock downcall (criterion 5).** Both linkages agree with `System.nanoTime()`: the largest skew outside the `nanoTime()` bracket is 0 ns for standard and for critical in all three runs. Observed only: the per-call p50 is 12 ns for `nanoTime()`, 18 to 20 ns for the standard downcall and 17 ns for the critical one.
 
 **Reports (criterion 6).** Every report passes `lowlat-report check`, every Java report carries `build.flags`, and both line runs count 100,000 with 0 dropped.
 
@@ -306,7 +306,7 @@ Two independent allocation counters agree: JMH `-prof gc` (544 to 576 B/op for p
 - End-to-end percentiles on the line do not show a saving of about 140 ns per parcel. Counters and JMH do.
 - A flat off-heap table in an `Arena` swept in 0.97 to 1.00 ms against 5.01 to 5.03 ms for an array of objects, at the cost of an explicit lifetime.
 - C++ spells the idea `std::start_lifetime_as`; a `reinterpret_cast` read is undefined behaviour. CPython copies no bytes but allocates per field.
-- Value classes (JEP 401) are a JDK 28 early-access preview. The book measures JDK 25 and re-visits at JDK 28 GA.
+- Value classes (JEP 401) are a JDK 28 early-access preview. The book measures JDK 25 and revisits at JDK 28 GA.
 
 The next chapter, *Eliminating work: allocation, cache locality, false sharing* (Part 3), takes data-structure-level work elimination across all three languages.
 
@@ -320,4 +320,4 @@ The next chapter, *Eliminating work: allocation, cache locality, false sharing* 
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that the C++, Java and Python readers decode the golden files identically; that `flat-ffm` allocates at most 1 B/op and `protobuf-decode` at least 100 B/op in JMH with a p50 ratio of at least 3x; that the receive thread's allocation per parcel on the line is at most 5 % of `protobuf-decode`'s; that the `flat-table` p50 is at most half the `object-table` p50; that both `clock_gettime` downcalls agree with `System.nanoTime()` within 1 ms; and that every report passes `lowlat-report check` with 100,000 parcels counted and none dropped; and that every Java report carries `build.flags`. Observed only, not asserted: compact object headers (JOL), the downcall per-call cost, the C++ decode variants and tables, and the Python lane. It held on `r02-run1`, `r02-run2` and `r02-run3` on the bare-metal host described above.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts that the C++, Java and Python readers decode the golden files identically; that `flat-ffm` allocates at most 1 B/op and `protobuf-decode` at least 100 B/op in JMH with a p50 ratio of at least 3x; that the receive thread's allocation per parcel on the line is at most 5 % of `protobuf-decode`'s; that the `flat-table` p50 is at most half the `object-table` p50; that both `clock_gettime` downcalls agree with `System.nanoTime()` within 1 ms; and that every report passes `lowlat-report check` and every Java report carries `build.flags`, with 100,000 parcels counted and none dropped. Observed only, not asserted: compact object headers (JOL), the downcall per-call cost, the C++ decode variants and tables, and the Python lane. It held on `r02-run1`, `r02-run2` and `r02-run3` on the bare-metal host described above.*

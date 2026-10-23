@@ -1,7 +1,7 @@
 # 06-gc-tails
 
 Chapter 6: the collector decides the tail. The in-flight parcel tracker runs at 10 kHz for 30 s on a
-JVM whose heap holds a 1.8 GB live set (1,804 to 1,810 MB across the r02 runs, as `verify.sh` prints
+JVM whose heap holds a 1.8 GB live set (1,804 to 1,810 MB across the three runs, as `verify.sh` prints
 it, with 1 MB = 2^20 bytes; the shift manifest and the parcels on the belt) and whose
 handler allocates about 400 MB/s of scan history. Eight JVM variants run the same bytecode, the same
 seed and the same `-Xms4g -Xmx4g -XX:+AlwaysPreTouch`, and differ only in the collector (or, for two of
@@ -13,7 +13,7 @@ runtime with a cycle collector and in one with none.
 A collector bounds the tail in two ways: how long it stops the application, and whether it can keep up
 with the allocation rate. The first is the pause; the second is headroom. When a concurrent collector
 runs out of headroom, an allocating thread waits for it (an allocation stall), and the wait is a pause
-by another name.
+that no GC log shows.
 
 | Lane | Variant | What differs |
 |---|---|---|
@@ -64,7 +64,7 @@ per parcel are in each report.
 | `--alloc-mb-per-s` | 400 | scan-history allocation rate |
 | `--in-flight-ms` | 480 | time between scanner and diverter |
 | `--rate` | 10000 | parcels per second the simulator sends |
-| `--warmup` | 30000 | synthetic parcels before the bind |
+| `--warm-up` | 30000 | synthetic parcels before the bind |
 | `--jfr FILE` | none | record the measured run in the JVM and write the recording here |
 | `--probe` | off | build the live set, print `live_set_bytes=` and exit |
 
@@ -120,7 +120,7 @@ Ports: Java 47260, Python 47261, C++ 47262.
 The recordings (`*.jfr`) are written to a scratch directory outside the tree and deleted when the script
 ends: they are binary and megabytes each, and everything the chapter quotes is in the derived reports.
 The GC logs are compressed because the unified log is repetitive text that compresses well; a full run's results directory
-is about 0.5 MB, far under the 20 MB budget for the iteration.
+is about 0.5 MB.
 
 ## Expected effect and criteria
 
@@ -201,7 +201,7 @@ observability.
 Everything on the measured path is open source. The examples are MIT (repository licence).
 Temurin 25 (the JDK, including ZGC, G1, Parallel, Shenandoah and JFR): GPL-2.0 with the Classpath
 exception. protobuf: BSD-3-Clause. HdrHistogram: CC0-1.0 or BSD-2-Clause. GoogleTest: BSD-3-Clause.
-CPython 3.14.8: PSF licence. Versions are pinned in `_plans/dependency-pins.md` and `versions.env`.
+CPython 3.14.8: PSF licence. Versions are pinned in `versions.env`.
 
 ## Verification status
 
@@ -235,4 +235,4 @@ criterion 5.
 
 Calibrated on a quiet host on 2026-10-22 (three dry runs plus the heap sweep above, which is
 calibration data and not a committed run); criterion 3 uses the 1.05x heap that clears its bounds by
-two orders of magnitude, and the former criterion 5 second half is an observed pair.
+two orders of magnitude.

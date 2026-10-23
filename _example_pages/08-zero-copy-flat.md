@@ -5,8 +5,8 @@ order: 8
 permalink: /examples/08-zero-copy-flat/
 card_eyebrow: "Example 08 · Chapter 8"
 card_title: "An 80-byte record read in place"
-card_blurb: "Reading a flat record through the Foreign Function & Memory API allocates under 1 B per decode against 544 to 576 B for a protobuf parse, and a flat table sweeps in 0.97 to 1.00 ms against 5.01 to 5.03 ms for an array of objects."
-description: "Reading a flat record through the Foreign Function & Memory API allocates under 1 B per decode against 544 to 576 B for a protobuf parse, and a flat table sweeps in 0.97 to 1.00 ms against 5.01 to 5.03 ms for an array of objects."
+card_blurb: "Reading a flat record through the Foreign Function & Memory API allocates under 1 B per decode against 544 to 576 B for a protobuf parse, and a flat table sweeps in 0.97 to 1.00 ms against 5.01 to 5.03 ms for an array of objects (bare-metal, untuned host)."
+description: "Reading a flat record through the Foreign Function & Memory API allocates under 1 B per decode against 544 to 576 B for a protobuf parse, and a flat table sweeps in 0.97 to 1.00 ms against 5.01 to 5.03 ms for an array of objects (bare-metal, untuned host)."
 languages: "Java · C++ · Python"
 ---
 

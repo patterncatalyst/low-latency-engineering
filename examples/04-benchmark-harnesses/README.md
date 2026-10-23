@@ -131,4 +131,4 @@ Ranges over the three runs:
 ## Licences
 
 Google Benchmark: Apache-2.0. JMH: GPL-2.0 with Classpath exception. pyperf: MIT.
-Versions are pinned in `_plans/dependency-pins.md`.
+Versions are pinned in `versions.env`.

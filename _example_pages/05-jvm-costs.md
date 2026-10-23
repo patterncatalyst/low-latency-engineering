@@ -28,7 +28,7 @@ examples/05-jvm-costs/verify.sh
 - `aot-cache`: the median time to ready is at most 0.8x the no-cache median, and the AOT log shows the cache opened.
 - Every Java report's `build.flags` carries the JVM arguments, and every line run counts 20,000 parcels, drops none and passes `lowlat-report check`.
 
-All of it held on the quiet-host runs `r02-run1..3`. The criterion on the unwarmed first window was first written on p99, failed on it in `r02-run2`, and is asserted on p99.9 after a recheck of all three runs; the chapter and the example README tell the story.
+All of it held on the quiet-host runs `r02-run1..3`. The criterion on the unwarmed first window was first written on p99, failed on it in `r02-run2`, and is asserted on p99.9 after a recheck of all three runs; the chapter and the README give the detail.
 
 ## Chapter and source
 

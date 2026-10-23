@@ -18,7 +18,7 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-The scanner sits 1.2 m upstream of the diverter and the belt moves at 2.5 m/s, so the scan-to-divert budget is 480 ms. The belt never waits for a slow consumer. Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed that a stall charges every parcel queued behind it; on the line those parcels have already travelled. Chapter 2, *Modelling with Little's Law and Amdahl's Law*, put the in-flight count at 480 parcels at 1 kHz.
+The scanner sits 1.2 m upstream of the diverter and the belt moves at 2.5 m/s, so the scan-to-divert budget is 480 ms. The belt never waits for a slow consumer. Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed that a stall charges every parcel queued behind it; on the line those parcels keep moving. Chapter 2, *Modelling with Little's Law and Amdahl's Law*, put the in-flight count at 480 parcels at 1 kHz.
 
 A controller JVM that has just started is such a stall: its first parcels arrive while classes load and the interpreter still runs code the compiler will replace. Chapter 1, *Latency vs bandwidth: latency is a distribution*, showed a Java warm-up p99.9 and said Part 2 treats the cause. This chapter measures three costs of a managed runtime: heap bytes per decision, the warm-up tail of the first parcels, and process start.
 
@@ -50,11 +50,11 @@ Bytecode starts in the interpreter, tier 0. Counters hand a hot method to C1: ti
 
 **Replay before the bind.** Before the socket opens, the process sends synthetic parcels through the real receive path and waits until the compiler is quiet. It delays the start.
 
-**The Leyden AOT cache.** JDK 25's ahead-of-time cache is built from JEP 483 (class loading and linking, JDK 24), JEP 514 (one-step creation) and JEP 515 (method profiles). A training run started with `-XX:AOTCacheOutput` writes the cache when it exits; `verify.sh`'s later runs pass `-XX:AOTCache` and `-XX:AOTMode=on`. The cache holds loaded and linked classes and method profiles, and no compiled code, so C1 and C2 still run but start from a profile. With `-XX:AOTMode=on` a cache the JVM cannot use is a startup failure; the default mode carries on without the cache, and a run that did would measure the wrong thing.
+**The Leyden AOT cache.** JDK 25's ahead-of-time cache is built from JEP 483 (class loading and linking, JDK 24), JEP 514 (one-step creation) and JEP 515 (method profiles). A training run started with `-XX:AOTCacheOutput` writes the cache when it exits; `verify.sh`'s later runs pass `-XX:AOTCache` and `-XX:AOTMode=on`. The cache holds loaded and linked classes and method profiles, and no compiled code, so C1 and C2 still run but start from a profile. With `-XX:AOTMode=on` a cache the JVM cannot use is a startup failure; the default mode runs on without it, and such a run measures the wrong thing.
 
 The cache is measured under G1: on JDK 25 it archives heap objects only with G1, and JEP 516 (final in JDK 26) lifts that limit. A cache records the module graph and JFR adds the `jdk.jfr` module, so the line run uses a cache trained with the same JFR flags.
 
-GraalVM CE native-image compiles ahead of time and is prose only here: its documentation lists the Serial and Epsilon collectors only, and G1 in native-image is part of Oracle GraalVM.
+GraalVM CE native-image compiles ahead of time and is not measured here: its documentation lists the Serial and Epsilon collectors only, and G1 in native-image is part of Oracle GraalVM.
 
 ### The C++ contrast
 
@@ -205,7 +205,7 @@ The counters differ. JMH's `-prof gc` reads the JVM's allocation accounting. The
 
 ### Warm-up before the bind
 
-C++ has nothing to warm, and that is the divergence, so this excerpt is Java only. It comes from `WarmUp.java` and the warm-up branch of `Costs.main` in `Costs.java`.
+C++ has nothing to warm, so this excerpt is Java only. It comes from `WarmUp.java` and the warm-up branch of `Costs.main` in `Costs.java`.
 
 ```java
     static Result replay(long parcels) throws IOException, InterruptedException, ExecutionException {
@@ -313,7 +313,7 @@ Allocation: async-profiler 4.6's allocation event on `escaping` attributes over 
 
 Warm-up: JFR's `jdk.Compilation` and `jdk.Deoptimization` events, counted per window by `JitWindows`, confirm the mechanism: the compilations are in the first window for `--unwarmed` and before the first parcel for `warmed`.
 
-Cache: the `-Xlog:aot` line (copied into `runtime.aot.used`) and `-XX:AOTMode=on`, which would have stopped an unusable cache at startup, show the cache was used, not just named.
+Cache: the `-Xlog:aot` line (copied into `runtime.aot.used`) and `-XX:AOTMode=on`, which would have stopped an unusable cache at startup, show the cache was used.
 
 ## What you learned
 
@@ -323,7 +323,7 @@ Cache: the `-Xlog:aot` line (copied into `runtime.aot.used`) and `-XX:AOTMode=on
 - A replay moves that work before the bind. The AOT cache cut time to ready from 173.1 to 176.9 ms to 50.7 to 54.8 ms, and `-XX:AOTMode=on` makes an unusable cache fail at startup.
 - A 2,000-parcel window resolves p99.9 of a 15 to 30 ms stall and can miss it at p99.
 
-The next chapter, GC for tails: Generational ZGC and Shenandoah, measures the pauses that allocation causes.
+The next chapter, *GC for tails: Generational ZGC and Shenandoah*, measures the pauses that allocation causes.
 
 ## For deeper coverage
 

@@ -57,7 +57,7 @@ Defects carry the `--` prefix in the text; report variant names have no prefix.
 | `escaping` | JMH: the decision is stored in a field, so it stays on the heap | Java |
 | `scalar-replaced` | JMH: the decision is read and dropped in the loop, so C2 removes it | Java |
 | `--no-escape-analysis` | JMH: `scalar-replaced` in a fork with `-XX:-DoEscapeAnalysis` | Java |
-| `--unwarmed` | line run, bind at once: the JIT warms on the first parcels (the r01 behaviour) | Java |
+| `--unwarmed` | line run, bind at once: the JIT warms on the first parcels (no warm-up) | Java |
 | `warmed` | line run, `--warm-up 20000`: replay 20,000 synthetic parcels in-process before the bind | Java |
 | `aot-cache` | line run with `-XX:AOTCache=… -XX:AOTMode=on`, trained for 3 s first | Java |
 | value | Google Benchmark: the `Decision` is a stack value | C++ |
@@ -149,7 +149,7 @@ and the bound, and exits non-zero if any missed:
    `lowlat-report check`.
 
 The window is a parameter of criterion 2. The cold cost of an unwarmed JVM is a stall at the
-start: the first-window maximum is 15.2 to 30.3 ms across the r02 runs, and 15 to 31 parcels land
+start: the first-window maximum is 15.2 to 30.3 ms across the three runs, and 15 to 31 parcels land
 above 1 ms (0.75 to 1.55 % of a 2,000-parcel window). The p99 of that window is its 21st-worst
 parcel, so it sits on the edge of the stall: inside it in runs 1 and 3 (31 parcels) and outside it in
 run 2 (15 parcels), which is why the first-window over steady p99 runs from 1.7x to 52x. The p99.9,
@@ -223,8 +223,8 @@ the three runs; the first window is parcels 0 to 1,999 and the steady window is 
 | Line runs | 20,000 parcels counted, none dropped, every report passes `lowlat-report check` |
 
 Criterion 2 failed in `r02-run2` as first written, on the p99: 1.7x against a bound of 5x, because
-the window's p99 fell outside the stall in that run (see above). The criterion was then asserted on
-p99.9, by decision, and `RECHECK=results/<run-id>` re-evaluated the committed reports of all three
+the window's p99 fell outside the stall in that run (see above). The criterion is asserted on
+p99.9, and `RECHECK=results/<run-id>` re-evaluated the committed reports of all three
 runs without running anything. Each run directory holds the output as `recheck.log` (58.3x, 51.7x
 and 98.3x). `verify.log` of `r02-run2` still records the original failure, and the run was not
 repeated.

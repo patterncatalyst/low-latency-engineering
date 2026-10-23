@@ -196,7 +196,7 @@ back to back in one `verify.sh`, so they do not depend on the machine's absolute
 
 JMH and JOL: GPL-2.0 with Classpath Exception. protobuf (Java, Python and C++): BSD-3-Clause. Jackson 3
 (Apache-2.0), HdrHistogram (BSD-2-Clause), Google Benchmark (Apache-2.0), GoogleTest (BSD-3-Clause),
-nlohmann/json (MIT), pytest (MIT). Versions are pinned in `_plans/dependency-pins.md`.
+nlohmann/json (MIT), pytest (MIT). Versions are pinned in `versions.env`.
 
 ## Verification status
 

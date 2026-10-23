@@ -211,7 +211,7 @@ Observed on the bare-metal host (governor `powersave`, tuned `balanced`, untuned
 all three `r02-run1..3` runs, run 1 at a margin of 1.01. The Disruptor's steady-window hand-off p99 was
 2,117 ns in run 1, 670 ns in run 2 and 641 ns in run 3; the `blocking-queue` p99 was 10,655, 10,871
 and 10,495 ns, about 10.5 to 10.9 us throughout. In run 1 the bound was 2,131 ns, one fifth of
-10,655 ns, against the Disruptor's 2,117 ns. The bound stays at one fifth (user decision, 2026-10-22).
+10,655 ns, against the Disruptor's 2,117 ns. The bound stays at one fifth.
 
 ### What the memory-mapped append removes
 
@@ -297,7 +297,7 @@ What isolation and the pin promise, and what they do not:
   is scheduled there: no other task to preempt it, and the stress workers stay on CPUs 0-2.
 - **The host is not partitioned.** The libvirt pin sends vCPU 3 to host CPU 13 and nowhere else, but
   the host kernel may still schedule other work on CPU 13 and on its hyperthread sibling CPU 5, and
-  any host interrupt can still land there. The guest sees such a stall as a pause it cannot explain.
+  any host interrupt can still land there. The guest sees such a stall only as lost time.
   The pin narrows the tail; it does not remove the host's share of it.
 - **A VM number is a `vm` number.** It carries the hypervisor's timing, the virtual clock and the
   noise of whatever the host is doing. It is never compared with a host (bare-metal) number in this
@@ -337,18 +337,10 @@ buffer mode the open-source queue offers, and it is the one set here. Chronicle,
 native-call dependency, and the JMH harness call `sun.misc.Unsafe` memory-access methods; JDK 25 warns
 at first use (JEP 471, JDK 23, deprecated them for removal; JEP 498, JDK 24, made the warning the
 default), and the warnings stay on.
-Versions are pinned in `_plans/dependency-pins.md`.
+Versions are pinned in `versions.env`.
 
-Chronicle Core posts usage analytics by default. Chronicle Queue and Chronicle Map each hold an
-`AnalyticsHolder` whose static initializer runs when the first queue or map is built; it calls
-`AnalyticsFacade.isEnabled()`, which reads the system property `chronicle.analytics.disable`
-(through `Jvm.getBoolean`, so the property is the only switch: there is no environment variable,
-though a `system.properties` file on the classpath or in the working directory can set it). Unless
-it is `true`, a Google Analytics 4 client posts a `started` event to
-`https://www.google-analytics.com/mp/collect` with a random client id kept in
-`~/.chronicle.analytics.client.id`, the JDK, OS and architecture, time zone, processor count,
-maximum heap and direct memory, the caller's package name and the queue's wire type and roll
-cycle. This example never allows it, in four places: `ChronicleAnalytics.disable()` in the static
+Chronicle Core posts usage analytics at startup unless the system property
+`chronicle.analytics.disable` is `true`. This example never allows it, in four places: `ChronicleAnalytics.disable()` in the static
 initializer of every class that touches Chronicle (`ChronicleJournal`, `ChronicleMapManifest`)
 and in `Handoff.main`; `-Dchronicle.analytics.disable=true` in the surefire `argLine` and the
 `exec:exec` arguments of `java/pom.xml`; the same flag in the `PublishBenchmark` fork and in
@@ -383,7 +375,7 @@ Behavioural. The host part and the VM part each assert their criteria, and all o
 
 Criterion 2 passed in all three runs. Run 1 passed with a margin of 1.01: the Disruptor's p99 was
 2,117 ns against a bound of 2,131 ns (one fifth of 10,655 ns). Runs 2 and 3 were 670 and 641 ns against
-bounds of 2,174 and 2,099 ns. The bound stays at one fifth, and run 1 is an observed outlier with no
+bounds of 2,174 and 2,099 ns. Run 1 is an observed outlier with no
 measured cause.
 
 **VM part**, `r02-vm-run1..3` (lab guest `lowlat-target`, label `vm`, PREEMPT_RT kernel
@@ -403,5 +395,5 @@ Pinned p99.9 stays at tens of microseconds: the pin narrows the tail and does no
 share of it (see the VM part above).
 
 Calibrated on a quiet host on 2026-10-22 (three dry runs on tmpfs, three more on btrfs, one more on tmpfs
-for the fault bound). The former criterion 4 p99 ratio was replaced by the fault mechanism above,
-because the ratio is set by the journal's file system and not by the technique.
+for the fault bound). Criterion 4 asserts the fault mechanism, not a p99 ratio, because the ratio is set
+by the journal's file system.

@@ -66,7 +66,7 @@ The receive thread must not call `complete` once ownership has moved. C++ test:
 
 The Java receive loop is `EventReceiver<E>` with a `Decoder<E>`: `decode(ByteBuffer)` returns
 the event the handler sees and `seq(E)` feeds the gap tracker. `LineReceiver` is
-`EventReceiver<ParcelEvent>` with the protobuf decoder, so r01 handlers (`ParcelHandler`)
+`EventReceiver<ParcelEvent>` with the protobuf decoder, so existing `ParcelHandler` handlers
 compile unchanged. A flat decoder returns a reused view over the datagram, so a handler for
 it allocates nothing per parcel (the view reader in the tests, `FlatParcel`, is the reference;
 Ch8 measures it). The wire layout is `contracts/flat/parcel-v1`; Python reads it with

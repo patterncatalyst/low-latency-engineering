@@ -321,7 +321,7 @@ The maximum cannot separate the methods. Every variant records the stalled sampl
 
 ## Cross-check
 
-`lowlat-report check` decodes each report's HdrHistogram, recomputes p50, p90, p99, p99.9 and max from the decoded counts, and asserts they equal the emitted values, using the rank convention of the writing language. The variants also cross-check each other. The corrected loop and the intended-time clock reach their numbers by different mechanisms, a back-filled client and a schedule clock, and still agree: in every run corrected p99 is 2.1 to 2.3 percent under intended time in C++, 3.2 to 3.9 in Python and 1.7 to 2.2 in Java. Two independent mechanisms agreeing confirms the back-fill.
+`lowlat-report check` decodes each report's HdrHistogram, recomputes p50, p90, p99, p99.9 and max from the decoded counts, and asserts they equal the emitted values, using the rank convention of the writing language. The variants also cross-check each other. The corrected loop and the intended-time clock reach their numbers by different mechanisms, a back-filled client and a schedule clock, and still agree: in every run corrected p99 is 2.1 to 2.3 % under intended time in C++, 3.2 to 3.9 in Python and 1.7 to 2.2 in Java. Two independent mechanisms agreeing confirms the back-fill.
 
 ## What you learned
 

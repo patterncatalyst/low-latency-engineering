@@ -57,7 +57,7 @@ the high percentiles and max (tens of ms in a 10 s run at 1 kHz), and the report
 notes say so. Ch4 measures warm-up in a harness; Ch5
 ([`examples/05-jvm-costs/`](../../../../05-jvm-costs/README.md)) splits the first window
 from the steady state with `--window` and moves the cost off the belt with an in-process
-replay (`--warm-up`) or the Leyden AOT cache, rather than hiding it.
+replay (`--warm-up`) or the Leyden AOT cache.
 
 ## `System.nanoTime()` is CLOCK_MONOTONIC on Linux
 

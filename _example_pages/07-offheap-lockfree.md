@@ -5,8 +5,8 @@ order: 7
 permalink: /examples/07-offheap-lockfree/
 card_eyebrow: "Example 07 · Chapter 7"
 card_title: "Rings, journals and a pinned thread"
-card_blurb: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,523 to 199,540 to 29 to 47 per 200,000 parcels and its steady hand-off p99 from 10,495 to 10,871 ns to 576 to 590 ns; the VM part pins the spinner to an isolated vCPU."
-description: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,523 to 199,540 to 29 to 47 per 200,000 parcels and its steady hand-off p99 from 10,495 to 10,871 ns to 576 to 590 ns; the VM part pins the spinner to an isolated vCPU."
+card_blurb: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,523-199,540 to 29-47 per 200,000 parcels and its steady hand-off p99 from 10,495-10,871 ns to 576-590 ns (bare-metal, untuned host); the VM part pins the spinner to an isolated vCPU."
+description: "Swapping a parking queue for an Agrona spinning ring cuts the decide thread's voluntary context switches from 199,523-199,540 to 29-47 per 200,000 parcels and its steady hand-off p99 from 10,495-10,871 ns to 576-590 ns (bare-metal, untuned host); the VM part pins the spinner to an isolated vCPU."
 languages: "Java · C++"
 ---
 

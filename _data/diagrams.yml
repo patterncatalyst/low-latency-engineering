@@ -109,7 +109,7 @@
 - name: "07-affinity-vm"
   section: "Ch7 · Off-heap and lock-free Java"
   title: "Pinning the decide thread to an isolated vCPU (VM)"
-  alt: "Inside the host, the guest lowlat-target boots with isolcpus=3 nohz_full=3 rcu_nocbs=3. stress-ng runs on guest CPUs 0-2, which are vCPU 0-2 free over the host CPUs. An unpinned decide thread shares them and records 174,388-313,298 involuntary context switches across nine alternations and a steady-window hand-off p99.9 of 1.09-1.86 ms (median of 3 alternations per run). A pinned decide thread (AffinityLock 3, amber) runs on the isolated vCPU 3, which libvirt pins to host CPU 13, and records 0-5 involuntary switches and a p99.9 of 51-55 us (same median). All figures are from the VM."
+  alt: "Inside the host, the guest lowlat-target boots with isolcpus=3 nohz_full=3 rcu_nocbs=3. stress-ng runs on guest CPUs 0-2, which are vCPUs 0-2, unpinned on the host. An unpinned decide thread shares them and records 174,388-313,298 involuntary context switches across nine alternations and a steady-window hand-off p99.9 of 1.09-1.86 ms (median of 3 alternations per run). A pinned decide thread (AffinityLock 3, amber) runs on the isolated vCPU 3, which libvirt pins to host CPU 13, and records 0-5 involuntary switches and a p99.9 of 51-55 us (same median). All figures are from the VM."
   caption: "Figure 7.3 — Pinned to an isolated vCPU, the decide thread is no longer preempted by the stress load. These are VM figures, never compared with the host runs."
 
 - name: "08-zero-copy-decode"

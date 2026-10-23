@@ -33,8 +33,7 @@ so and explains why. That divergence is part of the lesson. Everything on a crit
 path is open source; the commercial landscape is surveyed in Appendix F and never
 required.
 
-The arc is below. Chapters link as they ship; see the
-[roadmap]({{ '/plans/iteration-plan/' | relative_url }}) for which iteration delivers each.
+The arc is below. Chapters link as they ship.
 
 ## Part 0 — Prerequisites & the Lab
 - Ch0 · [Setup: Fedora 44, the three toolchains, Docker Engine, the KVM/libvirt VM lab, a PREEMPT_RT kernel, `linuxptp`, and the line simulator]({{ '/docs/00-prerequisites/' | relative_url }})

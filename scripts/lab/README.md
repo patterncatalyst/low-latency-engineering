@@ -150,7 +150,7 @@ Fedora's realtime config leaves out legacy iptables
 (cloud-init installs and selects it); with `iptables-legacy` Docker cannot start
 on the RT kernel.
 
-## Pinned JDK, isolation profile, vcpupin (r02)
+## Pinned JDK, isolation profile, vcpupin
 
 **Temurin.** The guest's `java`/`javac` are the pinned Temurin tarball from `versions.env`
 (`TEMURIN_VERSION`, `TEMURIN_URL`, `TEMURIN_SHA256`), unpacked to `/opt/temurin-<version>`, selected with

@@ -101,7 +101,7 @@ never compared.
 | 05.10 | JIT events per window (JFR) | observed, not asserted | `--unwarmed` first window 245 to 248 compilations (16 to 19 at tier 4); `warmed` 1,059 to 1,069 before the first parcel, 20 to 24 in the first window; `aot-cache` 183 to 189 at startup, 266 to 270 in the first window, 0 deoptimizations (`verify.log` "JIT events per window") |
 | 05.11 | Receive-thread allocation per parcel | observed, not asserted | 732.7 / 667.3 / 654.4 B (`--unwarmed` / `warmed` / `aot-cache`) in every run (`runtime.alloc_bytes_per_parcel`) |
 | 05.12 | C++ first-window p99 over steady p99 | observed, not asserted | 1.0 in all runs (`verify.log` "C++ (no JIT)") |
-| 05.13 | async-profiler allocation share on the `escaping` benchmark | observed, not asserted | 100.0 % of sampled bytes on the `DivertDecision` leaf frame in all runs (`verify.log`, `async-alloc/`); optional, user-local tool |
+| 05.13 | async-profiler allocation share on the `escaping` benchmark | observed, not asserted | over 99.99 % of sampled bytes on the `DivertDecision` leaf frame in all runs (`verify.log`, `async-alloc/`); optional, user-local tool |
 
 ## Example 06: GC for tails
 
