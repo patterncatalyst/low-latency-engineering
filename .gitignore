@@ -35,3 +35,8 @@ examples/*/results/**/queue/
 
 # agent worktrees
 .claude/worktrees/
+
+# valgrind --tool=cachegrind raw output (cachegrind_run keeps only a JSON summary) and
+# jcstress result trees (Ch10 verify.sh summarises them to text)
+cachegrind.out.*
+jcstress-results/

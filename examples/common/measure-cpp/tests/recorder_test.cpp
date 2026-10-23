@@ -248,7 +248,7 @@ TEST_F(Measure, WriteReportCarriesModel) {
   Recorder r{"t", "v"};
   r.record(1000);
   const json model = {{"law", "Amdahl"}, {"workers", 4}};
-  const auto path = fs::temp_directory_path() / "lowlat-model-test.json";
+  const auto path = fs::path{testing::TempDir()} / std::format("lowlat-model-test-{}.json", ::getpid());
   const json doc = r.write_report(path, "", model);
   std::ifstream in{path};
   const json written = json::parse(in);

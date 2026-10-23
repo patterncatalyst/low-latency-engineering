@@ -125,6 +125,7 @@
         },
         "counters": {
           "type": "object",
+          "minProperties": 1,
           "additionalProperties": { "type": "integer", "minimum": 0 },
           "description": "Exact event counts of the run, name -> integer: CAS failures, maximum retries, torn reads, litmus outcomes, lost claims."
         },
