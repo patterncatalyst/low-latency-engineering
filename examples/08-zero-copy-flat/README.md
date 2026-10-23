@@ -15,7 +15,7 @@ of objects. Java leads; C++ and Python are inline contrasts.
   `contracts/flat/parcel-v1/parcel_v1.hpp`; every offset is derived from the layout, and
   `ParcelLayoutTest` compares the derived offsets with the header's `static_assert(offsetof(...))` lines
   and with the table in the contract README. Value layouts are unaligned and little-endian: a UDP
-  payload is not guaranteed aligned, and the wire is little-endian whatever the host is.
+  payload isn't guaranteed aligned, and the wire is little-endian whatever the host is.
 - **`Arena`.** `FlatTable` allocates its slots from a confined arena, so the table's lifetime is explicit
   and its memory is outside the heap and the collector.
 - **`Linker` downcall.** `ClockGettime` binds `clock_gettime(CLOCK_MONOTONIC)` with a hand-written
@@ -26,7 +26,7 @@ of objects. Java leads; C++ and Python are inline contrasts.
 - **Compact object headers.** `-XX:+UseCompactObjectHeaders` (a product flag in JDK 25) shrinks every
   header from 12 to 8 bytes. JOL shows the effect on the object table; it does nothing to the flat table.
 
-Valhalla is not used: see [`VALHALLA.md`](VALHALLA.md).
+Valhalla isn't used: see [`VALHALLA.md`](VALHALLA.md).
 
 ## Workload
 
@@ -40,7 +40,7 @@ kind of memory (one direct buffer whose position and limit select a datagram).
 The table benchmark sweeps 1,000,000 in-flight parcels the way the tracker does at every encoder tick:
 total weight of the in-flight parcels whose `encoder_tick` has reached the diverter's, about 2 percent of
 the slots. Parcels arrive in order and sit at a shuffled slot, as a hash-addressed table fills, so slot
-order is not allocation order.
+order isn't allocation order.
 
 ## Variants
 
@@ -56,14 +56,14 @@ order is not allocation order.
 | C++ | `flat-table`, `pointer-table` | `std::vector<ParcelState>` against `std::vector<std::unique_ptr<ParcelState>>` (observed) |
 | Python | `unpack-from`, `parse-from-string` | `struct.Struct.unpack_from` over a `memoryview` against `ParseFromString` (observed) |
 
-### C++: three decodes, and the one that is not shown
+### C++: three decodes, and the one that isn't shown
 
 `decode-memcpy` is the contract's own `decode()`. `decode-bit-cast` copies into a `std::array` and
 `std::bit_cast`s it. `decode-start-lifetime-as` begins the lifetime of a `Parcel` in the bytes already
 there (`std::start_lifetime_as`, C++23; Clang 22 and GCC 16 compile it) and returns a pointer, so nothing
 is copied; it requires the buffer to be aligned for `Parcel`, and the function refuses a misaligned one.
 
-The fourth way, `reinterpret_cast<const Parcel*>(buffer)` and a read through it, is not a variant. No
+The fourth way, `reinterpret_cast<const Parcel*>(buffer)` and a read through it, isn't a variant. No
 `Parcel` object exists in that storage, so the read has undefined behaviour: it violates the object-lifetime
 and strict-aliasing rules, and an unaligned buffer adds an alignment violation. It usually appears to work,
 which is the hazard: an optimizer may assume that no `Parcel` is read from storage written as bytes and
@@ -73,10 +73,10 @@ sanctioned spelling of "these bytes already are a `Parcel`".
 
 ### Python: no view, so no zero allocation
 
-`unpack_from` over a `memoryview` does not copy the datagram, but it returns a tuple, and every numeric
+`unpack_from` over a `memoryview` doesn't copy the datagram, but it returns a tuple, and every numeric
 field larger than 256 is a new `int` object. `ParseFromString` reads fields lazily from a message that lives in
 protobuf's own arena, and each field read also creates an `int`. The lane reports blocks and new int
-objects per parcel for both paths; they are the same. In CPython "zero-copy" means no copy of the
+objects per parcel for both paths; they're the same. In CPython "zero-copy" means no copy of the
 bytes, not no allocation, and that divergence from the JVM and C++ is the point of the lane.
 
 ## The contract: why `parcel-v1` looks like this
@@ -85,7 +85,7 @@ bytes, not no allocation, and that divergence from the JVM and C++ is the point 
 golden files pin the bytes) is the minimum a flat wire needs to be safe to read in place:
 
 - **Fixed size, fixed offsets.** 80 bytes, every field at its natural alignment, no implicit padding (the
-  six reserved bytes are a named field that is zero on write). A reader jumps to an offset; there is nothing to
+  six reserved bytes are a named field that's zero on write). A reader jumps to an offset; there's nothing to
   scan, so nothing to allocate.
 - **Self-identifying header.** `schema_id` and `version` are the first four bytes. A reader checks them
   before it checks the size, so a later and larger version is reported as unsupported, not as a bad length.
@@ -98,8 +98,8 @@ golden files pin the bytes) is the minimum a flat wire needs to be safe to read 
   signedness mistake changes a field. C++, Java and Python decode the same files.
 
 This is the minimum, hand-written and small enough to read in one table. A production flat wire adds a
-framing header, variable-length fields, repeating groups and generated codecs; that is Simple Binary Encoding
-(SBE), the schema-driven format Aeron and Artio use, and it is the subject of Ch22. `parcel-v1` is the same
+framing header, variable-length fields, repeating groups and generated codecs; that's Simple Binary Encoding
+(SBE), the schema-driven format Aeron and Artio use, and it's the subject of Ch22. `parcel-v1` is the same
 set of ideas without the machinery, so the layout and the cost of reading it stay visible.
 
 ## Layout of the example
@@ -166,7 +166,7 @@ failed:
    the `protobuf-decode` p50 is at least 3 times the `flat-ffm` p50. Same JMH run.
 3. **Line.** At 10 kHz for 10 s, the receive thread's allocated bytes per parcel (channel, decode and
    handler; `runtime.alloc_bytes_per_parcel`) for `flat-ffm` are at most 5 % of `protobuf-decode`'s. The
-   floor is not zero: the first decode links the `VarHandle`s and loads classes on the receive thread, a one-time
+   floor isn't zero: the first decode links the `VarHandle`s and loads classes on the receive thread, a one-time
    cost spread over the parcels, so the percentage falls as the run gets longer.
 4. **Table sweep.** The `flat-table` p50 is at most half the `object-table` p50. Same JMH run.
 5. **Downcall.** `clock_gettime(CLOCK_MONOTONIC)` through FFM, standard and critical, agrees with
@@ -178,7 +178,7 @@ failed:
    `dropped` = 0; every Java report has `build.flags`.
 
 These are mechanism counters first (bytes per operation, bytes per parcel) and ratios between variants run
-back to back in one `verify.sh`, so they do not depend on the machine's absolute speed.
+back to back in one `verify.sh`, so they don't depend on the machine's absolute speed.
 
 ## Observation surfaces
 
@@ -220,8 +220,8 @@ kernel 7.2, Temurin 25.0.5+8, VM down). Ranges over the three runs.
 | Observed: Python `unpack_from` / `ParseFromString` | 8.7 blocks and 6.7 new `int` objects per parcel for both; per-call p50 336 to 349 ns / 997 to 1,050 ns |
 | Observed: line end-to-end latency, both variants | p50 57.0 to 57.6 us, p99 87 to 94 us, p99.9 4.9 to 11.1 ms |
 
-The line's end-to-end latency does not show the decode saving. The p99.9 of 4.9 to 11.1 ms
-was measured on unwarmed JVMs on the default heap (Ch5 measures that cost). It is lower for `flat-ffm` in each
+The line's end-to-end latency doesn't show the decode saving. The p99.9 of 4.9 to 11.1 ms
+was measured on unwarmed JVMs on the default heap (Ch5 measures that cost). It's lower for `flat-ffm` in each
 run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and this example
 attributes no cause to it. JMH and the allocation counters resolve the saving, 141 to 146 ns and 582 to
-583 B per parcel; an end-to-end percentile at this load does not.
+583 B per parcel; an end-to-end percentile at this load doesn't.

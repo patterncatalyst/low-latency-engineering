@@ -14,15 +14,15 @@ By the end of this chapter you can:
 - Write a hand-off over an Agrona `OneToOneRingBuffer` or a Disruptor ring, and map a sequence to a slot with a mask.
 - Keep the divert command off the data queue, and append an audit journal through a memory-mapped Chronicle Queue.
 - Move a million-entry manifest off the Java heap with Chronicle Map, and state what the lookup costs.
-- Pin a thread with OpenHFT Affinity, and say what guest isolation and a vCPU pin do and do not promise.
+- Pin a thread with OpenHFT Affinity, and say what guest isolation and a vCPU pin do and don't promise.
 
 ## Why this matters
 
-A parcel travels 1.2 m at 2.5 m/s from the scanner to the diverter, which leaves 480 ms from scan to divert. The receive thread hands each scan to a decide thread, and the belt does not wait: a stall charges every parcel behind it, as Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed. At 10 kHz, 4,800 parcels are in flight inside the budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*), so a consumer that wakes late has thousands of parcels behind it.
+A parcel travels 1.2 m at 2.5 m/s from the scanner to the diverter, which leaves 480 ms from scan to divert. The receive thread hands each scan to a decide thread, and the belt doesn't wait: a stall charges every parcel behind it, as Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed. At 10 kHz, 4,800 parcels are in flight inside the budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*), so a consumer that wakes late has thousands of parcels behind it.
 
-A `BlockingQueue` is the idiomatic hand-off. This chapter measures what it costs against spinning rings, a memory-mapped audit journal, an off-heap manifest and a pinned thread. None of this is a default: a spinning consumer holds a core at 100 %.
+A `BlockingQueue` is the idiomatic hand-off, and this chapter measures what it costs against spinning rings, a memory-mapped audit journal, an off-heap manifest and a pinned thread. None of them is a default: a spinning consumer holds a core at 100 %.
 
-The code is in `examples/07-offheap-lockfree/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
+Build and run it from `examples/07-offheap-lockfree/`; its `README.md` covers the options.
 
 ## Diagram
 
@@ -32,7 +32,7 @@ The code is in `examples/07-offheap-lockfree/`. The run script there builds and 
 
 ### Parking and spinning
 
-A `BlockingQueue` consumer in `take()` parks when the queue is empty, and the next `offer` wakes it through the kernel. At 10 kHz the queue is empty nearly every time a parcel arrives, so nearly every parcel pays a park and a wake. A spinning consumer polls in a loop and never blocks. That removes the wake-up and costs a core whether parcels arrive or not, so it belongs on a dedicated, pinned thread.
+A `BlockingQueue` consumer in `take()` parks when the queue is empty, and the next `offer` wakes it through the kernel. At 10 kHz the queue is empty nearly every time a parcel arrives, so nearly every parcel pays a park and a wake. A spinning consumer polls in a loop and never blocks. That removes the wake-up. It also costs a core whether parcels arrive or not, so it belongs on a dedicated, pinned thread.
 
 ### Libraries and the ring
 
@@ -143,7 +143,7 @@ In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads
     }
 ```
 
-`tryNext` claims a sequence, or throws `InsufficientCapacityException` when the ring is full; the run counts an overflow and criteria require none. The `finally` matters: a claim that is never published would stall the consumer. The C++ lane's parking consumer calls `std::atomic::wait` in `wait_for_data`, which futex-sleeps after a short spin.
+`tryNext` claims a sequence, or throws `InsufficientCapacityException` when the ring is full; the run counts an overflow and criteria require none. The `finally` matters: a claim that's never published would stall the consumer. The C++ lane's parking consumer calls `std::atomic::wait` in `wait_for_data`, which futex-sleeps after a short spin.
 
 ```cpp
   /// Producer only: wake a consumer parked in wait_for_data(). The wake-up costs a system call
@@ -162,7 +162,7 @@ In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads
 
 ### The command path
 
-The decide thread sends a `DivertCommand` on its own UDP socket (port 47271). It never passes through the hand-off, so a flood of scans cannot queue ahead of a command and a slow listener cannot back up the scans.
+The decide thread sends a `DivertCommand` on its own UDP socket (port 47271). It never passes through the hand-off, so a flood of scans can't queue ahead of a command and a slow listener can't back up the scans.
 
 ### The audit journal
 
@@ -217,13 +217,13 @@ After the command has gone out, each scan event is appended to a journal. `Chron
     }
 ```
 
-Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, pre-toucher, replication, encryption) are not used; Appendix F surveys them. `BufferMode.None` is the only open-source buffer mode.
+Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, pre-toucher, replication, encryption) aren't used; Appendix F surveys them. `BufferMode.None` is the only open-source buffer mode.
 
 Chronicle Core posts usage analytics unless `chronicle.analytics.disable` is `true`. This example disables them in code (`ChronicleAnalytics.disable()`, above), in `java/pom.xml` and in `verify.sh`; `ChronicleAnalyticsTest` checks it, and `scripts/validate.py` fails a Chronicle source without it. In your own program, set it before the first queue or map is built.
 
-The open-source pre-toucher hook is a stub that calls itself until `StackOverflowError` (confirmed with `javap`). The code never calls it. Do not call it.
+The open-source pre-toucher hook is a stub that calls itself until `StackOverflowError` (confirmed with `javap`). The code never calls it, and yours shouldn't.
 
-The open-source queue does not `fsync` on append; no claim here depends on durability.
+The open-source queue doesn't `fsync` on append; no claim here depends on durability.
 
 ### The manifest and the heap
 
@@ -270,7 +270,7 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 **Context switches (criterion 1).** Voluntary switches of the decide thread over 200,000 parcels: `blocking-queue` 199,383-199,582, `agrona-spsc` 38-47 and `disruptor` 23-31. The bounds are at most 1 % of the parcels for the spinners and at least 25 % for the queue. `linked-queue` and `disruptor-blocking-wait` park too (observed), at 199,489-199,577. `agrona-spsc-backoff` (observed) spins, yields, then parks, and the park phase returns the switches: 358,518-358,735.
 
-**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,455-11,743 ns, `agrona-spsc` 572-674 ns and `disruptor` 674-731 ns. The bound is one fifth of `blocking-queue`'s in the same run. All three runs passed, with Disruptor margins (bound over observed) of 3.48, 2.86 and 3.38. Run 1 of an earlier set (git history, d419992) hit a Disruptor p99 of 2,117 ns, a margin of 1.01. It did not recur here, and no cause was measured. A spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
+**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,455-11,743 ns, `agrona-spsc` 572-674 ns and `disruptor` 674-731 ns. The bound is one fifth of `blocking-queue`'s in the same run. All three runs passed, with Disruptor margins (bound over observed) of 3.48, 2.86 and 3.38. Run 1 of an earlier set (git history, d419992) hit a Disruptor p99 of 2,117 ns, a margin of 1.01. It didn't recur here, and no cause was measured. A spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
 
 **Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007-0.0009 B/op (both under 1 B/op), `linked-queue` 96.7-96.9 B/op. `blocking-queue`, observed, allocates 93.4-98.5 B/op for the immutable `Scan` record. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covers what an allocation costs.
 
@@ -284,7 +284,7 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 ### The VM part: pinning to an isolated vCPU
 
-The isolation lives in a lab guest restored from a snapshot; the host is not changed.
+The isolation lives in a lab guest restored from a snapshot; the host isn't changed.
 
 ```bash
 scripts/lab/revert-vm.sh lowlat-target lab-ready-iso && scripts/lab/lab-up.sh
@@ -311,7 +311,7 @@ Each run does the 10 kHz, 20 s workload unpinned and pinned, alternated three ti
 
 **Placement (criterion 3).** The pinned thread's `Cpus_allowed_list` was CPU 3 and `/proc` showed it on CPU 3. The unpinned thread was allowed on CPUs 0-3 and seen on CPUs 0-2.
 
-Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and does not remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own isolation, and Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, covers the real-time kernel.
+Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and doesn't remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own isolation, and Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, covers the real-time kernel.
 
 ## Cross-check
 
@@ -323,7 +323,7 @@ The decide thread's switches (read from `/proc/<pid>/task/<tid>/status`) and the
 - Agrona and Disruptor rings publish under 1 B/op (0.0004 and 0.0007 to 0.0009) and map a sequence to a slot with a mask.
 - The divert command travels on its own socket and never shares a queue with the scans.
 - A memory-mapped journal removes the system call, not the first-touch fault; a Chronicle Map trims the heap at the price of a slower lookup.
-- A pin to an isolated vCPU removed the preemption in the VM; it narrows the tail and is not host isolation.
+- A pin to an isolated vCPU removed the preemption in the VM; it narrows the tail and isn't host isolation.
 
 The next chapter, *Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison*, removes most of the allocation from the decode that feeds this hand-off.
 

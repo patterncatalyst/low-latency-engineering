@@ -10,14 +10,14 @@ variants, each swapping one stage. Java leads; a C++ lane measures the same hand
 A parcel crosses three boundaries between the scanner and the diverter:
 
 1. **Receive thread to decide thread.** The hand-off is the data path. A `BlockingQueue` is the
-   idiomatic choice and parks the consumer when it is empty; waking it costs a trip through the
+   idiomatic choice and parks the consumer when it's empty; waking it costs a trip through the
    kernel. An Agrona `OneToOneRingBuffer` over an `UnsafeBuffer` on a direct `ByteBuffer`, or an
    LMAX Disruptor ring of preallocated events, publishes with two ordered stores and lets the
    consumer spin on the sequence. Nothing is allocated per parcel, and the garbage collector
    never sees the records.
 2. **Decide thread to the diverter.** The divert command leaves on its own UDP socket to its own
-   address. It never travels through the hand-off structure, so a flood of scans cannot queue
-   ahead of a command and a slow listener cannot back up the scans.
+   address. It never travels through the hand-off structure, so a flood of scans can't queue
+   ahead of a command and a slow listener can't back up the scans.
 3. **Decide thread to the audit journal.** Every scan event is appended to a journal after the
    command has gone out. A Chronicle Queue appender writes into memory-mapped pages; the
    alternative is one `FileChannel.write` system call per event.
@@ -27,7 +27,7 @@ The shift manifest (barcode serial to destination, 1,000,000 entries) is a fourt
 the program runs; a Chronicle Map keeps the entries in native memory and leaves the heap with
 the map handle.
 
-The spinning variants are not a default. A busy-spin consumer holds a core at 100 % whether or
+The spinning variants aren't a default. A busy-spin consumer holds a core at 100 % whether or
 not parcels arrive, so the technique belongs to a dedicated, pinned thread (the VM part of this
 chapter). On the host, scheduling is the kernel's choice and every spin thread competes with
 the simulator and with the rest of the machine.
@@ -170,13 +170,13 @@ usage analytics unless `-Dchronicle.analytics.disable=true` is set; the scripts 
   so the read lands before it exits. The C++ lane prints the same two lines.
 - **Allocation.** JMH `-prof gc` on `PublishBenchmark`, which calls the production
   `HandOff.publish` with a draining consumer: `gc.alloc.rate.norm` is bytes per publish across all
-  threads. The throughput score is not a latency and is not quoted.
+  threads. The throughput score isn't a latency and isn't quoted.
 - **Old generation.** After the run, `System.gc()` and the old-generation `MemoryPoolMXBean`
   usage, once, off the hot path (`OldGen`). Written to the end-to-end and window reports as
   `runtime.gc.old_gen_used_bytes`, with the figure before the manifest was loaded as
   `old_gen_baseline_bytes` in the notes.
 - **GC and safepoint log.** `-Xlog:gc*,safepoint` through `-Xlog:async` to
-  `results/<run>/java-<variant>.gc.log`. A JFR recording is not taken: its sampler is another
+  `results/<run>/java-<variant>.gc.log`. A JFR recording isn't taken: its sampler is another
   thread on a measured path.
 - **Journal I/O.** `decide_write_syscalls` (`syscw` of the decide thread) and `decide_minor_faults`
   (field 10 of its `/proc/P/task/T/stat`) in the end-to-end notes, taken over the same window as the
@@ -200,11 +200,11 @@ usage analytics unless `-Dchronicle.analytics.disable=true` is set; the scripts 
 4. The journal tailer reads back exactly 200,000 events in sequence order. The decide thread makes no
    write system call under `chronicle-journal` (at most 1 % of the events) and at least one per event
    under `write-per-parcel` (exact), read from `syscw` in `/proc/P/task/T/io`. The decide thread's
-   minor faults show the first touch of the mapped file: under `chronicle-journal` they are at least
+   minor faults show the first touch of the mapped file: under `chronicle-journal` they're at least
    the journal's bytes / (4096 x 16), the floor even if every fault mapped 16 pages, and at least 5x
    the `write-per-parcel` count, which sits near the thread's baseline. The append p50, p99 and p99.9
    of both are reported as observed, with the faults, the journal bytes, `journal_fs`, the block size
-   and the roll cycle; the p99 ratio is not asserted.
+   and the roll cycle; the p99 ratio isn't asserted.
 5. Old generation after a full GC: `chronicle-map-manifest` at most one quarter of
    `on-heap-manifest`.
 6. Every run: `count` = 200,000, `dropped` = 0, no hand-off overflow, every divert command received,
@@ -215,7 +215,7 @@ all three `r02-run1..3` runs, with Disruptor margins (bound over observed) of 3.
 Disruptor's steady-window hand-off p99 was 674, 731 and 694 ns; the `blocking-queue` p99 was 11,719,
 10,455 and 11,743 ns, so the bounds were 2,344, 2,091 and 2,349 ns. Run 1 of the committed set from
 an earlier set (git history, d419992) hit a Disruptor p99 of 2,117 ns against a bound of 2,131 ns, a margin
-of 1.01. It did not recur in these three runs, and no cause was measured. The bound stays at one fifth.
+of 1.01. It didn't recur in these three runs, and no cause was measured. The bound stays at one fifth.
 
 ### What the memory-mapped append removes
 
@@ -224,7 +224,7 @@ It removes the system call, not the first-touch page fault. The appender copies 
 minor fault. In one calibration run on tmpfs (2026-10-22, not committed) the run used one 80 MiB
 file and the faulting append took about 1.9 us against a median of 0.3 us. Records are about 75 bytes, so on tmpfs a fault falls on roughly
 every 55th append (1.9 % of appends, more than the 1 % that a p99 looks at: there the Chronicle p99 is the
-fault); on btrfs it is 0.7 % and the p99 drops below the fault.
+fault); on btrfs it's 0.7 % and the p99 drops below the fault.
 How often it happens depends on the file system under the journal:
 
 | `journal_fs` | Decide-thread minor faults, 200,000 appends (15.0 MB, 3,662 pages) | Per page | Chronicle p50 / p99 / p99.9 | `write-per-parcel` p50 / p99 / p99.9 |
@@ -243,14 +243,14 @@ and `ChronicleQueue.createPretoucher()` are the pre-toucher hook, and pretouchin
 feature. In the 2026.7 OSS jar `PretouchFactoryEmpty.createPretoucher(q)` calls `q.createPretoucher()`,
 which is the default method that dispatches back to the same factory, so the call recurses until
 `StackOverflowError`; `ExcerptAppender.pretouch()` on a `StoreAppender` reaches the same method. Do not
-call it. A larger `blockSize` does not help either (faults are per page touched, not per chunk map).
+call it. A larger `blockSize` doesn't help either (faults are per page touched, not per chunk map).
 
 Observed, not asserted: `agrona-spsc-backoff` (the park phase of the idle strategy returns the
 context switches), `disruptor-blocking-wait` against `disruptor`, the manifest lookup cost of the
 off-heap map against the `HashMap`, and the C++ `atomic-spsc` against `atomic-wait` hand-off and
 context switches.
 
-The open-source queue does not `fsync` on append, and no claim here depends on durability.
+The open-source queue doesn't `fsync` on append, and no claim here depends on durability.
 
 ## VM part: pinning to an isolated CPU
 
@@ -275,7 +275,7 @@ The same 10 kHz x 20 s run (N = 200,000) then goes twice, alternated three times
 
 `pinned-isolated` fails loudly instead of measuring something else: the program refuses to start
 when the guest's `/proc/cmdline` has no `isolcpus=3`, and the decide thread throws when the lock
-does not leave `Affinity.getCpu()` at 3. The script also reads `Cpus_allowed_list` and the CPU of
+doesn't leave `Affinity.getCpu()` at 3. The script also reads `Cpus_allowed_list` and the CPU of
 the decide thread from `/proc` and requires CPU 3 alone.
 
 Criteria:
@@ -294,17 +294,17 @@ and `stress-ng` confined to CPUs 0-2, and removes `stress-ng` and any JVM it sta
 fails. The host-built `benchmarks.jar` and `line-simulator` are copied into the guest; nothing is
 built there and nothing system-level changes on the host.
 
-What isolation and the pin promise, and what they do not:
+What isolation and the pin promise, and what they don't:
 
 - **Inside the guest**, `isolcpus` takes CPU 3 out of the scheduler's balancing and `nohz_full` and
   `rcu_nocbs` take the tick and RCU callbacks off it, so once the decide thread owns it nothing else
   is scheduled there: no other task to preempt it, and the stress workers stay on CPUs 0-2.
-- **The host is not partitioned.** The libvirt pin sends vCPU 3 to host CPU 13 and nowhere else, but
+- **The host isn't partitioned.** The libvirt pin sends vCPU 3 to host CPU 13 and nowhere else, but
   the host kernel may still schedule other work on CPU 13 and on its hyperthread sibling CPU 5, and
   any host interrupt can still land there. The guest sees such a stall only as lost time.
-  The pin narrows the tail; it does not remove the host's share of it.
+  The pin narrows the tail; it doesn't remove the host's share of it.
 - **A VM number is a `vm` number.** It carries the hypervisor's timing, the virtual clock and the
-  noise of whatever the host is doing. It is never compared with a host (bare-metal) number in this
+  noise of whatever the host is doing. It's never compared with a host (bare-metal) number in this
   book, and the unpinned/pinned comparison holds only inside one boot of one guest.
 - Isolation is deployment configuration (kernel arguments and a domain pin, both versioned in
   `scripts/lab/`), not a tweak: Chapters 15 and 18 own it as such. This part previews it.
@@ -335,9 +335,9 @@ What isolation and the pin promise, and what they do not:
 | JMH 1.37 | GPL-2.0 with Classpath exception | allocation benchmark |
 
 Only the open-source edition of Chronicle is used. Its commercial edition adds features this
-example does not use: asynchronous write buffers (`BufferMode.Asynchronous`), the pre-toucher,
+example doesn't use: asynchronous write buffers (`BufferMode.Asynchronous`), the pre-toucher,
 queue and map replication, queue encryption and timezone roll-over. `BufferMode.None` is the only
-buffer mode the open-source queue offers, and it is the one set here. Chronicle, through its `jffi`
+buffer mode the open-source queue offers, and it's the one set here. Chronicle, through its `jffi`
 native-call dependency, and the JMH harness call `sun.misc.Unsafe` memory-access methods; JDK 25 warns
 at first use (JEP 471, JDK 23, deprecated them for removal; JEP 498, JDK 24, made the warning the
 default), and the warnings stay on.
@@ -348,7 +348,7 @@ Chronicle Core posts usage analytics at startup unless the system property
 initializer of every class that touches Chronicle (`ChronicleJournal`, `ChronicleMapManifest`)
 and in `Handoff.main`; `-Dchronicle.analytics.disable=true` in the surefire `argLine` and the
 `exec:exec` arguments of `java/pom.xml`; the same flag in the `PublishBenchmark` fork and in
-`verify.sh`; and `ChronicleAnalyticsTest`, which fails if the forked test JVM was not started with
+`verify.sh`; and `ChronicleAnalyticsTest`, which fails if the forked test JVM wasn't started with
 it. `scripts/validate.py` (check `chronicle`) fails any pom or Java source that uses Chronicle
 without one of them. If you write your own program on these classes, set the property before
 the first queue or map is built.
@@ -378,7 +378,7 @@ Behavioural. The host part and the VM part each assert their criteria, and all o
 | Every run | 200,000 parcels counted, none dropped, no overflow, every divert command received, `lowlat-report check` passes |
 
 Criterion 2 passed in all three runs, with Disruptor margins of 3.48, 2.86 and 3.38 (p99 of 674, 731 and
-694 ns against bounds of 2,344, 2,091 and 2,349 ns). The old run 1 hit an outlier that did not recur: its
+694 ns against bounds of 2,344, 2,091 and 2,349 ns). The old run 1 hit an outlier that didn't recur: its
 Disruptor p99 was 2,117 ns against a bound of 2,131 ns, a margin of 1.01. Those earlier committed runs
 are in git history at d419992. No cause was measured.
 
@@ -395,7 +395,7 @@ with three alternations of unpinned and pinned in one boot:
 | Placement | pinned thread: `Cpus_allowed_list` CPU 3, seen on CPU 3 in every alternation; unpinned thread allowed on CPUs 0-3 and seen on CPUs 0-2 |
 | Every run | 200,000 parcels counted, none dropped, no overflow, every divert command received |
 
-Pinned p99.9 stays at tens of microseconds: the pin narrows the tail and does not remove the host's
+Pinned p99.9 stays at tens of microseconds: the pin narrows the tail and doesn't remove the host's
 share of it (see the VM part above).
 
 Calibrated on a quiet host on 2026-10-22 (three dry runs on tmpfs, three more on btrfs, one more on tmpfs
