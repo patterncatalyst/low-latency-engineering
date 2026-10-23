@@ -11,13 +11,13 @@ they process the same number of parcels per second. The batch variant holds
 parcels until 32 have arrived and then handles them together, the
 "throughput-friendly" design. Each parcel's latency is `done - intended_emit`,
 so a parcel that arrives first waits for 31 more (31 ms at 1 kHz) before it is
-handled. Throughput is equal; p50 is 15.2 to 15.4 ms instead of 0.106 to 0.182 ms (r02-run1..3).
+handled. Throughput is equal; p50 is 15.2 to 15.4 ms instead of 0.085 to 0.188 ms (r02-run1..3).
 
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
 a scanner no-read) takes a slow re-lookup path of about 2 ms. The median does
-not move. p99 jumps by 7 to 27 times, because the slow parcel and the
-parcels queued behind it all land in the tail: in r02-run1..3, 2.9 to 4.6 % of
-parcels took 1 ms or more, and p99 was 2,664,447 to 5,611,519 ns. A single summary number
+not move. p99 jumps by 11 to 30 times, because the slow parcel and the
+parcels queued behind it all land in the tail: in r02-run1..3, 2.6 to 6.8 % of
+parcels took 1 ms or more, and p99 was 2,140,159 to 6,832,127 ns. A single summary number
 describes neither group.
 
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
@@ -108,23 +108,23 @@ examples/build/release/common/line-simulator/line-simulator --rate 1000 --durati
    `notes` as `throughput_mhz` (milli-Hz, integer; `n/a` when fewer than two
    parcels completed, which fails the criterion). The batch variant's first
    completion is 31 ms into the run, so its C++ and Python figures are about
-   0.3 % higher; Java's differ by under 0.13 % in r02-run1..3.
+   0.3 % higher; Java's differ by under 0.16 % in r02-run1..3.
 2. `batch-32` p50 is at least 10x the `per-parcel` p50.
 3. `bimodal-1pct` p99 is at least 20x its own p50.
 4. `bimodal-1pct` p50 is under a quarter of the same run's measured slow-path
    duration (`slow_path_us` in `notes`): the median stays in the fast mode. An
    earlier version compared it with the `per-parcel` run's p50 and failed in one
    quiet-host run (commit `1811055`), because on an untuned host the median itself moves between
-   runs (C++ per-parcel p50 122, 156 and 157 us across r02-run1..3). Comparing within one run removes that dependence.
+   runs (C++ per-parcel p50 164, 157 and 160 us, Java 112, 188 and 85 us across r02-run1..3). Comparing within one run removes that dependence.
 
 All reports must also have `count = 10000`, `dropped = 0`, and pass
 `lowlat-report check`.
 
 Criterion 3 depends on the 1 % boundary: exactly 100 of 10,000 parcels are slow,
 so p99 sits where the slow parcels and the parcels queued behind them meet
-(2.7 to 5.6 ms in r02-run1..3). The ratio therefore also depends on how small the
+(2.1 to 6.8 ms in r02-run1..3). The ratio therefore also depends on how small the
 median is.
-On a loaded host the median grows and the margin shrinks.
+On a loaded host the median grows and the margin shrinks. In r02-run2 the C++ bimodal p99 was 22.4 times its p50 against the bound of 20, a margin of 1.12.
 
 ## Verification status
 
@@ -142,13 +142,14 @@ three runs, in nanoseconds:
 
 | Variant | p50 | p99 |
 |---|---|---|
-| per-parcel (all languages) | 106,111 to 181,759 | 185,343 to 357,119 |
-| batch-32 (all languages) | 15,179,775 to 15,441,919 | 31,080,447 to 31,227,903 |
-| bimodal-1pct (all languages) | 95,487 to 191,231 | 2,664,447 to 5,611,519 |
+| per-parcel (all languages) | 85,439 to 187,519 | 188,671 to 404,735 |
+| batch-32 (all languages) | 15,179,775 to 15,417,343 | 31,113,215 to 31,211,519 |
+| bimodal-1pct (all languages) | 95,423 to 232,063 | 2,140,159 to 6,832,127 |
 
-The per-parcel median itself moves between runs on this untuned host (C++ 122,047,
-155,903 and 156,927 ns across runs 1 to 3), which is why no criterion compares
-medians across runs.
+The per-parcel median itself moves between runs on this untuned host (C++ 164,479,
+156,671 and 160,127 ns, Java 111,871, 187,519 and 85,439 ns across runs 1 to 3). The
+1 kHz consumers switch at random between a mode near 100 us and one near 155 to 170 us on
+this host; the cause is not identified. No criterion compares medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU
 governor, tuned profile, virtualisation, load.

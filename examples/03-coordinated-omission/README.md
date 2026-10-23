@@ -55,8 +55,8 @@ Each language is also a plain program (`run` and `probe` subcommands):
 
 ### Why `intended-time` has a floor the others cannot see
 
-With no stall, `intended-time` p99 is still 0.19 to 0.28 ms while `receipt-time` is 5 to 58
-us (C++ 5.2 to 6.8, Python 25.1 to 26.8, Java 31.8 to 57.9). `intended-time` starts at the belt's schedule, so it includes the
+With no stall, `intended-time` p99 is still 0.19 to 0.42 ms while `receipt-time` is 5 to 75
+us (C++ 5.2 to 8.0, Python 25.7 to 27.8, Java 53.8 to 74.9). `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,
 so neither can see that part. The floor is real latency of the line, not a stall,
@@ -118,10 +118,10 @@ the three runs, in all three languages:
 
 | Quantity | Range (p99 unless noted) |
 |---|---|
-| `intended-time`, stall | 100,335,615 to 102,301,695 ns |
-| `closed-loop-corrected`, stall | 98,107,391 to 99,287,039 ns |
-| `receipt-time`, stall | 5,067 to 52,479 ns |
-| `closed-loop-naive`, stall | 956 to 19,759 ns |
-| `intended-time-control` | 185,855 to 284,159 ns |
-| `closed-loop-corrected-control` = `closed-loop-naive-control` | 953 to 19,503 ns (identical per language) |
-| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 42 to 47 ns |
+| `intended-time`, stall | 100,401,151 to 101,842,943 ns |
+| `closed-loop-corrected`, stall | 98,238,463 to 99,287,039 ns |
+| `receipt-time`, stall | 5,447 to 49,695 ns |
+| `closed-loop-naive`, stall | 961 to 19,359 ns |
+| `intended-time-control` | 185,343 to 424,703 ns |
+| `closed-loop-corrected-control` = `closed-loop-naive-control` | 965 to 19,839 ns (identical per language) |
+| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 42 to 46 ns |

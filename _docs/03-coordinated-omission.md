@@ -107,7 +107,7 @@ The consumer receives each parcel as a UDP datagram, handles it, and records a l
 - **Receipt time** starts when the consumer dequeues the datagram. It is what a service-side timer reports. It measures handling only.
 - **Closed loop** is a client that issues the next request only after the previous one completes, one request per millisecond, with the same 200 ms stall. Each request is timed from its own start. Recorded as is, it is the naive variant. Recorded through the histogram's correction call it is the corrected variant.
 
-{% include excalidraw.html file="03-coordinated-omission" alt="Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.1-5.4 us) and intended-time (p99 100.3-100.5 ms C++, 100.8-101.5 ms Java); in the closed-loop run a client feeds naive (p99 1.0 us C++, 6.9-7.0 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.1-99.3 ms Java)." caption="Figure 3.2 — A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (Intel Core i7-11800H, Fedora 44 kernel 7.2.11-200.fc44, governor `powersave`), runs r02-run1..3." %}
+{% include excalidraw.html file="03-coordinated-omission" alt="Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.4-11.9 us) and intended-time (p99 100.4-100.5 ms C++, 101.4-101.7 ms Java); in the closed-loop run a client feeds naive (p99 1.0-1.1 us C++, 6.9-7.1 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.2-99.3 ms Java)." caption="Figure 3.2 — A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (Intel Core i7-11800H, Fedora 44 kernel 7.2.11-200.fc44, governor `powersave`), runs r02-run1..3." %}
 
 The first two variants come from the same datagrams in the same run. Parcel 5000 triggers the stall. During those 200 ms the simulator keeps emitting, so about 200 parcels wait in the socket. The consumer then drains them back to back, so receipt time records 200 fast samples. Intended time records the same 200 parcels with waits that fall from about 200 ms to near zero. The third and fourth variants come from a separate closed-loop phase in the same process.
 
@@ -300,28 +300,28 @@ It builds the three programs, runs each for 10 s at 1,000 parcels/s with the sta
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges span the three committed runs, `results/r02-run1` to `r02-run3`. Java and Python run unwarmed.
 
-**Clock read.** `monotonic_ns` through `clock_gettime` costs a p50 of 12 ns in C++ in all three runs, and `std::chrono::steady_clock` costs 13 ns. `System.nanoTime` costs 12 to 13 ns. Python is about 3.5 to 3.9 times higher: `time.monotonic_ns` 44 to 47 ns and `time.perf_counter_ns` 42 to 45 ns. The `tsc` clocksource is read in user space through the vDSO, which is why a read costs tens of nanoseconds and not a syscall. `acpi_pm`, which this host also lists, is not readable through the vDSO, so each read would be a system call. Timing work shorter than a few clock reads measures the clock.
+**Clock read.** `monotonic_ns` through `clock_gettime` costs a p50 of 12 ns in C++ in all three runs, and `std::chrono::steady_clock` costs 13 ns. `System.nanoTime` costs 12 to 13 ns. Python is about 3.6 to 3.8 times higher: `time.monotonic_ns` 43 to 46 ns and `time.perf_counter_ns` 42 to 44 ns. The `tsc` clocksource is read in user space through the vDSO, which is why a read costs tens of nanoseconds and not a syscall. `acpi_pm`, which this host also lists, is not readable through the vDSO, so each read would be a system call. Timing work shorter than a few clock reads measures the clock.
 
 **The stall, four ways (p99).**
 
 | Variant | C++ | Python | Java |
 |---|---|---|---|
-| receipt-time | 5.1 to 5.4 us | 25.6 to 52.5 us | 32.0 to 48.5 us |
-| intended-time | 100.3 to 100.5 ms | 101.4 to 102.3 ms | 100.8 to 101.5 ms |
-| closed-loop naive | 1.0 us | 19.2 to 19.8 us | 6.9 to 7.0 us |
-| closed-loop corrected | 98.2 ms | 98.1 to 98.3 ms | 99.1 to 99.3 ms |
+| receipt-time | 5.4 to 11.9 us | 25.6 to 48.4 us | 37.4 to 49.7 us |
+| intended-time | 100.4 to 100.5 ms | 100.7 to 101.8 ms | 101.4 to 101.7 ms |
+| closed-loop naive | 1.0 to 1.1 us | 19.2 to 19.4 us | 6.9 to 7.1 us |
+| closed-loop corrected | 98.2 ms | 98.2 ms | 99.2 to 99.3 ms |
 
 The receipt-time and closed-loop naive variants stay in microseconds, while intended-time and closed-loop corrected land near 100 ms. The arithmetic explains that. The 200 stalled parcels are 2 percent of 10,000 samples, and their waits fall linearly from about 200 ms to zero. The p99 sits 1 percent from the top, which is the midpoint of that ramp, about 100 ms. The corrected loop has the same shape: 199 back-filled values from 199 ms down to 1 ms plus the 200 ms sample, so its p99 is also near 100 ms.
 
-The maximum cannot separate the methods. Every variant records the stalled sample, so the max is about 200 ms everywhere, including receipt time (C++ 200.3 ms) and the naive closed loop (C++ 200.3 ms). The naive methods hold the stall as one sample. The p99 shows that it hurt 200 parcels.
+The maximum cannot separate the methods. Every variant records the stalled sample, so the max is about 200 ms everywhere, including receipt time (C++ 200.1 ms) and the naive closed loop (C++ 200.3 ms). The naive methods hold the stall as one sample. The p99 shows that it hurt 200 parcels.
 
-**The control (no stall).** The correction must add nothing when nothing is late. In the control, closed-loop naive and corrected have the same count, 10,000, and the same p99 in every run: C++ 1.0 us, Python 19.2 to 19.5 us, Java 5.8 to 6.0 us. Control intended-time p99 is 186 to 253 us in C++, 199 to 216 us in Python and 221 to 284 us in Java, while receipt time is 5.2 to 6.8 us in C++. That gap is real latency, not a stall. Intended time includes the simulator waking late to send, the loopback hop and the socket queue; receipt time and the closed loop start after all of that. It is also why the control criterion is a p99 under 1 ms rather than a comparison with the other clocks. Java's control also shows an intended-time p99.9 of 9.4 to 18.0 ms, consistent with the unwarmed start.
+**The control (no stall).** The correction must add nothing when nothing is late. In the control, closed-loop naive and corrected have the same count, 10,000, and the same p99 in every run: C++ 1.0 us, Python 19.1 to 19.8 us, Java 6.0 to 6.2 us. Control intended-time p99 is 185 to 400 us in C++, 209 to 213 us in Python and 267 to 425 us in Java, while receipt time is 5.2 to 8.0 us in C++. That gap is real latency, not a stall. Intended time includes the simulator waking late to send, the loopback hop and the socket queue; receipt time and the closed loop start after all of that. It is also why the control criterion is a p99 under 1 ms rather than a comparison with the other clocks. Java's control also shows an intended-time p99.9 of 10.1 to 25.7 ms, consistent with the unwarmed start.
 
 **Criteria, per language.** Intended-time p99 is at least 50 ms. Receipt-time p99 is under 1 ms. Corrected p99 is within 2x of intended-time p99. Naive p99 is under 1 ms. In the control, intended-time p99 is under 1 ms and corrected p99 is within 2x of naive p99.
 
 ## Cross-check
 
-`lowlat-report check` decodes each report's HdrHistogram, recomputes p50, p90, p99, p99.9 and max from the decoded counts, and asserts they equal the emitted values, using the rank convention of the writing language. The variants also cross-check each other. The corrected loop and the intended-time clock reach their numbers by different mechanisms, a back-filled client and a schedule clock, and still agree: in every run corrected p99 is 2.1 to 2.3 % under intended time in C++, 3.2 to 3.9 in Python and 1.7 to 2.2 in Java. Two independent mechanisms agreeing confirms the back-fill.
+`lowlat-report check` decodes each report's HdrHistogram, recomputes p50, p90, p99, p99.9 and max from the decoded counts, and asserts they equal the emitted values, using the rank convention of the writing language. The variants also cross-check each other. The corrected loop and the intended-time clock reach their numbers by different mechanisms, a back-filled client and a schedule clock, and still agree: in every run corrected p99 is 2.2 to 2.3 % under intended time in C++, 2.4 to 3.5 in Python and 2.1 to 2.4 in Java. Two independent mechanisms agreeing confirms the back-fill.
 
 ## What you learned
 

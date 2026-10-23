@@ -69,7 +69,7 @@ nodes = [
         "w": 340,
         "h": 66,
         "style": "ink",
-        "lines": ["L sampled vs lambda x W-bar", "C++  +0.2 to +0.6 %", "Java +0.7 to +2.0 %"],
+        "lines": ["L sampled vs lambda x W-bar", "C++  +0.3 to +0.5 %", "Java +1.3 to +4.3 %"],
     },
 ]
 

@@ -82,16 +82,16 @@ executions, which is why pyperf runs warm-up values first, discards them from th
 records them. For this function the effect is small: pyperf's own output reports
 `2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each value covers 64
 calls of the 1,024-prefix function and the interpreter is warm before the first value
-finishes. The first warm-up of the calibration run (a cold interpreter) was 1,912 to 1,991 ns
-per check digit and the median measured value 1,977 to 1,989 ns across r02-run1..3: 3.0 and 3.3
-percent lower in runs 2 and 3, 0.4 percent higher in run 1, and below the minimum measured value in runs 2 and 3 (minimum 1,973 and 1,952 ns, first warm-up 1,929 and 1,912 ns) but not in run 1 (minimum 1,966 ns, first warm-up 1,991 ns). `verify.sh` prints both. A function with a
+finishes. The first warm-up of the calibration run (a cold interpreter) was 1,894 to 1,917 ns
+per check digit and the median measured value 1,974 to 2,023 ns across r02-run1..3: 5.6, 4.1 and 4.7
+percent lower than the median in runs 1 to 3, and below the minimum measured value in every run (minimum 2,001, 1,951 and 1,959 ns; first warm-up 1,909, 1,894 and 1,917 ns). `verify.sh` prints both. A function with a
 long first call would show more.
 
 ## Host state and the pyperf warning
 
 Numbers here are host bare metal, untuned: governor `powersave`, tuned profile `balanced`,
-turbo on (recorded in `profile.json` and in every report). In run 2 pyperf printed "the
-benchmark result may be unstable"; every run advises `pyperf system tune`. The warning stays.
+turbo on (recorded in `profile.json` and in every report). In all three runs pyperf printed "the
+benchmark result may be unstable" and advised `pyperf system tune`. The warning stays.
 Tuning the system (governor, turbo, CPU isolation) changes the host, which this repository
 does not do; it is taught in Part 5, inside the lab VM. `pyperf system show` is read-only and
 its output is saved as `pyperf.system-show.txt`.
@@ -119,14 +119,14 @@ least 20 values from at least 3 worker processes; the six converted reports pass
 `lowlat-report check` with the profile embedded.
 
 All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `powersave`,
-tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning in run 2).
+tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning in every run).
 Ranges over the three runs:
 
 | Harness | Result |
 |---|---|
-| Google Benchmark (C++) | guarded median 4.73 to 4.76 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 473 to 476x (divisor floored at 0.01 ns, so a lower bound) |
-| JMH SampleTime (Java) | guarded p50 32 ns; eliminated p50 0 ns; ratio 3,200x (floored) |
-| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,977 to 1,988 ns |
+| Google Benchmark (C++) | guarded median 4.73 to 4.74 ns per check digit; eliminated median below 0.5 ns (0 ns in the report); ratio 472 to 473x (divisor floored at 0.01 ns, so a lower bound) |
+| JMH SampleTime (Java) | guarded p50 31 to 32 ns; eliminated p50 0 ns; ratio 3,100 to 3,200x (floored) |
+| pyperf (Python) | 24 values from 6 worker processes; 64 outer loops x 1,024 inner loops per value; report p50 of the measured values 1,973 to 2,023 ns |
 
 ## Licences
 

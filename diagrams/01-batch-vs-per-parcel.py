@@ -32,7 +32,7 @@ nodes.append(
         "w": 120,
         "h": 56,
         "style": "ink",
-        "lines": ["p50 106-182 us", "C++, Python, Java"],
+        "lines": ["p50 85-188 us", "C++, Python, Java"],
     }
 )
 edges.append({"x1": 664, "y1": 133, "x2": 735, "y2": 133})

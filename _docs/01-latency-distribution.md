@@ -2,7 +2,7 @@
 title: "Latency vs bandwidth: latency is a distribution"
 order: 1
 part: "Understanding & Measuring Latency"
-description: "On a bare-metal, untuned host, equal throughput can hide an 84x to 145x difference in median latency, and one slow parcel in a hundred moves p99 up by 7 to 27 times while the median stays put. Measure the distribution, never one number."
+description: "On a bare-metal, untuned host, equal throughput can hide an 82x to 180x difference in median latency, and one slow parcel in a hundred moves p99 up by 11 to 30 times while the median stays put. Measure the distribution, never one number."
 duration: 45 minutes
 ---
 
@@ -29,17 +29,17 @@ Every measured number in this chapter carries one profile: bare-metal host, Inte
 
 ## Diagram
 
-{% include excalidraw.html file="01-batch-vs-per-parcel" alt="Two lanes of parcels arriving at 1 kHz: the per-parcel lane handles each parcel on arrival, with p50 106-182 us; the batch lane gathers parcels 1 to 32 into one handling step, and an amber arrow marks the first parcel's ~31 ms wait, with p50 15.2-15.4 ms." caption="Figure 1.1 — Batching leaves throughput unchanged but moves the p50 from 106-182 us to 15.2-15.4 ms, because the first parcel waits for 31 others." %}
+{% include excalidraw.html file="01-batch-vs-per-parcel" alt="Two lanes of parcels arriving at 1 kHz: the per-parcel lane handles each parcel on arrival, with p50 85-188 us; the batch lane gathers parcels 1 to 32 into one handling step, and an amber arrow marks the first parcel's ~31 ms wait, with p50 15.2-15.4 ms." caption="Figure 1.1 — Batching leaves throughput unchanged but moves the p50 from 85-188 us to 15.2-15.4 ms, because the first parcel waits for 31 others." %}
 
 ## Concept
 
 **Latency** is the time one parcel spends between its intended emission and the moment the consumer finishes handling it. **Bandwidth**, or throughput, is how many parcels per second the consumer completes.
 
-A consumer that collects 32 parcels and handles them together amortises per-call overhead. At 1 kHz the 32nd parcel arrives 31 ms after the first, so the first parcel waits 31 ms. The batch variant completes parcels at the per-parcel rate, yet the typical parcel is 84 to 145 times later.
+A consumer that collects 32 parcels and handles them together amortises per-call overhead. At 1 kHz the 32nd parcel arrives 31 ms after the first, so the first parcel waits 31 ms. The batch variant completes parcels at the per-parcel rate, yet the typical parcel is 82 to 180 times later.
 
 The second effect is a bimodal workload. One parcel in 100 is a scanner no-read, the barcode could not be decoded, and the controller runs a slower re-lookup that takes about 2 ms. The other 99 take the fast path. The median sits inside the large fast population. The slow path delays every parcel that arrives behind it while the core is busy, so p99 sits in the slow one.
 
-{% include excalidraw.html file="01-bimodal-tail" alt="Parcels 98 to 104 in a row, with parcel 100 drawn wide as an amber ~2 ms slow path that holds the core and parcel 101 queued behind it; p50 points to a fast-mode box (p50 95-191 us) and p99 to a slow-mode box (p99 2.7-5.6 ms), and a ghost box says one summary number describes neither group." caption="Figure 1.2 — The median stays in the fast mode while p99 lands in the slow mode, among the slow parcel and those queued behind it. One summary number describes neither group." %}
+{% include excalidraw.html file="01-bimodal-tail" alt="Parcels 98 to 104 in a row, with parcel 100 drawn wide as an amber ~2 ms slow path that holds the core and parcel 101 queued behind it; p50 points to a fast-mode box (p50 95-232 us) and p99 to a slow-mode box (p99 2.1-6.8 ms), and a ghost box says one summary number describes neither group." caption="Figure 1.2 — The median stays in the fast mode while p99 lands in the slow mode, among the slow parcel and those queued behind it. One summary number describes neither group." %}
 
 ### Percentiles
 
@@ -364,11 +364,11 @@ C++ and Java add the lane lookup result to `lane_sink` (`laneSink`) and print it
 
 `consume_with` is declared `template <ParcelHandler Handler>` and takes the handler by reference. A `std::function` or a virtual base class would put an indirect call on every parcel that the compiler cannot inline, and a `std::function` holding a stateful handler such as `Batch` can also allocate. Both costs would fall inside every recorded latency.
 
-With a template parameter the compiler sees the concrete handler type and inlines the call into the loop, so the hook adds no indirect call and no allocation to the measured path. `std::sort` takes its comparator the same way. The price is one instantiation of the loop per handler type, three in this binary: code size, not latency. Java gets the same result from the JIT, because one handler instance serves the whole run and the call site is monomorphic. Python has no equivalent; the dispatch cost is part of the Python column.
+With a template parameter the compiler sees the concrete handler type and inlines the call into the loop, so the hook adds no indirect call and no allocation to the measured path. `std::sort` takes its comparator the same way. The price is one loop instantiation per handler type, three here: code size, not latency. Java gets the same result from the JIT, because the call site is monomorphic. Python has no equivalent; dispatch cost is part of the Python column.
 
 ### The calibrated busy loop
 
-The slow path, in `cpp/src/latdist.cpp`, `latdist-py/src/lowlat_latdist/work.py` and `java/src/main/java/io/patterncatalyst/lowlat/latdist/BusyWork.java`, is a busy CPU loop, not a sleep. A sleep yields the core, so the cost shows up as scheduler noise instead of work. A real re-lookup holds the core, so the parcels behind it queue, and the loop reproduces that.
+The slow path, in `cpp/src/latdist.cpp`, `latdist-py/src/lowlat_latdist/work.py` and `java/src/main/java/io/patterncatalyst/lowlat/latdist/BusyWork.java`, is a busy CPU loop, not a sleep. A sleep yields the core, so the cost shows up as scheduler noise. A real re-lookup holds the core and the parcels behind it queue; the loop reproduces that.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -492,47 +492,47 @@ All numbers below come from the committed runs `r02-run1..3` in `examples/01-lat
 
 ### A. Equal throughput, different median
 
-Throughput stays at about 1,000 parcels per second: per-parcel runs measure 1,000.1 to 1,003.2 per second and batch-32 runs 1,003.2 to 1,003.3. The C++ and Python batch figures are about 0.3 % above their per-parcel ones because the first completion falls 31 ms into the run, which shortens the measured span.
+Throughput stays at about 1,000 parcels per second: per-parcel runs measure 1,000.1 to 1,003.4 per second and batch-32 runs 1,003.1 to 1,003.4. The batch figures are up to 0.3 % higher because the first completion falls 31 ms into the run, which shortens the measured span.
 
 | Variant | p50 across runs and languages |
 |---|---|
-| per-parcel | 106 to 182 us |
+| per-parcel | 85 to 188 us |
 | batch-32 | 15.2 to 15.4 ms |
 
-Against the same language and run, the batch median is 84 to 145 times larger. The batch p99 is 31.1 to 31.2 ms in all nine batch runs, the fill wait plus handling. Throughput asks at what rate parcels leave; the median asks when.
+Against the same language and run, the batch median is 82 to 180 times larger. The batch p99 is 31.1 to 31.2 ms in all nine batch runs, the fill wait plus handling. 
 
 ### B. One parcel in a hundred
 
-In the bimodal runs the calibrated slow path measured 2.0 to 2.1 ms (`slow_path_us` 1,957.4 to 2,137.6). The medians stayed in the fast mode, 95 to 191 us. The tail did not: p99 was 2.7 to 5.6 ms, and 2.9 to 4.6 % of bimodal parcels took 1 ms or more, counted from the stored histograms, although only 1 % ran the slow path.
+In the bimodal runs the calibrated slow path measured 2.0 to 2.1 ms (`slow_path_us` 1,993.9 to 2,076.8). The medians stayed in the fast mode, 95 to 232 us. The tail did not: p99 was 2.1 to 6.8 ms, and 2.6 to 6.8 % of bimodal parcels took 1 ms or more, counted from the stored histograms, although only 1 % ran the slow path.
 
-The C++ bimodal row of `r02-run2`, from its stored report, shows the shape:
+The C++ bimodal row of `r02-run2`, from its stored report, shows the shape. It is also the tightest case for the p99 criterion: p99 is 22 times its own p50 against a bound of 20, a margin of 1.12:
 
 | p50 | p90 | p99 | p99.9 | max |
 |---|---|---|---|---|
-| 121.7 us | 170.6 us | 4,145.2 us | 6,139.9 us | 6,828.0 us |
+| 95.4 us | 165.2 us | 2,140.2 us | 6,012.9 us | 7,110.7 us |
 
-p50 and p90 differ by 49.0 us, p90 and p99 by more than 3.9 ms. p99.9 and max extend past the slow-path length because of queueing.
+p50 and p90 differ by 69.8 us, p90 and p99 by more than 1.9 ms. p99.9 and max extend past the slow-path length because of queueing.
 
-The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 9.0 to 21.7 ms while C++ stays below 0.4 ms. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, treats the cause; p99.9 exposed it and p50 did not.
+The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 8.3 to 23.5 ms while C++ stays below 0.5 ms. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, treats the cause; p99.9 exposed it and p50 did not.
 
 ### The median itself moved
 
-The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 122 us in `r02-run1`, 156 us in `r02-run2` and 157 us in `r02-run3`; Python went 182, 181 and 173 us; Java 106, 108 and 108 us. Nothing in the program changed. The host runs governor `powersave` and tuned profile `balanced`, so the kernel chooses frequency and idle state at run time. One binary's median moved by a factor of up to 1.3; the reports record no frequency counters, so the data do not isolate the cause.
+The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 165 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed. One binary's median moved by up to 2.2 times. The 1 kHz consumers on this untuned host switch at random between a mode near 100 us and one near 155 to 170 us. An interleaved run of the tree before and after the last code change switched the same way in both, and the cause of the modes is not identified.
 
-Variants in one run differ too: in `r02-run3` the Java per-parcel p50 was 108 us and bimodal p50 173 us.
+Variants in one run differ too: in `r02-run2` the C++ per-parcel p50 was 157 us and the bimodal p50, which does strictly more work, 95 us.
 
-That variation decides how a check is written. An earlier set of runs, committed at `1811055`, required the bimodal median to stay under twice the per-parcel median from a different consumer run. The `verify.log` of that set's run 2 records the C++ failure: "bimodal p50 stays under 2x per-parcel p50 (73919 ns) (got 158335, need < 147838)".
+That variation decides how a check is written. An earlier set, committed at `1811055`, required the bimodal median to stay under twice the per-parcel median from a different consumer run, and its run 2 failed for C++ (got 158335 ns, need < 147838).
 
-`verify.sh` therefore compares within one run: the bimodal p50 must be under a quarter of the same run's measured `slow_path_us`. In `r02-run1..3` that threshold was 489 to 534 us against bimodal medians of at most 191 us, and each run's `verify.log` records all 12 criteria passing.
+`verify.sh` therefore compares within one run: the bimodal p50 must be under a quarter of the same run's measured `slow_path_us`. In `r02-run1..3` that threshold was 498 to 519 us against bimodal medians of at most 232 us, and each run's `verify.log` records all 12 criteria passing.
 
 ## Cross-check
 
-Each criterion in `verify.sh` pairs the percentiles with an independent measurement. Throughput comes from the span between the first and last completion timestamps, not from the latency percentiles. The slow-path duration comes from timing the loop directly, not from the histogram. Agreement across three languages in all three runs shows the effect belongs to the handling policy and not to one runtime.
+Each criterion pairs the percentiles with an independent measurement. Throughput comes from the span between the first and last completion timestamps, not from the latency percentiles. The slow-path duration comes from timing the loop directly, not from the histogram. Agreement across three languages in three runs shows the effect belongs to the handling policy, not one runtime.
 
 ## What you learned
 
-- Throughput and latency are separate. Batching 32 parcels at 1 kHz left throughput within 1 % and moved the median from 106 to 182 us up to 15.2 to 15.4 ms.
-- A mixed workload has no single latency. With one slow parcel in 100, p50 stayed at 95 to 191 us, p99 reached 2.7 to 5.6 ms, and 2.9 to 4.6 % of parcels took 1 ms or more.
+- Throughput and latency are separate. Batching 32 parcels at 1 kHz left throughput within 1 % and moved the median from 85 to 188 us up to 15.2 to 15.4 ms.
+- A mixed workload has no single latency. With one slow parcel in 100, p50 stayed at 95 to 232 us, p99 reached 2.1 to 6.8 ms, and 2.6 to 6.8 % of parcels took 1 ms or more.
 - Report p50, p90, p99, p99.9 and max, never a mean, and tie the scan-to-divert requirement to a tail percentile.
 - A shared receive loop takes a handler that reports each parcel done, now or later; one that holds parcels needs a drain hook. In C++ the handler is a template parameter, so the hook adds no indirect call.
 - Simulate a slow path with a calibrated busy loop, not a sleep.

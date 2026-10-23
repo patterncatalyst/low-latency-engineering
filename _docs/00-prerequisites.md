@@ -325,11 +325,11 @@ Three runs (`r02-run1` to `r02-run3`) on the bare-metal host above. All nine rep
 
 | Consumer | p50 (us) | p99 (us) | p99.9 (us) |
 |---|---|---|---|
-| C++ | 93.5 to 153.7 | 177.5 to 281.1 | 212.6 to 293.6 |
-| Python | 98.0 to 182.4 | 175.2 to 238.0 | 190.7 to 358.9 |
-| Java | 110.3 to 188.5 | 313.6 to 339.5 | 21,168.1 to 24,264.7 |
+| C++ | 77.8 to 152.8 | 183.6 to 243.8 | 210.4 to 263.2 |
+| Python | 107.0 to 186.2 | 218.1 to 223.4 | 297.5 to 308.5 |
+| Java | 83.2 to 186.1 | 319.5 to 403.5 | 13,312.0 to 23,740.4 |
 
-The one to read is the Java p99.9, 21.2 to 24.3 ms against p99 0.31 to 0.34 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
+The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
 
 ### Guest result
 
