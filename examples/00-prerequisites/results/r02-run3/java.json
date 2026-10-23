@@ -1,0 +1,108 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "00-prerequisites",
+  "language" : "java",
+  "variant" : "baseline",
+  "unit" : "ns",
+  "count" : 5000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 188543,
+    "p90" : 218495,
+    "p99" : 325631,
+    "p99_9" : 23642111,
+    "max" : 28442623
+  },
+  "hdr_histogram" : "HISTFAAAA3d4nE1UQa7jRBDtvC6XOx3/jr9/xjKRyVhRFKIoE0WZr89ohARIiC3HYMVqmBtwAxZsQXMCFiMhcQaWLFgjhEZsOMK8avtL0263u6uruqtevXL/w493zhXv3Nj89J1x+vXlt5/d5/+Pgr+/xzN8im8xxxIf4QYL3PIp8RQFZU6czHEHx5XjShw8IMGFKFUMAUAMEBFVlShBFKIO4EpDEEiKIjGqRq0ooaxtUhWrICsVx0+sqqQKTTGohliptSgxaRW1SUBl50dElRDsvqDUpFmyu3hzpJWLighZgULeCDodwV2owAUXBcoNr04R6JzYnlg0NhNzN0ttzV6IRep1lDNcNQmyIlc042vIqJ2k3myoTnxKGFCUOEJX5McMiSmI7NjyTRzmKOUJbomo3MKLQezz7p3Y545bjoYGfImFzJmGGxoBn1B2k3fwVDwV2XOq4Mdzl1mNK09LelryeLtyHCc1KXhNYTEt8n25WYSmAV0QhXyC2GAssFCy4/DqxxgCwSRmtl9YZNQyNYLiLOUEmRkTY4JRg8mNSBxCbNjqJmgjTR3rmvM2NX2KqUvbbrXfDs1q2HTHbX9oh/PL6+m6319Ox+v5OByHz15sr+f7h0t/Pb08f3E8Hq+Xw1f3+8thOG2vh8u52+/3x4dhd9yfTocXD+fDbj2c1/fb3WU43283/XrXbfq2XR/Wu/V61W+GtFm1fdett02Turreb7q6b5uuqvqmrtq2i6le17tVSHWX2nZT1xUpS5/rkFKShnHJKlWhdSQfYwviI1sgL8UISEanYD0mgmU8DVYTVjFBSM1khKIquR2seNR6pCWX5BVLxvJCVcIazcpZ0Rn1YAksqG9pMwVvxM/5zbk1udMpr34kH2cmjS7bW7rlkZULjNy2KvBi3JWpJsyE1Lbz6dCjfjFyOfNDZSSRzzqZQnxzBWUiitF8Ih+PnMtUH5SEHMacG5mN45FUlmWe62Rk++aPUz/RNQ+lnZvdzl6yq1AWxkLNyLgJKf4TXF7YCSOnMwD8+RSaI1Y/wWQlnW8110vgkfimnZFz49aok8GeCoe/zjlyNCXrcGl14cffgrk/ltmC5Zvd+zgj8ISLBb7kT7jAN3iOXzzeFHg7w18ePy3x+w3elnhT2pL9T48/PH4F3s2s/zfDv48Tjv/M8Bqv8vP6g/cVvsN7fRRKvw==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T00:27:24Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2467875,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.92,
+      "load5" : 1.15,
+      "load15" : 1.04,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=4194304",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 16785604608
+    },
+    "alloc_bytes_per_parcel" : 880.0096
+  }
+}

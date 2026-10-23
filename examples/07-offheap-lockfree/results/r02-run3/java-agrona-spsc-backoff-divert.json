@@ -1,0 +1,109 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "07-offheap-lockfree",
+  "language" : "java",
+  "variant" : "agrona-spsc-backoff-divert",
+  "unit" : "ns",
+  "count" : 200000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 4995,
+    "p90" : 6179,
+    "p99" : 16735,
+    "p99_9" : 85567,
+    "max" : 2269183
+  },
+  "hdr_histogram" : "HISTFAAACpV4nD1Yf2hV1x2/53vPO++88+47Obm5ud5cr8/sLX3NQrAhs1mWutSFznZd58SF4kSKf7jhSltklE5KKeJEnAsyMhGRrOuKOJEhIUgRKeKkBClFSpFQylZEikhxJUgQV0T2+Z770ndf7j0/vuf78/P9vu9NcegvPUHg/hGUn7DzFBhuGbn4bvD0crnwr8foKXqWvk8NWkPr6DHqxuhX9CdBr9JP6If0N6I/Cnqc1hJhI6SAajyQVTwD4i9hVVEFd6ooGUpJstyTKvAkMpBSmQ4tPlqC3vhdyXMZMgeMpdPa2KyVj02+uPv115fEbTFLV2k2/Dyck+9UFiqfqQfVY7Wvalfrn9bvNO51HXNn4/PxSnI8vZceyk71XVh7NX+UXytWijvrrheH1i2su1w8KL4sLq1dLJb7Tq+9WHzad73vaN+NbDE7lX295saahTW30wPpSu/13g97L/c+jOeTpZ5H8aP4I3e2+55b6Trn7ttFu2Kv2HN21q407jRWGkv2fOO0vWsP2Yf2na579uuula757kvdH7j5+Ia70L3cPdN9uOe9nqV4JlnsOdhztOdWfDY+2XMzPtPzUfc1N+MeuOtu1n3ctdh1xZ7oOmy/aXzSON6Yacw1jkQz0cX6pfr5+t36gfo1c8R8ZpZrR81tPV87WLutD+j7+qp+T5/T36h71VvV09VT1bnq++pMdbb6QH2tLqm7al4dUgvqojqtFivH1cPKnPqwcrpyqnKockserLxXuSy/kCflvPxcfhUuhXfC6+HNcC48GS7TIzoR3qTz9G/6jGbpE7pC98UMRsfokbgvTtBDcVPcweiWWBEPxLJ4hOsBovSJOEm3BNPcF9+Ij8WCuCsWxefigriG5z8xPy/OYLYg3hHzYla8fQxDXj6OhbfOYGUe+/PiiHj9Am5HxJ/Fa8fFb95864jYe0y8fUDse2Pf/tf27dm9d8+W3bum9+7cvuvlPft2vDi1a3rnrqnNk88/s3F0dOPGrf3tkWc2DYxuaE9sHts0Mjg6PNRuNZPhDaPNfGgk6R9otTeM5q5ImsVAa6yVt0bcQH9/muKbDmXN/sF4OI378+GiGeftZLhVuMLGtpU2syRp5s08bSdpPBDbZpwlcWxzl6m8iGOX50mUGWdT65q5zfLc2jjPXBxZq3OVOZXEWewA7TQyWWwtCC3O2zhxqU6MNYk2OJ/byDljkkyBJNEg0ol1iXPW5UXLxdhMmxb3wtk8dpEyGba1cZFJwc4plzrnIu2yKM4sCJLCNJMiT1t5kkBwnCewKG6mmStckvQXsU1VAdOyyCV5qpI0apoYkllvl1ijbASrIm2iKNYx1Ihjk0Ifo5yOTKSUcdKlkVaFYVqbWGlwzMAiZaS1SHtFUWRiwlTrSPNHKXwDJ0GHbFcQlmjFxUAaGK9wB4UmjW2KcSxiD4GZUo4MtgzqR6yNjhTYW2YnFWltA61lFEjlWKgCueQFAsMAtQW6yiiSEloHsAdzKSXkQgGnNKhgkFXaGm2dtmDPXsUoYzNjiy+OBrAfKju4J5L4gxcQu8ip1ClsWIUYSNIqhsEEM6FEFBG8Z9gfpQucgcoq0ZAsIVDzMhTREhsaK1CAKCL2eQTlpGG3SW3jju8kVi0WEGcLf5CGl7EGXWEPNqSVLoqjJLJRDB7WAiYODoRHcRxGIDZsUQzd4CsvxbGAyCRkLEUukwpwSVgvxdIS9rXy0Qmgs+Vp4A2NrIwkB4VZwpFaIq5wJvaMQZFHRfdehi8QauICD1IOlFQR/04oChAsPCTrJ4EBEMN3HH4JYQH/LAAchh0UKMaJ9Z6DLdZlyISBotg8Njj80nPTe353UBwWp8QJ8S6uK+J9cQO1alksiS9Rie6JebqG6jSHGvaVOExH6SydoNuoZLdAw/drqFlL4pK4LL5ARVvA30nUpLviuvgAq2fFHC4uWjPizT2HxTlxTOx/+ZXDYv9rb2D6wv5dO/dun966Y8feHdteennbpi1TW6Zf2PTMxNjQ5JbR8anRifHhyU0TE63Wplb/0MZ2eyjfMBG3iuHCxUmS5EWSt7NW6poZCkWCoGUcmBi3NHI2Rj5nWdJMBrIiBe3w80PtqfHnJqZ2755+ccv0K1Pbd+7dum33zhe2oiBO7Nr+3OSezc9v2z45Pj41NbVhbHxifHBkdHBs4/jI6PBke9C1BpPB/o2DeWtDMxvk2pgXRbu/cMOtJG71N/tdkuo0Sc1ghlqSKptmsUq5MjAIkTxI3Qh1CBnAFUIixbHM6YYwOhORjJDWhiOPG2cnhzoiBoBG9mmGkcYsMECG4VUioEoGntxXjQB5gSE20DkwLvgQICf5BiADdSZgasXEvhhwM8FQ8yw0M8U6s0S5ASQDRioAxQc8SBlphvsSQNOEchWqLA6gCzuwhBB0LhoqoE1hM/gc2hUV8hwyiCuJb2OYgRfntZLc+BDEQipWJB/GEDA2vtxRELHCbK4MNVuKysGdEfhT4N0GlhGbBsUl/EaWxbMUrqARCLjIYWaMl4eSGyG5+HCgWK3A61S2WawUa4xZqZqfUQXbFEoKOt0Zy/WG8mGFHV4O/BX6Vg8G6c6MWWGBKTHz7RyGiIA/EqI4BFQWgYC5shqsfKDZPt/wsfGBj3eF2EF+mR3FR/xFKmR+HYPwCLjcU0kW+grhNfVC/QegqvCe18XH0nNmEHWM94qwXczVH2GEsh7S8O9FiD6WIcvxkKW//e8FftY4kox1ZkklGtkAL8mjIKSOx0JYxuWt4gVoTwDQsMtV6eqwYwZrViOPLx1SGSOpu9CId7prRXXirjtcjQR49vmGvMKdOHWRb9qpIbk5R2Ou+Kjs87R1LPh2PCz7dyq79sA38hC2lpdXww8gVHj0hBcmK95VVfT6qlEK64HgBuviG/wqLgjv4gYfI/ii6nEMJ3HcYY33EKzUpQCecPJyeDSFyGntHYlIctT9q4DHTMjC2ZMenvz7zKnCtnhDoKSsSHa2YpuqWOhG3nB4A3YAdJZV1rzzhsJGMb0sESbLtGA0lq4oI8ggpjLtvUBGh3d7BcKkrHXcVt6gX8kVHLEPqaF3f+DjzytlWjWoRIAPW4VV8SwYCbCVDfV8WB+fYOWLlAdQ2EFJmW4hLApkZ9NTV3zGfAvvsHzTYgWqJQpLhTnRSiVkF0i+U8LCezpAQFkg2wcQyg6TjpsDjqxXWCLmCqb0dkxkXlVZLwVU4RnpQYSVEIDAiTo7jiEReheQt72OeS+evVhby7BkBwd+oZvdW+/UIGbaVUKhQqWavexff8RryN4LZNVvwcE84nSrydLHLLz0oy861fIdc43Hs4cPzOiWHebQosbuLbl7lrLSeautym+rXwebIeR55JM/s1o2q3LVbUFZBJDy1TKXZIfYA6E0sixGFa9AnWqrOV3xUPOJWfe8GQKNUqlQBR2bamXAPImPUYkPiO9bVaDhpYTUYVNCkHOmKh/H2np/8jG879d8CnPM/JknQbTe5zkzQ2LTOo4vvN+RVqcf+GcP/Rin12ODZ4/jWWOiZ+lH9CpOfZd+SX8Qfvgk/ZT+x/8/eII5/oKewuZfBch/TT/DWjf9ln7uM/bvgv4rcf73mD9N38PBbhzv8zXnP236P/KApmI=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/agrona-spsc-backoff.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T00:42:14Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2476874,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.3,
+      "load5" : 0.48,
+      "load15" : 0.7,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "handoff=agrona_backoff; journal=none; manifest=none; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; old_gen_baseline_bytes=3798040",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/agrona-spsc-backoff.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+    }
+  }
+}

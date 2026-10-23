@@ -1,0 +1,126 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "05-jvm-costs",
+  "language" : "java",
+  "variant" : "warmed-first-2000",
+  "unit" : "ns",
+  "count" : 2000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 157183,
+    "p90" : 196095,
+    "p99" : 228607,
+    "p99_9" : 287487,
+    "max" : 865791
+  },
+  "hdr_histogram" : "HISTFAAAAkV4nDWTPW4UQRCFe1/X1tT2tofx+B9ZAuQAIYSEREjgCCRCjkHkS5ATOEZwBTJuwi0QR+CrXnt3p6e6uv76vbfXX+9PSql/y+FTH94bzI9vf/8st/8Ojl93+rbRK93ps470jmerM+21M1VJVg4v7fhW7U2sPhF0oklXOItVVj2RXuAhIg/zt8+FYBVeZlZ4xKZvTQfTolhxmbNhG7P1Fm5L6809el+jt94tZm9NEZZFVlzC2XzxNi9u5uFhXc0adeWh5t1KL9FoluXNWw/vs4hxGnn+yFI0s9msp6WgUdjSaTzLFyagazBBGCY1fM6HHLbdW6jLLbyVcZ2WZYO7lAAzheW1mSf0+CkCqYFAjlXGpUtitNOArCSYSrxrbHPVMe6swiWIoeyxbnAXwN4LAnYj4gzrSu8JmHSrl9gf9OmBg0mjECn7cV5HR3ZWRuWcJ8fKQOXxNNqOHBw2EvPNwZSBlfQtWdMoM3kKgy08yraPVknZPOim2FHuUiVcKltxdxt9K2ykvwz6s/ZkCZgjlelQBIkgCFCGgShqYC7MOdFvDcIb8HdoRCdPzxcWjD6fr2wul9P1+vlpW/vlGnG5wGZbY11PIwiam0MlinM4hs1Y0I6hM7pZZwy4hNNoMabN/wFCyoEZr0Mzw6f4UnJ5TaUnD0EyvBJPIqU0GKUAwkzhI3MN0W8H/4lbIlW9jCoJOCaUptg1kK56pix4Nv6CSfrREAp4vyZwKEYXEFU5+L7h/EI/NvjfoINjEr4Qei/9Odd/+hUhbQ==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/warmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.aJjION/warmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T00:10:42Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2458050,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 1.13,
+      "load5" : 0.89,
+      "load15" : 0.8,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "warm_up=20000; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set; window=2000; first window is seq < 2000",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 268435456,
+      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/warmed.gc.log:uptime,level,tags", "-XX:+UseG1GC", "-Xms256m", "-Xmx256m" ]
+    },
+    "jit" : {
+      "startup" : {
+        "compilations" : 1060,
+        "c2_compilations" : 234,
+        "deoptimizations" : 57
+      },
+      "first-2000" : {
+        "compilations" : 24,
+        "c2_compilations" : 11,
+        "deoptimizations" : 9
+      },
+      "steady" : {
+        "compilations" : 21,
+        "c2_compilations" : 14,
+        "deoptimizations" : 2
+      }
+    }
+  }
+}

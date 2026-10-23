@@ -1,0 +1,105 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 5000,
+  "dropped": 0,
+  "example": "00-prerequisites",
+  "hdr_histogram": "HISTFAAAA8F4nDVVQY4cRRDcioqOyamtKfe218tIXlaWJRtrtLKMZRkjIZA4APINLlwQJ8QDEE/gB3yAZ/AZ3gBPQJE17tF0V3dnZmVGRmTf/vHnw4uL3Y8X86jna7m4qN+8+vuvi6/+mw/++RX/EqxoGGpja9djPfb+dFPfbu40jhHrFmuQRAACUMQC1FhAVfiQBsGIrVGBCEVprLYCEAsqibxTicorLAAO2gN7FBxQULD4TK8r8Ck+wQGXKNrhChIiWtfxxf2Tl69Pr1+d3ty/PD65uetDo40WbfRtvd7Gk+2mrX200KbSm3pI18cXp+dvT19/8eW70xjjemtqCpAA8yyoAGWmu3N5gFhRMy3McwHIHfzUGQaABVULCKlEkSK0hsi1t7i9f/7m7fuff/v9l59++O79u9Pp6V3vvVO9BRACWWBAi72dQkEVwBIOv8/tKkvUXC3Ajjt4d6EQRYWsKHQYu+Q1QbX5IxTuZ9pLFubLrMbLy7Ry9Sjgol0+r/Szml0q88eKg63kHP24zRAHG/s9JefPYt+8JBtmCBapQiyuK4MhCVSoQigmuFlFyQIWL9M/TSXjEm6TkTJ/HDgqo4LYidko5bpQH7wf5N7O4JJu5148gB/QmTDsgUvnekBm7LwvP/S+JpbgwnzpqOqMEpSkFkkZkmKJYEEYZu/MzFsFCw8uGDs6SGY2g6qALmhJMagSfVabXEjQkhOJV1HWLGPs2tUlRkk8jA3QpJ6YUlAT04utcILe2LIzJTQlSqSNXTQidaPYpDEi2taHbsfxukmtbWuojXXtqzswtlCnWieF1XnoeAaik/BKUqjSGEUnR0dTaKg1Suxk6wywNNvJ1dg1aOX2m5vRWqzc5rn3sW4xWtukdQDRe7QxevTBGIO9C61HjxhDiOvUud8MjlBjcIjh2lp4cghUiGqD7GoleWXVm1WTWoAjWMbobkKKCqLADrY0IR0p2CJp7XeyhWk+m5Z7KVs7FeBGWKx5k/CfB05Dg1QtLM5us5t43XfBZnrZT8bIf6VK3Jrqeyu/mjmzBivUpjFlbT8gnAqVM5e5VMz2m4LJiSy+ckowOWKBpNijOPwOCQbpwUPLnli4nOeNFVbnhphMm4LGPqdJTog5E5Y5U65S47s5mq5Sqwv98oBH6fYYc+zigKu8KXiESzwGPsKDnDz+PnyMz1Gxx8OUTgWeeWJyDuf8jpwnGOZgOisKRDP1SiJv/knRqGYAMT9vRtUEtbYsE1rhWZz/Siq0HMHJoPOEgGeHB+vek+UzfI9v8T/ZUDTF",
+  "language": "cpp",
+  "notes": "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=8388608",
+  "percentiles": {
+    "max": 323071,
+    "p50": 105599,
+    "p90": 190847,
+    "p99": 281087,
+    "p99_9": 293631
+  },
+  "profile": {
+    "captured_at": "2026-10-22T23:42:36Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.97,
+      "load15": 0.85,
+      "load5": 0.9,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2437775,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "baseline"
+}

@@ -1,0 +1,104 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "01-latency-distribution",
+  "language": "python",
+  "variant": "per-parcel",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 181759,
+    "p90": 203519,
+    "p99": 224511,
+    "p99_9": 263423,
+    "max": 468735
+  },
+  "hdr_histogram": "HISTFAAAA8F4nC2UzYocNxDHV/+urtFqZVmWZVFRZKUzdIZhGJZhWMx6MM5iTFjMYsxigjEhOSTkFkjeIZccfAh5gbxBDrnkFfI2ueScIM0KGpXqQ2pV/VTl598enpyMf5wcx3A3q5OT4YvdX7+ffP7PUfHfD/hF4W+FB/gWHxQGfAyFx1jgFANGnGEEgBEDKYLCSAssMNIpFMADoEADCKSoSwMtgIGafgSG7vIQA7pji2mBp8DYForotJkxgtHOVu2sPp9hoIHUcaFVCx+YFBT47jAQKzCjyYy2JNbMisBgQ6RZG92WRIqINWlQBDFrMBu2jpw1ALODzyH6bGI2Xqz3YSpp6asECZKCk+pXRaKNOTorNeVaaqw5i+wmyTXLfJ5X01amaZc22/1+++RiuS1ZUq15muayTDFMaZJt3MQUlqGuUpolS4wxhlik6FIl+eJTsD5aa6eYQnLZphCcJBejc1liYi0mBB9iSC5o74LxyWobyHnndNRWO7aGjTdMRNoQE7Ql0orIkSZipUmR0UQE2xKOnjmi/vXyDtQKzccMj2gWjK3yPILoHu5Gsy4YtOjSIyyastXyHsZe+VZMDFjgo04PAWctBKzuInDUdDKo7dMLPfSdVEdj7DQ0mc46gc2D7rAaAWrup2jk8EhHchpuzdQ3uMOpX6khCtUuq7jdWbfcaNKq/VHPgO5psM5bo6XlVnQwseqUoogU8dnnZSou1lW2KScJzsVSarEppZistcFPbhZfi5APLvi4nHzNXuqcnjIHHZ331gWdQi05xFSLz5KL+LmGdRHJKdSUJXubvETvcgpCKU1edCyWnUvOhcnH4IuzKfjoLTtvrPfOOMsW4nVwpI03jqxJxkfntXXGUA7GRxtMkiDiok8pTKsYZ4mbMs+yOtSprtZXW9lc7Ot6vT3f3uwPm8tnT24ON29ef/nu+evb5+9fXL57+fX757c3V2+/e/Xix5dv3u/fXn/5/fXhq9sXr66vr69vrg9Xrza3l8/Or17ut5cX83a3Oxz2u8O8Ol8tL6fNerrYri/Wy5x36+XGy25eiZQy55yrJGckpTm6bKufSwwuGh+iD8Zq600IzoVonLbtrsHYqBNrw8qwcU6b5BwTR2ON0doG7awFKduUrHTrCZZ7/WFg0Z4HaShm1kxsNIzxRJq4NxJq5DEr6GNnaZwcO5oC8dCovd/azgJHnpu+A9wYb5g15ps8YqSzzuKAMx7RVQr3oOg+RjxoKNPj1l7xqFse9jfwQQF/Ap/gKb7Bp/gMP+HXAf8O+B9Ae178",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-22T23:42:52Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2438195,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 0.82,
+      "load5": 0.87,
+      "load15": 0.84,
+      "running": 2
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "throughput_mhz=1000127; done_span_ns=9998724680; reordered=0; single thread, GIL"
+}

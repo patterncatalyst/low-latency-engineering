@@ -1,0 +1,105 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 10199,
+  "dropped": 0,
+  "example": "03-coordinated-omission",
+  "hdr_histogram": "HISTFAAAAwN4nJ1TvYtdRRR/53d/77yT8ybD7N3L9XJzfT4eL+u6LMsKGj+yfoBgscWisVMEsbCIjdjYhphCUwmCVRSxsLDSRiwihIAiio2ChX3QUv8BkXOzWkggiTNz58z5nY+Z83GHS+9vTibTDyY3R3VMZTKpnt3/6uPJU3/cBE4vv8U12fLGgYokYlCUSoAzABKsq5KMI4hEhZvTTABHclNQS9vWpVvWpV6kVHcX5LkL/FR+5U/T72df6nfVVbuM6/xIPpf35Nxl7L0j547+klcu4fxnck0uyu/y5FV58xe5IofX5eATefzo1b2LMrzx6M4VOXN+eXSwf9ivfPfM+mh5sG73Fofl6Wbrxe3dNPQ7e8NOyV3bllXqah3ULfVuTH3W1FvfpFZ3LWdtlKBHbJoEBlIyDUHpEFKhRtFQiFQQphpSVZpBxUhocTOqibEky9ktq6qbKZMbUvLUeJtz1+SmK4s2NSk3uelLPbSlX/XW+LKsh1y3fd+vVw917XJY7u9sDUOpU3HVRWrMU8mOzkuTu0VxLamrUfqudMvsfa7r5IXFk2kpcFfUiCIlT21W03g4jeYK9+waMnMfESGpCVQqKASZYGoKuKlqwBIHCRVHLKEiIYQqCgGoMCMIUVEZCTW0LTwlj26BqglhbLX1tpTUpux1LiymJAoksuiprr1ZdMP29qoZ0jKX3FkqkU1XR/RdZmKunSmv67rUTerbnDV7neLFPoYb5QA9R+mgAldAktBIMQKiFYHoZ1ScQXhCNyiowM2A7wkViKKCjj0vmKICMMcMxEnMKcd4hQ3IyE0xYxX3hFNVIMIFw4fCwlvkGuGn4mhKB8a/BqBFIscmi3vGqgiEVWAVWVFDobIApsc3gxuoRkczjOAJCDfjSZxzitdxGmeB+/ASHsQLeFvwQ4f7IXgZD+MBPIFnMMfPPd59DV9k/DjDNzPcqPBbFfuNCh8Cf8ot1teCt24zn8djOPu/vn9Oj+AU7sWpcd4ZvTvtO7U+GdX+d5//h781ejv+bq3+BqIbchY=",
+  "language": "cpp",
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; record_corrected, expected interval 1 ms",
+  "percentiles": {
+    "max": 200278015,
+    "p50": 138,
+    "p90": 633,
+    "p99": 98238463,
+    "p99_9": 190316543
+  },
+  "profile": {
+    "captured_at": "2026-10-22T23:45:42Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.86,
+      "load15": 0.8,
+      "load5": 0.76,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2440525,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "closed-loop-corrected"
+}

@@ -1,0 +1,143 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "05-jvm-costs",
+  "language": "java",
+  "variant": "aot-cache-steady",
+  "unit": "ns",
+  "count": 18000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 155519,
+    "p90": 188927,
+    "p99": 217343,
+    "p99_9": 257023,
+    "max": 840191
+  },
+  "hdr_histogram": "HISTFAAABJZ4nC1VzYrcRhDW1PT09sqKVh7LsxOtEMpEEUJpREcojVCEIsQgzLBMlo0xy7KYZDEmGGLMxoc9LD4En0LIJeSexwjkmAfIOW+RvEGqWjs/Pa36+bq66qua8P2vjyyL/2lNr/n97wy3o/rjd+vLfyfBX9+DBY/gIXwKRwDHAN/i/gA+w+8HqDmCB/g9gEM44XMjeYgSMJaATxYwC+bsMcCcPrQwQGu2QNXcGFjMyI5xZRwY+S0Awcid1DY9kwnq0YPwOBmRCWNgccHxh92DgUEgK8tAoWoBTKCA0XnGDCgUDpaYkzHCcIsf4iqm8+ZgYiMkVDPLmDOKmBtIPJHROkdMPJ8xwU0gICzO6WwQhIjP3EFLm3MXGMbIXcZcx2LcFsJxmc0ddLMZcM7tJQodz4s8xwWxcl07WNqBK5Z+bEfrNIoDJ4xWwXodeV649lMdhOlmHa/iMJXLyPX9dUSGySZMwrBpk01VyHY43deDPu23dTrK00qPWvWylE1Z7fq+GzrVnY1dOezri6fbp8N4ttv3bXHaZs02H7uuk6d6V6dDk5ZbNC3yWndt0Q2ySIY8TxJVSBnHOs2UijZqs4nTtRtGXpxHQRxGkZ+uIscNKGZ/vXQi4bqet1oKd7l0fS+wV47nuy53nOWSC4/b/or0ruPYjs8wI1w4K2ELEDa3XeE5mCnP5phMG9PNUWoJhzMhLNtmuLFwISfMs0BbYaqJOFgmU0dKP0d/TqXiVFRUIDmxSlQDZhkO4cdixhywhsgcjhWfE9EIxnJwRaSJl2RnMYNOe8uAGtpwEIyRlE2e3CKnuXkTeReGxsw0BzM0Rb6jzWLiLTMYaIBKEy0nIV4VHemBG0YiuZBaAiaAKSiKg25nCWYITkEA3dwjGOIs5s5CiSCezumaRGyTFkyZbVLkua7rrMNwE7hqfHJ2df3di3ev3v44e3PzzfvZ61ev736a3d28vXl5fXdz9/r259nLmzfP3/0ye3F1e/38+ur2+dXV5UV3NuxeXey63fmoxvZluSsLVXSyamWG/CmVyvuyLptMF32el1rlG60b3den1bPz+lKW4/6yqbf7sWuarC1r1bRF0T8rqrFFj7SUg6pUlVeZlDosizhDfjdhHspk03cqKfJSyU2dKqWaKqzydKulrmUWNrHc1q2WXV1cdHkx1l0+Do0iftdateeN0m2vGi2rqqj6YdRyGLZ5o7snWmb7Uu2LvW7KrNa5UlWz1U0vsWN02fe77klx3uqyLupSFYkudB3oVGfpRuVJq/I4xCClzKI0wSBlnEWbJIwCvEIeBGEYZNQ/qyBOgiTyPW8Z+H6wcnzbd9ehb9uuu3awQda2F67WOCJc7KEVdgq2EPNQzbCNPmdsoikQRRiNvKn60xDElz1NXEP6A2IsDjDsr4mGRAFuJhzj2FXUI7agPgI2DVXSmqaiyY3su1dMY5q2nN33Ajf0JhovwMxSGt4HZogDOyBEfECYBTOeh6YxjklL9mhwhJtDdsLmRsSOCejoXvkhfASfwNeA/zIHtMBjOMEjPoYf4Cv4Av5ewH8z+GcOvz2A/wHxu5wk",
+  "build": {
+    "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cnUVZ5/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.cnUVZ5/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.aot.log",
+    "gil_enabled": null
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T00:33:07Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2472115,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 0.82,
+      "load5": 0.81,
+      "load15": 0.9,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "warm_up=0; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set; window=2000; first window is seq < 2000",
+  "runtime": {
+    "gc": {
+      "collectors": [
+        "G1 Young Generation",
+        "G1 Concurrent GC",
+        "G1 Old Generation"
+      ],
+      "heap_bytes": 268435456,
+      "flags": [
+        "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/aot-cache.gc.log:uptime,level,tags",
+        "-XX:+UseG1GC",
+        "-Xms256m",
+        "-Xmx256m"
+      ]
+    },
+    "aot": {
+      "cache": "jvm-costs-observed.aot",
+      "mode": "on",
+      "used": true
+    },
+    "jit": {
+      "startup": {
+        "compilations": 183,
+        "c2_compilations": 19,
+        "deoptimizations": 17
+      },
+      "first-2000": {
+        "compilations": 267,
+        "c2_compilations": 30,
+        "deoptimizations": 0
+      },
+      "steady": {
+        "compilations": 128,
+        "c2_compilations": 49,
+        "deoptimizations": 4
+      }
+    }
+  }
+}

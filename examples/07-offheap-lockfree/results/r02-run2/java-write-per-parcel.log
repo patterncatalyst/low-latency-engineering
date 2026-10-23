@@ -1,0 +1,18 @@
+command: java -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/write-per-parcel.gc.log:uptime\,level\,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -cp /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/java/target/benchmarks.jar io.patterncatalyst.lowlat.offheap.Handoff --variant write-per-parcel --bind 127.0.0.1:47270 --journal-dir /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/queue --placement unpinned --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel.json
+offheap-lockfree: variant write-per-parcel listening on /127.0.0.1:47270, commands to /127.0.0.1:47271, window 20000
+decide-thread pid=2464514 tid=2464561
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     52.1us p99=     59.5us p99.9=     63.3us max=     160.4us
+window-end handled=200000
+received 200000 dropped 0 reordered 0 published 200000 overflow 0 (stopped: EXPECTED)
+journal-readback count=200000 in_order=true
+old-gen bytes_after_gc=7840352 baseline_bytes=3797064
+07-offheap-lockfree        java   write-per-parcel       200000        0       61.2       65.1       89.3     2058.2    16310.3
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel-first-20000.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel-steady.json
+07-offheap-lockfree        java   write-per-parcel-handoff     200000        0        0.1        0.3        0.7     1889.3     3031.0
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel-handoff.json
+07-offheap-lockfree        java   write-per-parcel-journal-append     200000        0        1.1        1.9        3.0        7.2       65.4
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel-journal-append.json
+07-offheap-lockfree        java   write-per-parcel-divert     200000        0        4.9        7.7       12.9       65.0     2146.3
+report: /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run2/java-write-per-parcel-divert.json

@@ -1,0 +1,116 @@
+[0.003s][info][gc,init] CardTable entry size: 512
+[0.004s][info][gc     ] Using G1
+[0.052s][info][gc,init] Version: 25.0.5+8-LTS (release)
+[0.052s][info][gc,init] CPUs: 16 total, 16 available
+[0.052s][info][gc,init] Memory: 64009M
+[0.052s][info][gc,init] Large Page Support: Disabled
+[0.052s][info][gc,init] NUMA Support: Disabled
+[0.052s][info][gc,init] Compressed Oops: Enabled (32-bit)
+[0.052s][info][gc,init] Heap Region Size: 1M
+[0.052s][info][gc,init] Heap Min Capacity: 1G
+[0.052s][info][gc,init] Heap Initial Capacity: 1G
+[0.052s][info][gc,init] Heap Max Capacity: 1G
+[0.052s][info][gc,init] Pre-touch: Enabled
+[0.052s][info][gc,init] Parallel Workers: 13
+[0.052s][info][gc,init] Concurrent Workers: 3
+[0.052s][info][gc,init] Concurrent Refinement Workers: 13
+[0.052s][info][gc,init] Periodic GC: Disabled
+[0.058s][info][gc,metaspace] CDS archive(s) mapped at: [0x000000002d000000-0x000000002dd99000-0x000000002dd99000), size 14258176, SharedBaseAddress: 0x000000002d000000, ArchiveRelocationMode: 1.
+[0.058s][info][gc,metaspace] Compressed class space mapped at: 0x000000002e000000-0x000000006e000000, reserved size: 1073741824
+[0.058s][info][gc,metaspace] UseCompressedClassPointers 1, UseCompactObjectHeaders 0
+[0.058s][info][gc,metaspace] Narrow klass pointer bits 32, Max shift 3
+[0.058s][info][gc,metaspace] Narrow klass base: 0x000000002d000000, Narrow klass shift: 0
+[0.058s][info][gc,metaspace] Encoding Range: [0x000000002d000000 - 0x000000012d000000), (4294967296 bytes)
+[0.058s][info][gc,metaspace] Klass Range:    [0x000000002d001000 - 0x000000006e000000), (1090514944 bytes)
+[0.058s][info][gc,metaspace] Klass ID Range:  [4096 - 1090519033) (1090514937)
+[0.058s][info][gc,metaspace] Protection zone: [0x000000002d000000 - 0x000000002d001000), (4096 bytes)
+[0.209s][info][gc,start    ] GC(0) Pause Full (System.gc())
+[0.209s][info][gc,task     ] GC(0) Using 13 workers of 13 for full compaction
+[0.209s][info][gc,phases,start] GC(0) Phase 1: Mark live objects
+[0.210s][info][gc,phases      ] GC(0) Phase 1: Mark live objects 1.182ms
+[0.210s][info][gc,phases,start] GC(0) Phase 2: Prepare compaction
+[0.211s][info][gc,phases      ] GC(0) Phase 2: Prepare compaction 0.388ms
+[0.211s][info][gc,phases,start] GC(0) Phase 3: Adjust pointers
+[0.211s][info][gc,phases      ] GC(0) Phase 3: Adjust pointers 0.470ms
+[0.211s][info][gc,phases,start] GC(0) Phase 4: Compact heap
+[0.211s][info][gc,phases      ] GC(0) Phase 4: Compact heap 0.326ms
+[0.211s][info][gc,phases,start] GC(0) Phase 5: Reset Metadata
+[0.212s][info][gc,phases      ] GC(0) Phase 5: Reset Metadata 0.111ms
+[0.212s][info][gc,heap        ] GC(0) Eden regions: 17->0(51)
+[0.212s][info][gc,heap        ] GC(0) Survivor regions: 0->0(0)
+[0.212s][info][gc,heap        ] GC(0) Old regions: 2->13
+[0.212s][info][gc,heap        ] GC(0) Humongous regions: 1->1
+[0.212s][info][gc,metaspace   ] GC(0) Metaspace: 5745K(5888K)->5745K(5888K) NonClass: 5146K(5248K)->5146K(5248K) Class: 599K(640K)->599K(640K)
+[0.212s][info][gc             ] GC(0) Pause Full (System.gc()) 18M->3M(1024M) 3.483ms
+[0.212s][info][gc,cpu         ] GC(0) User=0.02s Sys=0.00s Real=0.01s
+[0.212s][info][safepoint      ] Safepoint "G1CollectFull", Time since last: 149014438 ns, Reaching safepoint: 2637 ns, At safepoint: 3496936 ns, Leaving safepoint: 1700 ns, Total: 3501273 ns, Threads: 0 runnable, 15 total
+[0.273s][info][gc,start       ] GC(1) Pause Young (Normal) (G1 Evacuation Pause)
+[0.273s][info][gc,task        ] GC(1) Using 13 workers of 13 for evacuation
+[0.275s][info][gc,phases      ] GC(1)   Pre Evacuate Collection Set: 0.14ms
+[0.275s][info][gc,phases      ] GC(1)   Merge Heap Roots: 0.04ms
+[0.275s][info][gc,phases      ] GC(1)   Evacuate Collection Set: 1.95ms
+[0.275s][info][gc,phases      ] GC(1)   Post Evacuate Collection Set: 0.11ms
+[0.275s][info][gc,phases      ] GC(1)   Other: 0.07ms
+[0.275s][info][gc,heap        ] GC(1) Eden regions: 51->0(427)
+[0.275s][info][gc,heap        ] GC(1) Survivor regions: 0->7(7)
+[0.275s][info][gc,heap        ] GC(1) Old regions: 13->13
+[0.275s][info][gc,heap        ] GC(1) Humongous regions: 10->10
+[0.275s][info][gc,metaspace   ] GC(1) Metaspace: 6257K(6400K)->6257K(6400K) NonClass: 5602K(5696K)->5602K(5696K) Class: 654K(704K)->654K(704K)
+[0.275s][info][gc             ] GC(1) Pause Young (Normal) (G1 Evacuation Pause) 63M->19M(1024M) 2.420ms
+[0.275s][info][gc,cpu         ] GC(1) User=0.03s Sys=0.00s Real=0.00s
+[0.275s][info][safepoint      ] Safepoint "G1CollectForAllocation", Time since last: 60582279 ns, Reaching safepoint: 3933 ns, At safepoint: 2442940 ns, Leaving safepoint: 4528 ns, Total: 2451401 ns, Threads: 0 runnable, 20 total
+[0.404s][info][gc,start       ] GC(2) Pause Young (Normal) (G1 Evacuation Pause)
+[0.404s][info][gc,task        ] GC(2) Using 13 workers of 13 for evacuation
+[0.420s][info][gc,phases      ] GC(2)   Pre Evacuate Collection Set: 0.39ms
+[0.420s][info][gc,phases      ] GC(2)   Merge Heap Roots: 0.13ms
+[0.420s][info][gc,phases      ] GC(2)   Evacuate Collection Set: 15.34ms
+[0.420s][info][gc,phases      ] GC(2)   Post Evacuate Collection Set: 0.38ms
+[0.420s][info][gc,phases      ] GC(2)   Other: 0.11ms
+[0.420s][info][gc,heap        ] GC(2) Eden regions: 427->0(533)
+[0.420s][info][gc,heap        ] GC(2) Survivor regions: 7->55(55)
+[0.420s][info][gc,heap        ] GC(2) Old regions: 13->20
+[0.420s][info][gc,heap        ] GC(2) Humongous regions: 10->10
+[0.420s][info][gc,metaspace   ] GC(2) Metaspace: 6257K(6400K)->6257K(6400K) NonClass: 5602K(5696K)->5602K(5696K) Class: 654K(704K)->654K(704K)
+[0.420s][info][gc             ] GC(2) Pause Young (Normal) (G1 Evacuation Pause) 446M->74M(1024M) 16.398ms
+[0.420s][info][gc,cpu         ] GC(2) User=0.20s Sys=0.00s Real=0.02s
+[0.420s][info][safepoint      ] Safepoint "G1CollectForAllocation", Time since last: 128371734 ns, Reaching safepoint: 4264 ns, At safepoint: 16442230 ns, Leaving safepoint: 3712 ns, Total: 16450206 ns, Threads: 0 runnable, 20 total
+[14.403s][info][gc,start       ] GC(3) Pause Young (Normal) (G1 Evacuation Pause)
+[14.403s][info][gc,task        ] GC(3) Using 13 workers of 13 for evacuation
+[14.425s][info][gc,phases      ] GC(3)   Pre Evacuate Collection Set: 0.40ms
+[14.425s][info][gc,phases      ] GC(3)   Merge Heap Roots: 0.14ms
+[14.425s][info][gc,phases      ] GC(3)   Evacuate Collection Set: 21.39ms
+[14.425s][info][gc,phases      ] GC(3)   Post Evacuate Collection Set: 0.63ms
+[14.425s][info][gc,phases      ] GC(3)   Other: 0.13ms
+[14.425s][info][gc,heap        ] GC(3) Eden regions: 533->0(553)
+[14.425s][info][gc,heap        ] GC(3) Survivor regions: 55->61(74)
+[14.425s][info][gc,heap        ] GC(3) Old regions: 20->78
+[14.425s][info][gc,heap        ] GC(3) Humongous regions: 10->10
+[14.425s][info][gc,metaspace   ] GC(3) Metaspace: 8437K(8576K)->8437K(8576K) NonClass: 7589K(7680K)->7589K(7680K) Class: 848K(896K)->848K(896K)
+[14.425s][info][gc             ] GC(3) Pause Young (Normal) (G1 Evacuation Pause) 607M->137M(1024M) 22.744ms
+[14.425s][info][gc,cpu         ] GC(3) User=0.28s Sys=0.00s Real=0.02s
+[14.425s][info][safepoint      ] Safepoint "G1CollectForAllocation", Time since last: 13982344991 ns, Reaching safepoint: 67355 ns, At safepoint: 22767008 ns, Leaving safepoint: 4447 ns, Total: 22838810 ns, Threads: 1 runnable, 12 total
+[22.151s][info][gc,start       ] GC(4) Pause Full (System.gc())
+[22.151s][info][gc,task        ] GC(4) Using 13 workers of 13 for full compaction
+[22.151s][info][gc,phases,start] GC(4) Phase 1: Mark live objects
+[22.161s][info][gc,phases      ] GC(4) Phase 1: Mark live objects 10.195ms
+[22.161s][info][gc,phases,start] GC(4) Phase 2: Prepare compaction
+[22.162s][info][gc,phases      ] GC(4) Phase 2: Prepare compaction 0.661ms
+[22.162s][info][gc,phases,start] GC(4) Phase 3: Adjust pointers
+[22.166s][info][gc,phases      ] GC(4) Phase 3: Adjust pointers 3.692ms
+[22.166s][info][gc,phases,start] GC(4) Phase 4: Compact heap
+[22.167s][info][gc,phases      ] GC(4) Phase 4: Compact heap 1.033ms
+[22.167s][info][gc,phases,start] GC(4) Phase 5: Reset Metadata
+[22.170s][info][gc,phases      ] GC(4) Phase 5: Reset Metadata 3.117ms
+[22.171s][info][gc,heap        ] GC(4) Eden regions: 52->0(573)
+[22.171s][info][gc,heap        ] GC(4) Survivor regions: 61->0(74)
+[22.171s][info][gc,heap        ] GC(4) Old regions: 78->127
+[22.171s][info][gc,heap        ] GC(4) Humongous regions: 10->10
+[22.171s][info][gc,metaspace   ] GC(4) Metaspace: 8447K(8640K)->8447K(8640K) NonClass: 7596K(7680K)->7596K(7680K) Class: 850K(960K)->850K(960K)
+[22.171s][info][gc             ] GC(4) Pause Full (System.gc()) 188M->131M(1024M) 20.132ms
+[22.171s][info][gc,cpu         ] GC(4) User=0.21s Sys=0.01s Real=0.02s
+[22.171s][info][safepoint      ] Safepoint "G1CollectFull", Time since last: 7725457881 ns, Reaching safepoint: 66813 ns, At safepoint: 20149770 ns, Leaving safepoint: 7528 ns, Total: 20224111 ns, Threads: 1 runnable, 11 total
+[22.269s][info][gc,exit        ] Heap
+[22.269s][info][gc,exit        ]  garbage-first heap   total reserved 1048576K, committed 1048576K, used 152076K [0x00000000c0000000, 0x0000000100000000)
+[22.269s][info][gc,exit        ]   region size 1024K, 18 young (18432K), 0 survivors (0K)
+[22.269s][info][gc,exit        ]  Metaspace       used 10987K, committed 11200K, reserved 1114112K
+[22.269s][info][gc,exit        ]   class space    used 1164K, committed 1280K, reserved 1048576K

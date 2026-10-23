@@ -1,0 +1,71 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+━━ unit tests: C++ (GoogleTest) and Python (pytest); Java ran during the package step
+Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] 6 tests from 3 test suites ran. (1 ms total)
+[  PASSED  ] 6 tests.
+..........                                                               [100%]
+=============================== warnings summary ===============================
+../../../../../usr/lib64/python3.14/ctypes/_endian.py:33
+  /usr/lib64/python3.14/ctypes/_endian.py:33: DeprecationWarning: Due to '_pack_', the 'ExternalHeader' Structure will use memory layout compatible with MSVC (Windows). If this is intended, set _layout_ to 'ms'. The implicit default is deprecated and slated to become an error in Python 3.19.
+    super().__setattr__(attrname, value)
+
+../../../../../usr/lib64/python3.14/ctypes/_endian.py:33
+  /usr/lib64/python3.14/ctypes/_endian.py:33: DeprecationWarning: Due to '_pack_', the 'PayloadHeader' Structure will use memory layout compatible with MSVC (Windows). If this is intended, set _layout_ to 'ms'. The implicit default is deprecated and slated to become an error in Python 3.19.
+    super().__setattr__(attrname, value)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+10 passed, 2 warnings in 0.10s
+✓ C++, Java and Python unit tests pass
+━━ 1. golden bytes: three readers, three seeds
+seed 1: cpp decodes 8 records identical to golden-seed1.json
+seed 1: java decodes 8 records identical to golden-seed1.json
+seed 1: python decodes 8 records identical to golden-seed1.json
+seed 42: cpp decodes 8 records identical to golden-seed42.json
+seed 42: java decodes 8 records identical to golden-seed42.json
+seed 42: python decodes 8 records identical to golden-seed42.json
+seed 2026: cpp decodes 8 records identical to golden-seed2026.json
+seed 2026: java decodes 8 records identical to golden-seed2026.json
+seed 2026: python decodes 8 records identical to golden-seed2026.json
+✓ 1 C++, Java and Python agree on every field of 3 seeds x 8 records
+━━ JMH SampleTime with the gc profiler: DecodeBenchmark, TableBenchmark, ClockBenchmark (about 3 minutes)
+━━ 2. decode: flat-ffm vs protobuf-decode (same JMH run)
+  flat-ffm        0.0012320143123368131 B/op, p50 16 ns
+  protobuf-decode 543.7777677023005 B/op, p50 150 ns
+✓ 2 flat-ffm allocates <= 1 B/op (0.0012320143123368131)
+✓ 2 protobuf-decode allocates >= 100 B/op (543.7777677023005)
+✓ 2 protobuf p50 (150 ns) >= 3x flat p50 (16 ns)
+━━ 4. in-flight table sweep of 1,000,000 parcels: flat-table vs object-table (same JMH run)
+  flat-table   p50 995839 ns
+  object-table p50 5009407 ns
+✓ 4 flat-table p50 (995839 ns) <= 1/2 of object-table p50 (5009407 ns)
+━━ 5. FFM clock_gettime downcall vs System.nanoTime()
+  per call, p50: nano-time 12 ns, downcall-standard 20 ns, downcall-critical 17 ns (observed)
+✓ 5 standard downcall within 1 ms of System.nanoTime() (largest skew outside the nanoTime bracket: 0 ns)
+✓ 5 critical downcall within 1 ms of System.nanoTime() (largest skew outside the nanoTime bracket: 0 ns)
+━━ line: protobuf-decode (protobuf wire), 10000 Hz x 10 s, UDP 47281
+━━ line: flat-ffm (flat wire), 10000 Hz x 10 s, UDP 47282
+━━ 3. line end-to-end allocation per parcel (receive thread: channel, decode, handler)
+  protobuf-decode 530.97744 B/parcel, flat-ffm 8.7632 B/parcel
+✓ 3 flat-ffm allocates <= 5 % of protobuf-decode per parcel (8.7632 vs 530.97744 B)
+  protobuf-decode p50 57535 ns, p99 96191 ns, p99.9 12771327 ns, max 19972095 ns
+  flat-ffm p50 56991 ns, p99 91327 ns, p99.9 7548927 ns, max 15572991 ns
+━━ compact-headers (observed): JOL footprint with and without -XX:+UseCompactObjectHeaders
+  standard: ParcelState 40 B, protobuf ParcelEvent 80 B, object table of 100000 = 4400016 B, flat table = 2400000 B
+  compact-headers: ParcelState 32 B, protobuf ParcelEvent 80 B, object table of 100000 = 3600016 B, flat table = 2400000 B
+━━ C++ lane (observed): decode variants over std::span<const std::byte>, flat vs pointer table
+  decode-memcpy              p50 9143 ns per 1024 records
+  decode-bit-cast            p50 8511 ns per 1024 records
+  decode-start-lifetime-as   p50 7615 ns per 1024 records
+  flat-table                 p50 903679 ns per sweep of 1,000,000
+  pointer-table              p50 4767743 ns per sweep of 1,000,000
+━━ Python lane (observed): struct.unpack_from over a memoryview vs ParseFromString
+08-zero-copy-flat  python  unpack-from        204800  0  0.3  0.4  0.4  0.4  14.0
+08-zero-copy-flat  python  parse-from-string  204800  0  1.2  1.2  2.2  2.4  56.3
+unpack-from: 8.7 blocks and 6.7 new int objects per parcel (12 fields read)
+parse-from-string: 8.7 blocks and 6.7 new int objects per parcel (10 fields read)
+━━ 6. reports: schema, histogram decode, percentile recompute; counts, drops, JVM flags
+✓ 6 16 reports validate (profile embedded: bare-metal-host)
+✓ 6 line runs: count = 100000 and dropped = 0 for both variants
+✓ 6 every Java report carries build.flags
+✓ 08-zero-copy-flat: flat records removed the decode allocation; results in /home/rsedor/Dev/low-latency-engineering/examples/08-zero-copy-flat/results/r02-run2
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64 load1=1.46

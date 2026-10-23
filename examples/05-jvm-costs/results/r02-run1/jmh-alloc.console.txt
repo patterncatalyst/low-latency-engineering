@@ -1,0 +1,721 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: /home/rsedor/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 300 ms each
+# Measurement: 5 iterations, 500 ms each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping
+
+# Run progress: 0.00% complete, ETA 00:00:20
+# Fork: 1 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 7.008 ±(99.9%) 0.812 ns/op
+# Warmup Iteration   2: 4.163 ±(99.9%) 0.624 ns/op
+# Warmup Iteration   3: 3.138 ±(99.9%) 0.043 ns/op
+Iteration   1: 3.885 ±(99.9%) 0.049 ns/op
+                 gc.alloc.rate:      4936.760 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            5.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              7.000 ns/op
+                 p0.99:              9.000 ns/op
+                 p0.999:             14.819 ns/op
+                 p0.9999:            42.728 ns/op
+                 p1.00:              44.000 ns/op
+
+Iteration   2: 3.233 ±(99.9%) 0.026 ns/op
+                 gc.alloc.rate:      5675.130 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            5.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              6.000 ns/op
+                 p0.999:             18.000 ns/op
+                 p0.9999:            36.302 ns/op
+                 p1.00:              43.000 ns/op
+
+Iteration   3: 6.262 ±(99.9%) 0.511 ns/op
+                 gc.alloc.rate:      3400.646 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           2.000 counts
+                 gc.time:            3.000 ms
+                 p0.00:              6.000 ns/op
+                 p0.50:              6.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              6.000 ns/op
+                 p0.99:              8.000 ns/op
+                 p0.999:             23.922 ns/op
+                 p0.9999:            1412.000 ns/op
+                 p1.00:              1412.000 ns/op
+
+Iteration   4: 6.207 ±(99.9%) 0.399 ns/op
+                 gc.alloc.rate:      3427.190 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           2.000 counts
+                 gc.time:            2.000 ms
+                 p0.00:              6.000 ns/op
+                 p0.50:              6.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              6.000 ns/op
+                 p0.99:              8.000 ns/op
+                 p0.999:             23.844 ns/op
+                 p0.9999:            1110.000 ns/op
+                 p1.00:              1110.000 ns/op
+
+Iteration   5: 6.185 ±(99.9%) 0.436 ns/op
+                 gc.alloc.rate:      3414.208 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           3.000 counts
+                 gc.time:            3.000 ms
+                 p0.00:              6.000 ns/op
+                 p0.50:              6.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              6.000 ns/op
+                 p0.99:              7.000 ns/op
+                 p0.999:             17.879 ns/op
+                 p0.9999:            1214.000 ns/op
+                 p1.00:              1214.000 ns/op
+
+
+# Run progress: 16.67% complete, ETA 00:00:18
+# Fork: 2 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 6.934 ±(99.9%) 1.014 ns/op
+# Warmup Iteration   2: 3.996 ±(99.9%) 0.930 ns/op
+# Warmup Iteration   3: 4.029 ±(99.9%) 0.564 ns/op
+Iteration   1: 3.547 ±(99.9%) 0.607 ns/op
+                 gc.alloc.rate:      5769.168 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            5.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             11.587 ns/op
+                 p0.9999:            1485.026 ns/op
+                 p1.00:              1524.000 ns/op
+
+Iteration   2: 3.489 ±(99.9%) 0.478 ns/op
+                 gc.alloc.rate:      5744.460 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              6.000 ns/op
+                 p0.999:             16.654 ns/op
+                 p0.9999:            1394.516 ns/op
+                 p1.00:              1402.000 ns/op
+
+Iteration   3: 6.062 ±(99.9%) 0.366 ns/op
+                 gc.alloc.rate:      3450.142 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           3.000 counts
+                 gc.time:            2.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              6.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              6.000 ns/op
+                 p0.99:              7.880 ns/op
+                 p0.999:             16.788 ns/op
+                 p0.9999:            1028.000 ns/op
+                 p1.00:              1028.000 ns/op
+
+Iteration   4: 6.121 ±(99.9%) 0.204 ns/op
+                 gc.alloc.rate:      3415.606 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           2.000 counts
+                 gc.time:            1.000 ms
+                 p0.00:              6.000 ns/op
+                 p0.50:              6.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              6.000 ns/op
+                 p0.99:              8.000 ns/op
+                 p0.999:             18.877 ns/op
+                 p0.9999:            569.000 ns/op
+                 p1.00:              569.000 ns/op
+
+Iteration   5: 6.177 ±(99.9%) 0.344 ns/op
+                 gc.alloc.rate:      3405.162 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           3.000 counts
+                 gc.time:            2.000 ms
+                 p0.00:              6.000 ns/op
+                 p0.50:              6.000 ns/op
+                 p0.90:              6.000 ns/op
+                 p0.95:              6.000 ns/op
+                 p0.99:              8.000 ns/op
+                 p0.999:             20.904 ns/op
+                 p0.9999:            954.000 ns/op
+                 p1.00:              954.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping":
+  N = 113868
+  mean =      4.798 ±(99.9%) 0.130 ns/op
+
+  Histogram, ns/op:
+    [   0.000,  125.000) = 113855 
+    [ 125.000,  250.000) = 0 
+    [ 250.000,  375.000) = 0 
+    [ 375.000,  500.000) = 0 
+    [ 500.000,  625.000) = 1 
+    [ 625.000,  750.000) = 0 
+    [ 750.000,  875.000) = 0 
+    [ 875.000, 1000.000) = 1 
+    [1000.000, 1125.000) = 3 
+    [1125.000, 1250.000) = 1 
+    [1250.000, 1375.000) = 1 
+    [1375.000, 1500.000) = 5 
+    [1500.000, 1625.000) = 1 
+    [1625.000, 1750.000) = 0 
+    [1750.000, 1875.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) =      3.000 ns/op
+     p(50.0000) =      6.000 ns/op
+     p(90.0000) =      6.000 ns/op
+     p(95.0000) =      6.000 ns/op
+     p(99.0000) =      8.000 ns/op
+     p(99.9000) =     18.000 ns/op
+     p(99.9900) =    999.369 ns/op
+     p(99.9990) =   1514.014 ns/op
+     p(99.9999) =   1524.000 ns/op
+    p(100.0000) =   1524.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping:gc.alloc.rate":
+  4263.847 ±(99.9%) 1685.697 MB/sec [Average]
+  (min, avg, max) = (3400.646, 4263.847, 5769.168), stdev = 1114.984
+  CI (99.9%): [2578.150, 5949.544] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping:gc.alloc.rate.norm":
+  24.001 ±(99.9%) 0.001 B/op [Average]
+  (min, avg, max) = (24.000, 24.001, 24.001), stdev = 0.001
+  CI (99.9%): [24.000, 24.001] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping:gc.count":
+  31.000 ±(99.9%) 0.001 counts [Sum]
+  (min, avg, max) = (2.000, 3.100, 4.000), stdev = 0.876
+  CI (99.9%): [31.000, 31.000] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.escaping:gc.time":
+  32.000 ±(99.9%) 0.001 ms [Sum]
+  (min, avg, max) = (1.000, 3.200, 5.000), stdev = 1.476
+  CI (99.9%): [32.000, 32.000] (assumes normal distribution)
+
+
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: /home/rsedor/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: <none>
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 300 ms each
+# Measurement: 5 iterations, 500 ms each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplaced
+
+# Run progress: 33.33% complete, ETA 00:00:14
+# Fork: 1 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 2.271 ±(99.9%) 0.303 ns/op
+# Warmup Iteration   2: 2.021 ±(99.9%) 0.021 ns/op
+# Warmup Iteration   3: 2.012 ±(99.9%) 0.013 ns/op
+Iteration   1: 2.013 ±(99.9%) 0.018 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            51.570 ns/op
+                 p1.00:              79.000 ns/op
+
+Iteration   2: 2.012 ±(99.9%) 0.007 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            18.632 ns/op
+                 p1.00:              22.000 ns/op
+
+Iteration   3: 2.009 ±(99.9%) 0.005 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            14.577 ns/op
+                 p1.00:              15.000 ns/op
+
+Iteration   4: 2.009 ±(99.9%) 0.005 ns/op
+                 gc.alloc.rate:      0.070 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            13.732 ns/op
+                 p1.00:              15.000 ns/op
+
+Iteration   5: 2.056 ±(99.9%) 0.010 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              4.000 ns/op
+                 p0.999:             4.000 ns/op
+                 p0.9999:            14.891 ns/op
+                 p1.00:              18.000 ns/op
+
+
+# Run progress: 50.00% complete, ETA 00:00:10
+# Fork: 2 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 2.447 ±(99.9%) 0.360 ns/op
+# Warmup Iteration   2: 2.030 ±(99.9%) 0.036 ns/op
+# Warmup Iteration   3: 2.009 ±(99.9%) 0.010 ns/op
+Iteration   1: 2.007 ±(99.9%) 0.005 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            14.416 ns/op
+                 p1.00:              17.000 ns/op
+
+Iteration   2: 2.009 ±(99.9%) 0.006 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            15.152 ns/op
+                 p1.00:              16.000 ns/op
+
+Iteration   3: 2.005 ±(99.9%) 0.003 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            10.573 ns/op
+                 p1.00:              11.000 ns/op
+
+Iteration   4: 2.008 ±(99.9%) 0.004 ns/op
+                 gc.alloc.rate:      0.070 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            9.574 ns/op
+                 p1.00:              10.000 ns/op
+
+Iteration   5: 2.006 ±(99.9%) 0.005 ns/op
+                 gc.alloc.rate:      0.069 MB/sec
+                 gc.alloc.rate.norm: ≈ 10⁻⁴ B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              2.000 ns/op
+                 p0.50:              2.000 ns/op
+                 p0.90:              2.000 ns/op
+                 p0.95:              2.000 ns/op
+                 p0.99:              2.000 ns/op
+                 p0.999:             3.000 ns/op
+                 p0.9999:            14.003 ns/op
+                 p1.00:              17.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplaced":
+  N = 142115
+  mean =      2.013 ±(99.9%) 0.003 ns/op
+
+  Histogram, ns/op:
+    [ 0.000,  5.000) = 142046 
+    [ 5.000, 10.000) = 46 
+    [10.000, 15.000) = 15 
+    [15.000, 20.000) = 6 
+    [20.000, 25.000) = 1 
+    [25.000, 30.000) = 0 
+    [30.000, 35.000) = 0 
+    [35.000, 40.000) = 0 
+    [40.000, 45.000) = 0 
+    [45.000, 50.000) = 0 
+    [50.000, 55.000) = 0 
+    [55.000, 60.000) = 0 
+    [60.000, 65.000) = 0 
+    [65.000, 70.000) = 0 
+    [70.000, 75.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) =      2.000 ns/op
+     p(50.0000) =      2.000 ns/op
+     p(90.0000) =      2.000 ns/op
+     p(95.0000) =      2.000 ns/op
+     p(99.0000) =      2.000 ns/op
+     p(99.9000) =      4.000 ns/op
+     p(99.9900) =     12.000 ns/op
+     p(99.9990) =     54.994 ns/op
+     p(99.9999) =     79.000 ns/op
+    p(100.0000) =     79.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplaced:gc.alloc.rate":
+  0.069 ±(99.9%) 0.001 MB/sec [Average]
+  (min, avg, max) = (0.069, 0.069, 0.070), stdev = 0.001
+  CI (99.9%): [0.069, 0.070] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplaced:gc.alloc.rate.norm":
+  ≈ 10⁻⁴ B/op
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplaced:gc.count":
+  ≈ 0 counts
+
+
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: /home/rsedor/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -XX:-DoEscapeAnalysis
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 300 ms each
+# Measurement: 5 iterations, 500 ms each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplacedNoEscapeAnalysis
+
+# Run progress: 66.67% complete, ETA 00:00:07
+# Fork: 1 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 7.173 ±(99.9%) 1.712 ns/op
+# Warmup Iteration   2: 3.627 ±(99.9%) 0.623 ns/op
+# Warmup Iteration   3: 4.262 ±(99.9%) 0.868 ns/op
+Iteration   1: 3.521 ±(99.9%) 0.467 ns/op
+                 gc.alloc.rate:      5744.430 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            5.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             13.650 ns/op
+                 p0.9999:            1307.620 ns/op
+                 p1.00:              1344.000 ns/op
+
+Iteration   2: 3.485 ±(99.9%) 0.281 ns/op
+                 gc.alloc.rate:      5662.426 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             14.000 ns/op
+                 p0.9999:            643.423 ns/op
+                 p1.00:              1292.000 ns/op
+
+Iteration   3: 3.384 ±(99.9%) 0.311 ns/op
+                 gc.alloc.rate:      5742.696 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             9.000 ns/op
+                 p0.9999:            690.430 ns/op
+                 p1.00:              1448.000 ns/op
+
+Iteration   4: 3.357 ±(99.9%) 0.172 ns/op
+                 gc.alloc.rate:      5762.892 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            2.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              4.000 ns/op
+                 p0.999:             8.000 ns/op
+                 p0.9999:            382.658 ns/op
+                 p1.00:              804.000 ns/op
+
+Iteration   5: 3.362 ±(99.9%) 0.184 ns/op
+                 gc.alloc.rate:      5745.827 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            3.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             10.000 ns/op
+                 p0.9999:            414.600 ns/op
+                 p1.00:              854.000 ns/op
+
+
+# Run progress: 83.33% complete, ETA 00:00:03
+# Fork: 2 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 7.648 ±(99.9%) 1.980 ns/op
+# Warmup Iteration   2: 3.524 ±(99.9%) 0.758 ns/op
+# Warmup Iteration   3: 3.406 ±(99.9%) 0.024 ns/op
+Iteration   1: 3.910 ±(99.9%) 0.378 ns/op
+                 gc.alloc.rate:      5195.726 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            5.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              8.000 ns/op
+                 p0.99:              9.000 ns/op
+                 p0.999:             21.464 ns/op
+                 p0.9999:            994.780 ns/op
+                 p1.00:              1570.000 ns/op
+
+Iteration   2: 3.470 ±(99.9%) 0.213 ns/op
+                 gc.alloc.rate:      5683.993 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             15.817 ns/op
+                 p0.9999:            487.652 ns/op
+                 p1.00:              979.000 ns/op
+
+Iteration   3: 3.444 ±(99.9%) 0.018 ns/op
+                 gc.alloc.rate:      5691.844 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            3.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             9.000 ns/op
+                 p0.9999:            24.440 ns/op
+                 p1.00:              26.000 ns/op
+
+Iteration   4: 3.418 ±(99.9%) 0.238 ns/op
+                 gc.alloc.rate:      5735.269 MB/sec
+                 gc.alloc.rate.norm: 24.001 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            3.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              5.000 ns/op
+                 p0.999:             12.000 ns/op
+                 p0.9999:            556.881 ns/op
+                 p1.00:              1104.000 ns/op
+
+Iteration   5: 3.385 ±(99.9%) 0.243 ns/op
+                 gc.alloc.rate:      5776.714 MB/sec
+                 gc.alloc.rate.norm: 24.000 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            2.000 ms
+                 p0.00:              3.000 ns/op
+                 p0.50:              3.000 ns/op
+                 p0.90:              4.000 ns/op
+                 p0.95:              4.000 ns/op
+                 p0.99:              4.000 ns/op
+                 p0.999:             7.000 ns/op
+                 p0.9999:            798.816 ns/op
+                 p1.00:              859.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplacedNoEscapeAnalysis":
+  N = 151526
+  mean =      3.469 ±(99.9%) 0.087 ns/op
+
+  Histogram, ns/op:
+    [   0.000,  125.000) = 151514 
+    [ 125.000,  250.000) = 0 
+    [ 250.000,  375.000) = 0 
+    [ 375.000,  500.000) = 0 
+    [ 500.000,  625.000) = 0 
+    [ 625.000,  750.000) = 1 
+    [ 750.000,  875.000) = 3 
+    [ 875.000, 1000.000) = 1 
+    [1000.000, 1125.000) = 1 
+    [1125.000, 1250.000) = 1 
+    [1250.000, 1375.000) = 3 
+    [1375.000, 1500.000) = 1 
+    [1500.000, 1625.000) = 1 
+    [1625.000, 1750.000) = 0 
+    [1750.000, 1875.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) =      3.000 ns/op
+     p(50.0000) =      3.000 ns/op
+     p(90.0000) =      4.000 ns/op
+     p(95.0000) =      4.000 ns/op
+     p(99.0000) =      6.000 ns/op
+     p(99.9000) =     12.000 ns/op
+     p(99.9900) =     86.847 ns/op
+     p(99.9990) =   1507.137 ns/op
+     p(99.9999) =   1570.000 ns/op
+    p(100.0000) =   1570.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.alloc.rate":
+  5674.182 ±(99.9%) 260.082 MB/sec [Average]
+  (min, avg, max) = (5195.726, 5674.182, 5776.714), stdev = 172.028
+  CI (99.9%): [5414.100, 5934.263] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.alloc.rate.norm":
+  24.000 ±(99.9%) 0.001 B/op [Average]
+  (min, avg, max) = (24.000, 24.000, 24.001), stdev = 0.001
+  CI (99.9%): [24.000, 24.001] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.count":
+  40.000 ±(99.9%) 0.001 counts [Sum]
+  (min, avg, max) = (4.000, 4.000, 4.000), stdev = 0.001
+  CI (99.9%): [40.000, 40.000] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.jvmcosts.AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.time":
+  35.000 ±(99.9%) 0.001 ms [Sum]
+  (min, avg, max) = (2.000, 3.500, 5.000), stdev = 1.080
+  CI (99.9%): [35.000, 35.000] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:00:21
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                                                Mode     Cnt     Score      Error   Units
+AllocationBenchmark.escaping                                           sample  113868     4.798 ±    0.130   ns/op
+AllocationBenchmark.escaping:gc.alloc.rate                             sample      10  4263.847 ± 1685.697  MB/sec
+AllocationBenchmark.escaping:gc.alloc.rate.norm                        sample      10    24.001 ±    0.001    B/op
+AllocationBenchmark.escaping:gc.count                                  sample      10    31.000             counts
+AllocationBenchmark.escaping:gc.time                                   sample      10    32.000                 ms
+AllocationBenchmark.escaping:p0.00                                     sample             3.000              ns/op
+AllocationBenchmark.escaping:p0.50                                     sample             6.000              ns/op
+AllocationBenchmark.escaping:p0.90                                     sample             6.000              ns/op
+AllocationBenchmark.escaping:p0.95                                     sample             6.000              ns/op
+AllocationBenchmark.escaping:p0.99                                     sample             8.000              ns/op
+AllocationBenchmark.escaping:p0.999                                    sample            18.000              ns/op
+AllocationBenchmark.escaping:p0.9999                                   sample           999.369              ns/op
+AllocationBenchmark.escaping:p1.00                                     sample          1524.000              ns/op
+AllocationBenchmark.scalarReplaced                                     sample  142115     2.013 ±    0.003   ns/op
+AllocationBenchmark.scalarReplaced:gc.alloc.rate                       sample      10     0.069 ±    0.001  MB/sec
+AllocationBenchmark.scalarReplaced:gc.alloc.rate.norm                  sample      10    ≈ 10⁻⁴               B/op
+AllocationBenchmark.scalarReplaced:gc.count                            sample      10       ≈ 0             counts
+AllocationBenchmark.scalarReplaced:p0.00                               sample             2.000              ns/op
+AllocationBenchmark.scalarReplaced:p0.50                               sample             2.000              ns/op
+AllocationBenchmark.scalarReplaced:p0.90                               sample             2.000              ns/op
+AllocationBenchmark.scalarReplaced:p0.95                               sample             2.000              ns/op
+AllocationBenchmark.scalarReplaced:p0.99                               sample             2.000              ns/op
+AllocationBenchmark.scalarReplaced:p0.999                              sample             4.000              ns/op
+AllocationBenchmark.scalarReplaced:p0.9999                             sample            12.000              ns/op
+AllocationBenchmark.scalarReplaced:p1.00                               sample            79.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis                     sample  151526     3.469 ±    0.087   ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.alloc.rate       sample      10  5674.182 ±  260.082  MB/sec
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.alloc.rate.norm  sample      10    24.000 ±    0.001    B/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.count            sample      10    40.000             counts
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:gc.time             sample      10    35.000                 ms
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.00               sample             3.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.50               sample             3.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.90               sample             4.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.95               sample             4.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.99               sample             6.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.999              sample            12.000              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p0.9999             sample            86.847              ns/op
+AllocationBenchmark.scalarReplacedNoEscapeAnalysis:p1.00               sample          1570.000              ns/op
+
+Benchmark result is saved to /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run1/jmh-alloc.json

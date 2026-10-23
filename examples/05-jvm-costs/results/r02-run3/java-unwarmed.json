@@ -1,0 +1,127 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "05-jvm-costs",
+  "language" : "java",
+  "variant" : "unwarmed",
+  "unit" : "ns",
+  "count" : 20000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 115967,
+    "p90" : 192639,
+    "p99" : 229375,
+    "p99_9" : 11001855,
+    "max" : 30277631
+  },
+  "hdr_histogram" : "HISTFAAABXp4nFVVz2/cRBS2n2dnJxPXdV3jusayjLVajLUsy7JsV6tVukSrCIUoqqIoqkJUVdEqikKIwrZUUVRVKK0iflSVUOEAFxD/QbnAv8KBIwfEBYkDBy58bzYc8Hg8M++9efM873vvpU+eX7Ws+l/W/HEuRhvTlc7P31s3/5wTvviQXiK6TNeoRuTQIllUF3VyBGF2iepgXSdMHLSXid4SVyD/JoTfoEviPaIrLMx7LYGdmF4SGMiRhMeSlpAOaSwECUsoRUI4YIj5Y5EUpHCUo0GzoENZLMd7a2QZEgkJPdClQJFCaGyTRkYpIaRZQ4Y7miU1zsBLJPFhFZKPhg5jENvBuo0GtlHCZBjJMiQctg9CNSWMJMznI0FRWpnRMmpdkLnxNQkllZSSpBLK1bDB9YT0peYN0vNAC5Wvch3GSdjM0zRJw7jVqMooTRp+nuRFEIQ53rhKyyxvZGmYeG6cx0kehUmcBa2w0S7zvDdIi2ZeJEWrl6W9pNFO46xZ5CWIuVukaZXlZRqHaVI0yrxqJs1Ou1of7+ysbB4dPjg8OTk6fGYfPLE/Rds93H10fGZv72+d24ere5v7OxuT1bXR2tFsNt178NQ+3j+9Mz2zn9qzT+xnaLPP7ZPZmX1un9lHz+yv7B/tJ/YP6E8xP/jWnp2eHN6fntuztc291e3x7dV3d7e2ljfvTnoro+VV9FG30y3b7dGgPeiWjXZVDcpOvyjz7nCQgVFk2Rg/31oeNdtlsxfnjbBdxFkV+c0i6aaNKIrzooyTJE8iP4y8pOUGaTOIwjKMtB96kQqSMAgD1/N97XmuqwLlu8qTvhd4rtLSh2d8T2OuKKTIl6EK4U8NOGIIRKRdoYQmuMwFvuBMDytQsEEDBNLgiAhIk9wBL2DPoBRMiZVkMBOzeMqgZkww8qR0BeZAGAsLA0HgjWFG5qMcIQwOGY/oDoNMMDo1A1ZKxyB2jj2DVWvOoRqTOUI83mFJo8XheBIWzYWNaphWE45gccWABXDnwVBTGv91icPFHGk4zOKYNVYusJHzODbWWswwYQnQM4ePwBn882hM4ouw+DpwTZKvTuCitesKjS3wiohVqD3taj+GQ1ytvEDNnSVjrV0/xD7PlQruwi4tAt93TdOBIERS7Ok41kHsBkHq+2HcKLJI51HRitJ2XrXaWavo5e2lfln2OivVUr/bAsTG425/ZbDUn6yPh8Pe6NbGneW9w52d28cn2+8eTR/eOdifAfe7uw9Pz+3T6aPtnd37Jwe7s+l0f2VrunV3aXr3eHN9Z3t4a3WyPlkbbKxt3F5e6q0ujQajyUpz2JsMh/3WuDvqDMp+q9Ob9Jorve6w06nWqvFg0OkPy8Gk261Gk/6on7Q73UYr6/eGg0GzDIseQj4uq3avKouq22oO83aFIImrLGk2y1YeZ1nYz3PECYI991tJI8vSPAWjiJEf8jj10ygK4iRKEBxFGGg/cJPY80D0VKKC2A9UmCjPi6PQ9XDTmgNEKS/RQLyvPOVLdogSni/ZQ0r48BgyGvwEJwpLI6tKj7EPl7gG4WBy0vsvz87db3I8CW0xogSndOAO/jQoQbbkKmHAAdA7ABFgySgzqdcy6V+afAxxJQzS6qCxpGNKAhleHQXKoosSgcM5YhyuOSZETAgxiOtzoGIFFC+igkH8OgaLXjGKXsO6LhbpdbrC4jVT4Zj9KuaLYsFY7BglkGLmgriIXscsL36HQLfIVEG6CtplU7nYoAWoW0S95OJ5DbTrhmNB6gYoNyH5PkqqA3tuwKLHRF/a9E+NPvPpJ4d+XaS/bXos6YVNX0v6Bl+H3qHvHHqbnvPsF4deEP1h0+/2/754f7PpHn100T82Xx7vmfYB/QvPWMKF",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cnUVZ5/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T00:33:07Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2472115,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.82,
+      "load5" : 0.81,
+      "load15" : 0.9,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "warm_up=0; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 268435456,
+      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/unwarmed.gc.log:uptime,level,tags", "-XX:+UseG1GC", "-Xms256m", "-Xmx256m" ]
+    },
+    "alloc_bytes_per_parcel" : 732.6664,
+    "jit" : {
+      "startup" : {
+        "compilations" : 447,
+        "c2_compilations" : 47,
+        "deoptimizations" : 25
+      },
+      "first-2000" : {
+        "compilations" : 245,
+        "c2_compilations" : 16,
+        "deoptimizations" : 1
+      },
+      "steady" : {
+        "compilations" : 72,
+        "c2_compilations" : 65,
+        "deoptimizations" : 3
+      }
+    }
+  }
+}

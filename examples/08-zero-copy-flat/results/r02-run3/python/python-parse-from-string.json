@@ -1,0 +1,104 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "08-zero-copy-flat",
+  "language": "python",
+  "variant": "parse-from-string",
+  "unit": "ns",
+  "count": 204800,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 1210,
+    "p90": 1243,
+    "p99": 1279,
+    "p99_9": 2487,
+    "max": 58719
+  },
+  "hdr_histogram": "HISTFAAAA0V4nD1SUWibVRTO+e75T+5/kzSmMV3btU3c1lp1Tdukg3V7GL7swVdhgrjHgYog+OSLIFKCliGlQhm1hCAypAyJQ6XrQxmFjVDKwFFG2UMRKSKlDzLKHsZW5Jw/M/mTm5x77ne+77vf0Nx3xVSK/0glL9ddKZVyl6fWWqlL/yaFewUhDvBhsNJ3aurszIUPPrzy8ecL9Ctt0hp1aBEd/I0D3HQtt+s2+ZhvRS35UdpyXw7SX/lGWAhb4X5mPtvMbeZ2881XbhaWCrd6j3qbpd9P/Nx3eKI5uDbYGbpR/qF8NLxUfnBq4fTG6OIb7de/Hn82fv3NjbOrU3enH082qytTx5ON2t7sfH219metWb9efzhzeK5Vb9TXa7u1znTn3P70TnW9+s/EwVs/TWxXn421xr4d2znz6Mze6PLp7crSyPHw8tD20F/DzYGV/sd9rdKXpa3SQXG/90n+ML+Yb/Ts9dzO3s3sh83QDo/887jln6aPZFlWo4dyxG1e5+dunh+4FXeILWxjB03cwFO6TW3aoCWaozlq0CefXXnn/csXZs5XZ8ZHKpW+/mzvSH94tac/G7z3gUU8B2EIAeIhzJ4ZjAzgGPqDhRDBgQQOEWs9YkIeBIcCBhABOAntAKGE93AVSCsAoYDItmNrdtqEItIgtrJOIIAJiCRmACSsKPoAEHa2zwKG04U4AfEsEKUEUubEHkKixJ0wixBE9GBGWEQB9IuZWM/rHGbSimNrA8EHGwhlIU4Zai8rRatRIkHMigTD3qai26yntJ28amJhTicGcBcCIM/JcGJzRAyF2f6xdgUyZQlSMqe76nb6/8E5JhSNiLENxMSIAQ8RhmcHDwQYs+RyTL9+Ijbt6MoAOBKOoJTNkEQr7I64Oy5SEmq4SlAwDQwYgqBIxMpZVIjSFCDDnHjHwfZUtF4cIOR1w4kEREbGWebE7tz0qi3CWW1mFRM0AsJZ9cYbPL98SJRLN0qWBfNKkxJb8KCuOU0dyi/NizlWeZQkUbOc0XRbmh24bN14jWMMIIMcBhBjFl+gAHyKk5jABPKYxVVcwh3Cu/gIEYoGVzbvFGUUDpNwuIZpXEQOLwi/EN7GC+AbwW8ZfF/Bf96DmNw=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T00:47:14Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2479234,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 1.52,
+      "load5": 0.92,
+      "load15": 0.82,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "per-call time of decode plus reading every field, 204800 calls; two perf_counter_ns reads are inside each sample; python 3.14.8; observed, not asserted"
+}

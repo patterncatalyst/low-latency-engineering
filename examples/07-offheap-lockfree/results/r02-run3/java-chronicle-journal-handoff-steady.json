@@ -1,0 +1,109 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "07-offheap-lockfree",
+  "language" : "java",
+  "variant" : "chronicle-journal-handoff-steady",
+  "unit" : "ns",
+  "count" : 180000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 140,
+    "p90" : 174,
+    "p99" : 585,
+    "p99_9" : 1229,
+    "max" : 1856511
+  },
+  "hdr_histogram" : "HISTFAAABJJ4nC1Tf2wTdRS/77tvv71dy+16O47uPC7l1h2ldMfRNbWWUspRZp1Ns4xlos5JJup/BBFM9C+ZZJljjh8amIiJTjTLsiCif0yjMxKiJiRGyVyUPzRBY/zDyCSGKBLju6v95n1/vPd5733euz7jyMttHBd6jWv++P9Pgtced+ENbttKU/E2oZQDXBRQKDBnzzK5Cr/zi3SBPs8WwzPiWfED8ZXoV9E56VbrVXlSud32s7ZgnF87YyyZt9a9kzyz/tKmyxuX3X+7f7h7dutNb7425U3sPLnjjDe9Y+7eq971ypR30RvbOrllZssv3R93L23+a9Nv7nn3XGZx46+p2/bNzjvWcWvOuN4+H59SZ2OXYxdbr0UXI+PR78STkYnImZbpliVhWlgJ/xleYfPsDr1Gl+kY/Zyf5cf4SzAOt8gojMESWSFfk4/Il+QCGSOj5Cw5ScbJyClycO+B/Y16rTo4WPS8mldzK5VS0sz2JHpyGSeXUp2MmU/badcu5xy3lC8WzJxhOoaTsp1E3NRkU1cM04qruqZbcUWXbUVXFEmV9bgkybKhybamS5oUFRVZ0mRVFQRJEEWqMEGmEouKVGBMEESBY1QUokwUQWBRmaERo5haQjMyTtYp1jIlr5RznFTFLdqFctFJZ+xcvpzLFS03byesdDJpJW1DkfK6mXKrNc8bqOwd2Hec9O8b9cucJKdwTZEjWP0Eyjm8XSAHnntiZJzsGT44vHf4wHDfM7tHBhuNgaG+vqFqo9ZX7S25RdfJ5rKptFMqpSy3kHHtrGkpZsoxdTMuZywtHdf0ZCJtlJ1GtVApFeu9XuUhr96oeuXe+tBgo7qnf2T3wGCjf6Rnf6NRqNSqVa/aV8nn++s99aFypjSQL5V6qnUnmc9W0omCXTXSmURajVvJhCIqekJRTEM11ZQRz2CDLdMyMq5hJVOWmdCzWjJhyYYhawlL0lUxridVXdbioqAaUVWUZSUqKZRJHGMSE6kkMKCUsijDpgMFAbsvopXiv5sTUcEB5YMDOAY88EzAAWAA4IsAUTxwFHzBYQDKmg9/QChDOPXf6BxMCxMieOehBSXQ+AGBNacJN56G0RXdfEUzCPMxIIYAQoCDx1OORsAfQZ75Dj6NkB8rMPqJIuBDOWiOKR8oQxCGNpQwYGr/GegB3y24twb4WMCyLbg3+TU9W1ACQqsCp2YBXGCKQHtgXBW4rMHVCffBPQGiGz4lsJOug+0YsxOOEtiFOg6egi74hiD04QDIwTq4C+ExPHlEdgX5YhgyDGsB2ukmn+Ua5Ih1xWADGpByF5KjeLbRGKL99KsRzfnVtcJmdOBQuTHg2kpfIPASQaYxeBalM+hAGI4ReM8vdw1sw9fqIO22gE47dGCMQxTB98MJgpFeJ9BB1yP0H8AYbwHCfwLYgSl3IfnHMdNmOMbD9wyJ/QhY1yFUXwnBCQo3CPwB8BmBKwTe9Vl8S+AT4vcGFWH4kMDTWBQ+TxN4EJ7ErjwCj+LagFE6cH8MDjN4NQSnKTwAfwPc4OFN/zNgxC8IHPU/0osA74fgsAn/AZ986FQ=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/chronicle-journal.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T00:42:14Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2476874,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.3,
+      "load5" : 0.48,
+      "load15" : 0.7,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "handoff=agrona_busy_spin; journal=chronicle; manifest=none; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; journal_fs=btrfs; journal_bytes=15002637; journal_block_size=67108864; journal_roll_cycle=FAST_DAILY; journal_readback_count=200000; journal_in_order=true; old_gen_baseline_bytes=3797368",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run3/chronicle-journal.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 10000,
+  "dropped": 0,
+  "example": "03-coordinated-omission",
+  "hdr_histogram": "HISTFAAAAtN4nC1TMctdRRB9c/a8ybiuy7q5XC6Xy/Xm8YiPh2L4+IgfD4lNENGgIiJWYhHEwjpYpviInYJayGdjq/gDUtiJFpbBWizEWlJIQASZfdk7y3JnZ2fPOTM7nX95ebXiYXUc4fEqq1V45dr9b1cv/310XNFs2QSEYI1LRFC1CBoAUAxMUYlmMapSY7QIKKBimsSgEaWL87Wv8cmD9W/yKFzwbvjr0l38E36VX/BQvpI/5b0f5M7tj166kBs/ygfvfyE3H8pbv8t9uSfn4Vz+kFufySP5Xh7I4UJuffzh9Tu7e7J/Y7e5Pb42nby7OSun+2mfq22XcVdulvmkO9SzaXM2nnUnr54c6jvd9U3/dn9j7E7HfX0uTlPtpQxx0aS9oqJHplUzmiHCCEDVSCWEPgBEIjIShKkKVdWgidk5g04ZrojG7CLVWLPVDEuMWnIteSjD1NfNnKfU97n0fZ+GlHWY5nHadsNu2M7jtGy28zLV/ThM/bjsry6b02W3XQ7TsmxrvdoPw5yGoVu6MdWSTPvoa2Uu1WKpqVeq5WhmWbOplZgdEs2SiRpgQnPsiAABK2oJpEKh5vtmRSmWvarURGVKKNT2wdjKzYgjX/VGgIKB4ptkFiOiUsX3TDUqfEYlDRbTMY0CTUxNyZJZqikjlb5LLqcXAtVPMFrRZINZTmUomzLnut3Urp/r2PVjiTExpqgxqYn6Wc01p5Jyn0uZrHQx2xKjmhVXgRA1SQKBWnImZBSjFzs6KANa1dFK2tq8URS0podLp3jsI55EgCDA6T8NgXeKvxc3YXO7ULqmXylo5ueFwSPYHgsCGQh3NV9QV5ieuEGgtIykWoCHKSkqmvwGdawkJQWKeWY3Go1CacHtKvhfIyU8sqHnb5gEawcQGpSA9RF4QMCaa1yG4AVc8dAX8Y3g3wGv43PBMwh4As/iO8HzeBM/F3wa8NNT+I/4H/hiT50=",
+  "language": "cpp",
+  "notes": "stall_ms=0 stall_seq=5000 dropped=0; the stall is a blocking sleep; record_corrected, expected interval 1 ms",
+  "percentiles": {
+    "max": 23903,
+    "p50": 137,
+    "p90": 634,
+    "p99": 977,
+    "p99_9": 3881
+  },
+  "profile": {
+    "captured_at": "2026-10-23T00:08:07Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.25,
+      "load15": 0.79,
+      "load5": 0.88,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2454141,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "closed-loop-corrected-control"
+}

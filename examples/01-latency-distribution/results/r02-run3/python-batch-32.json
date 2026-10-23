@@ -1,0 +1,104 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "01-latency-distribution",
+  "language": "python",
+  "variant": "batch-32",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 15237119,
+    "p90": 28213247,
+    "p99": 31211519,
+    "p99_9": 31244287,
+    "max": 31260671
+  },
+  "hdr_histogram": "HISTFAAAA1F4nE1SQYgcRRSd/+r375reSk9vTdu0k87Yrss4jMNmXZZlWEOyhyWEuC4oexARQnLKYZFFJATZwxoHScCDKB5FEYSI6MmDB0/xJAjevamgFxEPHnJa5Ff3Mk4PVfXq/Xr1/v9VzT/qdzrRC53mZ9qZOh1zdf27zzpX/mk2fj7Cj4wL6OM5vEu4iN+BCDG6eAkGz2MZy2ADgv4jRDoZxIwejK6eAIgJEN1n9DhE6oElXeiy2ywA5ojjoK0ogmmCo0ATYh3ZwOBJ7gLLCDL6dWHQeujhPKKg8JRu9FQHF/E14R3Cs/iS8CJ6uIFzeDlEYylcFAX/QupRLTAxR+qcwbrHejVrLswaaYXQuNNjEE02SHCzH4F1wwiYIYZVrxEJIRCdm0qEZI0aiUOKMXdxpa0RoY9zbTW06gYRlnAePVxAD58Qf0H4s8bTCBGEPqs44FOb+DQpbeasdYkmQcJsgpyOUaia9oklteKy3Jepz2w2yHKfiGYZsQAW0vZ2mfv4yuEZtR8BS5a5zEZlNXS5sFhtT4SmdYYN27yoxqNBPVpJRciyE8035hgfC3rBZteS+GJYDiufWzmT0NGwloUlT+rRSl1NxpkVYpvY/2sgNCIWsCuHZT3Is9QiUQsRzjSMrWfXdi978qm2wOCBVlA0oWQ4m42KVEzzYrVBK2t7O7sFXM6sT++BQWwB48rN2XiY2KbZTWg13bu0V4jzsgglNrbY2pzWTkP1fn0+fv3apYPSJl7kLFLAxiYbO9MVm2qb1SmYsvH+9v5qkmRW9PCvBGPZrt+dZAQG89ac7uSlZcIPBFLqaKOlJvfp2FcLSiZvzlpqfEL3yNcLjkdHl72+UuHR8ZyK2hK3FK0eXvUIVP32e1QNkwVV397LG6q48wHVlWspESre2C+UYsnu3qfpIF1Q2eFB2VDurTltlSkYnxLYHh4z26OfaCS4ASS3T4jZ3vqFVm3At+5pFq/9RiPF5F6fk2N55Q+aNPjgfcXX/6Jpg69/SKnIzr80TQKefU6ZyPZjWktwEy3cOKU1p3DjocLpHA1cf0heZHKCzQDH31AusnpK24nchKu/pUKkmmPbKSy+p1KkOKXdVGH2iEph/5j2M4XpIxqwZH/Tq17+A+LCcMo=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T00:27:41Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2468287,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 0.71,
+      "load5": 1.09,
+      "load15": 1.02,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "throughput_mhz=1003212; done_span_ns=9967981683; reordered=0; single thread, GIL; batch=32"
+}

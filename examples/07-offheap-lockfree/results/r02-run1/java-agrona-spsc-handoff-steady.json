@@ -1,0 +1,109 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "07-offheap-lockfree",
+  "language" : "java",
+  "variant" : "agrona-spsc-handoff-steady",
+  "unit" : "ns",
+  "count" : 180000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 140,
+    "p90" : 181,
+    "p99" : 576,
+    "p99_9" : 3893,
+    "max" : 187647
+  },
+  "hdr_histogram" : "HISTFAAABS54nC1SX2xTVRi/57unt7d3Xde1d6Xt7sqlK7OWrZayldptl1mhjjrrnBOXOeeYc4ZlWZCYiQZhMUjmMuKC8CAiIlGDCSHGQMIDD2YhBJEH4QGThQcyE0PMHowaTAwx/s4pvX/Od77v9/2+3/n1Woc/CSqK9pNS/amPVoawlLl8Rtn2RzVxi3EjN8/WaIGf1o7r5zx/1vztW63/LnSyaTV+MnklfX/Lcn6pe3nHf85d55jzsPtK18Vtaz23Oy8Xrncudp7t+rl4p3CzcK5wpXCq89/CvPMgt5a72r6aOZVZaVtNLiRWNvwWm4udiZ63flh3s2E1uBK8Wn8ucNJ/sW7Vd8d3vPar2ru1D4zrnnueY5777nvuw+7fXd+7ll2nXdf4TX6B31VvqBfVNVqmD9QlesiO0xFaZbfZA3aN3WCL7BhbYgts5uA8mx7pG630F0fbB4ecVDGezeSSxXzSypq5QmuqEG+3c+lUPJdPphOx1mjaTNipTCoabbXjth21rHg0FLYCVjhl27GobbUm/OGEHTWj/lDM9gWsRKIlYFtxM2SnrHAgHAsFkl4zapmI9EQgZJmmPxQyzVgg5DNtK+nk08Xh/pHDbHb/PEQusjNshV1mF9hpdp59w2bPslPsvUU2z0bn2OTIETZxYGRiZmR8cJHNlIcmK5WxOTY2NjjQNzUwPNBeLvWXC05vVyafbW/Ntibimb4WO5bMpqKJfCYZaLHCSTuczaUy+UK+t2t2fN8827tv8gibA//B2ckDC2zvyL6De5fY2/Nsamq6MjhRcYbLpXy5t6vs9A335gf6i+Wx7aXC6MCuieFKuXekv1J0hnqKeWd7S6mQi7UXnHyiJ5XKZ512p6c03Tuwf3J6fGrXzNjQ5MB4z1B/T6lYqhRbil2Olcw5aTudac1a2aSdSKeSiUzSthMw3IRxVgtsTvp9ITPk9ceiphkI+y3dFzIMzfAbRsDrNQzOQ16fzxvQdZ9hGLqPe7264SfONfJxALluaLpuEPdqmo80JDTSdQ07TUeRFINIAZyIXBoChTSFq8RJ4Rw3d5MLq0YqKRrQJCF4uThuGaFCpKEfCF5lIcmpYKcBQyKo8gENjCK3YtEVSYke0cUVTQYKGVwDUIE+0GuiFYokVPTpJFmpqlJGmibGa0K4kCu1I9bkaDwqYnG7uNQHtAuXQrWcpFCXwJCgBqWiqRirAiBg1QMLBpkS4lWR49U8DEJN4dWTuKUaqpFDJR4OqtClYJV2BaVhyiP5wlde96iG0EMUpAhFeK2gclMDqBpwAVcHxGbaSh1UK+NG5JqEwJ28TqomD99Eh+h13kbd1Ewv0jrwIEvbhMXUxPegD4FgpMeIHgeBBzQ1KEdoPVYXBrhRakTNI+sb5d5N9UC4IW0zbUGuRrIIyfXANNBThFcdQmGGG60e7J8EZLc8wvuInqBn6R2s63HEavMhZETXBhCqJBsVzKxHah129ThmhwS6oS0oWhGLWg20NCNuordoC38euQhtQvwCRtbBoI8ZfciQ6QbSTW30EZM6aqgTIAjZSM9AYBv6I1L0DjxBaWoE85sxWZhLjTxC70LdejRsgAlvSiH19BJUb8S6VR7+a4auRsz6leCzmy4x+kwMPyo+hEuqULKHThC9gulb6TVY9QZhkgdqoegfBnN+ZPQtA0OH9KBJUKr0JaPPxfocZjbTpwyVCL2KduFNB6z0QHc3drsh5xf5oaogrMPfvkkoeJroZQxtpi8Y7aQTDOcO0i0GGOz5S6X/ASLX+NY=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/agrona-spsc.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T23:57:25Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2446814,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.17,
+      "load5" : 0.52,
+      "load15" : 0.67,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "handoff=agrona_busy_spin; journal=none; manifest=none; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; old_gen_baseline_bytes=3796992",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-run1/agrona-spsc.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+    }
+  }
+}

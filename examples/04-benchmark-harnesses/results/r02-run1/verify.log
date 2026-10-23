@@ -1,0 +1,101 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2.11-200.fc44.x86_64
+━━ unit tests: check digit parity on known-good SSCCs
+Running main() from /home/rsedor/Dev/low-latency-engineering/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] 2 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 2 tests.
+......                                                                   [100%]
+=============================== warnings summary ===============================
+../../../../../usr/lib64/python3.14/ctypes/_endian.py:33
+  /usr/lib64/python3.14/ctypes/_endian.py:33: DeprecationWarning: Due to '_pack_', the 'ExternalHeader' Structure will use memory layout compatible with MSVC (Windows). If this is intended, set _layout_ to 'ms'. The implicit default is deprecated and slated to become an error in Python 3.19.
+    super().__setattr__(attrname, value)
+
+../../../../../usr/lib64/python3.14/ctypes/_endian.py:33
+  /usr/lib64/python3.14/ctypes/_endian.py:33: DeprecationWarning: Due to '_pack_', the 'PayloadHeader' Structure will use memory layout compatible with MSVC (Windows). If this is intended, set _layout_ to 'ms'. The implicit default is deprecated and slated to become an error in Python 3.19.
+    super().__setattr__(attrname, value)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+6 passed, 2 warnings in 0.05s
+✓ C++ (GoogleTest), Java (JUnit, ran during package) and Python (pytest) agree on the check digit
+━━ C++ Google Benchmark: 30 repetitions per benchmark
+Google Benchmark aggregates (default output also prints a mean; read median and p99):
+  BM_CheckDigit_Guarded  median  4.733 ns
+  BM_CheckDigit_Guarded  p99  4.853 ns
+  BM_CheckDigit_Eliminated  median  0 ns
+  BM_CheckDigit_Eliminated  p99  0 ns
+  median guarded = 4.7329169005099025 ns, eliminated = 1.7799902707338332E-10 ns (divisor floored at 0.01 ns)
+✓ C++: eliminated median is >= 10x lower than guarded (473 >= 10)
+━━ Java JMH SampleTime: 3 forks x (3 warm-up + 5 measured) iterations
+JMH percentile view (percent, ns per check digit):
+  eliminated
+    p0.0  0
+    p50.0  0
+    p90.0  0
+    p95.0  0
+    p99.0  0
+    p99.9  0
+    p99.99  2
+    p99.999  10.792
+    p99.9999  12
+    p100.0  12
+  guarded
+    p0.0  14
+    p50.0  32
+    p90.0  36
+    p95.0  38
+    p99.0  39
+    p99.9  49
+    p99.99  67.287
+    p99.999  84
+    p99.9999  84
+    p100.0  84
+✓ JMH SampleTime output includes p0.99 and p0.999
+  p50 guarded = 32.0 ns, eliminated = 0.0 ns (divisor floored at 0.01 ns)
+✓ Java: eliminated p50 is >= 10x lower than guarded (3200 >= 10)
+━━ Python pyperf: 6 worker processes x 4 values, 3 warm-ups each
+Total duration: 6.5 sec
+Start date: 2026-10-22 19:48:11
+End date: 2026-10-22 19:48:18
+Raw value minimum: 129 ms
+Raw value maximum: 133 ms
+
+Number of calibration run: 1
+Number of run with values: 6
+Total number of run: 7
+
+Number of warmup per run: 3
+Number of value per run: 4
+Loop iterations per value: 2^16 (64 outer-loops x 1024 inner-loops)
+Total number of values: 24
+
+Minimum:         1.97 us
+Median +- MAD:   1.98 us +- 0.00 us
+Mean +- std dev: 1.99 us +- 0.02 us
+Maximum:         2.04 us
+
+  0th percentile: 1.97 us (-1% of the mean) -- minimum
+  5th percentile: 1.97 us (-1% of the mean)
+ 25th percentile: 1.98 us (-1% of the mean) -- Q1
+ 50th percentile: 1.98 us (-0% of the mean) -- median
+ 75th percentile: 1.99 us (-0% of the mean) -- Q3
+ 95th percentile: 2.02 us (+1% of the mean)
+100th percentile: 2.04 us (+2% of the mean) -- maximum
+
+Number of outlier (out of 1.96 us..2.00 us): 5
+host tuning state (pyperf system show, read-only; untuned by design):
+  CPU scaling governor: 0-15=powersave
+  Turbo Boost (intel_pstate): Turbo Boost enabled
+  CPU scaling governor: Use CPU scaling governor 'performance'
+  Turbo Boost (intel_pstate): Disable Turbo Boost to get more reliable CPU frequency
+✓ pyperf recorded values (24 >= 20)
+✓ pyperf worker processes with values (6 >= 3)
+  warm-up vs warmed (calibration run, cold interpreter): first warm-up 1991 ns, median measured 1982.3 ns
+━━ converting harness samples to lowlat reports
+report percentiles in ns (lowlat-report show prints microseconds, too coarse here):
+  cpp guarded: n=30 p50=5 p90=5 p99=5 p99.9=5 max=5
+  cpp eliminated: n=30 p50=0 p90=0 p99=0 p99.9=0 max=0
+  java eliminated: n=130208 p50=0 p90=0 p99=0 p99.9=0 max=12
+  java guarded: n=67125 p50=32 p90=36 p99=39 p99.9=49 max=84
+  python check_digit-measured: n=24 p50=1982 p90=2013 p99=2037 p99.9=2037 max=2037
+  python check_digit-warmup: n=31 p50=1981 p90=2010 p99=2024 p99.9=2024 max=2024
+✓ 6 lowlat reports validate (profile embedded: bare-metal-host)
+✓ 04-benchmark-harnesses: C++ 473x, Java 3200x, pyperf 24 values / 6 processes; results in /home/rsedor/Dev/low-latency-engineering/examples/04-benchmark-harnesses/results/r02-run1

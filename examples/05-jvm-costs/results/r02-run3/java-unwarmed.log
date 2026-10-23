@@ -1,0 +1,15 @@
+[0.210s][info][jfr,startup] Started recording 1. No limit specified, using maxsize=250MB as default.
+[0.210s][info][jfr,startup] 
+[0.210s][info][jfr,startup] Use jcmd 2472990 JFR.dump name=1 to copy recording data to file.
+ready: variant unwarmed on 127.0.0.1:47250
+received 20000 dropped 0 reordered 0 (stopped: EXPECTED) in flight 480 lanes [595, 3757, 5962, 3659, 2241, 1330, 2456, 0]
+window-times: first=2026-10-23T00:34:05.540298262Z boundary=2026-10-23T00:34:07.510228089Z end=2026-10-23T00:34:25.509695401Z
+05-jvm-costs               java   unwarmed                20000        0      116.0      192.6      229.4    11001.9    30277.6
+05-jvm-costs               java   unwarmed-first-2000       2000        0      192.6      215.2    11001.9    28409.9    30277.6
+05-jvm-costs               java   unwarmed-steady         18000        0      111.0      186.9      211.5      289.0     6979.6
+report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed-first-2000.json
+report: /home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run3/java-unwarmed-steady.json
+jit startup     compilations 447 (c2 47), deoptimizations 25
+jit first-2000  compilations 245 (c2 16), deoptimizations 1
+jit steady      compilations 72 (c2 65), deoptimizations 3

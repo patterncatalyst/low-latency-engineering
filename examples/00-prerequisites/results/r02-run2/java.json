@@ -1,0 +1,108 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "00-prerequisites",
+  "language" : "java",
+  "variant" : "baseline",
+  "unit" : "ns",
+  "count" : 5000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 113023,
+    "p90" : 215423,
+    "p99" : 339455,
+    "p99_9" : 24264703,
+    "max" : 29065215
+  },
+  "hdr_histogram" : "HISTFAAAA/94nFVVvY4kNRD2VtdUezxer+nra7WaZhm1VsuyGuCESNGJADICYkICoo2AmIQ3QIQnwROQ8h6nE+IRTgiJN4DvK88iMd3Ttsv1X1/Z6w8/Pgmh/za0X3ceLzD97NlvP4fnfzfCiwfZyVPtpVNMepGAgY/sMX1XPpWDPMf4hry6AOlNecJdlUvQOzxBgh4Ekz2FtbMAVqGuvV5hV8mnIrG3xq+d21BKYofmxHVQEH5wj6YFY6DiHf4C5Zxdiu907mrvBJjYwa5SmetUUS5NndckChZuIyhHczK4SHAG0tXABCoWMRr3DGtLEdNONSVKFCs15mEYc8k11zKNc13HHG8rflPONpShzHmqqazjPI7zvOR5W+I4rNfbdD0dt9N8d3t/3N5/tnx4Oh1P4/VpuZs/2u7H4zzMd/NxudmO6z3kluN2s03Lum3X87yt03J9czuu07wd53Uc5lrHOtQhlzrVMubJ4BHeEvMU4epkk8Uh5aglj9HSEOecYsZTUsGnhphTwUaKqUgs+g6SghIgc2Isac8smyorwjnKC6pXBEz+wVeiJxAD088cI/ckhoiigCd2Xg4vpFHK6wNF4FWDRPTSgubi5GNRopff9bG60pTzdxBHnH99G1CITRgla1SJZl7+6HXGQh2ZiA1v55UnDtXl1YFr8ihNJDUBj7RvKDUGFswNNme61iXudPC8MIEU7ayXFgfyEB63uzPcA9wKzIZpIxKN5jzIyBm37B91KDfp1meBtSEr86VU3ZzGmv5BJSI38mKgTVSCUZjpY8aaV7TR2guwV7fsKqWV0JSBejG9vgEtBHdRTnXT1ZgvJtb4B4aqJk1mMUbJ4CGqGCDdUbRMAORyHnSo41CBy1LrmrBJ0KbhdkGv5HkYKxaxjFYgntFjNccEsTqixVLSeUiLocGsTLBXdYrkyGi7nLIV7MA+LOGbYCYNwHoteTD4ZDXlIQHuqgVNgnYGV2GWKpqbWAEl+ABuNgbiQOJiRvAIdscFIuRHkWb100OZ2I6Jb1iN0rKpjnT188jIhcE8+9ZaxxpOycB6aUOVyrnIJl4AP8l8qmwnUnrxxmrYp+3Ojyr6d24AOeNYHaEEPA9J7dnSHfHEw3VnOz+N1YF8PpOx09oMBysdfOqY8GOau32zuzvjmJ1ofg1QIYBObKHLdi6zN2mt3vBJ3wFubST12Ci+R3TuYmtrB2vwpvIQcGVYaBF3sTtfTQfXduUQbg3rFwxa1ZN0aKdF8AuipY0G9rziQLn0YA7yNv5v+Z3DS+QTuZIvQfsa43vygXwh3yP8j+Vz0B7kK3l9Jb9UeRnl117+Uvmj4/t7J/+I/HnB97W//83x/elCvpNv/Pn/+CD/AsKhTKA=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T00:05:00Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2.11-200.fc44.x86_64",
+      "version" : "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2451478,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "XPS 15 9510"
+    },
+    "load" : {
+      "load1" : 0.88,
+      "load5" : 0.86,
+      "load15" : 0.78,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "reordered=0; rcvbuf_requested=4194304; rcvbuf_granted=4194304",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 16785604608
+    },
+    "alloc_bytes_per_parcel" : 880.0096
+  }
+}

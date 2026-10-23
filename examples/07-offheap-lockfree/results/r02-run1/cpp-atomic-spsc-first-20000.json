@@ -1,0 +1,105 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 20000,
+  "dropped": 0,
+  "example": "07-offheap-lockfree",
+  "hdr_histogram": "HISTFAAAAv14nD2UQYhcRRCGp76uV6+np+ft7NuZyWY3bnZlM6vrCps1qCi4IrpG8RAEIXgJBMEkR2/mqMGTh4gQ9aKLSO7Kgp48eBC9rCCCoIIgeNCTIHrwIFL9Jvahu19V919Vf/39Tt14e6nX0/d63QjzVXq9cLD72WFv/4/O8PXD/LnCB4F7+VH4XvlLeEe4xG8hj587kt/lWL6UGxzLoVx/6fmLzz64tnf+yYNrFx85f+6x3fXNU+vrK8vr02nbpCamhLUxxkYtJYhYMlBNoKJmSRH1IaohBUxUB4AgPpupBh1SU7mNAJWvQt+nCUJF0CVWkex2RaKighgGQTUmHN23ojJHDvPVcTxQnxoGbh4UJ9IdCf4VPG8gmGh1J75Ql6yLoyD37ziC1vbEEV/Vry3+s/zR6X9Xj0682d4e/tR/Px7Fz+PN+u/qB/0wfMe7fCE35fqVFy9fOHh8+57Z5va0adq7R7lpc2pTim1KFrNli2amUU01oqipGYJimkwsEkVjyUZLsZpUTTAa/3RjQD09v+EbJzbAULsiA6ZiHX9Om48K0+BElstC5WfLVkWDWlrbfuWW3JZf5FjewOXwrXwih3JLrlw4d7C7tzfb2ZntzXams3bcrOSsDY15FmZpbGub4zavjLK1KY6aJkUML0UwiR5ICrGeqrfTCsVWSgjq2im+0iPUm0egT59VF0rd9b+vddFSamK7nMfjnEcpN6Nk49aixlGjajSakySLqnls4zyypnXNdhx04Yv6wjyZQD0POySkqGZmLuscDVUlqhQuLcZsMU7bmEyIxFIIlVZFLMMCOKEqWlWt59EsFD1qoGLYSarq6mEBhUXvQ9CK/wUspVdiHUDhwxEtlAgDFjue0JqOtBNsICzxMn2HmwdiQqBTd82QCVsENlhgwiL34SSchKeK0WkeUutCOX6SoPfDBgP22aKmz2mEB6g5270pHmWfhxggvEDgKs9QfilbDHld+NVfXcUZzvAq3yiBp/lYuIuzfOp0v+XJ/VzxH3CpVQA=",
+  "language": "cpp",
+  "notes": "handoff=atomic-spsc; published=200000; overflow=0; reordered=0; rcvbuf_granted=8388608; window=20000; first window is seq < 20000",
+  "percentiles": {
+    "max": 526335,
+    "p50": 56639,
+    "p90": 63807,
+    "p99": 84543,
+    "p99_9": 188543
+  },
+  "profile": {
+    "captured_at": "2026-10-22T23:57:25Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2.11-200.fc44.x86_64",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.17,
+      "load15": 0.67,
+      "load5": 0.52,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2446814,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "XPS 15 9510",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "atomic-spsc-first-20000"
+}

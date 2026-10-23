@@ -1,0 +1,143 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "05-jvm-costs",
+  "language": "java",
+  "variant": "aot-cache-first-2000",
+  "unit": "ns",
+  "count": 2000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 186367,
+    "p90": 206847,
+    "p99": 293887,
+    "p99_9": 685055,
+    "max": 2426879
+  },
+  "hdr_histogram": "HISTFAAAAlJ4nC1Tu44TQRDsq+lt947H4721wdYdJ4ROJ0QEEhFCyBkX8CHk8AVIpETESCRE/ACInyIlo7rXXu/2TE919WNrH33+uhPRgyy/crYXXL598eu7nP4ujh8f8PsCb3CHW3zEU7zGFo9R8Aw3eEl7k/sBogKaS978PwgTC0WxQhgIUJpCjxhPDMKLO8OgiI2ZoDiPoUWTj+e+REoYR0mkpk90FW5BsJE3PaaroIuMQwbpgBWwCVzBmE+sdJ3kopfpWO4tKxWCd9kO1nwcmGpL10rJEERb4ka2PCbVOq/ItY4SoBFOEO1wJsX1UlxWHAzj0msUVcJXEh7p0uSEYqlQY0OAtYbazFGtm0br6vCmqFyralV3cwuEuDo9ZoyVXLqFMXi4CG/0xcQYxqfwYh4nmBPWiqadvEATZgz88n6KO0lJnoUVmFUwHQEZH9SRtpI237EFzAgLJBNGUnZjrVdtWQgbcBJ4tUZqbW1vtfLPRLWJT3U/cWNT1+7zVav12KZqc/d9myY/7qtN81wbD/s019r209x8nudu/VjxcD62/ZX3dqTXbGLfU+8kZBi5mJR35zS9dnZgzFlZHVt3zpIDaizcz62pnTuId+Isapk7T4x95nw9lIsYHGzgJC3mFEIvekrBFO533B90l58EtVJUB849JFJyjMMiZsmAlPhIwQw6akmJ6fmDgski5hBVqHAI/CIh0fQWqovAkPKBT8HzJB3zqz2R7z3XemDAhgfXqeE7rjah4x0xT3DCPV7x6B48+VLwacA7/AH+Ffyc8W2N/7U4I/g=",
+  "build": {
+    "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.aJjION/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.aJjION/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/aot-cache.aot.log",
+    "gil_enabled": null
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T00:10:42Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2.11-200.fc44.x86_64",
+      "version": "#1 SMP PREEMPT_DYNAMIC Thu Oct 15 15:58:58 UTC 2026",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2458050,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "XPS 15 9510"
+    },
+    "load": {
+      "load1": 1.13,
+      "load5": 0.89,
+      "load15": 0.8,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "warm_up=0; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set; window=2000; first window is seq < 2000",
+  "runtime": {
+    "gc": {
+      "collectors": [
+        "G1 Young Generation",
+        "G1 Concurrent GC",
+        "G1 Old Generation"
+      ],
+      "heap_bytes": 268435456,
+      "flags": [
+        "-Xlog:gc*,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags",
+        "-XX:+UseG1GC",
+        "-Xms256m",
+        "-Xmx256m"
+      ]
+    },
+    "aot": {
+      "cache": "jvm-costs-observed.aot",
+      "mode": "on",
+      "used": true
+    },
+    "jit": {
+      "startup": {
+        "compilations": 189,
+        "c2_compilations": 18,
+        "deoptimizations": 18
+      },
+      "first-2000": {
+        "compilations": 270,
+        "c2_compilations": 30,
+        "deoptimizations": 0
+      },
+      "steady": {
+        "compilations": 127,
+        "c2_compilations": 49,
+        "deoptimizations": 4
+      }
+    }
+  }
+}

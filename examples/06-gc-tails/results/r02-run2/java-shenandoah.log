@@ -1,0 +1,7 @@
+java: -Xlog:async -Xlog:gc\*\,safepoint:file=/home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/results/r02-run2/shenandoah.gc.log:uptime\,level\,tags -Xms4096m -Xmx4096m -XX:+AlwaysPreTouch -XX:+UseShenandoahGC -jar /home/rsedor/Dev/low-latency-engineering/examples/06-gc-tails/java/target/gc-tails-java.jar --variant shenandoah --jfr /tmp/lowlat-scratch.cuZqsi/shenandoah.jfr
+live set 2165094352 bytes: 431157 manifest entries, 75 samples per parcel, 4800 in flight
+gctails-java: variant shenandoah on 127.0.0.1:47260
+line-simulator           cpp  emit-lateness    count=   300000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     64.3us max=     204.4us
+received 300000 dropped 0 reordered 0 (stopped: EXPECTED) [0]
+06-gc-tails                java   shenandoah             300000        0       60.3       61.8       83.1      149.8     2750.5
+shenandoah-gc-pause: 44 GC pauses, p99 432895 ns, max 432895 ns
