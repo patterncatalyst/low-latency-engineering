@@ -147,6 +147,26 @@ its own release/rNN branch and PR, branched from an updated main, squash-merged
 with the branch deleted; tag rNN.x on main after merge.
 Repo is public; the site deploys to GitHub Pages from main.
 
+## Publishing rule: nothing identifies the machine or its owner
+The repo is public, so no tracked file may name the development machine, its owner
+or anything that helps locate or attack it later:
+- No absolute home-directory path (under /home or /Users), no account name, no hostname.
+  Write `<repo>/...` or `~/...`. The profile's `host_label` is already generic.
+- No laptop model (DMI `product_name` is `"redacted"`), no CPU model or model number. The
+  CPU is a class: "Intel 8-core/16-thread laptop CPU"; prose names its properties (SMT,
+  `intel_pstate`, the L2 spatial prefetcher), never the part.
+- No host kernel build number or build date. The host kernel is "7.2" and its preempt model
+  (`PREEMPT_DYNAMIC`). The disposable lab guest's own RT kernel strings and the Fedora SRPM
+  pin (`kernel-7.2.11-200.fc44` in `scripts/lab/` and `_plans/dependency-pins.md`) stay.
+- No `/etc/machine-id`, DMI serial or UUID, MAC or IP address, `root=UUID=` or BOOT_IMAGE.
+- Generators comply: `scripts/profile.sh` records vendor and topology, `major.minor` and the
+  preempt model; `examples/_lib/lib.sh` scrubs each results directory on exit; a captured
+  log is piped through `scripts/scrub-host-ids.py --filter` before it is committed.
+- `scripts/scrub-host-ids.py` is the one table of replacements (the account name is read at
+  run time, never written). `python3 scripts/validate.py` check `host-ids` fails the build on
+  a leak. `scripts/scrub-host-ids.py --print-rules` prints `git filter-repo --replace-text`
+  rules for a history rewrite; that output holds the account name and is never committed.
+
 ## Do not
 - Do not report a number you did not measure, or omit the machine/VM profile.
 - Do not compare the three languages as a shootout; compare techniques.
