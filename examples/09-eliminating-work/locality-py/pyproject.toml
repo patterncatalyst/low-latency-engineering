@@ -1,9 +1,15 @@
 [project]
 name = "lowlat-locality"
 version = "1.0.0"
-description = "Ch9: eliminating work, Python lane (__slots__ against a dict per parcel, thread counters)"
+description = "Ch9: eliminating work, Python lane (slots against a dict per parcel, array columns, counters in shared memory)"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = ["lowlat-measure"]
+
+[project.scripts]
+locality-py = "lowlat_locality.cli:main"
+
+[tool.uv.sources]
+lowlat-measure = { workspace = true }
 
 [build-system]
 requires = ["hatchling==1.32.4"]
