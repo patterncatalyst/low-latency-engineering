@@ -14,26 +14,20 @@
   <artifactId>lockfree-waitfree-java</artifactId>
   <name>lockfree-waitfree-java (Ch10 progress guarantees, memory orders, seqlock)</name>
 
-  <properties>
-    <!-- Affinity (via Chronicle Core) needs these on Java 17 and later; the list is the one
-         07-offheap-lockfree documents, trimmed to what Affinity touches, plus native access for JNA. -->
-    <chronicle.jvmArgs>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED</chronicle.jvmArgs>
-  </properties>
-
   <!-- dependencyConvergence stays on. Affinity (JNA 5.5.0) and jcstress-core (JNA 5.8.0) disagree on
        JNA, and JMH (jopt-simple 5.0.4) and jcstress-core (jopt-simple 4.6) on jopt-simple. Each is
-       resolved to the higher version; JMH needs 5.0.4, so the jcstress runner runs on it: `-m sanity` runs, only its `-h` text fails (NoSuchMethodError in the help formatter). -->
+       resolved to the higher version (jna.version in the parent POM, the newest stable; jopt-simple 5.0.4 is the newest stable); JMH needs 5.0.4, so the jcstress runner runs on it: tests run, only its `-h` text fails (NoSuchMethodError in the help formatter): never call `-h`. -->
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
-        <version>5.8.0</version>
+        <version>${jna.version}</version>
       </dependency>
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna-platform</artifactId>
-        <version>5.8.0</version>
+        <version>${jna.version}</version>
       </dependency>
       <dependency>
         <groupId>net.sf.jopt-simple</groupId>

@@ -164,7 +164,7 @@ jobs:
           uv run ruff check . ../scripts ../diagrams
           uv run ruff format --check . ../scripts ../diagrams
 
-  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-8) and runs the tests,
+  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-10) and runs the tests,
   # including the 05 AOT-cache smoke test (a child JVM trains a cache, then runs with -XX:AOTMode=on).
   # The JDK is the Temurin tarball pinned in versions.env (TEMURIN_URL, SHA-checked), the same
   # build the lab guest runs; the tarball is cached on its SHA and re-verified on every run.

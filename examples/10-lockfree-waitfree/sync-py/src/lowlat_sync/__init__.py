@@ -1,12 +1,23 @@
 """Ch10: lock-free and wait-free, Python lane. Wiring only (S4); the lane lands in S6."""
 
 import sys
+import sysconfig
 import threading
 
 
 def python_build() -> str:
-    """`free-threaded` if the GIL is off in this interpreter, else `gil` (runtime.python_build)."""
-    return "gil" if sys._is_gil_enabled() else "free-threaded"
+    """`free-threaded` for the free-threaded build, else `gil` (runtime.python_build).
+
+    The build comes from the interpreter's configuration, not from the live GIL state: an
+    extension that does not declare free-threading support re-enables the GIL at import time in a
+    free-threaded interpreter, which `gil_enabled` reports separately.
+    """
+    return "free-threaded" if sysconfig.get_config_var("Py_GIL_DISABLED") else "gil"
+
+
+def gil_enabled() -> bool:
+    """Whether the GIL is on right now (False only for a free-threaded build that kept it off)."""
+    return sys._is_gil_enabled()
 
 
 def claim_all(threads: int, per_thread: int) -> list[int]:

@@ -18,7 +18,7 @@ and the full README arrive in S5.
 | Agrona | 2.7.0 | Apache-2.0 | primitive-keyed map |
 | OpenHFT Affinity (chronicle-bom 2026.26) | 2026.2 | Apache-2.0 | thread pinning |
 | abseil-cpp | 20250512.1 | Apache-2.0 | `absl::flat_hash_map` |
-| JMH | 1.37 | GPL-2.0 WITH Classpath-exception-2.0 | Java benchmarks |
+| JMH | 1.37 | GPL-2.0-only WITH Classpath-exception-2.0 | Java benchmarks |
 | JOL | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | object layout and footprint |
 
 The GPL-with-Classpath-exception tools are build- and measurement-time only; no hot path links them.

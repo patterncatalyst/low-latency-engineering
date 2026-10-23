@@ -14,12 +14,6 @@
   <artifactId>eliminating-work-java</artifactId>
   <name>eliminating-work-java (Ch9 locality, false sharing, node vs flat maps)</name>
 
-  <properties>
-    <!-- Affinity (via Chronicle Core) needs these on Java 17 and later; the list is the one
-         07-offheap-lockfree documents, trimmed to what Affinity touches, plus native access for JNA. -->
-    <chronicle.jvmArgs>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED</chronicle.jvmArgs>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.agrona</groupId>

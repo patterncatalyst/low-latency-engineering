@@ -4,7 +4,7 @@ import os
 import sys
 
 import pytest
-from lowlat_sync import claim_all, python_build
+from lowlat_sync import claim_all, gil_enabled, python_build
 
 
 def test_lock_claim_is_exactly_once() -> None:
@@ -12,8 +12,10 @@ def test_lock_claim_is_exactly_once() -> None:
     assert sorted(claimed) == list(range(8_000))
 
 
-def test_python_build_matches_the_interpreter() -> None:
-    assert python_build() == ("gil" if sys._is_gil_enabled() else "free-threaded")
+def test_python_build_is_one_of_the_two_builds() -> None:
+    assert python_build() in {"gil", "free-threaded"}
+    if python_build() == "gil":
+        assert gil_enabled()
 
 
 @pytest.mark.skipif(
@@ -22,4 +24,5 @@ def test_python_build_matches_the_interpreter() -> None:
 )
 def test_free_threaded_build_was_requested() -> None:
     assert sys._is_gil_enabled() is False
+    assert gil_enabled() is False
     assert python_build() == "free-threaded"
