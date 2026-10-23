@@ -55,7 +55,7 @@
          https://repo1.maven.org/maven2/net/openhft/root-parent-pom/2026.0/root-parent-pom-2026.0.pom
          The shaded jar's manifest cannot carry them (the Add-Opens manifest entry is honoured only
          for `java -jar`), so run scripts pass the same list.
-         The last line is not Chronicle's: JNA 5.5.0 (the BOM's pin, used by Affinity) calls
+         The last line is not Chronicle's: JNA (used by Affinity; managed at ${jna.version} below) calls
          System::load, which JDK 25 reports as a restricted-method warning unless native
          access is enabled.
          Chronicle Core also posts usage analytics unless -Dchronicle.analytics.disable=true; the
@@ -138,6 +138,19 @@
         <groupId>org.openjdk.jcstress</groupId>
         <artifactId>jcstress-core</artifactId>
         <version>${jcstress.version}</version>
+      </dependency>
+      <!-- JNA for every module: Affinity (via the BOM below) pins 5.5.0 and jcstress-core 5.8.0;
+           managed here at the newest stable so 07, 09 and 10 resolve one version. Declared before
+           the BOM import, so it wins. -->
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna</artifactId>
+        <version>${jna.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna-platform</artifactId>
+        <version>${jna.version}</version>
       </dependency>
       <!-- OpenHFT: queue, map, bytes and affinity versions come from this BOM. -->
       <dependency>

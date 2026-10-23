@@ -118,11 +118,7 @@ final class CountersRun {
                     ready.countDown();
                     go.await();
                     Batch batch = o.variant.equals("long-adder") ? Batch.ADDER : o.rmw ? Batch.RMW : Batch.STORE;
-                    for (int b = 0; b < o.batches; b++) {
-                        long t0 = System.nanoTime();
-                        batch.run(counters, adder, camera);
-                        batchNs[camera][b] = System.nanoTime() - t0;
-                    }
+                    timeBatches(batch, counters, adder, camera, batchNs[camera]);
                     done.countDown();
                     while (!release.get()) { // parked, so verify.sh can read where this thread last ran
                         LockSupport.parkNanos(10_000_000L);
@@ -225,9 +221,21 @@ final class CountersRun {
         CameraCounters scratch = new CameraCounters(layout);
         LongAdder scratchAdder = new LongAdder();
         Batch batch = useAdder ? Batch.ADDER : rmw ? Batch.RMW : Batch.STORE;
+        long[] scratchNs = new long[WARM_UP_BATCHES];
         long end = System.nanoTime() + WARM_UP_NANOS;
         while (System.nanoTime() < end) {
-            batch.run(scratch, scratchAdder, camera);
+            timeBatches(batch, scratch, scratchAdder, camera, scratchNs);
+        }
+    }
+
+    private static final int WARM_UP_BATCHES = 64;
+
+    /** The measured loop: one timed batch per element of {@code batchNs}. Warmed whole, so it runs C2 code. */
+    private static void timeBatches(Batch batch, CameraCounters counters, LongAdder adder, int camera, long[] batchNs) {
+        for (int b = 0; b < batchNs.length; b++) {
+            long t0 = System.nanoTime();
+            batch.run(counters, adder, camera);
+            batchNs[b] = System.nanoTime() - t0;
         }
     }
 

@@ -182,11 +182,10 @@ each_alt() {
 
 # ---- build and unit tests ------------------------------------------------------------------------------------------
 if ((RUN)); then
-  # Six distinct physical cores, the first dropped: CPU 0 takes most interrupts, so the five pinned threads start at the
-  # second core (example 09 does the same).
-  cores=$(distinct_cores 6) || die "need 6 distinct physical cores (5 to pin, the first left alone)"
-  mapfile -t CORES <<<"$cores"
-  CORES=("${CORES[@]:1}")
+  # Five distinct physical cores, CPU 0 excluded: it takes most interrupts (example 09 does the same).
+  cores=$(distinct_cores 7) || die "need 6 distinct physical cores (5 to pin, CPU 0 left alone)"
+  mapfile -t CORES < <(awk '$1 != 0' <<<"$cores" | head -n 5)
+  ((${#CORES[@]} == 5)) || die "need 5 distinct physical cores other than CPU 0, found ${#CORES[@]}"
   cores=$(printf '%s\n' "${CORES[@]}")
   CPUS=$(paste -sd, <<<"$cores")
   uv python find 3.14t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14t (a user-local download)"

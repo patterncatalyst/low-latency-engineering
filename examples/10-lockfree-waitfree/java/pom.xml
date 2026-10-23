@@ -15,20 +15,11 @@
   <name>lockfree-waitfree-java (Ch10 progress guarantees, memory orders, seqlock)</name>
 
   <!-- dependencyConvergence stays on. Affinity (JNA 5.5.0) and jcstress-core (JNA 5.8.0) disagree on
-       JNA, and JMH (jopt-simple 5.0.4) and jcstress-core (jopt-simple 4.6) on jopt-simple. Each is
-       resolved to the higher version (jna.version in the parent POM, the newest stable; jopt-simple 5.0.4 is the newest stable); JMH needs 5.0.4, so the jcstress runner runs on it: tests run, only its `-h` text fails (NoSuchMethodError in the help formatter): never call `-h`. -->
+       JNA, and JMH (jopt-simple 5.0.4) and jcstress-core (jopt-simple 4.6) on jopt-simple. JNA is
+       managed in the parent POM at jna.version (the newest stable, for 07, 09 and 10 alike); jopt-simple is resolved
+       here to 5.0.4, the newest stable; JMH needs 5.0.4, so the jcstress runner runs on it: tests run, only its `-h` text fails (NoSuchMethodError in the help formatter): never call `-h`. -->
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>net.java.dev.jna</groupId>
-        <artifactId>jna</artifactId>
-        <version>${jna.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>net.java.dev.jna</groupId>
-        <artifactId>jna-platform</artifactId>
-        <version>${jna.version}</version>
-      </dependency>
       <dependency>
         <groupId>net.sf.jopt-simple</groupId>
         <artifactId>jopt-simple</artifactId>

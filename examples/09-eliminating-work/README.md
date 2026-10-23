@@ -106,8 +106,11 @@ parcels, and the object table is allocated in a shuffled order so slot order isn
 method gets its own fork, the benchmark thread is pinned with `AffinityLock`, and the heap is fixed and
 pre-touched so no collection starts inside a run. The counters and the line run are standalone harnesses in
 `Main` (`counters`, `consume`), because JMH can't give control of five pinned threads. Each camera thread
-first runs its loop on a scratch counter set for 600 ms, so JIT compilation stays out of the hardware counts of
-the measured region, which lasts only tens of milliseconds.
+first runs its whole measured loop, `timeBatches`, on a scratch counter set for 600 ms. That matters more than
+it sounds: warming only the inner batch left the outer loop at C1's profiling tier, whose shared profile
+counters bounced between the five cores and added about 0.005 L1 misses per increment to the padded layout.
+Warmed whole, the loop runs C2 code and compilation stays out of the measured region, which lasts only tens of
+milliseconds.
 
 The lookup keys are built once, so their `String` hash codes are cached. On the line a barcode arrives as a
 new `String` and pays the hash too, which makes the JMH lookup a conservative measure of the node map.
@@ -246,7 +249,7 @@ Python, the sweep and the process and thread counters on the GIL and free-thread
 | abseil-cpp | 20250512.1 | Apache-2.0 | `absl::flat_hash_map` |
 | JMH | 1.37 | GPL-2.0-only WITH Classpath-exception-2.0 | Java benchmarks |
 | JOL | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | object layout and footprint |
-| JNA and jna-platform (via Affinity) | 5.5.0 | LGPL-2.1-or-later OR Apache-2.0 | native calls behind thread pinning |
+| JNA and jna-platform (via Affinity) | 5.19.1 | LGPL-2.1-or-later OR Apache-2.0 | native calls behind thread pinning |
 | slf4j-api (via Affinity) | 2.0.17 | MIT | Affinity's logging facade, no provider bound |
 | jopt-simple, commons-math3 (via JMH) | 5.0.4, 3.6.1 | MIT, Apache-2.0 | JMH option parsing and statistics |
 
