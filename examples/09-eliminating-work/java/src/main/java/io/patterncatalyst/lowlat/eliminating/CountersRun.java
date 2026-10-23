@@ -116,15 +116,10 @@ final class CountersRun {
                     placed[camera] = Placement.line(lock.cpuId(), "camera");
                     ready.countDown();
                     go.await();
+                    Batch batch = o.variant.equals("long-adder") ? Batch.ADDER : o.rmw ? Batch.RMW : Batch.STORE;
                     for (int b = 0; b < o.batches; b++) {
                         long t0 = System.nanoTime();
-                        for (int i = 0; i < BATCH; i++) {
-                            if (useAdder) {
-                                adder.increment();
-                            } else {
-                                bump(counters, camera, i % NO_READ_EVERY == NO_READ_EVERY - 1, o.rmw);
-                            }
-                        }
+                        batch.run(counters, adder, camera);
                         batchNs[camera][b] = System.nanoTime() - t0;
                     }
                     done.countDown();
@@ -218,17 +213,44 @@ final class CountersRun {
         return 0;
     }
 
-    private static void bump(CameraCounters counters, int camera, boolean noRead, boolean rmw) {
-        if (rmw) {
-            if (noRead) {
-                counters.addNoRead(camera);
-            } else {
-                counters.addRead(camera);
+    /** One batch of {@value #BATCH} increments by one camera; one loop per increment so the loop body stays small. */
+    private enum Batch {
+        /** Single writer: a plain read and a release store, no read-modify-write. */
+        STORE {
+            @Override
+            void run(CameraCounters counters, LongAdder adder, int camera) {
+                for (int i = 0; i < BATCH; i++) {
+                    if ((i & (NO_READ_EVERY - 1)) == NO_READ_EVERY - 1) {
+                        counters.bumpNoRead(camera);
+                    } else {
+                        counters.bumpRead(camera);
+                    }
+                }
             }
-        } else if (noRead) {
-            counters.bumpNoRead(camera);
-        } else {
-            counters.bumpRead(camera);
-        }
+        },
+        /** The same counts as an atomic read-modify-write. */
+        RMW {
+            @Override
+            void run(CameraCounters counters, LongAdder adder, int camera) {
+                for (int i = 0; i < BATCH; i++) {
+                    if ((i & (NO_READ_EVERY - 1)) == NO_READ_EVERY - 1) {
+                        counters.addNoRead(camera);
+                    } else {
+                        counters.addRead(camera);
+                    }
+                }
+            }
+        },
+        /** Every camera adds to one shared sum. */
+        ADDER {
+            @Override
+            void run(CameraCounters counters, LongAdder adder, int camera) {
+                for (int i = 0; i < BATCH; i++) {
+                    adder.increment();
+                }
+            }
+        };
+
+        abstract void run(CameraCounters counters, LongAdder adder, int camera);
     }
 }
