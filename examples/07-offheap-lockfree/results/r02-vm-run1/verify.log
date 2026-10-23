@@ -1,0 +1,167 @@
+# host loadavg at start: 0.55 0.90 0.78 1/2155 2710861
+ VCPU   CPU Affinity
+----------------------
+ 0      0-15
+ 1      0-15
+ 2      0-15
+ 3      13
+
+━━ host build: benchmarks.jar and line-simulator
+━━ guest prerequisites
+Lab guest prerequisites (lowlat-target)
+[PASS] guest ssh                    lowlat-target reachable
+[PASS] guest RT kernel              PREEMPT_RT in uname -v and the running kernel's config
+[PASS] guest: Temurin 25.0.5        /opt/temurin-25.0.5/bin/java
+[PASS] guest: stress-ng             present
+[PASS] guest: cyclictest            present
+[PASS] guest: ptp4l                 present
+[PASS] guest: phc2sys               present
+[PASS] guest: tuned-adm             present
+[PASS] guest: /dev/ptp0             KVM virtual PTP clock
+[PASS] guest: docker                daemon reachable
+[PASS] guest isolation (info)       isolcpus=3 nohz_full=3 rcu_nocbs=3 on the cmdline
+[PASS] guest vcpupin (info)         vCPU 3 pinned to host CPU 13
+[PASS] guest lab-ready              lab-ready: ok
+
+Summary: 13 PASS, 0 WARN, 0 FAIL
+✓ guest runs Temurin 25.0.5
+✓ guest cmdline isolates CPU 3 (isolcpus, nohz_full, rcu_nocbs)
+libvirt vcpupin (a pin, not a host isolation):
+ VCPU   CPU Affinity
+----------------------
+ 0      0-15
+ 1      0-15
+ 2      0-15
+ 3      13
+
+━━ deploy
+→ syncing examples/ and scripts/ to lowlat-target:/home/fedora/low-latency-engineering
+deployed to lowlat-target:/home/fedora/low-latency-engineering
+━━ noise: stress-ng --cpu 3 on guest CPUs 0-2
+stress-ng processes by allowed CPUs:       4 0-2
+✓ stress-ng --cpu 3 running on guest CPUs 0-2 (guest CPU 3 is isolated and idle of it)
+━━ run r1-unpinned (of 3 alternations, one boot)
+━━ guest: agrona-spsc, placement unpinned
+✓ placement unpinned: involuntary 139925, voluntary 15, decide thread allowed on CPUs 0-3, ran on CPU 2..1
+━━ run r1-pinned-isolated (of 3 alternations, one boot)
+━━ guest: agrona-spsc, placement pinned-isolated
+✓ placement pinned-isolated: involuntary 0, voluntary 10, decide thread allowed on CPUs 3, ran on CPU 3..3
+━━ run r2-unpinned (of 3 alternations, one boot)
+━━ guest: agrona-spsc, placement unpinned
+✓ placement unpinned: involuntary 204946, voluntary 10, decide thread allowed on CPUs 0-3, ran on CPU 2..0
+━━ run r2-pinned-isolated (of 3 alternations, one boot)
+━━ guest: agrona-spsc, placement pinned-isolated
+✓ placement pinned-isolated: involuntary 3, voluntary 9, decide thread allowed on CPUs 3, ran on CPU 3..3
+━━ run r3-unpinned (of 3 alternations, one boot)
+━━ guest: agrona-spsc, placement unpinned
+✓ placement unpinned: involuntary 143746, voluntary 9, decide thread allowed on CPUs 0-3, ran on CPU 1..2
+━━ run r3-pinned-isolated (of 3 alternations, one boot)
+━━ guest: agrona-spsc, placement pinned-isolated
+✓ placement pinned-isolated: involuntary 0, voluntary 9, decide thread allowed on CPUs 3, ran on CPU 3..3
+━━ checking reports (on the host)
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc-divert.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc-handoff-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc-handoff.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc-handoff-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-pinned-isolated/java-agrona-spsc-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc-divert.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc-handoff-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc-handoff.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc-handoff-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r1-unpinned/java-agrona-spsc-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc-divert.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc-handoff-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc-handoff.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc-handoff-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-pinned-isolated/java-agrona-spsc-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc-divert.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc-handoff-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc-handoff.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc-handoff-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r2-unpinned/java-agrona-spsc-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc-divert.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc-handoff-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc-handoff.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc-handoff-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-pinned-isolated/java-agrona-spsc-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc-divert.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc-handoff-first-20000.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc-handoff.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc-handoff-steady.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc.json
+ok   /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm/r3-unpinned/java-agrona-spsc-steady.json
+example              language  variant                           count  dropped   p50     p90      p99    p99.9      max
+07-offheap-lockfree  java      agrona-spsc-divert               200000        0   5.1     6.0   1042.4   2007.0   4167.7
+07-offheap-lockfree  java      agrona-spsc-first-20000           20000        0  65.9   565.8  21725.2  28786.7  30261.2
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000   20000        0   0.2     3.8     23.4    477.7   2543.6
+07-offheap-lockfree  java      agrona-spsc-handoff              200000        0   0.2     0.3     19.8     58.8   2543.6
+07-offheap-lockfree  java      agrona-spsc-handoff-steady       180000        0   0.2     0.2     19.3     52.6    468.2
+07-offheap-lockfree  java      agrona-spsc                      200000        0  64.2    69.0   1437.7  21725.2  30261.2
+07-offheap-lockfree  java      agrona-spsc-steady               180000        0  64.2    67.6   1129.5   1975.3   3903.5
+07-offheap-lockfree  java      agrona-spsc-divert               200000        0   5.2     6.0   1102.8   3475.5   8847.4
+07-offheap-lockfree  java      agrona-spsc-first-20000           20000        0  68.8  2015.2  18841.6  26951.7  28327.9
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000   20000        0   0.2  1187.8   4059.1   6570.0   7716.9
+07-offheap-lockfree  java      agrona-spsc-handoff              200000        0   0.2     5.3   1309.7   4059.1   7716.9
+07-offheap-lockfree  java      agrona-spsc-handoff-steady       180000        0   0.2     5.2     64.9   1036.8   2199.6
+07-offheap-lockfree  java      agrona-spsc                      200000        0  64.8   162.0   2271.2  18841.6  28327.9
+07-offheap-lockfree  java      agrona-spsc-steady               180000        0  64.5    78.8   1604.6   2965.5   7860.2
+07-offheap-lockfree  java      agrona-spsc-divert               200000        0   5.2     8.5   1216.5   2562.0   4247.6
+07-offheap-lockfree  java      agrona-spsc-first-20000           20000        0  65.3  1575.9  40828.9  44859.4  46268.4
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000   20000        0   0.2     6.5     43.3   2779.1   2967.6
+07-offheap-lockfree  java      agrona-spsc-handoff              200000        0   0.2     0.3     21.8     65.3   2967.6
+07-offheap-lockfree  java      agrona-spsc-handoff-steady       180000        0   0.2     0.2     18.0     54.7    135.3
+07-offheap-lockfree  java      agrona-spsc                      200000        0  64.5    70.7   1885.2  40828.9  46268.4
+07-offheap-lockfree  java      agrona-spsc-steady               180000        0  64.5    68.2   1094.7   2074.6   4862.0
+07-offheap-lockfree  java      agrona-spsc-divert               200000        0   5.3     7.5   1502.2   3024.9   6332.4
+07-offheap-lockfree  java      agrona-spsc-first-20000           20000        0  70.8  1004.0  30687.2  39845.9  40697.9
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000   20000        0   5.7    50.5   1854.5   6475.8   8593.4
+07-offheap-lockfree  java      agrona-spsc-handoff              200000        0   0.3     5.8     80.0   1927.2   8593.4
+07-offheap-lockfree  java      agrona-spsc-handoff-steady       180000        0   0.3     5.4     52.5    289.3   2044.9
+07-offheap-lockfree  java      agrona-spsc                      200000        0  67.9    81.4   1778.7  30687.2  40697.9
+07-offheap-lockfree  java      agrona-spsc-steady               180000        0  67.5    75.3   1406.0   2185.2   4780.0
+07-offheap-lockfree  java      agrona-spsc-divert               200000        0   5.2     6.2    917.0   1962.0   4792.3
+07-offheap-lockfree  java      agrona-spsc-first-20000           20000        0  66.9  1412.1  27213.8  29966.3  30965.8
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000   20000        0   0.2     5.6     56.4   1632.3   2248.7
+07-offheap-lockfree  java      agrona-spsc-handoff              200000        0   0.2     0.2     22.0     78.7   2248.7
+07-offheap-lockfree  java      agrona-spsc-handoff-steady       180000        0   0.2     0.2     16.7     60.3    135.9
+07-offheap-lockfree  java      agrona-spsc                      200000        0  64.4    71.7   1786.9  27213.8  30965.8
+07-offheap-lockfree  java      agrona-spsc-steady               180000        0  64.4    69.0   1206.3   2063.4   4448.3
+07-offheap-lockfree  java      agrona-spsc-divert               200000        0   5.4     6.7   1224.7   2424.8   6422.5
+07-offheap-lockfree  java      agrona-spsc-first-20000           20000        0  73.3  1955.8  36864.0  41353.2  41713.7
+07-offheap-lockfree  java      agrona-spsc-handoff-first-20000   20000        0   5.6   166.5   4040.7   7221.2   7761.9
+07-offheap-lockfree  java      agrona-spsc-handoff              200000        0   0.3     7.2    338.7   4040.7   7761.9
+07-offheap-lockfree  java      agrona-spsc-handoff-steady       180000        0   0.3     5.3     74.7   1324.0   2283.5
+07-offheap-lockfree  java      agrona-spsc                      200000        0  64.5   190.3   2213.9  36864.0  41713.7
+07-offheap-lockfree  java      agrona-spsc-steady               180000        0  64.3   115.6   1666.0   2287.6   7446.5
+━━ criteria 3: every run
+✓ every run: count 200000, dropped 0, no overflow, every divert command received, pinned thread confined to CPU 3
+  per run (guest, label vm): decide-thread involuntary / voluntary ctx switches; hand-off p50 / p99 / p99.9 ns, steady window
+    r1 unpinned: 139925 / 15; 193 / 64863 / 1036799
+    r1 pinned-isolated: 0 / 10; 202 / 19295 / 52607
+    r2 unpinned: 204946 / 10; 251 / 52479 / 289279
+    r2 pinned-isolated: 3 / 9; 200 / 17951 / 54655
+    r3 unpinned: 143746 / 9; 254 / 74687 / 1324031
+    r3 pinned-isolated: 0 / 9; 155 / 16719 / 60287
+━━ criteria 1: decide-thread involuntary context switches per run
+✓ 1: r1 pinned-isolated involuntary ctx switches <= 10 (0 <= 10)
+✓ 1: r1 unpinned involuntary ctx switches >= 100 (139925 >= 100)
+✓ 1: r2 pinned-isolated involuntary ctx switches <= 10 (3 <= 10)
+✓ 1: r2 unpinned involuntary ctx switches >= 100 (204946 >= 100)
+✓ 1: r3 pinned-isolated involuntary ctx switches <= 10 (0 <= 10)
+✓ 1: r3 unpinned involuntary ctx switches >= 100 (143746 >= 100)
+━━ criteria 2: hand-off p99.9, steady window (median of 3 alternations, same boot)
+✓ 2: pinned-isolated hand-off p99.9 (54655 ns) <= 1/2 of unpinned (1036799 ns) (1036799 >= 109310)
+✓ 07-offheap-lockfree (VM): pinning to the isolated CPU holds the decide thread's tail; results in /home/rsedor/Dev/low-latency-engineering/examples/07-offheap-lockfree/results/r02-vm-run1/vm, label vm (never compare with host numbers)
+profile: lowlat-target.lab virt=kvm kernel=7.2.11-200.lowlatrt.fc44.x86_64+rt tuned=virtual-guest
+EXIT=0
