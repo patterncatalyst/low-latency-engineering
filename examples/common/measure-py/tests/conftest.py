@@ -9,9 +9,7 @@ FIXTURES = Path(__file__).resolve().parents[2] / "measure-fixtures"
 
 
 @pytest.fixture(scope="session")
-def golden_report(
-    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
-) -> Path:
+def golden_report(request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Write python-golden.json (dataset i*1000, i=1..10000) and return its path.
 
     The file goes to a temporary directory. ``pytest --regen-golden`` writes the committed

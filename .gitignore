@@ -25,3 +25,13 @@ examples/common/proto-py/src/lowlat/
 
 # verify.sh scratch output; published runs go to results/<run-id>/
 examples/*/results/latest/
+
+# JFR recordings are scratch, never published (lib.sh java_run writes them outside the tree)
+*.jfr
+# scratch convention: a directory named .scratch/ is never committed; Chronicle Queue data
+# (Ch7) lives in a queue/ dir under a results dir and is likewise ignored
+.scratch/
+examples/*/results/**/queue/
+
+# agent worktrees
+.claude/worktrees/

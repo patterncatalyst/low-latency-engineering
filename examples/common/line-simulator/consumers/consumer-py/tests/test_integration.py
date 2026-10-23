@@ -9,21 +9,20 @@ import pytest
 
 EXAMPLES = Path(__file__).resolve().parents[5]
 SIM = EXAMPLES / "build/release/common/line-simulator/line-simulator"
-PORT = 47102
 
 
 @pytest.mark.skipif(
     not SIM.is_file(), reason=f"simulator not built: {SIM} (cmake --preset release)"
 )
 @pytest.mark.usefixtures("lowlat_profile")
-def test_simulator_into_consumer(tmp_path):
+def test_simulator_into_consumer(tmp_path, bound_port):
     report = tmp_path / "r.json"
     cmd = [
         sys.executable,
         "-m",
         "lowlat_consumer",
         "--bind",
-        f"127.0.0.1:{PORT}",
+        "127.0.0.1:0",
         "--expect",
         "2000",
         "--report",
@@ -31,7 +30,9 @@ def test_simulator_into_consumer(tmp_path):
     ]
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) as consumer:
         try:
-            assert consumer.stdout.readline().startswith("line-consumer-py: bound")  # socket is up
+            banner = consumer.stdout.readline()
+            assert banner.startswith("line-consumer-py: bound")  # socket is up
+            port = bound_port(banner)
             subprocess.run(
                 [
                     str(SIM),
@@ -41,7 +42,7 @@ def test_simulator_into_consumer(tmp_path):
                     "2",
                     "--quiet",
                     "--dest",
-                    f"127.0.0.1:{PORT}",
+                    f"127.0.0.1:{port}",
                 ],
                 check=True,
                 timeout=30,

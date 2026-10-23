@@ -25,6 +25,7 @@ build/release/common/line-simulator/line-simulator --rate 1000 --duration 10 --d
 | `--expect N` | none | stop after N datagrams (received + dropped) |
 | `--idle-timeout-ms MS` | 2000 | stop after MS of silence, once the first datagram has arrived |
 | `--report FILE` | none | write the report (needs `LOWLAT_PROFILE`) |
+| `--window N` | none | also write `<stem>-first-N` (seq < N) and `<stem>-steady` reports beside `--report` |
 | `--example NAME` | `00-line-consumer` | report `example` |
 | `--variant NAME` | `baseline` | report `variant` |
 

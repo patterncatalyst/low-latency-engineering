@@ -1,0 +1,106 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 10000,
+  "dropped": 0,
+  "example": "03-coordinated-omission",
+  "hdr_histogram": "HISTFAAAA8h4nMVUTYscRRjeeurtmpra2ndra8uyt7fT6QxN02mGYVwH3YzDGJdhkRCSS4h7EJScguxBD8aDH3gIePEmHryZ/6AgiHjy5MmT+AO86z+Q6ol4ETwI2l9v9VNvPd31Pk9V+fizw50d9dXO9pBPo9jZkefzb77cefm3LfDkDXwu8MsujiAAjDHGPjJcxSGuYR8vIgOuAce4CwkBgSs4wP6QK4EUtYBQlICnGULJoSNBNIKgDJAktinYxS5EYj3ALiT2sYtR+q4Enk0YjSCRDVQQNAJGyFI7GwgVKQOQAhHpBGYEQYl6BEp5JCApDZZKqeEXoLUgo7RmrYUlslprTeQ0kUkglFaJUpAirZQ2hjQpra3XlhVrDio4bYi1jTmzMaYsvXcmWK4aF8pQhLpsyi6UbVEUfTc9mT64/9b9Dz4VDx99dPmxeCweXL7+6O2HF5dn927dXp1fnPfrzdnJ8uz22frNV2f37lzc3Nxe3Zmdzk9X5/1mcXFrtVmtT+6tFifz9aZZzibr03Vbzad94+ex7UPX2xjydlo2vixz7wPX3sU6j147553nkLM2bK1WxlhAKa2kBijNC4ABFAhaJekkDdVUBCVISwy11IO4QgmiFAlKKrnVcitsRgJEkFApEmEv4XIQlgYTyKT0GFkSP2UfYmuKpC7GNMTDNA57GA+U2KcxRmkMDiAxxhHS1zMAxzQQyi3HMfbSuIwoG4wyhhj8Q6lLYhd7W/fgOMHJH1uWP/9rmJySqRSZEhCUeElS6knzEUqnolDyFaWybeGhW2vDZYyx67pu0dcny6Jrl4tmNusX/XyxWS2Xq64/X54t5013OpncrOqmmkxmXRmnVR3qNsZ8UpV52U+6qu7rrq2bOJ22RdvOu346rZvupJvkbdt1fTVbl820n82a6Wm16GbT9eKFzbxrll3VdZN23s7oOnFgGzgPlc99zI1P7do564uqZPYcHMe8sjb4EHMfquhr56vIpWudi7HgoszL2uahKUtbxonLnY1cNFEbx2ystkU0bIMrVMGWjfWRo7MusNdKeQ7sw8RZz0Xg3Ae2mr0l59gYpdmkhWOjY/ZWG2Zn2Svj2LP17MhZjsY6NtDGOaNZMVlrrNLJqloZFQxrZbXRw9qEUIBWaf1a0lAklMJWWJU8jWSvtAcMttmqnSWDAUdpBwKu0zN4F58I7OMd3MD7uIuvBV7DF8C3wId4Ht8Tvivwg8WPI/yk8Kt8ev0s8bv4++uJwHv/cL6Cl3DjX93P4RhXcDyc/188GlbX3vD8q/Vfv/8Bod6KTg==",
+  "language": "cpp",
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep",
+  "percentiles": {
+    "max": 200409087,
+    "p50": 143487,
+    "p90": 180095,
+    "p99": 100401151,
+    "p99_9": 190447615
+  },
+  "profile": {
+    "captured_at": "2026-10-23T06:35:25Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.2,
+      "load15": 0.81,
+      "load5": 0.88,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2684418,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "redacted",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "intended-time"
+}

@@ -1,0 +1,97 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+━━ cpp: stall 200 ms at parcel 5000, port 47230
+━━ cpp: stall 0 ms at parcel 5000, port 47231 (-control)
+━━ cpp: clock-read probe (1e6 calls)
+━━ java: stall 200 ms at parcel 5000, port 47232
+━━ java: stall 0 ms at parcel 5000, port 47233 (-control)
+━━ java: clock-read probe (1e6 calls)
+━━ python: stall 200 ms at parcel 5000, port 47234
+━━ python: stall 0 ms at parcel 5000, port 47235 (-control)
+━━ python: clock-read probe (1e6 calls)
+━━ criteria (p99 in ns)
+cpp: receipt=5447 intended=100532223 closed-corrected=98238463 closed-naive=988
+✓ cpp intended-time p99 shows the stall (>= 50 ms) (100532223 >= 50000000)
+✓ cpp receipt-time p99 hides it (< 1 ms) (5447 < 1000000)
+✓ cpp closed-loop-corrected p99 within 2x of intended-time p99 (98238463 and 100532223)
+✓ cpp closed-loop-naive p99 hides it (< 1 ms) (988 < 1000000)
+cpp control: intended=185343 closed-corrected=965 closed-naive=965
+✓ cpp control intended-time p99 has no stall tail (< 1 ms) (185343 < 1000000)
+✓ cpp control closed-loop-corrected within 2x of closed-loop-naive (965 and 965)
+java: receipt=49695 intended=101515263 closed-corrected=99221503 closed-naive=7055
+✓ java intended-time p99 shows the stall (>= 50 ms) (101515263 >= 50000000)
+✓ java receipt-time p99 hides it (< 1 ms) (49695 < 1000000)
+✓ java closed-loop-corrected p99 within 2x of intended-time p99 (99221503 and 101515263)
+✓ java closed-loop-naive p99 hides it (< 1 ms) (7055 < 1000000)
+java control: intended=266751 closed-corrected=5995 closed-naive=5995
+✓ java control intended-time p99 has no stall tail (< 1 ms) (266751 < 1000000)
+✓ java control closed-loop-corrected within 2x of closed-loop-naive (5995 and 5995)
+python: receipt=28383 intended=101580799 closed-corrected=98238463 closed-naive=19359
+✓ python intended-time p99 shows the stall (>= 50 ms) (101580799 >= 50000000)
+✓ python receipt-time p99 hides it (< 1 ms) (28383 < 1000000)
+✓ python closed-loop-corrected p99 within 2x of intended-time p99 (98238463 and 101580799)
+✓ python closed-loop-naive p99 hides it (< 1 ms) (19359 < 1000000)
+python control: intended=209279 closed-corrected=19087 closed-naive=19087
+✓ python control intended-time p99 has no stall tail (< 1 ms) (209279 < 1000000)
+✓ python control closed-loop-corrected within 2x of closed-loop-naive (19087 and 19087)
+━━ reports (schema, histogram decode, percentile recompute)
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-clock-read.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-clock-read-steady_clock.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-corrected-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-corrected.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-naive-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-closed-loop-naive.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-intended-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-intended-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-receipt-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/cpp-receipt-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-clock-read.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-corrected-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-corrected.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-naive-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-closed-loop-naive.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-intended-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-intended-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-receipt-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/java-receipt-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-clock-read.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-clock-read-perf_counter_ns.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-corrected-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-corrected.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-naive-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-closed-loop-naive.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-intended-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-intended-time.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-receipt-time-control.json
+ok   <repo>/examples/03-coordinated-omission/results/r02-run3/python-receipt-time.json
+example                  language  variant                          count  dropped    p50    p90       p99     p99.9       max
+03-coordinated-omission  cpp       clock-read                     1000000        0    0.0    0.0       0.0       0.0       2.4
+03-coordinated-omission  cpp       clock-read-steady_clock        1000000        0    0.0    0.0       0.0       0.0       4.1
+03-coordinated-omission  cpp       closed-loop-corrected-control    10000        0    0.1    0.6       1.0       1.2      19.9
+03-coordinated-omission  cpp       closed-loop-corrected            10199        0    0.1    0.7   98238.5  190316.5  200278.0
+03-coordinated-omission  cpp       closed-loop-naive-control        10000        0    0.1    0.6       1.0       1.2      19.9
+03-coordinated-omission  cpp       closed-loop-naive                10000        0    0.1    0.7       1.0       1.1  200278.0
+03-coordinated-omission  cpp       intended-time-control            10000        0  156.2  168.3     185.3     225.7     353.0
+03-coordinated-omission  cpp       intended-time                    10000        0  157.8  170.9  100532.2  190447.6  200409.1
+03-coordinated-omission  cpp       receipt-time-control             10000        0    2.7    3.3       5.3       7.5      18.6
+03-coordinated-omission  cpp       receipt-time                     10000        0    2.8    3.2       5.4       7.6  200146.9
+03-coordinated-omission  java      clock-read                     1000000        0    0.0    0.0       0.0       0.0      10.6
+03-coordinated-omission  java      closed-loop-corrected-control    10000        0    0.7    2.7       6.0       8.7      20.5
+03-coordinated-omission  java      closed-loop-corrected            10199        0    0.9    6.3   99221.5  190316.5  200278.0
+03-coordinated-omission  java      closed-loop-naive-control        10000        0    0.7    2.7       6.0       8.7      20.5
+03-coordinated-omission  java      closed-loop-naive                10000        0    0.9    6.0       7.1      17.4  200278.0
+03-coordinated-omission  java      intended-time-control            10000        0  115.0  173.8     266.8   25722.9   35291.1
+03-coordinated-omission  java      intended-time                    10000        0  102.7  183.6  101515.3  190840.8  200540.2
+03-coordinated-omission  java      receipt-time-control             10000        0    5.6   15.8      55.0     136.7   34504.7
+03-coordinated-omission  java      receipt-time                     10000        0    4.9   14.2      49.7     109.4  200409.1
+03-coordinated-omission  python    clock-read                     1000000        0    0.0    0.0       0.1       0.1       8.6
+03-coordinated-omission  python    clock-read-perf_counter_ns     1000000        0    0.0    0.0       0.0       0.1      14.4
+03-coordinated-omission  python    closed-loop-corrected-control    10000        0    1.9    4.3      19.1      22.1      53.7
+03-coordinated-omission  python    closed-loop-corrected            10200        0    2.0   15.9   98238.5  190316.5  200278.0
+03-coordinated-omission  python    closed-loop-naive-control        10000        0    1.9    4.3      19.1      22.1      53.7
+03-coordinated-omission  python    closed-loop-naive                10000        0    2.0   11.7      19.4      33.3  200278.0
+03-coordinated-omission  python    intended-time-control            10000        0  113.3  192.4     209.3     228.7     464.6
+03-coordinated-omission  python    intended-time                    10000        0  180.9  195.3  101580.8  190578.7  200278.0
+03-coordinated-omission  python    receipt-time-control             10000        0    8.4   20.6      26.8      38.8      65.3
+03-coordinated-omission  python    receipt-time                     10000        0   19.6   22.0      28.4      36.4  200278.0
+host clocksource: tsc (available: tsc acpi_pm)
+✓ coordinated omission observed in C++, Java and Python

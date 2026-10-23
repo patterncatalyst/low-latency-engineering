@@ -1,0 +1,105 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "01-latency-distribution",
+  "language": "python",
+  "variant": "per-parcel",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 185087,
+    "p90": 200191,
+    "p99": 226303,
+    "p99_9": 322815,
+    "max": 443391
+  },
+  "hdr_histogram": "HISTFAAAA7N4nD2UUYscRRDHr/9TU1tb19d0OpPJZJyMy7iM5xHX41iXcAZdRY7jiEGOIMdxLCGEEGKIEiI++Oq7D+Kj4IufQT+W4BeQ6j3chp6dqurqmvr/uruff725s1P+ubP9FddPt7NTnBz+/cfOZ/9sDf9+h18cvsUulyjg4DAFpvgAU7yHd3EXe0CRx8e4iwkK3M5RNvawax6yZwln62kXcIDl2qUJABQEKkCUs1NhJgJTSVsnWQICiFkcO0hBlpstKBvJMbGyCDMTIpEQC9jRb84KJTiCY3KiXnwQgrBIYAkULTKFKjRNHLTvfD/M98dmGMeu68e2aWbVfD60QzP2XdcPbV/1bZrVTd0O7X7dN2kZFrO+7nwfD/b7LjX1rElN3fg6tRpTVPGxTlTV7H1Q1oZVNVRJVLgmEbAPrOI5eBVpvIYQvU/iQ2i9HzhUWjfiu15DqrrUxLr2sfHSqhWdYh2qqg1tzZpSauvO1lZV7SttRC2NeqSagkMMdSMqMUoILMpC6hUuirIqhche4EWZVERErZNCQp5hNhKYjYThlKEEG7DeQ5wqHDPEBDQUTEJyJiIcFcSYmpIZCHIEKXFNgrMwG3Aos+yUhS3yWjgqLdaoAFASF1TknR1fk1IQJiBndFjGMtNV5n80yeC57SvdAJXY0mapCsqT+V3mo7RirDC2zcgJLKsjw3JbGeUtzMck4Lyl5C9y2wKFKVeXp5KRM9kizp8KBN4y62w1O2TgCcTEJMawgFVhvfcWnEVQit6HlGKsYkqzWUd9qvpuaIeDdn/WjOP+sOgXYT7vl4f3VvdWy8ViebY+OVqfrddXm7PjR6cXj589fPX47eXzJy+fPn96tbl68uTq5bM3lxfnr14+f/3i+8355ebF5nzzcP366uL8zdurzePT04tPHy0fXX59tjr58ujh6TfrB8vjxacn4/HxwYODxf3D1ep4OT9brObrLx4MR4er8eBwdjRb9WPXtPP9Md7r7y+qvjkahmGsumbWhy62Y6yD6rxLdTWLXR27qG0w9pNPKqkJQZu2iapcJ+XIPmqv3mnyXmCnOwpzYFYS9sJCEfnQi+amW+fypCaXAWtyMjGbEqYHwYnpLObYKmagmSaZRCanWbRMiUmU0ZxkqEtsr7nsKslRgRvXXruieIoJ9vLl6IBbNEWBKdlriYKMUkxhMUbRTbxjh2Tyf/YP8TluYxe37FYE8BGmuIvbeB+3LMxu2hvYw1f4BHdwB385/IjfzfMT7uAHFPgP2QxfSg==",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T06:32:34Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2682147,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "redacted"
+    },
+    "load": {
+      "load1": 0.75,
+      "load5": 0.9,
+      "load15": 0.81,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "throughput_mhz=1000122; done_span_ns=9998772471; reordered=0; single thread, GIL"
+}

@@ -30,7 +30,7 @@ Every measured number in this chapter carries one profile: bare-metal host, Inte
 
 ## Diagram
 
-{% include excalidraw.html file="02-littles-law" alt="The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.3 to +1.6 %, Java +2.4 to +3.6 %." caption="Figure 2.1 — The consumer as a queue. Sampled L matches lambda x W-bar within 1.6 % in C++ and 3.6 % in Java; W-bar is a model input, never a reported latency." %}
+{% include excalidraw.html file="02-littles-law" alt="The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.3 to +0.5 %, Java +1.3 to +4.3 %." caption="Figure 2.1 — The consumer as a queue. Sampled L matches lambda x W-bar within 0.5 % in C++ and 4.3 % in Java; W-bar is a model input, never a reported latency." %}
 
 ## Concept
 
@@ -40,7 +40,7 @@ For a stable system, the long-run number of items inside equals the arrival rate
 
 Applied to the belt, it gives the 480 parcels in flight. Applied to a handler, `lambda` times the mean service time is the number of busy workers: the model block reports an offered utilisation of 0.60 from a 600 us service-time parameter. One worker suffices on average, with no slack for the tail Chapter 1 measured.
 
-The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.02 to 1.07 ms, p50 is 0.75 to 0.79 ms and p99 is 4.33 to 4.40 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
+The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.04 to 1.08 ms, p50 is 0.76 to 0.80 ms and p99 is 4.35 to 4.42 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
 
 ### Amdahl's Law
 
@@ -54,7 +54,7 @@ A fixed batch of parcels is shared among N workers. Each parcel costs parallel C
 
 The formula assumes the serial part runs alone, and a lock does not guarantee that: while one worker holds it, the others can still scan. The workload therefore runs in waves. Each worker scans its parcels, all workers meet at a barrier, every worker commits under the lock, and they meet again. Nobody commits while anyone scans, and nobody scans while anyone commits. That is the structure the formula describes, and it fits a wave-picked sortation plan.
 
-{% include excalidraw.html file="02-amdahl-phases" alt="Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java." caption="Figure 2.2 — The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.83-2.84x, Java 2.74x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x." %}
+{% include excalidraw.html file="02-amdahl-phases" alt="Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java." caption="Figure 2.2 — The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.83-2.85x, Java 2.74-2.75x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x." %}
 
 ## How the code works
 
@@ -386,7 +386,7 @@ examples/02-littles-amdahl/verify.sh
 
 The script builds the programs, runs both experiments, asserts the criteria and writes the reports. `ALLOW_BUSY=1` measures although a lab VM is running; `SKIP_BUILD=1` reuses builds.
 
-The 1-minute load average at the start was 0.17 to 0.60. Ranges are across the three runs, `r01-run1` to `r01-run3`.
+The 1-minute load average at the start was 0.34 to 0.55. Ranges are across the three runs, `r02-run1` to `r02-run3`.
 
 ### A. Little's Law
 
@@ -394,10 +394,10 @@ Each consumer received 10,000 parcels at 1,000 per second over 10 s with none dr
 
 | Consumer | Sampled L | W-bar (model input) | Error of L vs lambda x W-bar | Max in system |
 |---|---|---|---|---|
-| C++ | 1.040 to 1.070 | 1.024 to 1.067 ms | +0.3 to +1.6 % | 11 |
-| Java | 1.182 to 1.240 | 1.154 to 1.197 ms | +2.4 to +3.6 % | 26 to 31 |
+| C++ | 1.046 to 1.087 | 1.042 to 1.083 ms | +0.3 to +0.5 % | 11 |
+| Java | 1.114 to 1.235 | 1.100 to 1.188 ms | +1.3 to +4.3 % | 22 to 33 |
 
-Both sit inside the 5 % criterion. Offered load is 0.60 of one worker, so the queue is usually short and occasionally holds a burst. Java's error is larger and its tail longer: its p99.9 for `W` is 21.6 to 27.4 ms against 8.4 ms in C++. The Java run does not warm the JIT first; one untested hypothesis is that compilation and collection pauses stretch a burst's residence.
+Both sit inside the 5 % criterion; Java's error was +4.3 % in run 1, +4.0 % in run 2 and +1.3 % in run 3. Offered load is 0.60 of one worker, so the queue is usually short and occasionally holds a burst. Java's error is larger and its tail longer: its p99.9 for `W` is 18.2 to 28.7 ms against 8.4 to 8.5 ms in C++. The Java run does not warm the JIT first; an untested hypothesis is that compilation and collection pauses stretch a burst's residence.
 
 The report's warehouse sub-block gives the same 480 parcels in flight on 1.20 m of belt. A slow path that stretches `W` grows that count in proportion.
 
@@ -405,22 +405,22 @@ The report's warehouse sub-block gives the same 480 parcels in flight on 1.20 m 
 
 | | s | 1/s | N = 2 predicted / measured | N = 4 predicted / measured |
 |---|---|---|---|---|
-| C++ | 0.095 | 10.5x | 1.83x / 1.77x | 3.11x / 2.83 to 2.84x |
-| Java | 0.099 | 10.1x | 1.82x / 1.75 to 1.76x | 3.08 to 3.09x / 2.74x |
-| Python processes | 0.104 to 0.105 | 9.5 to 9.6x | 1.81x / 1.72 to 1.81x | 3.04 to 3.05x / 2.93 to 3.01x |
-| Python threads | 0.099 to 0.100 | 10.0 to 10.1x | 1.82x / 0.96 to 1.01x | 3.08x / 0.48 to 0.52x |
+| C++ | 0.095 | 10.5x | 1.83x / 1.77x | 3.11x / 2.83 to 2.85x |
+| Java | 0.098 to 0.099 | 10.1 to 10.2x | 1.82x / 1.75 to 1.76x | 3.08 to 3.09x / 2.74 to 2.75x |
+| Python processes | 0.104 to 0.107 | 9.4 to 9.6x | 1.81x / 1.83 to 1.89x | 3.03 to 3.05x / 2.92 to 2.97x |
+| Python threads | 0.099 to 0.101 | 9.9 to 10.1x | 1.82x / 1.00 to 1.02x | 3.07 to 3.09x / 0.47 to 0.50x |
 
-The N = 1 wall p50 for C++ was 78.4 to 78.5 ms and for Java 78.8 to 79.0 ms. At N = 4 it fell to 27.6 to 27.7 ms in C++ and 28.7 to 28.8 ms in Java.
+The N = 1 wall p50 was 78.4 to 78.5 ms for C++ and 78.9 to 79.0 ms for Java; at N = 4 it fell to 27.6 to 27.7 ms in C++ and 28.7 to 28.9 ms in Java.
 
-The C++ and Java speedups at N = 4 sit 9 to 11 % under the prediction (C++ -8.7 to -8.9 %, Java -11.0 to -11.1 %), inside the 15 % criterion. For sizing, the formula is optimistic: a worker count taken from `S(N)` under-provisions by about a tenth.
+The C++ and Java speedups at N = 4 sit 9 to 11 % under the prediction (C++ -8.6 to -9.0 %, Java -11.0 to -11.3 %), inside the 15 % criterion. For sizing, the formula is optimistic: a worker count from `S(N)` under-provisions by about a tenth.
 
-Two costs are candidates. Each wave ends when the slowest worker reaches the barrier, and the contended lock moves the table's cache lines between cores. The formula has no term for either, and these runs did not isolate how much of the gap they explain. A further hypothesis is frequency: the governor is `powersave` on a host that boosts to 4.6 GHz, and the effective clock (user cycles over task-clock from `perf stat`) was 4.33 to 4.35 GHz for C++, 4.35 to 4.36 for Java and 3.74 to 3.93 for Python. Those figures cover each whole process: they show the cores ran above the 2.30 GHz base clock, not whether the clock fell as more cores woke at N = 4. The workers were not pinned, so scheduler placement is a third unmeasured candidate.
+Two candidates: each wave ends when the slowest worker reaches the barrier, and the contended lock moves the table's cache lines between cores. The formula has no term for either, and these runs did not isolate how much of the gap they explain. A further hypothesis is frequency: the governor is `powersave` on a host that boosts to 4.6 GHz, and the effective clock (user cycles over task-clock from `perf stat`) was 4.34 to 4.35 GHz for C++, 4.35 to 4.36 for Java and 3.69 to 3.86 for Python. Those figures cover each whole process: they show the cores ran above the 2.30 GHz base clock, not whether the clock fell as more cores woke at N = 4. The workers were not pinned, so scheduler placement is a third unmeasured candidate.
 
-Python threads stay near 1x at N = 2 and fall to 0.48 to 0.52x at N = 4. The CPU-bound loop holds the GIL (`build.gil_enabled` is `true` in the reports, CPython 3.14.8), so the interpreter runs one thread at a time. The fall below 1x is consistent with each barrier and lock hand-off also paying a GIL hand-off, a hypothesis the run does not isolate. Processes track the prediction, 2.93 to 3.01x against a predicted 3.04 to 3.05x. The gap between the predicted 3.08x for threads and the measured 0.48 to 0.52x is the GIL, which Amdahl's Law does not know about. Free-threaded CPython is Appendix E.
+Python threads stay near 1x at N = 2 and fall to 0.47 to 0.50x at N = 4. The CPU-bound loop holds the GIL (`build.gil_enabled` is `true` in the reports, CPython 3.14.8), so the interpreter runs one thread at a time. The fall below 1x fits each barrier and lock hand-off also paying a GIL hand-off; the run does not isolate it. Processes track the prediction, 2.92 to 2.97x against a predicted 3.03 to 3.05x. The gap between the predicted 3.07 to 3.09x for threads and the measured 0.47 to 0.50x is the GIL, which Amdahl's Law does not know about.
 
 ### An observation: the free-running lock
 
-`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.59 to 3.60x at N = 4 in C++ and 3.51 to 3.57x in Java, over the predicted 3.08 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
+`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.51 to 3.59x at N = 4 in C++ and 3.53 to 3.57x in Java, over the predicted 3.09 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
 
 ## Cross-check
 
@@ -428,11 +428,11 @@ For Little's Law, `L` and `W` come from a sampler thread and a per-parcel clock 
 
 ## What you learned
 
-- Little's Law sizes work in flight: 480 parcels between scanner and diverter. On the consumer, sampled `L` matched `lambda x W-bar` within +0.3 to +1.6 % in C++ and +2.4 to +3.6 % in Java.
+- Little's Law sizes work in flight: 480 parcels between scanner and diverter. On the consumer, sampled `L` matched `lambda x W-bar` within +0.3 to +0.5 % in C++ and +1.3 to +4.3 % in Java.
 - `W-bar` and the serial fraction are modelling inputs in a labelled `model` block; latencies stay percentiles.
-- Amdahl's Law bounds speedup at `1/s`. With `s` near 0.1, N = 4 predicts about 3.1x and the phased runs measured 2.74 to 2.84x in C++ and Java. Size workers from measured speedup, not the formula.
-- A free-running lock measured above the formula, 3.51 to 3.60x, with lock sections overlapping other workers' scanning as the likely cause.
-- CPU-bound Python threads fall to 0.48 to 0.52x at N = 4 under the GIL; processes reached 2.93 to 3.01x.
+- Amdahl's Law bounds speedup at `1/s`. With `s` near 0.1, N = 4 predicts about 3.1x and the phased runs measured 2.74 to 2.85x in C++ and Java. Size workers from measured speedup, not the formula.
+- A free-running lock measured above the formula, 3.51 to 3.59x, with lock sections overlapping other workers' scanning as the likely cause.
+- CPU-bound Python threads fall to 0.47 to 0.50x at N = 4 under the GIL; processes reached 2.92 to 2.97x.
 
 Chapter 3 returns to measurement itself: clocks, percentiles and coordinated omission.
 
@@ -447,4 +447,4 @@ Chapter 3 returns to measurement itself: clocks, percentiles and coordinated omi
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts, for the C++ and Java consumers, 10,000 parcels received with none dropped and sampled `L` within 5 % of `lambda x W-bar`. It asserts that the C++ and Java speedups at N = 4 are within 15 % of the prediction, that Python threads stay under 1.3x (the reports record the GIL enabled), that Python processes exceed 2x, and that every N reproduces the one-worker table (the programs exit non-zero on a checksum mismatch). It validates the report files. All of it held on the three runs, `r01-run1` to `r01-run3`.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts, for the C++ and Java consumers, 10,000 parcels received with none dropped and sampled `L` within 5 % of `lambda x W-bar`. It asserts that the C++ and Java speedups at N = 4 are within 15 % of the prediction, that Python threads stay under 1.3x (the reports record the GIL enabled), that Python processes exceed 2x, and that every N reproduces the one-worker table (the programs exit non-zero on a checksum mismatch). It validates the report files. All of it held on the three runs, `r02-run1` to `r02-run3`.*

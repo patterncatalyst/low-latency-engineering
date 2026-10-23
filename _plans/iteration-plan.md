@@ -6,17 +6,20 @@ description: "How the book ships: what each release iteration delivers, in order
 
 Source of truth for scope: the PRD in Notion (*PRD — Latency with C++, Python &
 Java*, §7 outline + §7a additions). This plan turns that outline into release
-iterations. Iterations ship as `low-latency-engineering_rNN.x.tar.gz` and are
-tagged `rNN.x`.
+iterations. Each iteration ships as its merged PR, tagged `rNN.x` on main with a
+GitHub release; no tarball is built.
 
 ## Status
 
 - **r00 (`release/r00`):** repo, CLAUDE.md, site scaffold, Parts, outline, Figure 0.1,
   this plan. No chapter prose.
-- **r01 (`release/r01`): complete, in review.** Steps S0 to S27 done (simulator, kits, lab, Ch0 to Ch4,
+- **r01: complete** (merged in #3, tag `r01.x`). Steps S0 to S27 done (simulator, kits, lab, Ch0 to Ch4,
   examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
   Claim log: `_plans/reconciliation-plan.md`.
-- Everything after r01 is planned, not started.
+- **r02 (`release/r02`): in progress.** Part 2 (Ch5–8). Chapters written and validated, example pages, READMEs and
+  reconciliation wired (S20); CI and review steps remain, and the iteration stays in progress until the PR merges.
+  Step status: `_plans/r02-plan.md`. Claim log: `_plans/reconciliation-plan.md`.
+- Everything after r02 is planned, not started.
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
@@ -66,7 +69,7 @@ infrastructure plus the chapters that explain it:
 | Iter | Delivers | Notes |
 |---|---|---|
 | r00 | Scaffold, outline, plan, Figure 0.1 | `release/r00` |
-| r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete; in review (PR to main)** |
+| r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete: merged in #3, tag `r01.x`** |
 | r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline |
 | r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language |
 | r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers |

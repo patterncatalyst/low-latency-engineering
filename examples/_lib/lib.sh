@@ -16,6 +16,8 @@
 #   SKIP_BUILD=1  reuse existing builds
 #   LOWLAT_BUILD  C++ binary dir (default examples/build/release); set a private
 #                 one when several builds run at once
+#   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
+#                 scratch_dir (a caller-provided value is kept)
 
 set -euo pipefail
 
@@ -31,6 +33,13 @@ fi
 step() { printf '%s━━ %s%s\n' "$_c_step" "$*" "$_c_off"; }
 ok()   { printf '%s✓ %s%s\n' "$_c_ok" "$*" "$_c_off"; }
 die()  { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off" >&2; exit 1; }
+# say_bad MESSAGE...: print a red ✗ line on stdout and carry on (die prints on stderr and exits).
+# Redirect with >&2 for stderr.
+say_bad() { printf '%s✗ %s%s\n' "$_c_bad" "$*" "$_c_off"; }
+# bad MESSAGE...: say_bad and count it in FAILURES. A verify.sh that evaluates every criterion
+# before it fails ends with `((FAILURES == 0)) || die ...`.
+FAILURES=0
+bad() { say_bad "$*"; FAILURES=$((FAILURES + 1)); }
 
 # Background consumers: track each one so that a die mid-run (or Ctrl-C) never leaves it holding
 # its UDP port. bg_track PID after starting one, bg_forget PID once it has been waited for.
@@ -48,20 +57,53 @@ _bg_cleanup() {
   for p in "${BG_PIDS[@]}"; do
     kill "$p" 2>/dev/null || true
   done
+  # Scratch (JFR recordings, FIFOs) is ours only when lib.sh created it.
+  [[ -z ${_LOWLAT_SCRATCH_OWNED:-} ]] || rm -rf "${LOWLAT_SCRATCH:?}"
 }
 trap _bg_cleanup EXIT
 
-# wait_udp_bound PORT PID LOG [TRIES]: wait (TRIES x 0.1 s, default 300) until a UDP socket is
-# bound to PORT. Dies, printing LOG, if the background process PID exits first or never binds.
-# Readiness comes from the kernel (ss), not from what the consumer prints.
+# pid_descends_from PID ANCESTOR: true when PID is ANCESTOR or one of its descendants (walks PPid).
+# A launcher such as `uv run` may fork the process that binds, so the socket's owner is matched to
+# the tracked PID through its parents.
+pid_descends_from() {
+  local p=$1
+  while [[ -n $p ]] && ((p > 1)); do
+    [[ $p == "$2" ]] && return 0
+    p=$(awk '/^PPid:/ {print $2}' "/proc/$p/status" 2>/dev/null) || return 1
+  done
+  return 1
+}
+
+# wait_udp_bound PORT PID LOG [TRIES]: wait (TRIES x 0.1 s, default 300) until a UDP socket owned by
+# PID (or a child of it) is bound to PORT. Dies, printing LOG, if the background process PID exits
+# first or never binds. Readiness comes from the kernel (ss), not from what the consumer prints, and
+# a socket held by some other process on the same port does not count.
 wait_udp_bound() {
-  local port=$1 pid=$2 log=$3 tries=${4:-300} i
+  local port=$1 pid=$2 log=$3 tries=${4:-300} i owner
   for ((i = 0; i < tries; i++)); do
-    [[ -z $(ss -ulnH "sport = :$port") ]] || return 0
+    while read -r owner; do
+      ! pid_descends_from "$owner" "$pid" || return 0
+    done < <(ss -ulnpH "sport = :$port" | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u)
     kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "consumer exited before binding UDP $port"; }
     sleep 0.1
   done
   die "consumer never bound UDP $port within $((tries / 10)) s"
+}
+
+# wait_log_line PATTERN LOG PID [TRIES]: print the first line of LOG matching the regexp,
+# polling every 20 ms; dies if PID exits first.
+wait_log_line() {
+  local pattern=$1 log=$2 pid=$3 tries=${4:-4500} i line
+  for ((i = 0; i < tries; i++)); do
+    line=$(grep -m1 -E -- "$pattern" "$log" || true)
+    if [[ -n $line ]]; then
+      printf '%s' "$line"
+      return 0
+    fi
+    kill -0 "$pid" 2>/dev/null || { cat "$log" >&2; die "process exited before printing /$pattern/"; }
+    sleep 0.02
+  done
+  die "no /$pattern/ line within $((tries / 50)) s"
 }
 
 # redact_host JSON...: replace the machine's hostname with the profile's
@@ -73,7 +115,8 @@ redact_host() {
   label=$(jq -r .host_label "$LOWLAT_PROFILE")
   for f in "$@"; do
     jq --arg h "$host" --arg l "$label" \
-      'walk(if type == "string" then split($h) | join($l) else . end)' "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+      'walk(if type == "string" then split($h) | join($l) else . end)' "$f" >"$f.tmp" || die "redact_host: jq failed on $f"
+    mv "$f.tmp" "$f"
   done
 }
 
@@ -162,5 +205,183 @@ assert_lt() {
   ok "$3 ($1 < $2)"
 }
 
+# expect_ge A B MESSAGE / expect_le / expect_lt: like assert_ge and assert_lt for integers, but a
+# miss is counted by bad and the run goes on, so one run shows every criterion's value against its bound.
+expect_ge() { if (($1 >= $2)); then ok "$3 ($1 >= $2)"; else bad "$3 (got $1, need >= $2)"; fi; }
+expect_le() { if (($1 <= $2)); then ok "$3 ($1 <= $2)"; else bad "$3 (got $1, need <= $2)"; fi; }
+expect_lt() { if (($1 < $2)); then ok "$3 ($1 < $2)"; else bad "$3 (got $1, need < $2)"; fi; }
+
+# note_of FILE KEY: the value after "KEY=" (up to the next ";") in a report's notes.
+note_of() { jget "$1" ".notes | capture(\"$2=(?<v>[^;]+)\").v"; }
+
+# median_ns VALUE...: the middle value of the sorted integers (the lower middle for an even count).
+median_ns() { printf '%s\n' "$@" | sort -n | sed -n "$((($# + 1) / 2))p"; }
+
 # simulate ARGS...: run the reference line simulator (C++).
 simulate() { "$(cpp_bin line-simulator)" "$@"; }
+
+# ---------------------------------------------------------------------------------------------
+# Java runtime observation (Part 2): JFR + unified logging, context switches, time to ready.
+# ---------------------------------------------------------------------------------------------
+
+# scratch_dir: make sure the per-run scratch dir exists and set LOWLAT_SCRATCH to it. Call it as
+# a plain statement in the calling shell, never inside $(...) (the EXIT trap would not see the
+# dir): `scratch_dir; AOT=$LOWLAT_SCRATCH/x.aot`. A caller-provided LOWLAT_SCRATCH is kept;
+# otherwise a mktemp dir is created and removed by the EXIT trap. Recordings (*.jfr) live here
+# and nowhere in the tree, so they cannot be committed.
+scratch_dir() {
+  if [[ -z ${LOWLAT_SCRATCH:-} ]]; then
+    LOWLAT_SCRATCH=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-scratch.XXXXXX")
+    _LOWLAT_SCRATCH_OWNED=1
+  fi
+  mkdir -p "$LOWLAT_SCRATCH"
+}
+_scratch() { scratch_dir; }  # earlier name, kept for callers that have not moved
+
+# java_flags VARIANT: prepare the observation flags for one JVM run, without starting it. Sets
+#   JFR_FILE         recording path under the scratch dir (JFR on, dumped on exit)
+#   GC_LOG           $OUT/VARIANT.gc.log (unified -Xlog gc* + safepoint, async)
+#   JAVA_RUN_FLAGS   array to put before -jar / the main class
+# For a background JVM:  java_flags v; java "${JAVA_RUN_FLAGS[@]}" -jar x.jar & bg_track $!
+# Needs $OUT (the results dir). -Xlog:async keeps the log writes off the application threads.
+java_flags() {
+  local variant=$1
+  : "${OUT:?java_flags needs OUT (the results dir)}"
+  scratch_dir
+  JFR_FILE="$LOWLAT_SCRATCH/$variant.jfr"
+  GC_LOG="$OUT/$variant.gc.log"
+  JAVA_RUN_FLAGS=(
+    -Xlog:async
+    "-Xlog:gc*,safepoint:file=$GC_LOG:uptime,level,tags"
+    "-XX:StartFlightRecording:filename=$JFR_FILE,dumponexit=true,settings=default"
+  )
+}
+
+# java_run VARIANT JAVA_ARGS...: run java in the foreground with the observation flags first,
+# echoing the full command line (that is the evidence of which flags ran). JAVA_ARGS are the
+# JVM flags, then -jar JAR or a class, then the program arguments:
+#   java_run zgc -XX:+UseZGC -Xmx512m -jar "$JAR" --duration 5
+# Leaves JFR_FILE and GC_LOG set; the exit status is java's.
+java_run() {
+  local variant=$1
+  shift
+  java_flags "$variant"
+  printf 'java:'
+  printf ' %q' java "${JAVA_RUN_FLAGS[@]}" "$@"
+  printf '\n'
+  java "${JAVA_RUN_FLAGS[@]}" "$@"
+}
+
+# jfr_pauses JFR EXAMPLE VARIANT: write $OUT/java-VARIANT-gc-pause.json, a gc-pause report with
+# one sample per jdk.GCPhasePause event (see JfrPauses). Needs LOWLAT_PROFILE (capture_profile).
+jfr_pauses() {
+  local jfr=$1 example=$2 variant=$3
+  local jar="$LOWLAT_EXAMPLES/common/measure-java/target/measure-java-cli.jar"
+  : "${OUT:?jfr_pauses needs OUT (the results dir)}"
+  [[ -f $jar ]] || build_java "$LOWLAT_EXAMPLES/common/measure-java"
+  [[ -f $jfr ]] || die "no recording at $jfr"
+  [[ -f $jar ]] || die "missing $jar (build_java common/measure-java first)"
+  java -jar "$jar" --jfr "$jfr" --example "$example" --variant "$variant" \
+    --out "$OUT/java-$variant-gc-pause.json"
+}
+
+# task_ctx_switches PID TID: print "VOLUNTARY INVOLUNTARY" for one thread, from
+# /proc/PID/task/TID/status. Read before and after a window and subtract.
+#   read -r vol invol < <(task_ctx_switches "$pid" "$tid")
+task_ctx_switches() {
+  local f=/proc/$1/task/$2/status
+  [[ -r $f ]] || die "no such thread: $f"
+  awk '/^voluntary_ctxt_switches:/ {v = $2} /^nonvoluntary_ctxt_switches:/ {n = $2} END {print v, n}' "$f"
+}
+
+# task_io_faults PID TID: print "WRITE_SYSCALLS MINOR_FAULTS" for one thread, from
+# /proc/PID/task/TID/io (syscw: write-like system calls) and .../stat (field 10, minflt). Read
+# before and after a window and subtract. /proc/.../io is readable only by the thread's own user.
+#   read -r wr minflt < <(task_io_faults "$pid" "$tid")
+task_io_faults() {
+  local writes faults
+  writes=$(awk '/^syscw:/ {print $2}' "/proc/$1/task/$2/io") || die "no such thread: $1/$2"
+  faults=$(sed -E 's/^.*\) //' "/proc/$1/task/$2/stat" | awk '{print $8}') # fields after "(comm) ": state is 1
+  echo "$writes $faults"
+}
+
+# task_cpu PID TID: print the CPU the thread last ran on, from /proc/PID/task/TID/stat (field 39).
+# The comm field may hold spaces, so the line is cut after its closing parenthesis first; the
+# fields after "(comm) " start at 3 (state), which puts field 39 at position 37.
+task_cpu() {
+  local stat
+  stat=$(<"/proc/$1/task/$2/stat") || die "no such thread: $1/$2"
+  awk '{print $37}' <<<"${stat##*) }"
+}
+
+# jmh_lock_wait MINUTES CONSOLE CMD...: run a JMH command (java ... -jar benchmarks.jar ...) with
+# its output in CONSOLE, retrying every 20 s for up to MINUTES while another JMH instance holds
+# the lock. JMH 1.37 takes ${java.io.tmpdir}/jmh.lock so that two benchmark runs never share the
+# CPUs; the lock is the point, so it is waited for rather than moved (a per-run lock file, by
+# -Djava.io.tmpdir, would let parallel runs perturb each other's numbers). The retry is around
+# the run, not a probe of the lock, so two waiters cannot both pass a check and then collide.
+# Returns CMD's status; any other failure ends the wait at once. Prints the tail of CONSOLE on failure.
+jmh_lock_wait() {
+  local minutes=$1 console=$2 attempt
+  shift 2
+  for ((attempt = 0; attempt < minutes * 3; attempt++)); do
+    if "$@" >"$console" 2>&1; then
+      return 0
+    fi
+    grep -q 'Unable to acquire the JMH lock' "$console" || break
+    echo "another JMH instance holds /tmp/jmh.lock; retrying in 20 s"
+    sleep 20
+  done
+  tail -30 "$console" >&2
+  return 1
+}
+
+# time_to_ready CMD...: launch CMD, wait for a line containing $READY_PATTERN (default "ready")
+# on its stdout/stderr, print the nanoseconds from launch to that line, then terminate CMD.
+# READY_TIMEOUT seconds (default 60) bounds the wait; the output is printed if CMD dies first
+# or never gets ready. A FIFO delivers the line the moment it is written, so there is no
+# polling granularity in the number.
+#
+# Clock: EPOCHREALTIME is the wall clock (CLOCK_REALTIME), microsecond resolution. Bash has no
+# monotonic clock ($SECONDS is whole seconds; /proc/uptime has 10 ms resolution, too coarse for a
+# ~100 ms interval; `date +%s%N` is the same wall clock plus a fork). Wall time is acceptable
+# here: NTP slews at 500 ppm at most (50 us over 100 ms), and only a clock step during the launch
+# would skew one number, which shows up as an outlier among the repeated launches. The
+# duration is a coarse startup figure, not a latency sample.
+time_to_ready() (
+  # A subshell body: its own EXIT/INT/TERM trap stops the process and removes the FIFO dir on every
+  # path, a Ctrl-C included, and the call is normally inside $(...), where the calling script's
+  # trap does not run. The variables are plain (no local) so the trap still sees them at exit.
+  pattern=${READY_PATTERN:-ready}
+  timeout=${READY_TIMEOUT:-60}
+  seen=''
+  fdir=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-ready.XXXXXX")
+  pid=''
+  trap 'kill "$pid" 2>/dev/null || true; rm -rf "$fdir"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  mkfifo "$fdir/fifo"
+  exec {fd}<>"$fdir/fifo"
+  t0=${EPOCHREALTIME/./}
+  "$@" >&"$fd" 2>&1 &
+  pid=$!
+  deadline=$((SECONDS + timeout))
+  while :; do
+    if IFS= read -r -t 1 -u "$fd" line; then
+      seen+="$line"$'\n'
+      if [[ $line == *"$pattern"* ]]; then
+        t1=${EPOCHREALTIME/./}
+        break
+      fi
+    elif ! kill -0 "$pid" 2>/dev/null; then
+      printf '%s' "$seen" >&2
+      die "time_to_ready: '$*' exited before printing '$pattern'"
+    elif ((SECONDS >= deadline)); then
+      printf '%s' "$seen" >&2
+      die "time_to_ready: '$*' not ready within ${timeout} s"
+    fi
+  done
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  echo $(((t1 - t0) * 1000))
+)

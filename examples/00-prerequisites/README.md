@@ -82,11 +82,11 @@ Python and Java consumers each receive all 5,000 parcels from the 1 kHz x 5 s
 simulator run with `dropped = 0`; and that each report validates, carries the
 machine profile and matches `lowlat-report check`. Exit 0 requires all of it.
 
-It held on all three quiet-host runs, `r01-run1..3` (bare-metal host, governor
+It held on all three quiet-host runs, `r02-run1..3` (bare-metal host, governor
 `powersave`, tuned `balanced`, kernel 7.2.11-200.fc44, `virt: none`): every report
 had `count = 5000` and `dropped = 0`. The p99 smoke values were not asserted; across
-the runs they were 180,607 to 182,783 ns (C++), 202,367 to 217,727 ns (Python) and
-212,735 to 325,375 ns (Java, which includes JIT warm-up).
+the runs they were 183,551 to 243,839 ns (C++), 218,111 to 223,359 ns (Python) and
+319,487 to 403,455 ns (Java, which includes JIT warm-up).
 
 The `VM=1` path ran once (`results/r01-vm-smoke/`, labelled VM): 8 of 8 guest
 checks passed and `cyclictest` produced its output. Those values are VM numbers and

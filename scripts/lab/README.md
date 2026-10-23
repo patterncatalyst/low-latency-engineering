@@ -83,7 +83,7 @@ Defaults: 4 vCPU, 8192 MB RAM, 40 GB disk (`VCPUS`, `RAM_MB`, `DISK_GB`).
 Real-time and time: `realtime-tests` (cyclictest; not Fedora's unrelated `rt-tests`), `linuxptp` (with the `ptp_kvm` module loaded at boot, giving `/dev/ptp0` "KVM virtual PTP"), `chrony`, `tuned` with
 `tuned-profiles-cpu-partitioning`, `realtime-setup`. Profiling: `perf`,
 `kernel-tools`, `numactl`. Toolchains: `gcc-c++`, `clang`, `cmake`,
-`ninja-build`, `java-25-openjdk-devel`, `maven`, `python3`, `uv`, plus `jq`,
+`ninja-build`, `java-25-openjdk-devel` (Fedora's JDK stays installed but is not selected), the pinned Temurin JDK (below), `stress-ng`, `maven`, `python3`, `uv`, plus `jq`,
 `git`, `rsync`. Containers: Docker Engine from Docker's Fedora repository
 (`docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-compose-plugin`); the
 guest user is in the `docker` group. No podman. The guest user `fedora` has
@@ -149,3 +149,41 @@ Fedora's realtime config leaves out legacy iptables
 (`CONFIG_NETFILTER_XTABLES_LEGACY`), so the guest uses `iptables-nft`
 (cloud-init installs and selects it); with `iptables-legacy` Docker cannot start
 on the RT kernel.
+
+## Pinned JDK, isolation profile, vcpupin
+
+**Temurin.** The guest's `java`/`javac` are the pinned Temurin tarball from `versions.env`
+(`TEMURIN_VERSION`, `TEMURIN_URL`, `TEMURIN_SHA256`), unpacked to `/opt/temurin-<version>`, selected with
+`alternatives` (so non-login ssh commands see it) and exported through `/etc/profile.d/temurin.sh`.
+`scripts/lab/install-guest-tools.sh [vm]` installs it into an existing guest (host download into
+`~/.cache/lowlat/downloads`, sha256-checked on the host and again in the guest, copied over vsock) together
+with `stress-ng`; cloud-init does the same for a rebuilt guest (the guest downloads through passt and
+checks the same sha256). `check-prereqs.sh --vm` fails unless the guest runs exactly that version.
+
+**Guest isolation profile.** `guest-profiles/isolate-cpu3.conf` holds the kernel arguments
+`isolcpus=3 nohz_full=3 rcu_nocbs=3` (documented in the file). `scripts/lab/apply-guest-profile.sh`
+puts them on the PREEMPT_RT boot entry with `grubby --update-kernel=<index> --args`, reboots the guest and
+verifies `/proc/cmdline` and `uname -v`. Only the RT entry changes; the stock entry is untouched.
+grubby on Fedora Cloud's btrfs `/boot` spells kernel paths `/boot/boot/vmlinuz-...` and rejects both that and
+the real path in `--update-kernel`, so the script addresses the entry by its grubby index; `--set-default` is
+never used. It is idempotent (an entry that already matches is not rewritten or rebooted).
+`apply-guest-profile.sh --remove` takes the arguments off again.
+
+**vcpupin.** `scripts/lab/pin-vcpu.sh` pins vCPU 3 of `lowlat-target` to host CPU 13 with
+`virsh vcpupin --config` (and `--live` when running) and prints `<cputune>` before and after;
+`pin-vcpu.sh --remove` deletes the `<cputune>` block again. This is libvirt configuration of the lab
+domain only. It is a pin, not an isolation: the host kernel may still schedule other work on CPU 13
+and on its hyperthread sibling CPU 5, and nothing on the host is partitioned. Core 5 (CPUs 5 and 13)
+had the fewest interrupts summed over both hyperthreads in `/proc/interrupts` on this host; check
+`lscpu -e`, `thread_siblings_list` and `/proc/interrupts` before reusing the default elsewhere. Override with `PIN_HOST_CPU` / `PIN_VCPU`. The guest has 4 vCPUs (0-3), so guest CPU 3 is vCPU 3.
+
+**Snapshot `lab-ready-iso`.** RT kernel + isolation profile + vcpupin + Temurin + `stress-ng`. It includes the
+domain XML at that moment, so reverting to `lab-ready` or `lab-ready-rt` also restores the unpinned
+domain, and reverting to `lab-ready-iso` restores the pin.
+
+```bash
+scripts/lab/revert-vm.sh lowlat-target lab-ready-iso   # isolated + pinned, tooled
+scripts/lab/revert-vm.sh lowlat-target lab-ready-rt    # RT kernel, no isolation, no pin
+scripts/lab/apply-guest-profile.sh --remove            # or undo in place
+scripts/lab/pin-vcpu.sh --remove
+```

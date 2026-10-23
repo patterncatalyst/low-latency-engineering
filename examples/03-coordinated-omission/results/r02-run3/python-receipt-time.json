@@ -1,0 +1,105 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "03-coordinated-omission",
+  "language": "python",
+  "variant": "receipt-time",
+  "unit": "ns",
+  "count": 10000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 19583,
+    "p90": 21967,
+    "p99": 28383,
+    "p99_9": 36351,
+    "max": 200278015
+  },
+  "hdr_histogram": "HISTFAAABaB4nDVWz4sc5xHdel1dXfvNNz09vb2t8WxrNBqNnZG0ThRLWmRHkmWRLFjIYAfh5GBCDD7YxoHgQMgpp5yTQy6BXHIwPhkHAoFgfPDNPvgv8N13XUKu4VWPBna25+v6Xe+97uFPfz06ODj87mD8FPv/cnBQnN/4zz8OXn06HvyzxfP4GQQVJriNOQoI3kCF20CFOUpMcBkCAQ4hmOMYc1xHgSNcAk9v4gQ/QAVM8BPco1vB80OUuBIOFzABjiJuiRmOABVASwgtC5RaYIoSFQQnmKPSGQpcxAQVSkwxA57HJAyu48eocBTmcy3irAhH1lPhJkqE6REwxSHi1nVeHAOzOD/EFDfj+jmUOMZrmI6djTNglTNcRYRlDyXuRR2ilULUxFRzUkNKXptCk6giwUyTG9T4S+FI6pLMVWGGxJYBE4hG2xpDmDJPjIvpwIMCKHG4n9YVzHDC8nAV7+ItVPiL4HUc4wquRrGs/jeo8Du8jIuowvwXmOLFiEuLN/AqvmasAscxgAu4jAs4xG0OSbTQsTBVU9ad4WqNubtZU3c51123btq275e2bPphsVn03apfblb9sH5hsRo2i22/2bVDs+h3q92ua9r1YjF0w7bfDkO33i67YdF3qV81yz4v++XQtctrXd+2y6ZZL9r2Wh7aRdv3ulg1tuiabZ/auuk79X5oOm9ym1O7aJpl3XaL1NVt3Td10+WcU1vnrvGUva6z1ym5eW4SFwTTDKi6azYThbtCVc0M0NpTbWqxT03qPHSuVF2QTF2cyFZ+cYaAAUlNCwMKCzKokRRqgsKgDgXERUvjak3F1Lhi228dRIEjMooq72gwhcs3wlZ5wkDKS1FRs2L8JeoqTBCOTEtjS4qC99Xcta4JP7i5JTfjENzUk2XVBEvGlaasipbm4jzVgKsZ58PsvApgJo4OnJv4SFdmJlQ0sAuDaIaKJmWv/EBYLceAJGxFIrd6NOCuUYLV6oasrsld1Woem7o1HJhBEpLVmrLR3LJ6NnVn4ZaiDq/dLcWVmlpMH2ScGswK9mAav4Js4wKKGJ/YvgHh7Fl0EeMfaakTdqwTRJgqFhpAoHtlJXtLgmrcBUoNWWDboY9ammgZO2VWDgxGcmuEjVUr8wjHF2WEKT1pL3FU0O0Z/ihMWlA/aaJjJjBL+E0Yjj0wfKlkOTDa7XEXcNWxbx3r4pkW7JKFORdJ10LJfAFKxzihkrEFe8TRC4wje9GIQlGMtY8PCMYJMVcUVoyZSsNkvCuj0pUaylrEX4V99AlOcBMFLtMX93CsvE2dF2AOXMcUotMw5/ePImoVKlmG+j97Dsz20ncYuEUQLcqCmNh+vgFgC+6A+kBdiGvNAkuac/acemtOzx49Ov/9H/4ln8kn8ol8K9/Il/JUvpIv5HP5VP4sf5PHH/38t+cPH97YXdtsbm263Qvb02FNYVwNabNtl9vubPfDs/t3H7x0582P3jx//OTRg9Pz87sv3Xm83a1XZ7tX7tw6++WT81+99/GTX3/8xw/f+fD9t9/56dt379+4sd5sl5vV0Ld1mzar1VDnYbVsczJP8dG+saaph36zXZ5uNtthvVvttqftYtE1OScn3ZyEMKuJ9tTUnlNurK6z1XXjWbPRrgGsJulbJM1qlqlWBBFlkkx2eBIOitqjFJlUagCbGApaCYdILtMlHpMWwuCSKDdKUIiFeIHPUQAuI1c9qyStY7sp0EzI8kmayezRJShFWJG0SjUNnOvIXqfmshbVkesedRjRbCFDwUMxainDO3E4coKONh9FIcg0sroc5fYZwwut9MWReLN4gQh7umgAdRpcJYSnwCVMcBwIDsRacDNIMMcsKj4KjE5CgUJUUGGKC+ALTISdji4T0j/eFUi1IlKwkHm8tfCFYY6/S7ww/E/wAUp8P8F//y34PzLdb2M=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T06:57:51Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2698681,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "redacted"
+    },
+    "load": {
+      "load1": 1.0,
+      "load5": 0.84,
+      "load15": 0.76,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep; single thread, GIL"
+}

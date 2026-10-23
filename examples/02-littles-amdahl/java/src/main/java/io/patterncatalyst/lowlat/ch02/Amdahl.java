@@ -38,7 +38,7 @@ public final class Amdahl {
     private record Options(long batch, long roundParcels, boolean phased, long parallelIters, long lockIters,
                            int reps, int warmup, int calibrationRuns, Path reportDir, String example) {
         private static final Set<String> KEYS = Set.of("--batch", "--round-parcels", "--sync",
-                "--parallel-iters", "--lock-iters", "--reps", "--warmup", "--report-dir", "--example");
+                "--parallel-iters", "--lock-iters", "--reps", "--warm-up", "--report-dir", "--example");
 
         static Options parse(String[] args) {
             Map<String, String> kv = Cli.pairs(args, KEYS);
@@ -49,7 +49,7 @@ public final class Amdahl {
                     Long.parseLong(kv.getOrDefault("--parallel-iters", "20000")),
                     Long.parseLong(kv.getOrDefault("--lock-iters", "2400")),
                     Integer.parseInt(kv.getOrDefault("--reps", "30")),
-                    Integer.parseInt(kv.getOrDefault("--warmup", "10")),
+                    Integer.parseInt(kv.getOrDefault("--warm-up", "10")),
                     5,
                     Path.of(kv.getOrDefault("--report-dir", ".")),
                     kv.getOrDefault("--example", "02-littles-amdahl"));

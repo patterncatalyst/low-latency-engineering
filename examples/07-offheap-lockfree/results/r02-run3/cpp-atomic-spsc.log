@@ -1,0 +1,9 @@
+command: <repo>/examples/build/release/07-offheap-lockfree/cpp/offheap-handoff --variant atomic-spsc --bind 127.0.0.1:47274 --expect 200000 --window 20000 --idle-timeout-ms 5000 --sample-hold-ms 1500 --example 07-offheap-lockfree --report <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc.json
+offheap-handoff: variant atomic-spsc listening on 127.0.0.1:47274
+decide-thread pid=2707380 tid=2707386
+window-end handled=200000
+line-simulator           cpp  emit-lateness    count=   200000 dropped=     0 p50=     51.7us p90=     51.8us p99=     59.5us p99.9=     63.1us max=     163.7us
+received 200000, dropped 0, reordered 0 published 200000 overflow 0 (stopped: expect)
+07-offheap-lockfree      cpp  atomic-spsc      count=   200000 dropped=     0 p50=     56.7us p90=     64.0us p99=     84.3us p99.9=    136.4us max=     279.3us
+07-offheap-lockfree      cpp  atomic-spsc-handoff count=   200000 dropped=     0 p50=      0.1us p90=      0.3us p99=      0.3us p99.9=      0.6us max=      49.9us
+report: <repo>/examples/07-offheap-lockfree/results/r02-run3/cpp-atomic-spsc.json

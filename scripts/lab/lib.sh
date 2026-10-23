@@ -96,6 +96,12 @@ render_user_data() {
   [[ -f "$keyfile" ]] || die "no SSH public key at $keyfile — generate one: ssh-keygen -t ed25519"
   key="$(cat "$keyfile")"
   tmpl="$(<"$LAB_DIR/cloud-init/user-data.tmpl")"
+  local TEMURIN_VERSION TEMURIN_URL TEMURIN_SHA256
+  # shellcheck source=../../versions.env
+  . "$LAB_DIR/../../versions.env"
+  tmpl="${tmpl//__TEMURIN_URL__/"$TEMURIN_URL"}"
+  tmpl="${tmpl//__TEMURIN_SHA256__/"$TEMURIN_SHA256"}"
+  tmpl="${tmpl//__TEMURIN_VERSION__/"$TEMURIN_VERSION"}"
   tmpl="${tmpl//__HOSTNAME__/"$host"}"
   printf '%s\n' "${tmpl//__SSH_PUBKEY__/"$key"}"
 }

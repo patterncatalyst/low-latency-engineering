@@ -25,6 +25,18 @@
       }
     },
     {
+      "name": "release-gcc",
+      "displayName": "Release for measurement (g++, -O2 -g, frame pointers)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_FLAGS_RELEASE": "-O2 -g -fno-omit-frame-pointer -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O2 -g -fno-omit-frame-pointer -DNDEBUG"
+      }
+    },
+    {
       "name": "debug",
       "displayName": "Debug (clang)",
       "inherits": "base",
@@ -50,11 +62,13 @@
   ],
   "buildPresets": [
     { "name": "release", "configurePreset": "release" },
+    { "name": "release-gcc", "configurePreset": "release-gcc" },
     { "name": "debug", "configurePreset": "debug" },
     { "name": "sanitize", "configurePreset": "sanitize" }
   ],
   "testPresets": [
     { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
+    { "name": "release-gcc", "configurePreset": "release-gcc", "output": { "outputOnFailure": true } },
     { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
     { "name": "sanitize", "configurePreset": "sanitize", "output": { "outputOnFailure": true } }
   ]

@@ -1,0 +1,117 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "02-littles-amdahl",
+  "language" : "java",
+  "variant" : "amdahl-free-n4",
+  "unit" : "ns",
+  "count" : 10,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 22183935,
+    "p90" : 23265279,
+    "p99" : 23265279,
+    "p99_9" : 23265279,
+    "max" : 23265279
+  },
+  "hdr_histogram" : "HISTFAAAADJ4nJNpmSzMwMAAwiDADKUZgUw3gx0LGOw/QAT2fmFk4mWSZlJkAlKmTMJMyiwAyUcG5Q==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T06:56:31Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2697127,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "redacted"
+    },
+    "load" : {
+      "load1" : 0.55,
+      "load5" : 0.74,
+      "load15" : 0.73,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "10 repetitions after 10 warm-up rounds; wall time of the whole batch incl. thread start; repetitions interleaved across N; sync=free",
+  "model" : {
+    "law" : "Amdahl: S(N) = 1 / ((1 - p) + p / N), p = 1 - s",
+    "workers" : 4,
+    "serial_fraction_modelling_input" : 0.09855259614156554,
+    "serial_fraction_basis" : "time inside the lock / wall time, one worker, instrumented runs",
+    "predicted_speedup" : 3.0872349440845266,
+    "measured_speedup_p50" : 3.5302807639852896,
+    "relative_error" : 0.14350894179585727,
+    "wall_p50_ns_n1" : 78315519,
+    "wall_p50_ns" : 22183935,
+    "batch_parcels" : 3200,
+    "lock" : "synchronized (platform threads)",
+    "sync" : "free: no barriers",
+    "parcels_per_worker_per_wave" : 160
+  }
+}

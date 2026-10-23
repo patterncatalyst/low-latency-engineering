@@ -13,6 +13,8 @@ target_link_libraries(line-consumer PRIVATE lowlat::line_consumer lowlat::warnin
 if(BUILD_TESTING)
   add_executable(line-consumer-test tests/consumer_test.cpp)
   target_link_libraries(line-consumer-test PRIVATE lowlat::line_consumer GTest::gtest_main lowlat::warnings)
+  target_compile_definitions(line-consumer-test PRIVATE
+    LOWLAT_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../measure-fixtures")
   include(GoogleTest)
   gtest_discover_tests(line-consumer-test)
 endif()

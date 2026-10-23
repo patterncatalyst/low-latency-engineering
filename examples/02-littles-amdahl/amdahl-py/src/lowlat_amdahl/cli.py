@@ -99,8 +99,7 @@ class Bench:
                 self.lock = threading.Lock()
                 self.waves = {n: threading.Barrier(n, timeout=60) for n in opts.workers}
                 self.pools = {
-                    n: stack.enter_context(ThreadPoolExecutor(max_workers=n))
-                    for n in opts.workers
+                    n: stack.enter_context(ThreadPoolExecutor(max_workers=n)) for n in opts.workers
                 }
             else:
                 self.cell = mp.Array("q", CELLS, lock=False)
@@ -254,7 +253,7 @@ def build_parser() -> argparse.ArgumentParser:
         f"{LOCK_ITERS['threads']} for threads, {LOCK_ITERS['processes']} for processes)",
     )
     ap.add_argument("--reps", type=int, default=30)
-    ap.add_argument("--warmup", type=int, default=3)
+    ap.add_argument("--warm-up", dest="warmup", type=int, default=3)
     ap.add_argument("--workers", type=int, nargs="+", default=[1, 2, 4])
     ap.add_argument("--report-dir", type=Path, default=Path("."))
     ap.add_argument("--example", default="02-littles-amdahl")

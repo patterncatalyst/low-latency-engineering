@@ -12,6 +12,7 @@ from lowlat_consumer.gaps import GapTracker
 from lowlat_consumer.loop import (
     DEFAULT_RCVBUF,
     NegativeLatencyError,
+    WindowedRecorders,
     install_signal_handlers,
     lane_handler,
     open_socket,
@@ -79,6 +80,14 @@ def build_parser(variants: Sequence[str] | None = None) -> argparse.ArgumentPars
         metavar="FILE",
         help="write the lowlat-report/1 JSON here (needs LOWLAT_PROFILE)",
     )
+    p.add_argument(
+        "--window",
+        type=positive_int,
+        default=None,
+        metavar="N",
+        help="also report parcels seq < N as <variant>-first-N and the rest as "
+        "<variant>-steady, beside --report",
+    )
     p.add_argument("--example", default="00-line-consumer", help="report example name")
     p.add_argument("--variant", default="baseline", choices=variants, help="report variant name")
     return p
@@ -93,17 +102,26 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     sock, granted = open_socket(args.bind, args.rcvbuf)
     rec = Recorder(args.example, args.variant)
-    tracker = GapTracker()
+    tracker = GapTracker(window=args.window or 0)
+    windows = WindowedRecorders(args.example, args.variant, args.window) if args.window else None
     try:
         with sock:
-            host, port = args.bind
+            host, port = sock.getsockname()  # the real port when --bind used port 0
             print(
                 f"line-consumer-py: bound {host}:{port}, SO_RCVBUF requested {args.rcvbuf} "
                 f"granted {granted} (Linux reports double the set value; capped by "
                 "net.core.rmem_max)",
                 flush=True,
             )
-            run(sock, rec, tracker, lane_handler, args.expect, args.idle_timeout_ms * 1_000_000)
+            run(
+                sock,
+                rec,
+                tracker,
+                lane_handler,
+                args.expect,
+                args.idle_timeout_ms * 1_000_000,
+                windows=windows,
+            )
     except NegativeLatencyError as exc:
         print(f"line-consumer-py: ABORT: {exc}", file=sys.stderr)
         return 2
@@ -115,8 +133,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     notes = (
         f"reordered={tracker.reordered}; rcvbuf_requested={args.rcvbuf}; "
-        f"rcvbuf_granted={granted}; single thread, GIL"
+        f"rcvbuf_granted={granted}; single thread, "
+        + ("GIL" if sys._is_gil_enabled() else "free-threaded, GIL off")
     )
     report = rec.write_report(args.report, notes) if args.report else rec.build_report(notes)
-    print(format_rows([report]))
+    rows = [report]
+    if windows is not None:
+        rows += [windows.first.build_report(notes), windows.steady.build_report(notes)]
+        if args.report:
+            for path in windows.write_reports(args.report, notes):
+                print(f"report: {path}", flush=True)
+    print(format_rows(rows))
     return 0

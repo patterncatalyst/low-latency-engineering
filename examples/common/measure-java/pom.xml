@@ -14,6 +14,10 @@
   <artifactId>measure-java</artifactId>
   <name>measure-java (latency measurement kit, see common/MEASUREMENT.md)</name>
 
+  <properties>
+    <shade.mainClass>io.patterncatalyst.lowlat.measure.JfrPauses</shade.mainClass>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.hdrhistogram</groupId>
@@ -27,6 +31,16 @@
 
   <build>
     <plugins>
+      <!-- Plain jar stays the library; the shaded -cli jar runs JfrPauses (scripts: lib.sh jfr_pauses). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <configuration>
+          <shadedArtifactAttached>true</shadedArtifactAttached>
+          <shadedClassifierName>cli</shadedClassifierName>
+          <outputFile>${project.build.directory}/measure-java-cli.jar</outputFile>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

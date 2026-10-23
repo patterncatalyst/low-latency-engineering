@@ -1,0 +1,106 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 10000,
+  "dropped": 0,
+  "example": "03-coordinated-omission",
+  "hdr_histogram": "HISTFAAABPd4nEVWvYtdRRTf85vfPffcebN337739mV3sx9xEzEmKEuIG4i6NiEEDJGEFCFIEEklIggpLCSkEAlBUhhJI0qwsBTLqIUiKSzEP8DG1lLEWuScuRvf7r6PmXlzzvy+Zjc+ejBdWOgWF+ojDa+ysJDO7z5+tPDaX3XgCwHUWGhqmsHEBoIEQLACHj915MStr+W+3JVP5JHclVs37sjP8ivu4if5V36Tz+Sx3JOv5MMr+xcunD+1c2q2sbPer/aFpVfrZ1YKC8tYQShVQFJVAMsqhP+BAhBAByawQUdBgwY+BxJTJDS+KpGFwpLHZqbFOIMpVaGqiQKlUIxqXoQkGj+G/5D+DGGjXgQJi3HMFgmJUXcJI1/dYITGAVhGguAQRpjG+5YjdGiwjTfwLKZAi5dwFIdxEglrvntUgD+0VgVqfSRq5vrGi5Mbu9/K+atfyt7fsvPetesPceUfufQp7uMX+R335AmeyEP8KXfke1y6j7Pv3N79RmYfy7nzt/c+2Hrr5t7NrXdfuXp67+1j146cvnDizfnF3bPXz148sn/u9N7q/vr+TjmWL/TrJR+3mW6dLhu2vjpetR1usMw41jwbT2i22jNr1jLXmeRZ6bmlqhhzQiNVlNlyRlFSspnSBASVEr8aQAaX9cDCBKECYgCtd7AN6osyCjPVxIoaswIwNRSqUk3FLPdOcRGguDIg3oohOHAEE7FoonIAcNRGqFQoTrE3F434qmQMTTUulspA69xTfVEbO4xcbnTqhepPrj7hYhRo2Nb3IcoUi0IlLiZWdYy8K/+QauERQlINWkSRIL0ZqjVYRBiqLqG3g8NVY4iNWyROfcxbG2ENLdawgjUcwgrOcIrn0GETSziDFW7jMC5jBZdDmA0eCA6j5cvYrN185w1s41V0mPpJV9DyhbBTi00s1yY28TxOYhHLOBO9HkKDZ7DoDmywhC7OJ1hm8vex4SgCoRs4VzEJ6B37oi4RU6C48xxch0fjmQOSLhKsoQsa3Kc+woSGYnDNmWbL1KIlK8Gc87jk8byf9Xm8Ps/z8WxjMh+P53OUfrLe26TvVcP+5jXFEjX4c/el0ERVBQ+EKhQVVxgpZhERRkPvutNCE3qsjM2jK1vutZ9Yzn3emE1W5zafzEs/KfM+l/Gk9Lkv2nv1bEW1wItHlplgyJ2whQzkJ7aRcoaKBhvSc8uN5XEYIMVq77zjECfuPVjEYwpcNUWuqSZNwxLEAekFamTGaVsiObYuW0rNw/rwec/jSqBE2rqTKMEyBvYDP5dpHRzSlHg6N3ijOcg6GWqBDSNdEx0Cn8xCOj/VR11tAxHFjkxsqh7frPYNMKKW54iiqe6NpO7cYfVrTT3xcLJKOg6+aAkmDMBBtWQzwi8O9sxClAgsvzxqTCAdZEgTBvA7IZhr6kyntMDM0yAGUwUvxejowPVBd0TG6P8LwTeTp8ANGeHZdDA2ZMlS7L8YNdyzHdGyq90dRcJUl9F5MxEurXahNUTLzcDQkseWQ11tOFxBOIhDGS5ctvHahmtCri006SDPOkLXpYWVlC5MhSL7SF0lyFBnoTIlinCW3/Xh/ojy4vZUvxp8Pq4FxjVdanRHN37ppMgOdWs6GNrGUqkK8BotGTD5fAoUvK1K3bLDrU1NuNbB6NBhG0sRbmuuuRT/YwjW8L5n8go/d5Cn+AF4HT/+IfgPc+Fiiw==",
+  "language": "cpp",
+  "notes": "stall_ms=200 stall_seq=5000 dropped=0; the stall is a blocking sleep",
+  "percentiles": {
+    "max": 200146943,
+    "p50": 769,
+    "p90": 3675,
+    "p99": 7455,
+    "p99_9": 8935
+  },
+  "profile": {
+    "captured_at": "2026-10-23T06:12:59Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 0.91,
+      "load15": 0.88,
+      "load5": 0.84,
+      "running": 2
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 2670132,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "product_name": "redacted",
+      "type": "none"
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "receipt-time"
+}

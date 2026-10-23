@@ -35,9 +35,10 @@ Usage: check-prereqs.sh [--vm] [-h|--help]
 
   (no flag)   check the host: OS, C++23 toolchain, CMake, JDK 25, Maven,
               Python 3.14, uv, pinned protoc, Docker Engine, KVM/libvirt,
-              perf, jq, rsync, SSH key
+              perf, async-profiler (optional), jq, rsync, SSH key
   --vm        check the lab guest (lowlat-target) over SSH instead: PREEMPT_RT
-              kernel, cyclictest, ptp4l, phc2sys, tuned, docker, readiness marker
+              kernel, pinned Temurin version, stress-ng, cyclictest, ptp4l, phc2sys,
+              tuned, docker, readiness marker; isolation and vcpupin state (info only)
   -h, --help  show this help
 
 Output is one PASS/WARN/FAIL line per check; WARN and FAIL lines carry an
@@ -174,6 +175,9 @@ check_java() {
     jv="$(java -version 2>&1 | first_version)"
     if [[ "$jv" == 25.* || "$jv" == 25 ]]; then
       record PASS "java 25" "$jv"
+      if ! version_ge "$jv" "$TEMURIN_VERSION"; then
+        record WARN "java >= pinned Temurin" "$jv is below $TEMURIN_VERSION" "sdk install java ${TEMURIN_VERSION}-tem"
+      fi
     else
       record FAIL "java 25" "${jv:-unknown}" "sudo dnf install java-25-openjdk-devel and select it with: sudo alternatives --config java"
     fi
@@ -298,8 +302,19 @@ check_virt() {
   need_tool "cloud-localds" cloud-localds FAIL "sudo dnf install cloud-utils"
 }
 
+# Optional: examples/05-jvm-costs adds an allocation profile when the pinned release is unpacked.
+check_async_profiler() {
+  local lib="$HOME/.cache/lowlat/async-profiler-$ASYNC_PROFILER_VERSION-linux-x64/lib/libasyncProfiler.so"
+  if [[ -f "$lib" ]]; then
+    record PASS "async-profiler $ASYNC_PROFILER_VERSION (info)" "$lib"
+  else
+    record WARN "async-profiler $ASYNC_PROFILER_VERSION (info)" "not unpacked (optional; example 05 skips its allocation profile)" "run scripts/deps/install-async-profiler.sh"
+  fi
+}
+
 check_misc() {
   need_tool "perf" perf WARN "sudo dnf install perf"
+  check_async_profiler
   need_tool "jq" jq FAIL "sudo dnf install jq"
   need_tool "rsync" rsync FAIL "sudo dnf install rsync"
   if [[ -f "$HOME/.ssh/id_ed25519.pub" ]]; then
@@ -335,6 +350,37 @@ vm_need() {
   fi
 }
 
+# The guest's JDK must be the pinned Temurin (versions.env), not Fedora's floating java-25-openjdk.
+check_vm_java() {
+  local out v
+  out="$(vm 'java -version 2>&1' || true)"
+  v="$(first_version <<<"$out")"
+  if [[ "$v" == "$TEMURIN_VERSION" && "$out" == *Temurin* ]]; then
+    # shellcheck disable=SC2016 # expands in the guest
+    record PASS "guest: Temurin $TEMURIN_VERSION" "$(vm 'readlink -f "$(command -v java)"' || true)"
+  else
+    record FAIL "guest: Temurin $TEMURIN_VERSION" "java is ${v:-missing}$([[ "$out" == *Temurin* ]] || echo ', not Temurin')" "scripts/lab/install-guest-tools.sh $LAB_VM (or revert to snapshot lab-ready-iso)"
+  fi
+}
+
+# Informational: isolation (guest cmdline) and vcpupin (libvirt) state. Neither is required,
+# so absence is a WARN with the command that applies it.
+check_vm_isolation() {
+  local cmd pin
+  cmd="$(vm cat /proc/cmdline || true)"
+  if [[ " $cmd " == *" isolcpus=3 "* && " $cmd " == *" nohz_full=3 "* && " $cmd " == *" rcu_nocbs=3 "* ]]; then
+    record PASS "guest isolation (info)" "isolcpus=3 nohz_full=3 rcu_nocbs=3 on the cmdline"
+  else
+    record WARN "guest isolation (info)" "not isolated (cmdline has no isolcpus=3)" "scripts/lab/apply-guest-profile.sh (undo: --remove)"
+  fi
+  pin="$(virsh -c qemu:///system vcpupin "$LAB_VM" 2>/dev/null | awk '$1 == 3 { print $2 }' || true)"
+  if [[ -n "$pin" && "$pin" != 0-* ]]; then
+    record PASS "guest vcpupin (info)" "vCPU 3 pinned to host CPU $pin"
+  else
+    record WARN "guest vcpupin (info)" "vCPU 3 is not pinned (${pin:-no data})" "scripts/lab/pin-vcpu.sh (undo: --remove)"
+  fi
+}
+
 run_vm() {
   local state uv rt ready
   printf 'Lab guest prerequisites (%s)\n' "$LAB_VM"
@@ -363,6 +409,8 @@ run_vm() {
   else
     record FAIL "guest RT kernel" "uname -v: ${uv:-?}; config: ${rt:-no CONFIG_PREEMPT_RT=y}" "boot the kernel-rt entry (scripts/lab/README.md), or revert to snapshot lab-ready-rt"
   fi
+  check_vm_java
+  vm_need stress-ng stress-ng
   vm_need cyclictest realtime-tests
   vm_need ptp4l linuxptp
   vm_need phc2sys linuxptp
@@ -377,6 +425,7 @@ run_vm() {
   else
     record FAIL "guest: docker" "daemon not reachable" "in the guest: sudo systemctl enable --now docker"
   fi
+  check_vm_isolation
   ready="$(vm head -n1 /var/log/lab-ready || true)"
   if [[ "$ready" == *ok* ]]; then
     record PASS "guest lab-ready" "$ready"

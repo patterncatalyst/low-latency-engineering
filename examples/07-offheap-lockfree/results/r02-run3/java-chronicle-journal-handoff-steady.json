@@ -1,0 +1,110 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "07-offheap-lockfree",
+  "language" : "java",
+  "variant" : "chronicle-journal-handoff-steady",
+  "unit" : "ns",
+  "count" : 180000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 142,
+    "p90" : 210,
+    "p99" : 578,
+    "p99_9" : 2663,
+    "max" : 529407
+  },
+  "hdr_histogram" : "HISTFAAABNZ4nC1SYWxTVRR+57z7Xl+7titdKWUrY4xSxyil1MEedRTS1AZxNrhAgwSjTkSC0DS1mXOpY85lzkUHGYoL0WXigmMCWdDgIgk/kBhCzDQIGJUYNUQXEo0YYvhBiN99oy/v3XO/893vfOfcBvsOVymKXqPM/dQHKyHMxKbHlA3/zAHniG3MimE41+4coQ+on+9wj7ig9dsm7SedlytHfTM1o4vPhk423I/8Hptec6dloKV//cDGmeRw8siGWxtmEz+ZNxO3ms+uu5GcMfsSX5vXm99t/rV51rwXv7f6zurxVQORL1f1NoyFL4T+W3Kmbqr2TO144NKCmfmzVee9N6v650157ronXL3ucddp9zHXZMUVx337IfusMW1M2v7QrmsXtV/ErBgSV9VL6rh6VB1Q+9QbPMH/0jCP8DDfpe9okqZphi7jexrPcfQxTOVB6qPSIJX3HqNjNErl7u72fEdHvlzso/au7kIfOGNU6uilKerHiV6cHKBBKhylo3QEwCieYUtskE7SCA2BNgJK5xAdokI/dXUW8s/u6tqdTWXSqVRLQ7K2MRI1Y5FQvDEcDIWq60MNoWDA7/PFao2wL1Dn83o9ddV+fzDgDXr89W6vxxfwOR2Gz+t2GIpuuN260+v1V4cCsXgyGU9syWzJ5trzxfZyZ6E4RMWOjq4BGBiG0wl0O0Xj9A1dpM/pOl2lvzGFK+j/BpDzWC+BcwUNjOF9m0rHqbu7lOuhPbvw7i2m923Z1NaayGXSya2ZSCwSjTTBcWNLU8RvxoJmNByNxs2GVMaMNqaS8WhiY9uOzW2tuVK5h8p7duYHYWGIOoqlHix91DWIEuV+KpVLhfwEgM58ZyemvHdfobhzTy/lNu/eun3Hrlw2m2tNrk1ld7Rm001bzcz21MZsLp1JZ9tSLelQOrG5IdySTjXF6jOxdDq7KRaJZ1pMjCIVTySbzCbTjJqpukazrjoeDzeEvOFAfbjeXxeorQv6fQHh8DvdHr/XbTgNr8fpNjxup8Oh1zqchu5xu9ktnAIpIQT+7DoWnVkXuqGzDIVDN5wK6042BDMg1nVWrUBuQWChSFBhMBwCOgryKltpBqpZTNYkZpOgAlSRKQ2FFKFCD5pSSJ1L6qqYE5AsILAjbIZk6FLOQrDRZAAKuLKkBi0h6ValBznBloLcAdekAFtby5RuE3Yh5HFFl20gEpUsbCDapB1h58XSVwUYNrbPJdiFx45V4Qpexgt4lYXZEbkQzUP1CvEUL0V2DSNZgVQlEjVYNV4BxXU4toIXcRWoy3khsyyjgPQh8ZsElYf4BAF08TO8BIKypQooVGGn8ov4rueVEN8GzqPAl/IL2NvFAeb5KOiCvB2gAh0NURXQlTi4jB9GTootBGr5tFbF2tutnpaALc2qYrkcqdWvdZ02MQ/tq1YXi0CRMpXyQhfompA3UQkAU65ECVAqMLMHrjU4nW/dEe5Dk+NXLKpUg7gNzBrm52FiKX9G/A7zfn4COtv4Ndh+lZv5EX6FP5bwYQL1Z+I/CfhXhAPXGG2dUPmgwExq+CMbf0/8pGR/y3yK+D3iTwgGnuZrBMW/iH9kzOw3KbAf432JH+MDfJv5B+ZzNn6D+C3i1zX+QvDLfErFYN9nflzWfI4/ZZm/Lfh/7eoarw==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run3/chronicle-journal.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T07:09:34Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2705508,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "redacted"
+    },
+    "load" : {
+      "load1" : 0.09,
+      "load5" : 0.36,
+      "load15" : 0.54,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "handoff=agrona_busy_spin; journal=chronicle; manifest=none; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; journal_fs=btrfs; journal_bytes=15002633; journal_block_size=67108864; journal_roll_cycle=FAST_DAILY; journal_readback_count=200000; journal_in_order=true; old_gen_baseline_bytes=3798520",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run3/chronicle-journal.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+    }
+  }
+}

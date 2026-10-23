@@ -9,6 +9,7 @@
 #include <array>
 #include <cerrno>
 #include <cmath>
+#include <cstring>
 #include <format>
 #include <memory>
 #include <random>
@@ -21,6 +22,7 @@
 #include "lowlat/line/schedule.hpp"
 #include "lowlat/line/sscc.hpp"
 #include "lowlat/line/v1/parcel.pb.h"  // generated: contracts/proto/lowlat/line/v1/parcel.proto
+#include "parcel-v1/parcel_v1.hpp"
 
 namespace lowlat::line {
 namespace {
@@ -89,6 +91,25 @@ class ParcelFactory {
   std::uniform_int_distribution<std::uint32_t> doubtful_{300, 700};
 };
 
+// The same parcel in the flat record. Both wires carry identical values for a
+// seed, so a protobuf run and a flat run differ only in the encoding.
+flat::parcel_v1::Parcel to_flat(const v1::ParcelEvent& ev) {
+  flat::parcel_v1::Parcel p;
+  p.weight_g = ev.weight_g();
+  p.seq = ev.seq();
+  p.intended_emit_ns = ev.intended_emit_ns();
+  p.actual_emit_ns = ev.actual_emit_ns();
+  p.encoder_tick = ev.encoder_tick();
+  p.length_mm = ev.dims().length_mm();
+  p.width_mm = ev.dims().width_mm();
+  p.height_mm = ev.dims().height_mm();
+  p.scan_confidence_permille = ev.scan_confidence_permille();
+  const std::string& barcode = ev.barcode();
+  if (barcode.size() != p.barcode.size()) throw std::runtime_error("barcode is not 18 characters");
+  std::ranges::copy(barcode, p.barcode.begin());
+  return p;
+}
+
 }  // namespace
 
 RunResult run(const Config& cfg, const std::atomic<bool>& stop, measure::Recorder& emit_lateness) {
@@ -98,7 +119,7 @@ RunResult run(const Config& cfg, const std::atomic<bool>& stop, measure::Recorde
   const double pulses_per_metre = static_cast<double>(cfg.encoder_ppm);
 
   v1::ParcelEvent ev;
-  std::array<char, 256> datagram{};  // reused; a ParcelEvent is under 100 bytes
+  std::array<char, 256> datagram{};  // reused; a ParcelEvent is under 100 bytes, a flat record 80
   RunResult result;
 
   const std::uint64_t total = parcel_count(cfg);
@@ -124,9 +145,16 @@ RunResult run(const Config& cfg, const std::atomic<bool>& stop, measure::Recorde
 
     const std::int64_t actual = monotonic_ns();
     ev.set_actual_emit_ns(actual);
-    const std::size_t size = ev.ByteSizeLong();
-    if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
-      throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+    std::size_t size = 0;
+    if (cfg.wire == Wire::flat) {
+      const auto bytes = flat::parcel_v1::encode(to_flat(ev));
+      size = bytes.size();
+      std::memcpy(datagram.data(), bytes.data(), size);
+    } else {
+      size = ev.ByteSizeLong();
+      if (!ev.SerializeToArray(datagram.data(), static_cast<int>(size))) {
+        throw std::runtime_error("ParcelEvent does not fit the datagram buffer");
+      }
     }
     // MSG_DONTWAIT: a full socket buffer drops this parcel instead of stalling the belt.
     if (::send(sock.get(), datagram.data(), size, MSG_DONTWAIT) == static_cast<ssize_t>(size)) {

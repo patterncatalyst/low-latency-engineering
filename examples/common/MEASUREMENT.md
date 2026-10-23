@@ -36,17 +36,19 @@ Versions come from `versions.env` / `_plans/dependency-pins.md`.
 - `record(latency_ns)`
 - `record_corrected(latency_ns, expected_interval_ns)`
 - `add_dropped(n)` — parcels that never arrived (sequence gaps)
-- `write_report(path, notes=None, model=None)` — writes one JSON report (below) and returns it;
+- `write_report(path, notes=None, model=None, runtime=None)` — writes one JSON report (below) and returns it;
   `notes` is an optional free-text string (run conditions, buffer sizes); `model` is an
-  optional JSON object written as the report's `model` block. Both keys are omitted when absent
-  (and `notes` when empty, `model` when empty). Signatures per kit:
-  - Java: `Report writeReport(Path path, String notes, Map<String, Object> model)`
-    (pass `null` to omit either)
+  optional JSON object written as the report's `model` block; `runtime` is an optional JSON
+  object written as the report's `runtime` block. All three keys are omitted when absent
+  (and `notes` when empty, `model` and `runtime` when empty). Signatures per kit:
+  - Java: `Report writeReport(Path path, String notes, Map<String, Object> model, Map<String, Object> runtime)`
+    (pass `null` to omit any; the 3-, 2- and 1-argument overloads remain)
   - C++: `nlohmann::json write_report(const std::filesystem::path& path, std::string_view notes = {},
-    const std::optional<nlohmann::json>& model = std::nullopt) const`; `report(notes, model)` builds
-    the document without writing it
-  - Python: `write_report(path: str | Path, notes: str | None = None, model: Mapping[str, Any] | None = None) -> dict`;
-    `build_report(notes=None, model=None)` builds the document without writing it
+    const std::optional<nlohmann::json>& model = std::nullopt,
+    const std::optional<nlohmann::json>& runtime = std::nullopt) const`; `report(notes, model, runtime)`
+    builds the document without writing it
+  - Python: `write_report(path: str | Path, notes: str | None = None, model: Mapping[str, Any] | None = None, *, language=..., build=..., runtime: Mapping[str, Any] | None = None) -> dict`;
+    `build_report(notes=None, model=None, *, language=..., build=..., runtime=None)` builds the document without writing it
 - `print_summary()` — one aligned table line to stdout: example, language,
   variant, count, dropped, p50, p90, p99, p99.9, max, in microseconds with 1
   decimal. **Never a mean.**
@@ -72,13 +74,40 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
 - `build`: `compiler` (C++: `__VERSION__`/`__clang_version__` and standard;
   Java: `Runtime.version()` + `java.vm.name`; Python: `sys.version`) and
   `gil_enabled` (Python `sys._is_gil_enabled()`; `null` in C++ and Java). Optional
-  `flags` (C++ build type and flags).
+  `flags` (C++ build type and flags; Java: the JVM input arguments from
+  `RuntimeMXBean.getInputArguments()` joined by single spaces, e.g.
+  `-XX:+UseZGC -Xmx1g`, omitted when the JVM was started without any, `JAVA_TOOL_OPTIONS`
+  included).
 - `profile`: the JSON file named by the environment variable `LOWLAT_PROFILE`
   (written by `scripts/profile.sh --out FILE`), embedded verbatim. The kits never
   probe the machine themselves. If `LOWLAT_PROFILE` is unset, fail with a clear
   message: a number without a profile is not publishable.
 - Optional `model`: the only place a time-average may appear (Little's law,
   Amdahl's law; Ch2). Optional `notes`.
+- Optional `runtime` (additive in `lowlat-report/1`; reports without it stay valid): facts
+  about the managed runtime and scheduler during the run. All members optional:
+  - `gc`: `name` (string), `collectors` (array of strings), `heap_bytes` (integer),
+    `old_gen_used_bytes` (integer; old-generation bytes in use after a collection at the end of the run, written
+    by example 07), `flags` (array of strings, e.g. `-XX:+UseZGC`)
+  - `alloc_bytes_per_parcel` (number)
+  - `jit`: free-form counts such as `compilations` and `deoptimizations`, keyed by window
+    (`{"first-1000": {...}, "steady": {...}}`)
+  - `aot`: `cache` (string), `mode` (string), `used` (boolean)
+  - `ctx_switches`: `voluntary`, `involuntary` (integers)
+  - `alloc_stalls`: `count`, `max_ns` (integers; `jdk.ZAllocationStall` events, written by `JfrPauses`)
+
+  No key anywhere inside `runtime` may name a mean or an average. The schema matches the key
+  case-insensitively and rejects `mean`, `avg` and `average` as a whole key or as a part of a
+  snake_case, kebab-case or camelCase one (`mean_ns`, `pause_mean_ns`, `mean_compile_ns`,
+  `avg_ns`, `average_ns`, `meanNs`, `avgNs`) and a trailing `meanns`/`avgns`, so
+  `lowlat-report validate` and `check` both fail. Keys such as `meaning` pass. Key order is the
+  order above for the typed members; the kits write the object as given, after `model`.
+  The Java kit never adds `runtime` on its own: `RuntimeInfo.jvm()` returns a mutable map
+  with `gc.collectors` (`GarbageCollectorMXBean` names), `gc.heap_bytes` (`Runtime.maxMemory()`)
+  and `gc.flags` (the GC and heap input arguments), which the caller extends with measured
+  facts and passes to `writeReport`. (`BuildInfo` records the full argument list in
+  `build.flags` automatically; `RuntimeInfo` is the structured, opt-in view.) The name is
+  not `Runtime`, to avoid shadowing `java.lang.Runtime`.
 - JSON is written with the language's established library: nlohmann/json,
   Jackson 3 (`tools.jackson`), stdlib `json`.
 
@@ -117,3 +146,15 @@ Record 1,000 values of 1 ms, then one value of 1 s with an expected interval of
   sharing example and variant agree across languages; use it only for reports
   recorded from one fixed dataset (the goldens), because languages measuring a
   live workload are expected to differ. Exit non-zero on any mismatch.
+
+## Scratch files and JFR (Part 2)
+
+Nothing bulky or machine-specific is committed. `*.jfr` recordings, `.scratch/` directories
+and Chronicle Queue data (`examples/*/results/**/queue/`) are git-ignored. `lib.sh`
+`java_run` writes the JFR recording to a `mktemp` directory outside the tree (removed on
+exit; set `LOWLAT_SCRATCH` to keep it) and the unified GC and safepoint log to
+`$OUT/<variant>.gc.log` (committed, small). `jfr_pauses JFR EXAMPLE VARIANT` runs the
+`JfrPauses` CLI (shaded `measure-java/target/measure-java-cli.jar`) and writes
+`$OUT/java-<variant>-gc-pause.json`: one sample per `jdk.GCPhasePause` event (duration in
+ns; nested `GCPhasePauseLevel*` phases are not counted), `runtime.gc` from
+`jdk.GCConfiguration` and `runtime.alloc_stalls` from `jdk.ZAllocationStall`.

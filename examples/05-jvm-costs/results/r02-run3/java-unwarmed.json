@@ -1,0 +1,128 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "05-jvm-costs",
+  "language" : "java",
+  "variant" : "unwarmed",
+  "unit" : "ns",
+  "count" : 20000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 103551,
+    "p90" : 190719,
+    "p99" : 224767,
+    "p99_9" : 10354687,
+    "max" : 29622271
+  },
+  "hdr_histogram" : "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",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run3/unwarmed.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.ureLFE/unwarmed.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T07:00:26Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2700222,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "redacted"
+    },
+    "load" : {
+      "load1" : 0.66,
+      "load5" : 0.65,
+      "load15" : 0.7,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "warm_up=0; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 268435456,
+      "flags" : [ "-Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run3/unwarmed.gc.log:uptime,level,tags", "-XX:+UseG1GC", "-Xms256m", "-Xmx256m" ]
+    },
+    "alloc_bytes_per_parcel" : 733.3048,
+    "jit" : {
+      "startup" : {
+        "compilations" : 440,
+        "c2_compilations" : 42,
+        "deoptimizations" : 25
+      },
+      "first-2000" : {
+        "compilations" : 246,
+        "c2_compilations" : 18,
+        "deoptimizations" : 0
+      },
+      "steady" : {
+        "compilations" : 73,
+        "c2_compilations" : 66,
+        "deoptimizations" : 3
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "07-offheap-lockfree",
+  "language" : "java",
+  "variant" : "agrona-spsc-steady",
+  "unit" : "ns",
+  "count" : 180000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 60639,
+    "p90" : 65407,
+    "p99" : 89279,
+    "p99_9" : 155647,
+    "max" : 2074623
+  },
+  "hdr_histogram" : "HISTFAAABSx4nE1Vb2hTVxS/97z7bm5eXtPs+YzxmcW3GLtas9jVLo7axc4/odTQlazrSug6cbV0RYowJ1XEyRaEbdqJG1JERieCIg7ESdc5GUVUnMgYxY/FDyJOdGxjc66IH3bOfYUt9+Xe8++e3++c+5KbrH6+gLFQigUfY37lKBYbpybYuj8Cw9cb4RuAhwYsgx85nAJ4CxbApxyWwwY4xeF3gPdgNbwJm2ElXOVwiMMaeBt241wLX3H4ABcDGCyGF+E5WAdv4Hc5RMCEGr0asBBHLayFTbACB4OPOGxDlwkQRs8G3IfyQgxcDCGEho856q/BIgAlM13T8GvoysIvcic77g38tuvWAX74M37yEN+/e27b9OtHNl/adOTVqZaZ1ccanqS/SN1ecnRJdcmDpdcyd5+/vnIqd27VZOPNF56suLX8ZPrgs1XvzqIL7pgzFjtRe7lm2r4eeWTdtg5bl8JnrVlrJnIlcs/6Mnxa3Zdzcs58KvabP4kJ8dSYNo4YnxhzMAvn4We4CzNQhWNwGk7AODzgM/wav8gv8Ek+zn/gZ/kYHx3jO6r8IK/yo3x0eG/fQJW37tsy3NWzt2/n8NbO9kLb9t72gWKlf+vQnkqlr6dY2tJZKpRebu8or++o9HZXBrefwXR3MN04jvO8CpNw2HgEZ+Epn0V9dKRnqNw4OM4ncIzu6O8rlVt6W0rdvS2FQj6fyzdl/bTXVFcfTWcznptxmxoyXp3XnE3H69LppJtKxr1kMpWLJXx3/RifhpvGn+aZ0Bn1SF1XF9WN0AP5WN6QU3JSPjbvm8fN8+KxMWHMwjSWfA5m+D1kd5kf48f5rj07ujvKveXe7rby4NauvkpzfmNjNtuQ89OZTMZPx/1kveMno44fj8YSXtZvbMwmPdeJunbMcb2oFbNsz7ItFbMt17KsqGtJ17Ecy1KWHbVty1GWJWVMZesKlYGuzsGB/mJpsL2rs7etr6O9pSffmu8o5stNzcXOlnyxUMp19Q+NVD7kIwf4AV7eNzA81LVzPx8Z6mwrtBazGNbcnG1K+alUyknVOfEGx40n3FhC2THLsREKAUXClko6Suv4DgohhbRASgYCZylQBrRI1Ewho0IlY3HbTcc9x2vwothb101knKSXSPl+MlFfV1/fkM81Z1tbs9nGnJ/JeI6f8uO+G3MR1LGkUiBsKROWFRNRWwrCZbGowqoJCxERLwq2koAMBCiFHBRIIVBTTEgJTCiBE7KlCLIDqSYuqDI0MwCLSYZ7kTdNjEqjhEowHS8Y5kcr5UUD0zmwQmBKYO3kQ7MBJuGRCyMN1CX9kgF/vrSFAMOEzdBAliARDhMFFkTp/wt01wi9MqiVBkIIEikHZiUPEQp2C01MBJvxIITSDoyWQkPjHweTEarUkGEwNBTSouwGhIi2FKac54BTKGBMw8SzJKM2MWGCRBhJcbS/JojXxURIDhMg1WjOwxjUPgbBh+qmlhNfk1JSo+gkUDSRv25TWOOiFQvBwklWuncsAJY6M2ahU5OUr1Yj/TdC2hGcidQzC5BIVtQ9TGHq3hN9fIEZsdTMmNB+vd0QpAhNO6TbKwhUBZlpJSb6eIOW0m7MGJFUohG0mOpjInj9TAg6qk8i8IqQbpKJpEMQtEKfDYWir4aaIbQPO4oqNXOB7h/eB8ER1pAaxjtkDTwDpk6wSkfDUngJry26aNYCtTWMrmX6NnkFw/EieQdvoHfpUvvFhIcmXBXwN8w//wD8BfAdh+85zfh8+z85eN6HfwFeCfge",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run2/agrona-spsc.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T06:47:09Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15"
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 2691139,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "product_name" : "redacted"
+    },
+    "load" : {
+      "load1" : 0.32,
+      "load5" : 0.42,
+      "load15" : 0.58,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "handoff=agrona_busy_spin; journal=none; manifest=none; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; old_gen_baseline_bytes=3798576; window=20000; first window is seq < 20000",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xlog:gc*,safepoint:file=<repo>/examples/07-offheap-lockfree/results/r02-run2/agrona-spsc.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ],
+      "old_gen_used_bytes" : 8040552
+    }
+  }
+}

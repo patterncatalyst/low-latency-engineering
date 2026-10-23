@@ -1,6 +1,6 @@
 """The per-parcel work: a parallel part, then a serial update of the shared sort-plan table.
 
-Plain Python on purpose. The parallel part is CPU-bound bytecode, which is exactly what the GIL
+Plain Python: the parallel part is CPU-bound bytecode, which is what the GIL
 serialises across threads and what processes run side by side.
 """
 

@@ -1,0 +1,85 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+━━ live set probe (ZGC, 4096 MB heap)
+✓ live set 1804 MB; --undersized-heap runs ZGC in 1895 MB (105 %)
+━━ java / stop-the-world (-XX:+UseParallelGC -Xms4096m -Xmx4096m)
+━━ java / g1 (-XX:+UseG1GC -Xms4096m -Xmx4096m)
+━━ java / zgc (-XX:+UseZGC -Xms4096m -Xmx4096m)
+━━ java / shenandoah-gen (-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -Xms4096m -Xmx4096m)
+━━ java / shenandoah (-XX:+UseShenandoahGC -Xms4096m -Xmx4096m)
+━━ java / undersized-heap (-XX:+UseZGC -Xms1895m -Xmx1895m)
+━━ java / thp (-XX:+UseZGC -XX:+UseTransparentHugePages -Xms4096m -Xmx4096m)
+━━ java / jfr-off (-XX:+UseZGC -Xms4096m -Xmx4096m)
+━━ python / cyclic-garbage
+━━ python / frozen
+━━ cpp / bulk-free
+━━ cpp / deferred-free
+━━ cpp / no-free
+━━ checking reports
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-stop-the-world.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-stop-the-world-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-g1.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-g1-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-zgc.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-zgc-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah-gen.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah-gen-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-shenandoah-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-undersized-heap.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-undersized-heap-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-thp.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-thp-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/java-jfr-off.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-cyclic-garbage.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-cyclic-garbage-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-frozen.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/python-frozen-gc-pause.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/cpp-bulk-free.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/cpp-deferred-free.json
+ok   <repo>/examples/06-gc-tails/results/r02-run2/cpp-no-free.json
+example      language  variant                    count  dropped       p50       p90       p99     p99.9       max
+06-gc-tails  java      stop-the-world            300000        0      60.4      77.5  131792.9  153878.5  160956.4
+06-gc-tails  java      stop-the-world-gc-pause       13        0  154796.0  159383.6  160956.4  160956.4  160956.4
+06-gc-tails  java      g1                        300000        0      60.4      61.8     105.4   16613.4   21659.6
+06-gc-tails  java      g1-gc-pause                   16        0   17563.6   21282.8   21446.7   21446.7   21446.7
+06-gc-tails  java      zgc                       300000        0      60.4      62.0      82.2     147.8    6098.9
+06-gc-tails  java      zgc-gc-pause                  38        0       9.7      14.1      22.0      22.0      22.0
+06-gc-tails  java      shenandoah-gen            300000        0      60.5      62.7      83.9     164.4    2398.2
+06-gc-tails  java      shenandoah-gen-gc-pause       91        0      87.9     395.5     646.1     646.1     646.1
+06-gc-tails  java      shenandoah                300000        0      60.4      62.5      84.2     153.3    2496.5
+06-gc-tails  java      shenandoah-gc-pause           44        0      54.3     387.1     706.0     706.0     706.0
+06-gc-tails  java      undersized-heap           300000        0      61.1   12714.0   44597.2  113049.6  139853.8
+06-gc-tails  java      undersized-heap-gc-pause    3316        0       5.9      16.6      31.0      44.4      53.2
+06-gc-tails  java      thp                       300000        0      60.4      62.7      98.6     204.2    2482.2
+06-gc-tails  java      thp-gc-pause                  44        0       9.8      15.4      27.7      27.7      27.7
+06-gc-tails  java      jfr-off                   300000        0      60.5      61.9      82.2     148.7    5136.4
+06-gc-tails  python    cyclic-garbage            300000        0      60.7      65.4  107544.6  138936.3  145883.1
+06-gc-tails  python    cyclic-garbage-gc-pause     1200        0     101.1     158.1    2672.6  145489.9  145752.1
+06-gc-tails  python    frozen                    300000        0      60.4      61.6      86.2     165.6     755.7
+06-gc-tails  python    frozen-gc-pause                0        0       0.0       0.0       0.0       0.0       0.0
+06-gc-tails  cpp       bulk-free                 300000        0      57.5      59.2      96.1    2129.9    3751.9
+06-gc-tails  cpp       deferred-free             300000        0      57.7      61.0      93.8     144.8     818.7
+06-gc-tails  cpp       no-free                   300000        0      57.5      59.7      93.1     145.9    1178.6
+━━ criteria
+✓ 1 stop-the-world max pause is at least 10 ms (160.956 ms >= 10.000 ms)
+✓ 1 stop-the-world max pause is at least 20x zgc's (0.022 ms) (160.956 ms >= 0.440 ms)
+✓ 1 zgc max pause is under 1 ms (0.022 ms < 1.000 ms)
+✓ 1 shenandoah-gen max pause, times 5, is at most stop-the-world's (3.230 ms <= 160.956 ms)
+✓ 2 zgc p99.9, times 3, is at most stop-the-world p99.9 (153.878 ms) (0.443 ms <= 153.878 ms)
+✓ 3 undersized-heap (1895 MB) has at least one ZGC allocation stall (903 >= 1)
+✓ 3 undersized-heap p99.9 is at least 3x right-sized zgc p99.9 (0.147 ms) (113.049 ms >= 0.443 ms)
+✓ 4 python frozen runs 0 generation-2 collections in the window (0 <= 0)
+✓ 4 python cyclic-garbage runs at least one generation-2 collection (9 >= 1)
+✓ 5 bulk-free max is at least 10x deferred-free p99.9 (0.144 ms) (3.751 ms >= 1.447 ms)
+✓ 6 every Java report's build.flags names its collector and heap (1 >= 1)
+✓ 6 every report: count 300000, dropped 0, lowlat-report check (checked above)
+━━ observed (no bound)
+shenandoah: p99.9 0.153 ms, max pause 0.706 ms
+thp: p99.9 0.204 ms, max pause 0.027 ms
+jfr-off: p99.9 0.148 ms
+thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never
+cpp deferred-free max 0.818 ms, no-free control max 1.178 ms (both are single OS-noise events)
+zgc (reference): p99.9 0.147 ms, max pause 0.022 ms
+live set: 1804 MB; allocation: 47554 B/parcel on the receive thread, 10000 parcels/s
+✓ 06-gc-tails: the collector, the headroom and where the frees run set the tail
+profile: bare-metal-host virt=none governor=powersave tuned=balanced thp=madvise kernel=7.2 load1=0.71

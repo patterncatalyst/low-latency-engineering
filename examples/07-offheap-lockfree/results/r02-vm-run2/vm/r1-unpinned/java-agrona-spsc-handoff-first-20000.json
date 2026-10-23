@@ -1,0 +1,110 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "07-offheap-lockfree",
+  "language" : "java",
+  "variant" : "agrona-spsc-handoff-first-20000",
+  "unit" : "ns",
+  "count" : 20000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 399,
+    "p90" : 938495,
+    "p99" : 10141695,
+    "p99_9" : 12541951,
+    "max" : 13402111
+  },
+  "hdr_histogram" : "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",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xlog:async -Xlog:gc*,safepoint:file=~/lowlat-vm-run/r1-unpinned/agrona-spsc.gc.log:uptime,level,tags -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-22T17:49:22Z",
+    "host_label" : "lowlat-target.lab",
+    "cpu" : {
+      "model" : "Intel 8-core/16-thread laptop CPU",
+      "sockets" : 4,
+      "cores_per_socket" : 1,
+      "threads_per_core" : 1,
+      "logical_cpus" : 4,
+      "smt_active" : false,
+      "online" : "0-3"
+    },
+    "power" : {
+      "scaling_driver" : null,
+      "governor" : null,
+      "energy_performance_preference" : null,
+      "intel_pstate_no_turbo" : null,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : null,
+      "cpu0_max_khz" : null
+    },
+    "tuned" : "virtual-guest",
+    "kernel" : {
+      "release" : "7.2.11-200.lowlatrt.fc44.x86_64+rt",
+      "version" : "#1 SMP PREEMPT_RT Wed Oct 21 21:52:35 UTC 2026",
+      "preempt_model" : "PREEMPT_RT",
+      "realtime" : true,
+      "sys_kernel_realtime" : null,
+      "cmdline" : "isolcpus=3 nohz_full=3 rcu_nocbs=3",
+      "isolcpus" : "3",
+      "nohz_full" : "3",
+      "rcu_nocbs" : "3",
+      "irqaffinity" : null,
+      "sys_isolated" : "3",
+      "sys_nohz_full" : "3"
+    },
+    "clock" : {
+      "current_clocksource" : "kvm-clock",
+      "available_clocksource" : [ "kvm-clock", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3662,
+      "cpu_affinity" : "0-3",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "kvm",
+      "product_name" : "Standard PC (Q35 + ICH9, 2009)"
+    },
+    "load" : {
+      "load1" : 0.67,
+      "load5" : 0.17,
+      "load15" : 0.06,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 8122676,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : null,
+      "thp_enabled" : null,
+      "thp_defrag" : null,
+      "thp_shmem_enabled" : null
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.3",
+      "cmake" : "cmake version 4.3.0",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "handoff=agrona_busy_spin; journal=none; manifest=none; published=200000; overflow=0; divert_received=200000; reordered=0; rcvbuf_granted=4194304; slots=65536; placement=unpinned; old_gen_baseline_bytes=3767600",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xlog:gc*,safepoint:file=~/lowlat-vm-run/r1-unpinned/agrona-spsc.gc.log:uptime,level,tags", "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+    }
+  }
+}

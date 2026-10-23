@@ -1,16 +1,24 @@
 # Contracts
 
-Two contracts shared by every example in the book: the wire format between the
-parcel line simulator and its consumers, and the measurement report every run
-produces.
+Three contracts shared by every example in the book: the protobuf wire format between the
+parcel line simulator and its consumers, the flat fixed-layout binary form of the same
+parcel (`flat/parcel-v1`), and the measurement report every run produces.
 
 | Path | Purpose |
 |---|---|
 | `proto/lowlat/line/v1/parcel.proto` | `ParcelEvent`: one per UDP datagram from the simulator (sense). |
 | `proto/lowlat/line/v1/divert.proto` | `DivertCommand` and `Lane`: the decision sent to the diverter (act). |
+| `flat/parcel-v1/parcel_v1.hpp` | The flat 80-byte little-endian `ParcelEvent` record: layout, `encode` and `decode` (header checked before size). |
+| `flat/parcel-v1/README.md` | Field offsets, reading rules and evolution rules of the flat record. |
+| `flat/parcel-v1/golden-seed{1,42,2026}.bin` and `.json` | Golden records and their decoded values; every language decodes them. |
 | `measurement/latency-report.schema.json` | JSON Schema 2020-12 for the one-per-run report (`lowlat-report/1`). |
 | `measurement/examples/valid.json` | A complete valid report with a real `scripts/profile.sh` capture and a real HdrHistogram string. |
 | `measurement/examples/invalid-mean.json` | The same report with a `mean` in `percentiles`; the schema must reject it. |
+| `measurement/examples/valid-runtime.json` | The same report with the optional `runtime` block (GC, `alloc_bytes_per_parcel`, JIT, AOT, context switches). |
+| `measurement/examples/invalid-runtime-mean.json` | A `runtime` block with `gc.pause_mean_ns`; the schema and `lowlat-report check` must reject it. |
+| `measurement/examples/invalid-runtime-old-gen.json` | A `runtime.gc.old_gen_used_bytes` of -1; the schema must reject a negative byte count. |
+| `measurement/examples/invalid-runtime-avg.json` | A `runtime` block with `gc.pause_avg_ns`; rejected like a mean. |
+| `measurement/examples/invalid-runtime-camel.json` | A `runtime.jit` window with `meanCompileNs`; rejected (camelCase). |
 | `proto/buf.yaml` | buf lint (STANDARD) and breaking-change (FILE) rules. |
 
 ## Design decisions

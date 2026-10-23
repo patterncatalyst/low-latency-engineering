@@ -9,7 +9,7 @@ benchmark, and obvious to a clock that starts at the belt's schedule.
 The line simulator emits 1,000 parcels/s for 10 s (`seq`, `intended_emit_ns`).
 A consumer in each language receives them and, at parcel `seq` 5000, stalls for
 200 ms with a blocking sleep. `sleep` is the right tool here: it models a GC
-pause, a page fault or a lock convoy, a thread that is simply not running. From
+pause, a page fault or a lock convoy, a thread that is not running. From
 that one run it records:
 
 | Variant | Latency is | What it shows |
@@ -55,8 +55,8 @@ Each language is also a plain program (`run` and `probe` subcommands):
 
 ### Why `intended-time` has a floor the others cannot see
 
-With no stall, `intended-time` p99 is still 0.18 to 0.35 ms while `receipt-time` is a few
-microseconds. `intended-time` starts at the belt's schedule, so it includes the
+With no stall, `intended-time` p99 is still 0.19 to 0.42 ms while `receipt-time` is 5 to 75
+us (C++ 5.2 to 8.0, Python 25.7 to 27.8, Java 53.8 to 74.9). `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,
 so neither can see that part. The floor is real latency of the line, not a stall,
@@ -112,16 +112,16 @@ no-stall control run and the clock probe, then asserts per language:
   within 2x of `closed-loop-naive-control` p99;
 - every report passes `lowlat-report check` (schema, histogram decode, percentile recompute).
 
-All of it held on the quiet-host runs `r01-run1..3` (bare-metal host, governor
+All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor
 `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2.11-200.fc44). Ranges over
 the three runs, in all three languages:
 
 | Quantity | Range (p99 unless noted) |
 |---|---|
-| `intended-time`, stall | 100,401,151 to 101,580,799 ns |
-| `closed-loop-corrected`, stall | 98,172,927 to 99,287,039 ns |
-| `receipt-time`, stall | 5,495 to 54,143 ns |
-| `closed-loop-naive`, stall | 972 to 19,711 ns |
-| `intended-time-control` | 177,023 to 347,391 ns |
-| `closed-loop-corrected-control` = `closed-loop-naive-control` | 940 to 19,855 ns (identical per language) |
-| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 44 to 46 ns |
+| `intended-time`, stall | 100,401,151 to 101,842,943 ns |
+| `closed-loop-corrected`, stall | 98,238,463 to 99,287,039 ns |
+| `receipt-time`, stall | 5,447 to 49,695 ns |
+| `closed-loop-naive`, stall | 961 to 19,359 ns |
+| `intended-time-control` | 185,343 to 424,703 ns |
+| `closed-loop-corrected-control` = `closed-loop-naive-control` | 965 to 19,839 ns (identical per language) |
+| clock read, p50 | C++ 12 to 13 ns, Java 12 to 13 ns, Python 42 to 46 ns |

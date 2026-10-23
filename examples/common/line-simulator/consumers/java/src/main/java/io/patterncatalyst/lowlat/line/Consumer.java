@@ -5,11 +5,16 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 /** Java line consumer: see {@code examples/common/line-simulator/consumers/README.md}. */
 public final class Consumer {
+
+    /** Upper bound on how long the shutdown hook waits for main to finish writing the report. */
+    private static final long REPORT_WAIT_SECONDS = 60;
 
     private Consumer() {
     }
@@ -50,19 +55,38 @@ public final class Consumer {
         // exit status below.
         FutureTask<LineReceiver.StopReason> receive = new FutureTask<>(receiver::run);
         Thread loop = Thread.ofPlatform().name("line-consumer").unstarted(receive);
-        // Runs on SIGINT/SIGTERM and on System.exit: stop the loop, wait for it (the join is also
-        // the happens-before edge to the single-threaded recorder), then write the report.
+        // The report is written once, by whichever of main (the loop ended by itself) or the
+        // shutdown hook (SIGINT/SIGTERM) gets here first.
+        ReportGate reported = new ReportGate();
+        // SIGINT/SIGTERM: stop the loop, wait for it (the join is also the happens-before edge to
+        // the single-threaded recorder), then write the report. Nothing can set the exit status
+        // from here, so a failed write halts the JVM with status 1.
         Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("line-consumer-shutdown").unstarted(() -> {
             receiver.stop();
             try {
                 loop.join();
-                if (receive.state() != Future.State.FAILED) {
-                    finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
+                if (receive.state() == Future.State.FAILED) {
+                    return;
+                }
+                if (reported.claim()) {
+                    try {
+                        finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
+                    } finally {
+                        reported.done();
+                    }
+                } else if (!reported.awaitDone(REPORT_WAIT_SECONDS, TimeUnit.SECONDS)) {
+                    // main is still writing: returning would let the JVM finish the shutdown mid-write
+                    System.err.println("line-consumer-java: report write did not finish in "
+                            + REPORT_WAIT_SECONDS + " s");
+                    Runtime.getRuntime().halt(1);
+                } else if (reported.hasFailed()) {
+                    Runtime.getRuntime().halt(1); // main's write failed (already reported); keep status 1
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+            } catch (IOException | UncheckedIOException e) {
+                System.err.println("line-consumer-java: cannot write report: " + e.getMessage());
+                Runtime.getRuntime().halt(1);
             }
         }));
 
@@ -77,7 +101,20 @@ public final class Consumer {
             }
             System.exit(1);
         }
-        System.exit(0); // runs the shutdown hook, which writes the report
+        if (!reported.claim()) {
+            return; // the shutdown hook is writing the report and ends the JVM
+        }
+        int status = 0;
+        try {
+            finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
+        } catch (IOException | UncheckedIOException e) {
+            System.err.println("line-consumer-java: cannot write report: " + e.getMessage());
+            status = 1;
+            reported.failed();
+        } finally {
+            reported.done();
+        }
+        System.exit(status);
     }
 
     private static void finish(Config config, LineReceiver receiver, LineReceiver.StopReason reason)
@@ -86,10 +123,20 @@ public final class Consumer {
         LatencyRecorder recorder = receiver.recorder();
         recorder.printSummary();
         System.out.println(receiver.notes());
+        if (receiver.windows() != null) {
+            receiver.windows().first().printSummary();
+            receiver.windows().steady().printSummary();
+        }
         Path report = config.report();
         if (report != null) {
-            recorder.writeReport(report, receiver.reportNotes());
+            Map<String, Object> runtime = receiver.runtime();
+            recorder.writeReport(report, receiver.reportNotes(), null, runtime);
             System.out.println("report: " + report);
+            if (receiver.windows() != null) {
+                for (Path window : receiver.windows().writeReports(report, receiver.reportNotes(), receiver.windowRuntime())) {
+                    System.out.println("report: " + window);
+                }
+            }
         }
     }
 }

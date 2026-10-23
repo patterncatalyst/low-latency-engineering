@@ -1,0 +1,5 @@
+littles-consumer: 127.0.0.1:47220, lambda=1000 /s, service mean 600 us (offered utilisation 0.60)
+02-littles-amdahl        cpp  littles-law      count=    10000 dropped=     0 p50=    801.3us p90=   2238.5us p99=   4423.7us p99.9=   8503.3us max=   10985.5us
+model: lambda=1000/s  L(sampled)=1.087  W-bar(model input)=1.083 ms  predicted L=lambda*W=1.083  error=+0.32%  (samples=10031, max in system=11)
+warehouse: 480 ms scan-to-divert x 1000/s = 480 parcels in flight on 1.20 m of belt at 2.5 m/s
+report: <repo>/examples/02-littles-amdahl/results/r02-run2/cpp-littles.json

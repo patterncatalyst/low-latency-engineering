@@ -1,0 +1,144 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "05-jvm-costs",
+  "language": "java",
+  "variant": "aot-cache-steady",
+  "unit": "ns",
+  "count": 18000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 175231,
+    "p90": 195327,
+    "p99": 221567,
+    "p99_9": 311295,
+    "max": 1035263
+  },
+  "hdr_histogram": "HISTFAAABMl4nDVVUYsbNxBey7KsUxVlT1GFut1sNmbruo4xqWvcYI7LYYxxr1dj0sO4hwnhONLjaEMoIYQjhBBCKKEPhb6U0of2of+hP6t/oNBv5NTr1Yy+mdFqZ77R5q9/uZYkTZ1sf/V3sgZ1dvvvP5K7/2yBv75nO+wz9gn7nN2A9j57j13DXWdXxXWMN1iTAWRXoO2yTzFLaNpkH7AGg77DSN5iPGGc87pECFTJEplACi5Ygyeck5EzQQbGmBAYeCIAJRyrSLgBJx2IgEomISmKSVpRAKAFGYwUsY1McIn4TyIUpzy6kHNcBw+lHRken8xiNMXW4yYIi7tj0RGLcIVF6jTHc2EQtH1sUAgp4SFpM/QCWjMAsCjNDSaKSyeVkSZAepNa56xJASiprNQh1c4o7q2DEoz0zmnpAny8syrLch9C5fKqLArXarXKMCiqVmmD77ky86Vvl95W7axql0WrPR/frkbLwcHe/mxvvD+bH9xZTEYH+9Pp6uxw/3B9dHyyON8s1qeni6OjxaPp8mA+25ufTM4Pz1ar0WaxuHe6me+t948OTjfTO4ib355M+tN+tzsYdkadfDQY9LqdqtPOy7I7KDpFb9jx3aryWdZ2rVCGfl5a51t5kRkPkam8LFQofOGzUFZZyDLYc+8KbdMsBIcgm+qgrTVKF8oHHZRKM61VGpA0qQUcUxVzrEWqDTKNtCpphWGwI/2KwQ2pRLoF10IAlJhJ1BsYpFDcKBQEkopIhVNU1kSQHQWDHskBq4wFR50Fb+CSosFULDhRL9kWPpKDmIJdYagTwb9iN9EaO8R43DtwjLSlJiBu1uFdj1H4E8CJjjFyy1ZG/Em2u2KR73xLex7bg4iFIAmvyF4elyUX1hCxJeIi2/VI8oZoiNg0ZMPbAEZW0GaUB7ye1MYopZkx1mcqeOdt1wZrvdZWg5wgYyhz7WBtaR8y45xPXeZdanQw2ljjQmhpa0Be47SC2aTMOEmx3iqDwhmRGqOV1VKnHh2AmdcutXCx3mhbZUUefJ72XNYty6o9rAbjYdVrdfrD3nCyPzycT+fDxXh2cnL2ePXg6fnF5YvV+ePLixevas9+ri3f1F7X3uB6Cfkb5JOL568wef70x9rl29ryJ0Bva88uf609fFv7vfb8Ze0RjE/O3tS+e7g5P3/2w5OHJ8dPH6/vz84uNpt7D9bHy83q/vpofIhhttzMVpeH0+PlejRdn52s9qYPlvdmh5Pj2Z2j+f7edNQf98eT8bQ/mBTT8XTU7XZ7w0GvPx7k407eb/d7Vf+gbFV5p9OpyqqVDXy/7Qsb8iz0WlnZKWxJbWFdyPIyMybXpsy9RQW8LXKfVqawSCES5lzQWsvU8xSjgGJ8qlKFzrAqMVZzaTVaJIDmQuDMkZzj2EmJ6MRuha5Q8dgE25lKlEgiJxj1kqKTOJ5m75qAbQ/giEBRREo69YhWW1ZHZoLlIGYSlWjg/xOzQTwXjXc+TXC/QXZSyKNOpzEgek4zHsYw4sNCFuqfRoyLPdNk18itjs6iyF0evzEfxhC6dxksV6BeZddh2o39kACpx05sRif6YNGXqgH8KpBb6FTCv8B4Ewi2B3mF3WUf4yP2DfuSfY3d3IDlI/Ytrj932b+c/QdrdZyG",
+  "build": {
+    "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags": "-Xlog:async -Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags -XX:StartFlightRecording:filename=/tmp/lowlat-scratch.cz8eDD/aot-cache.jfr,dumponexit=true,settings=default,jdk.Compilation#threshold=0ms,jdk.Deoptimization#enabled=true -XX:+UseG1GC -Xms256m -Xmx256m -XX:AOTCache=/tmp/lowlat-scratch.cz8eDD/jvm-costs-observed.aot -XX:AOTMode=on -Xlog:aot:file=<repo>/examples/05-jvm-costs/results/r02-run2/aot-cache.aot.log",
+    "gil_enabled": null
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T06:38:00Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2685966,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "redacted"
+    },
+    "load": {
+      "load1": 0.5,
+      "load5": 0.62,
+      "load15": 0.72,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "warm_up=0; window=2000; reordered=0; rcvbuf_granted=4194304; the first window includes JIT and class-loading cost unless warm_up > 0 or an AOT cache is set; window=2000; first window is seq < 2000",
+  "runtime": {
+    "gc": {
+      "collectors": [
+        "G1 Young Generation",
+        "G1 Concurrent GC",
+        "G1 Old Generation"
+      ],
+      "heap_bytes": 268435456,
+      "flags": [
+        "-Xlog:gc*,safepoint:file=<repo>/examples/05-jvm-costs/results/r02-run2/aot-cache.gc.log:uptime,level,tags",
+        "-XX:+UseG1GC",
+        "-Xms256m",
+        "-Xmx256m"
+      ]
+    },
+    "aot": {
+      "cache": "jvm-costs-observed.aot",
+      "mode": "on",
+      "used": true
+    },
+    "jit": {
+      "startup": {
+        "compilations": 189,
+        "c2_compilations": 15,
+        "deoptimizations": 17
+      },
+      "first-2000": {
+        "compilations": 268,
+        "c2_compilations": 31,
+        "deoptimizations": 0
+      },
+      "steady": {
+        "compilations": 126,
+        "c2_compilations": 49,
+        "deoptimizations": 4
+      }
+    }
+  }
+}

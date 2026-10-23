@@ -1,0 +1,105 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "08-zero-copy-flat",
+  "language": "python",
+  "variant": "unpack-from",
+  "unit": "ns",
+  "count": 204800,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 336,
+    "p90": 369,
+    "p99": 617,
+    "p99_9": 825,
+    "max": 18975
+  },
+  "hdr_histogram": "HISTFAAAA1R4nC1Q32scVRTe+90zd2dvZiezk8lkdjOZTKbrZNyO47Bsh8kP202o29gKlb6qf4CgD74IvklYixWVEkMeog+hBKk+xCBSVERKkNonH0ooRWiIIUjoQ4nFh+JDkdl4LtzL/c53zved4/Y/HymV+FHpJPj/LyuVeC/9YaN07vgE+IJQJaELxzG98/NvvH2VrbP77A/2PTb4P3xZ+VX5ReyLm+qTyrOhPW1t+NnwZm135EvnvrM2vup95e9MbZ/qR7vR9dO7L6ykNzo/zz6dW3/p37N3ukcLt3uPL9/rHfZ2equvbF/YuPDR0u8Lq+duza/PHGd3Zg7a68lm/Pj55dZadPzcjVN3g1v+Z/7tyatTOxPL7j13f/xR44G7N7Fc36p/Ul+pH431nUN7z/rG2jS/q/1k7Ne2qqvagezLQ/W6+rS8o/SVA/qYbvIn+AubeMC22DbbZivsA/bea1fyxW4YNgNb14QliSSREKRCFUKojKBSEVLqptClppGhWZpvhW3NNt2g4dq+GxaXZ/oNP2pbkRdHXhK4Dc9tB2EYNwI39Dzf9xwnaDpeo+UGaew1DDsNQy+P/DAL47DZ6HZaoZ95mZ+029FiFqVx52ynGTZbeSvP3Cy4EsWtzIvbs3meZbN50Elns2wxn82SNGktxe1kqZumedxd6mTJYpx351/tNJP59HwnT9N8PvGT4GISx81m021lfthK27HrNZLAC1zbyTzP8v3YbDS9IIhs3fG1wLI1S5qOtKWtGY6p65ZhW7a0DMczbcuQumqYppSG1KW0Hd0gTTc01ZJMqJqhCaELXSOhSU1VVVVIIZgqVCGkgBBEgkhTBQhssGcCsWLZQgURwEAkIMFUBlWQYDjBiBMYuGAoDocCDjCCKD4ECJxkMMgOgaFCSoEQOAG8oHMAYwUBjCaohgqGQINOQxgr1E8KFSgYGTSbAgfDNDjKwBwqmME0XsYkvmW4xnAZCqpQUAFVURtU1VAFwxAqhdgoOFVQpjEwjBScgW+FXkQdKIOhijIqYBhFDRzD4FQMwDE5wIq56jhT+J3DpULwDH4s7JzG5EBgBu+ggq8ZPi28TKOKt/Am/i70LwHvYgGvF9lxXENR/T5G8SHHbwx/Gngo8JDjP5Y5pNg=",
+  "build": {
+    "compiler": "3.14.8 (main, Oct  1 2026, 00:00:00) [GCC 16.2.1 20260819 (Red Hat 16.2.1-2)]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T06:52:08Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 2693702,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "product_name": "redacted"
+    },
+    "load": {
+      "load1": 1.31,
+      "load5": 0.91,
+      "load15": 0.75,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "per-call time of decode plus reading every field, 204800 calls; two perf_counter_ns reads are inside each sample; python 3.14.8; observed, not asserted"
+}

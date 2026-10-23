@@ -45,7 +45,7 @@ def from_gbench(src: Path, out_dir: Path) -> list[Path]:
     data = json.loads(src.read_text(encoding="utf-8"))
     ctx = data["context"]
     build = {
-        "compiler": f"Google Benchmark {ctx.get("library_version", "unknown")}; "
+        "compiler": f"Google Benchmark {ctx.get('library_version', 'unknown')}; "
         "see the C++ report for the compiler",
         "gil_enabled": None,
         "flags": f"library_build_type={ctx.get('library_build_type')}",

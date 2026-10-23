@@ -1,4 +1,5 @@
-// Consumer tests. The integration tests bind UDP 127.0.0.1:47101.
+// Consumer tests. The integration tests bind an ephemeral UDP port on 127.0.0.1 (port 0) and
+// read the bound port from the ready callback, so they run in any order and in parallel.
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 #include <netinet/in.h>
@@ -6,7 +7,12 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <cstdlib>
+#include <deque>
+#include <filesystem>
 #include <future>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -23,12 +29,48 @@ using namespace std::chrono_literals;
 
 namespace {
 
-constexpr int kPort = 47101;
-
 line::ConsumerConfig test_config() {
   line::ConsumerConfig c;
-  c.bind = "127.0.0.1:" + std::to_string(kPort);
+  c.bind = "127.0.0.1:0";  // the kernel picks the port; the ready callback reports it
   return c;
+}
+
+// Hands the bound port (and granted receive buffer) from the consumer thread to the test.
+class Up {
+ public:
+  [[nodiscard]] line::ReadyFn fn() {
+    return [this](int port, int granted) { p_.set_value({port, granted}); };
+  }
+  [[nodiscard]] bool wait() { return f_.wait_for(5s) == std::future_status::ready; }
+  [[nodiscard]] int port() { return f_.get().first; }
+  [[nodiscard]] int granted() { return f_.get().second; }
+
+ private:
+  std::promise<std::pair<int, int>> p_;
+  std::shared_future<std::pair<int, int>> f_ = p_.get_future().share();
+};
+
+// Sets the stop flag when the test scope ends. Declared after the consumer jthread, it runs
+// first on a failed ASSERT, so the jthread destructor joins a consumer that has been told to stop.
+class StopOnExit {
+ public:
+  explicit StopOnExit(std::atomic<bool>& stop) noexcept : stop_(stop) {}
+  StopOnExit(const StopOnExit&) = delete;
+  StopOnExit& operator=(const StopOnExit&) = delete;
+  ~StopOnExit() { stop_.store(true); }
+
+ private:
+  std::atomic<bool>& stop_;
+};
+
+std::string dest_of(int port) { return "127.0.0.1:" + std::to_string(port); }
+
+sockaddr_in loopback(int port) {
+  sockaddr_in to{};
+  to.sin_family = AF_INET;
+  to.sin_port = htons(static_cast<in_port_t>(port));
+  inet_pton(AF_INET, "127.0.0.1", &to.sin_addr);
+  return to;
 }
 
 }  // namespace
@@ -142,19 +184,19 @@ TEST(ConsumerIntegration, OneKilohertzTwoSeconds) {
   std::atomic<bool> stop{false};
   lowlat::measure::Recorder latency{"line-consumer-test", "integration"};
 
-  std::promise<int> granted;
-  auto ready = granted.get_future();
+  Up up;
   line::ConsumerResult result;
   std::jthread consumer{[&] {
-    result = line::consume(cfg, stop, latency, [&](int, int g) { granted.set_value(g); });
+    result = line::consume(cfg, stop, latency, up.fn());
   }};
-  ASSERT_EQ(ready.wait_for(5s), std::future_status::ready);
-  EXPECT_GT(ready.get(), 0);
+  const StopOnExit stop_guard{stop};
+  ASSERT_TRUE(up.wait());
+  EXPECT_GT(up.granted(), 0);
 
   line::Config sim;
   sim.rate_hz = 1000;
   sim.duration_s = 2.0;
-  sim.dest = cfg.bind;
+  sim.dest = dest_of(up.port());
   std::atomic<bool> sim_stop{false};
   lowlat::measure::Recorder lateness{"line-simulator", "emit-lateness"};
   const line::RunResult sent = line::run(sim, sim_stop, lateness);
@@ -177,16 +219,16 @@ TEST(ConsumerIntegration, IdleTimeoutEndsTheRunAfterTheLastDatagram) {
   cfg.idle_timeout_ms = 200;
   std::atomic<bool> stop{false};
   lowlat::measure::Recorder latency{"line-consumer-test", "idle"};
-  std::promise<void> up;
-  auto ready = up.get_future();
+  Up up;
   line::ConsumerResult result;
-  std::jthread consumer{[&] { result = line::consume(cfg, stop, latency, [&](int, int) { up.set_value(); }); }};
-  ASSERT_EQ(ready.wait_for(5s), std::future_status::ready);
+  std::jthread consumer{[&] { result = line::consume(cfg, stop, latency, up.fn()); }};
+  const StopOnExit stop_guard{stop};
+  ASSERT_TRUE(up.wait());
 
   line::Config sim;
   sim.rate_hz = 1000;
   sim.duration_s = 0.1;  // 100 parcels, then silence
-  sim.dest = cfg.bind;
+  sim.dest = dest_of(up.port());
   std::atomic<bool> sim_stop{false};
   lowlat::measure::Recorder lateness{"line-simulator", "emit-lateness"};
   (void)line::run(sim, sim_stop, lateness);
@@ -212,18 +254,18 @@ TEST(ConsumerIntegration, NegativeLatencyAborts) {
   auto cfg = test_config();
   std::atomic<bool> stop{false};
   lowlat::measure::Recorder latency{"line-consumer-test", "negative"};
-  std::promise<void> up;
-  auto ready = up.get_future();
+  Up up;
   std::promise<bool> threw;
   std::jthread consumer{[&] {
     try {
-      (void)line::consume(cfg, stop, latency, [&](int, int) { up.set_value(); });
+      (void)line::consume(cfg, stop, latency, up.fn());
       threw.set_value(false);
     } catch (const std::runtime_error&) {
       threw.set_value(true);
     }
   }};
-  ASSERT_EQ(ready.wait_for(5s), std::future_status::ready);
+  const StopOnExit stop_guard{stop};
+  ASSERT_TRUE(up.wait());
 
   // An event stamped an hour in the future: as if from another clock.
   lowlat::line::v1::ParcelEvent ev;
@@ -232,10 +274,7 @@ TEST(ConsumerIntegration, NegativeLatencyAborts) {
   ev.set_barcode("006141410000000008");
   const std::string wire = ev.SerializeAsString();
   line::Fd tx{::socket(AF_INET, SOCK_DGRAM, 0)};
-  sockaddr_in to{};
-  to.sin_family = AF_INET;
-  to.sin_port = htons(kPort);
-  inet_pton(AF_INET, "127.0.0.1", &to.sin_addr);
+  sockaddr_in to = loopback(up.port());
   ASSERT_EQ(::sendto(tx.get(), wire.data(), wire.size(), 0, reinterpret_cast<sockaddr*>(&to), sizeof to),
             static_cast<ssize_t>(wire.size()));
 
@@ -273,18 +312,15 @@ TEST(ConsumerHook, DeferredCompletionAndDrain) {
   cfg.expect = 3;
   std::atomic<bool> stop{false};
   lowlat::measure::Recorder latency{"line-consumer-test", "hook"};
-  std::promise<void> up;
-  auto ready = up.get_future();
+  Up up;
   HoldTwo handler;
   line::ConsumerResult result;
-  std::jthread consumer{[&] { result = line::consume_with(cfg, stop, latency, handler, [&](int, int) { up.set_value(); }); }};
-  ASSERT_EQ(ready.wait_for(5s), std::future_status::ready);
+  std::jthread consumer{[&] { result = line::consume_with(cfg, stop, latency, handler, up.fn()); }};
+  const StopOnExit stop_guard{stop};
+  ASSERT_TRUE(up.wait());
 
   line::Fd tx{::socket(AF_INET, SOCK_DGRAM, 0)};
-  sockaddr_in to{};
-  to.sin_family = AF_INET;
-  to.sin_port = htons(kPort);
-  inet_pton(AF_INET, "127.0.0.1", &to.sin_addr);
+  sockaddr_in to = loopback(up.port());
   for (const std::uint64_t seq : {0, 1, 3}) {  // seq 2 is missing: dropped
     lowlat::line::v1::ParcelEvent ev;
     ev.set_seq(seq);
@@ -300,5 +336,170 @@ TEST(ConsumerHook, DeferredCompletionAndDrain) {
   EXPECT_EQ(result.completed, 3u);  // two in the loop, one by drain
   EXPECT_EQ(latency.count(), 3);
   EXPECT_EQ(latency.dropped(), 1u);
+  EXPECT_LE(result.first_done_ns, result.last_done_ns);
+}
+
+// --- Windows ----------------------------------------------------------------
+
+TEST(SeqTracker, DropsAreBookedInTheirWindow) {
+  line::SeqTracker t{10};
+  for (std::uint64_t s : {0, 1, 4}) (void)t.observe(s);  // 2, 3 missing: both below 10
+  EXPECT_EQ(t.dropped_below_window(), 2u);
+  (void)t.observe(14);  // 5..13 missing: 5..9 below 10, 10..13 not
+  EXPECT_EQ(t.dropped(), 11u);
+  EXPECT_EQ(t.dropped_below_window(), 7u);
+  (void)t.observe(20);  // 15..19 missing, all above
+  EXPECT_EQ(t.dropped_below_window(), 7u);
+  EXPECT_EQ(t.dropped(), 16u);
+}
+
+TEST(ConsumerConfig, WindowOption) {
+  using V = std::vector<std::string_view>;
+  EXPECT_FALSE(line::parse_consumer_args(V{}).window);
+  EXPECT_EQ(line::parse_consumer_args(V{"--window", "2000"}).window, 2000u);
+  EXPECT_THROW((void)line::parse_consumer_args(V{"--window", "0"}), std::invalid_argument);
+}
+
+TEST(WindowedRecorders, SplitBySeqAndNameTheReports) {
+  line::WindowedRecorders w{"ex", "warmed", 3};
+  for (std::uint64_t seq = 0; seq < 10; ++seq) w.record(seq, 1000 + static_cast<std::int64_t>(seq));
+  EXPECT_EQ(w.first().count(), 3);
+  EXPECT_EQ(w.steady().count(), 7);
+  EXPECT_EQ(w.first().variant(), "warmed-first-3");
+  EXPECT_EQ(w.steady().variant(), "warmed-steady");
+
+  ASSERT_EQ(::setenv("LOWLAT_PROFILE", LOWLAT_FIXTURES_DIR "/profile.json", 1), 0);
+  const auto dir = std::filesystem::temp_directory_path() / "lowlat-window-test";
+  std::filesystem::create_directories(dir);
+  const auto paths = w.write_reports(dir / "run.json", "n");
+  ASSERT_EQ(paths.size(), 2u);
+  EXPECT_EQ(paths[0].filename(), "run-first-3.json");
+  EXPECT_EQ(paths[1].filename(), "run-steady.json");
+  for (const auto& p : paths) EXPECT_TRUE(std::filesystem::exists(p)) << p;
+  std::filesystem::remove_all(dir);
+}
+
+namespace {
+
+void send_window_run(int port, double seconds) {
+  line::Config sim;
+  sim.rate_hz = 1000;
+  sim.duration_s = seconds;
+  sim.dest = dest_of(port);
+  std::atomic<bool> sim_stop{false};
+  lowlat::measure::Recorder lateness{"line-simulator", "emit-lateness"};
+  (void)line::run(sim, sim_stop, lateness);
+}
+
+}  // namespace
+
+TEST(ConsumerWindow, TwoWindowsSumToTheTotal) {
+  auto cfg = test_config();
+  cfg.expect = 500;
+  cfg.window = 200;
+  std::atomic<bool> stop{false};
+  lowlat::measure::Recorder latency{"line-consumer-test", "windowed"};
+  line::WindowedRecorders windows{"line-consumer-test", "windowed", 200};
+  Up up;
+  line::ConsumerResult result;
+  std::jthread consumer{[&] { result = line::consume(cfg, stop, latency, up.fn(), &windows); }};
+  const StopOnExit stop_guard{stop};
+  ASSERT_TRUE(up.wait());
+  send_window_run(up.port(), 0.5);
+  consumer.join();
+
+  EXPECT_EQ(latency.count(), 500);
+  EXPECT_EQ(windows.first().count(), 200);
+  EXPECT_EQ(windows.steady().count(), 300);
+  EXPECT_EQ(windows.first().count() + windows.steady().count(), latency.count());
+  EXPECT_EQ(windows.first().dropped() + windows.steady().dropped(), latency.dropped());
+}
+
+// --- Completion owned by another thread -------------------------------------
+
+namespace {
+
+// The shape Ch7 uses: the receive thread only enqueues; a decide thread owns the
+// Completion and completes. drain() joins it, which publishes its recordings.
+class DecideThread {
+ public:
+  void operator()(const lowlat::line::v1::ParcelEvent& ev, line::Completion& done) {
+    if (!worker_.joinable()) worker_ = std::jthread{[this, &done](std::stop_token st) { decide(st, done); }};
+    {
+      const std::lock_guard lock{mutex_};
+      queue_.push_back({ev.seq(), ev.intended_emit_ns()});
+    }
+    wake_.notify_one();
+  }
+
+  void drain(line::Completion&) {
+    worker_.request_stop();
+    worker_.join();
+  }
+
+  [[nodiscard]] std::thread::id decide_thread() const { return decide_id_; }  // valid after drain
+
+ private:
+  struct Item {
+    std::uint64_t seq;
+    std::int64_t intended_ns;
+  };
+
+  void decide(std::stop_token st, line::Completion& done) {
+    decide_id_ = std::this_thread::get_id();
+    while (true) {
+      std::unique_lock lock{mutex_};
+      wake_.wait(lock, st, [this] { return !queue_.empty(); });
+      if (queue_.empty()) return;  // stop requested and nothing left
+      const Item item = queue_.front();
+      queue_.pop_front();
+      lock.unlock();
+      done.complete(item.seq, item.intended_ns, line::monotonic_ns());
+    }
+  }
+
+  std::mutex mutex_;
+  std::condition_variable_any wake_;
+  std::deque<Item> queue_;
+  std::thread::id decide_id_;
+  std::jthread worker_;  // last: stopped and joined before the rest is destroyed
+};
+
+static_assert(line::ParcelHandler<DecideThread>);
+
+}  // namespace
+
+TEST(ConsumerOwnership, ReceiveAndOwnerFieldsAreInSeparateFalseSharingRanges) {
+  EXPECT_TRUE(line::Completion::writers_on_separate_lines());
+  EXPECT_GE(alignof(line::Completion), 2 * std::hardware_destructive_interference_size);
+}
+
+TEST(ConsumerOwnership, CompletionOnASecondThreadRecordsEveryReceivedParcel) {
+  auto cfg = test_config();
+  cfg.expect = 400;
+  cfg.window = 100;
+  std::atomic<bool> stop{false};
+  lowlat::measure::Recorder latency{"line-consumer-test", "decide"};
+  line::WindowedRecorders windows{"line-consumer-test", "decide", 100};
+  DecideThread handler;
+  Up up;
+  line::ConsumerResult result;
+  std::thread::id receive_thread;
+  std::jthread consumer{[&] {
+    receive_thread = std::this_thread::get_id();
+    result = line::consume_with(cfg, stop, latency, handler, up.fn(), &windows);
+  }};
+  const StopOnExit stop_guard{stop};
+  ASSERT_TRUE(up.wait());
+  send_window_run(up.port(), 0.4);
+  consumer.join();
+
+  EXPECT_NE(handler.decide_thread(), receive_thread);
+  EXPECT_NE(handler.decide_thread(), std::thread::id{});
+  EXPECT_EQ(result.received, 400u);
+  EXPECT_EQ(result.completed, result.received);  // every parcel received was completed, on the other thread
+  EXPECT_EQ(latency.count(), static_cast<std::int64_t>(result.received));
+  EXPECT_EQ(windows.first().count() + windows.steady().count(), latency.count());
+  EXPECT_EQ(windows.first().count(), 100);
   EXPECT_LE(result.first_done_ns, result.last_done_ns);
 }
