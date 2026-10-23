@@ -108,8 +108,8 @@ About 10 minutes: twelve 20 s runs, each with its own JVM or process start, then
 publish benchmark. Environment (from `examples/_lib/lib.sh`): `ALLOW_BUSY=1` to measure while a
 lab VM runs or the host is loaded (the numbers are then noisy), `SKIP_BUILD=1`, `RESULTS_DIR`,
 `LOWLAT_BUILD`. `RECHECK=results/<run-id>` evaluates the criteria on committed reports without
-running anything. `VM=1` is the affinity part and is not built yet: it exits with
-`VM part: S10`.
+running anything. `VM=1` runs the affinity part in the lab guest (see "VM part" below); it needs
+the guest running, restored from the snapshot `lab-ready-iso`.
 
 Reports land in `results/latest/` as `<lang>-<variant>.json` (end-to-end) with the siblings
 `-handoff`, `-handoff-first-20000`, `-handoff-steady`, `-first-20000`, `-steady`,
@@ -246,9 +246,7 @@ context switches), `disruptor-blocking-wait` against `disruptor`, the manifest l
 off-heap map against the `HashMap`, and the C++ `atomic-spsc` against `atomic-wait` hand-off and
 context switches.
 
-The Chronicle Queue journal is not a durability mechanism. The open-source queue does not
-`fsync` on append: a record survives a process crash because it sits in the page cache, and a
-power loss can take the pages that were not yet written back. No claim here depends on durability.
+The open-source queue does not `fsync` on append, and no claim here depends on durability.
 
 ## VM part: pinning to an isolated CPU
 
@@ -276,7 +274,7 @@ when the guest's `/proc/cmdline` has no `isolcpus=3`, and the decide thread thro
 does not leave `Affinity.getCpu()` at 3. The script also reads `Cpus_allowed_list` and the CPU of
 the decide thread from `/proc` and requires CPU 3 alone.
 
-Criteria (S12 calibrates the bounds):
+Criteria:
 
 1. decide-thread involuntary context switches per run, from `/proc/PID/task/TID/status` between the
    thread's id line and the end of the window: pinned <= 10, unpinned >= 100, in every run.
@@ -335,8 +333,10 @@ What isolation and the pin promise, and what they do not:
 Only the open-source edition of Chronicle is used. Its commercial edition adds features this
 example does not use: asynchronous write buffers (`BufferMode.Asynchronous`), the pre-toucher,
 queue and map replication, queue encryption and timezone roll-over. `BufferMode.None` is the only
-buffer mode the open-source queue offers, and it is the one set here. Agrona and Chronicle call
-`sun.misc.Unsafe`, which JDK 25 warns about at first use; the warnings stay on (JEP 471 and 498).
+buffer mode the open-source queue offers, and it is the one set here. Chronicle, through its `jffi`
+native-call dependency, and the JMH harness call `sun.misc.Unsafe` memory-access methods; JDK 25 warns
+at first use (JEP 471, JDK 23, deprecated them for removal; JEP 498, JDK 24, made the warning the
+default), and the warnings stay on.
 Versions are pinned in `_plans/dependency-pins.md`.
 
 Chronicle Core posts usage analytics by default. Chronicle Queue and Chronicle Map each hold an
@@ -359,9 +359,48 @@ the first queue or map is built.
 
 ## Verification status
 
-Unverified. The host part builds, its unit tests pass and `verify.sh` runs end to end; the VM part
-(`VM=1`) ran once functionally in the lab guest; the `r02-run1..3` and `r02-vm-run1..3`
-measurements are still to come.
+Behavioural. The host part and the VM part each assert their criteria, and all of them held.
+
+**Host part**, `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, clocksource
+`tsc`, kernel 7.2.11-200.fc44, Temurin 25.0.5+8, VM down). Ranges over the three runs:
+
+| Quantity | Range |
+|---|---|
+| Voluntary context switches over 200,000 parcels: `blocking-queue` / `agrona-spsc` / `disruptor` | 199,523 to 199,540 / 29 to 47 / 37 to 41 |
+| Same, observed: `linked-queue`, `disruptor-blocking-wait` / `agrona-spsc-backoff` | 199,380 to 199,541 / 358,431 to 359,020 |
+| Steady-window hand-off p99: `blocking-queue` / `agrona-spsc` / `disruptor` | 10,495 to 10,871 ns / 576 to 590 ns / 641 to 2,117 ns |
+| JMH publish allocation: Agrona / Disruptor / `linked-queue` (observed: `blocking-queue`) | 0.0004 B/op / 0.0007 B/op / 96.1 to 97.1 B/op (90.2 to 95.7 B/op) |
+| Journal readback; decide-thread write system calls: Chronicle / `write-per-parcel` | 200,000 events in order for both; 0 / 200,000 |
+| Decide-thread minor faults: Chronicle / `write-per-parcel` | 1,427 to 1,459 / 64 to 67 (journal 15,002,637 B on btrfs, 3,662 pages) |
+| Observed append latency, steady window, Chronicle p50 / p99 / p99.9 | 311 to 322 / 800 to 835 / 4,643 to 5,299 ns |
+| Observed append latency, `write-per-parcel` p50 / p99 / p99.9 | 1,071 to 1,079 / 2,485 to 3,023 / 5,139 to 7,607 ns |
+| Old generation after a full collection: `chronicle-map-manifest` / `on-heap-manifest` (baseline 3.8 MB) | 13.99 to 14.00 MB / 137.3 to 137.4 MB |
+| Observed whole-run lookup p50 / p99: Chronicle Map / `HashMap` | 280 to 282 / 1,204 to 1,313 ns; 31 to 33 / 402 to 445 ns |
+| Observed `on-heap-manifest` hand-off p99.9; `chronicle-map-manifest` | 227 to 397 us; 1.2 to 2.4 us |
+| Observed C++ `atomic-spsc` hand-off p50 / p99 / p99.9 | 121 to 127 / 326 to 329 / 431 to 511 ns, 0 voluntary switches |
+| Observed C++ `atomic-wait` hand-off p50 / p99 / p99.9 | 1,908 to 2,006 / 9,023 to 9,439 / 53,855 to 76,863 ns, 199,861 to 199,892 voluntary switches |
+| Every run | 200,000 parcels counted, none dropped, no overflow, every divert command received, `lowlat-report check` passes |
+
+Criterion 2 passed in all three runs. Run 1 passed with a margin of 1.01: the Disruptor's p99 was
+2,117 ns against a bound of 2,131 ns (one fifth of 10,655 ns). Runs 2 and 3 were 670 and 641 ns against
+bounds of 2,174 and 2,099 ns. The bound stays at one fifth, and run 1 is an observed outlier with no
+measured cause.
+
+**VM part**, `r02-vm-run1..3` (lab guest `lowlat-target`, label `vm`, PREEMPT_RT kernel
+7.2.11-200.lowlatrt.fc44.x86_64+rt, guest command line `isolcpus=3 nohz_full=3 rcu_nocbs=3`, vCPU 3
+pinned to host CPU 13, `stress-ng --cpu 3` on guest CPUs 0-2, each run restored from `lab-ready-iso`,
+guest down afterwards). Never compared with the host numbers above. Ranges over the three runs, each
+with three alternations of unpinned and pinned in one boot:
+
+| Quantity | Range |
+|---|---|
+| Involuntary context switches per 200,000-parcel run, unpinned / pinned (bounds: at least 100 / at most 10) | 174,388 to 313,298 / 0 to 5 |
+| Steady-window hand-off p99.9, median of three alternations, unpinned / pinned (bound: pinned at most half) | 1,087,487 to 1,864,703 ns / 51,167 to 54,559 ns |
+| Placement | pinned thread: `Cpus_allowed_list` CPU 3, seen on CPU 3 in every alternation; unpinned thread allowed on CPUs 0-3 and seen on CPUs 0-2 |
+| Every run | 200,000 parcels counted, none dropped, no overflow, every divert command received |
+
+Pinned p99.9 stays at tens of microseconds: the pin narrows the tail and does not remove the host's
+share of it (see the VM part above).
 
 Calibrated on a quiet host on 2026-10-22 (three dry runs on tmpfs, three more on btrfs, one more on tmpfs
 for the fault bound). The former criterion 4 p99 ratio was replaced by the fault mechanism above,

@@ -53,7 +53,7 @@ Each report carries a distribution, summarised by five points:
 | p99.9 | 999 in 1,000 were faster | the rare outliers |
 | max | the slowest parcel | the worst case in this run |
 
-A run of 10,000 parcels puts only 100 parcels above p99, 10 above p99.9 and exactly one at the max. The deeper the percentile, the fewer samples stand behind it.
+A run of 10,000 parcels puts 100 above p99, 10 above p99.9 and one at the max. The deeper the percentile, the fewer samples stand behind it.
 
 ### Why the report never carries a mean
 
@@ -513,13 +513,13 @@ The C++ bimodal row of `r02-run2`, from its stored report, shows the shape:
 
 p50 and p90 differ by 49.0 us, p90 and p99 by more than 3.9 ms. p99.9 and max extend past the slow-path length because of queueing.
 
-The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 9.0 to 21.7 ms while C++ stays below 0.4 ms. Part 2 treats the cause; here p99.9 exposed it and p50 did not.
+The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 9.0 to 21.7 ms while C++ stays below 0.4 ms. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, treats the cause; p99.9 exposed it and p50 did not.
 
 ### The median itself moved
 
 The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 122 us in `r02-run1`, 156 us in `r02-run2` and 157 us in `r02-run3`; Python went 182, 181 and 173 us; Java 106, 108 and 108 us. Nothing in the program changed. The host runs governor `powersave` and tuned profile `balanced`, so the kernel chooses frequency and idle state at run time. One binary's median moved by a factor of up to 1.3; the reports record no frequency counters, so the data do not isolate the cause.
 
-Variants in one run differ too: in `r02-run3` the Java per-parcel p50 was 108 us and the Java bimodal p50 173 us.
+Variants in one run differ too: in `r02-run3` the Java per-parcel p50 was 108 us and bimodal p50 173 us.
 
 That variation decides how a check is written. An earlier set of runs, committed at `1811055`, required the bimodal median to stay under twice the per-parcel median from a different consumer run. The `verify.log` of that set's run 2 records the C++ failure: "bimodal p50 stays under 2x per-parcel p50 (73919 ns) (got 158335, need < 147838)".
 
@@ -545,7 +545,7 @@ Chapter 2 models these effects with Little's Law and Amdahl's Law.
 - Enberg, *Latency* (Manning), as further reading.
 - Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1: how many samples a percentile needs, and coordinated omission.
 - Chapter 2 in Part 1: Little's Law and Amdahl's Law as modelling inputs.
-- Chapter 5 in Part 2: the JIT warm-up tail seen in the Java runs.
+- Chapter 5 in Part 2: the Java warm-up tail.
 - Part 5: the CPU governor, idle states and tuned profiles behind the median's movement.
 
 ---

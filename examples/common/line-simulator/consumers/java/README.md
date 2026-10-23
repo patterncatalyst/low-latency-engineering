@@ -52,9 +52,12 @@ dropped. The first datagram's gap from seq 0 counts as dropped.
 
 This is the plain HotSpot JVM. The first few thousand parcels run in the interpreter and
 C1 before C2 code arrives, and the first receive also pays class loading and
-protobuf initialisation. r01's consumer does not discard a warm-up window: the cost lands in
+protobuf initialisation. The consumer does not discard a warm-up window: the cost lands in
 the high percentiles and max (tens of ms in a 10 s run at 1 kHz), and the report
-notes say so. Ch4 and Ch5 measure warm-up (and ways to shorten it) rather than hide it.
+notes say so. Ch4 measures warm-up in a harness; Ch5
+([`examples/05-jvm-costs/`](../../../../05-jvm-costs/README.md)) splits the first window
+from the steady state with `--window` and moves the cost off the belt with an in-process
+replay (`--warm-up`) or the Leyden AOT cache, rather than hiding it.
 
 ## `System.nanoTime()` is CLOCK_MONOTONIC on Linux
 

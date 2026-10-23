@@ -148,12 +148,14 @@ and the bound, and exits non-zero if any missed:
 6. Every line run counts 20,000 parcels, drops none, and every report passes
    `lowlat-report check`.
 
-The window is a parameter of criterion 2. The cold cost of an unwarmed JVM is a stall of
-about 11 ms at the start, which delays a few dozen parcels: about 1% of a 2,000-parcel
-window. The p99 of that window is its 20th-worst parcel, so it sits on the edge of the
-stall and lands inside it in some runs and outside it in others (first-window over steady
-p99 from 1.7x to 52x across the r02 runs). The p99.9 and the maximum fall inside the stall
-every time, so the criterion is asserted on p99.9 and the p99 ratio is printed as observed.
+The window is a parameter of criterion 2. The cold cost of an unwarmed JVM is a stall at the
+start: the first-window maximum is 15.2 to 30.3 ms across the r02 runs, and 15 to 31 parcels land
+above 1 ms (0.75 to 1.55 % of a 2,000-parcel window). The p99 of that window is its 21st-worst
+parcel, so it sits on the edge of the stall: inside it in runs 1 and 3 (31 parcels) and outside it in
+run 2 (15 parcels), which is why the first-window over steady p99 runs from 1.7x to 52x. The p99.9,
+the window's 3rd-worst parcel, falls inside the stall every time, so the criterion is asserted on
+p99.9 and the p99 ratio is printed as observed. The criterion was first written on p99 and failed
+in `r02-run2` (1.7x against a bound of 5x); see the verification status below.
 `verify.sh` prints the p99, p99.9 and maximum ratios for every variant.
 
 The AOT cache is trained twice, once with the observation flags (JFR adds the `jdk.jfr`
@@ -198,7 +200,37 @@ Every dependency is open source; none sits on a path that needs a paid tier.
 
 ## Verification status
 
-Unverified until S13: `verify.sh` runs end to end and its reports pass
-`lowlat-report check`, but no number is recorded here. The `r02-run1..3` host runs
-(bare-metal, untuned, serial, VM down) fill in the measured ranges; a number without its
-machine profile (the `profile` block of every report) is not quoted.
+Behavioural. `verify.sh` asserts the six criteria above, and all of them held on the quiet-host
+runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, clocksource `tsc`,
+kernel 7.2.11-200.fc44, Temurin 25.0.5+8, VM down), with one exception recorded below. Ranges over
+the three runs; the first window is parcels 0 to 1,999 and the steady window is the rest of the same run.
+
+| Quantity | Range |
+|---|---|
+| `escaping`, `--no-escape-analysis` (JMH `gc.alloc.rate.norm`) | 24 B/op in all three runs |
+| `scalar-replaced` | 0.00016 to 0.00017 B/op |
+| C++ `--allocating`, value (observed: pmr 0.00) | 16 B/op and one allocation per parcel, 1.3e-06 B/op |
+| C++ median per decision, value / `--allocating` / pmr (observed) | 2.3 ns / 11.1 to 11.2 ns / 3.7 to 3.8 ns |
+| `--unwarmed` first-window p99.9 against steady p99.9 | 13.4 to 28.5 ms against 0.26 to 0.49 ms; ratio 58.3x, 51.7x, 98.3x (bound 5x) |
+| `--unwarmed` first-window p99 against steady p99 (observed) | ratio 24.7x, 1.7x, 52.0x; first-window p99 11.0, 0.34, 11.0 ms |
+| `warmed` first-window p99 against steady p99 | 0.23 to 0.33 ms, ratio 1.1x in all runs (bound 3x); first-window p99.9 0.29 to 0.36 ms |
+| `aot-cache` first-window p99.9 (observed) | 0.61, 0.69, 3.2 ms; ratio 2.2x, 2.2x, 12.5x |
+| Time to ready, median of five launches: AOT cache / no cache | 50.7 to 54.8 ms / 173.1 to 176.9 ms; ratio about 0.3 (bound 0.8); `Opened AOT cache` in the AOT log, `runtime.aot.used` true |
+| Compilations in the first window (observed), tier 4 in parentheses | `--unwarmed` 245 to 248 (16 to 19); `warmed` 20 to 24 (7 to 11); `aot-cache` 266 to 270 (30), 0 deoptimizations |
+| Compilations before the first parcel (observed) | `warmed` 1,059 to 1,069 (234 to 236 at tier 4); `aot-cache` 183 to 189 |
+| Receive-thread allocation per parcel (observed) | 732.7 B (`--unwarmed`), 667.3 B (`warmed`), 654.4 B (`aot-cache`) in every run |
+| C++ consumer first-window p99 over steady p99 (observed) | 1.0x in all three runs |
+| Line runs | 20,000 parcels counted, none dropped, every report passes `lowlat-report check` |
+
+Criterion 2 failed in `r02-run2` as first written, on the p99: 1.7x against a bound of 5x, because
+the window's p99 fell outside the stall in that run (see above). The criterion was then asserted on
+p99.9, by decision, and `RECHECK=results/<run-id>` re-evaluated the committed reports of all three
+runs without running anything. Each run directory holds the output as `recheck.log` (58.3x, 51.7x
+and 98.3x). `verify.log` of `r02-run2` still records the original failure, and the run was not
+repeated.
+
+Not asserted: compilations and deoptimizations per window, bytes per parcel, the C++ split, the
+timings and the pmr counter, the `aot-cache` first window (its run-3 value of 3.2 ms has no
+attributed cause) and the async-profiler share (over 99.99 % of the sampled bytes on the
+`DivertDecision` leaf frame in all three runs). A number without its machine profile (the `profile`
+block of every report) is not quoted.

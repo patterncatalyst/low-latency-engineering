@@ -3,9 +3,11 @@
 Status at 2026-10-22.
 
 Project Valhalla would give Java value classes: objects without identity that the JVM may flatten into
-arrays and fields, which removes the per-object header and the pointer from a table such as the in-flight
-parcel table. That is the layout problem this example solves today with an off-heap `MemorySegment` of
-structs (`FlatTable`) and solves for the wire with `FlatView`.
+arrays and fields, which aims to remove the per-object header and the pointer from a table such as the
+in-flight parcel table. On common hardware JEP 401 flattens a mutable field or array element only up to
+64 bits, null flag included, so a 22-byte `ParcelState` needs later null-restricted or non-atomic
+enhancements before it gets that layout (see the list below). This example solves the layout problem today with an off-heap `MemorySegment` of
+structs (`FlatTable`) and solves it for the wire with `FlatView`.
 
 | Item | State |
 |---|---|

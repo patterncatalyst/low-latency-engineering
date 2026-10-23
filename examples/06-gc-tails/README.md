@@ -1,7 +1,8 @@
 # 06-gc-tails
 
 Chapter 6: the collector decides the tail. The in-flight parcel tracker runs at 10 kHz for 30 s on a
-JVM whose heap holds a 1.9 GB live set (the shift manifest and the parcels on the belt) and whose
+JVM whose heap holds a 1.8 GB live set (1,804 to 1,810 MB across the r02 runs, as `verify.sh` prints
+it, with 1 MB = 2^20 bytes; the shift manifest and the parcels on the belt) and whose
 handler allocates about 400 MB/s of scan history. Eight JVM variants run the same bytecode, the same
 seed and the same `-Xms4g -Xmx4g -XX:+AlwaysPreTouch`, and differ only in the collector (or, for two of
 them, in the heap or the flight recorder). A Python lane and a C++ lane show the same question in a
@@ -25,7 +26,7 @@ by another name.
 | Java | `thp` | ZGC with `-XX:+UseTransparentHugePages` (observed). The OS refuses huge pages for ZGC's shared-memory heap (`shmem_enabled` is `never`; `Large Page Support: Disabled (OS enforced)`), so this runs on 4 KB pages |
 | Java | `jfr-off` | ZGC without the flight recorder (observed: what the recording costs) |
 | Python | `cyclic-garbage` | each parcel's scan history is a reference cycle: only the cyclic collector frees it |
-| Python | `frozen` | no cycles, and `gc.freeze()` after setup: refcounting frees everything and the collector has nothing to walk |
+| Python | `frozen` | no cycles, and `gc.freeze()` after setup: refcounting frees each parcel at once, and the run has 0 collections in every generation |
 | C++ | `bulk-free` | the retired wave of manifest entries is destroyed on the hot thread, in the call that closes the wave |
 | C++ | `deferred-free` | the wave is handed to a reclaimer thread, which destroys it |
 | C++ | `no-free` | the control: the wave is kept until after the run |
@@ -192,7 +193,7 @@ cost without the destruction cost.
 
 None by design. The numbers are the reports, `verify.sh`'s printed table and the compressed GC logs;
 there is no dashboard for this chapter. A collector's pauses are better read from a JFR file (`jfr
-print --events jdk.GCPhasePause`) or `-Xlog` than from a panel, and Part 5 owns low-overhead
+print --events jdk.GCPhasePause`) or `-Xlog` than from a panel, and Part 7 owns low-overhead
 observability.
 
 ## Licences
@@ -204,6 +205,34 @@ CPython 3.14.8: PSF licence. Versions are pinned in `_plans/dependency-pins.md` 
 
 ## Verification status
 
-Unverified until the iteration's measurement runs (S13). Calibrated on a quiet host on 2026-10-22: three
-dry runs plus the heap sweep above; criterion 3 uses the 1.05x heap that clears its bounds by two orders of
-magnitude, and the former criterion 5 second half is now an observed pair.
+Behavioural. `verify.sh` asserts the six criteria above, and all of them held on the quiet-host
+runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, THP `madvise`, kernel
+7.2.11-200.fc44, Temurin 25.0.5+8, CPython 3.14.8, VM down). Ranges over the three runs.
+
+| Quantity | Range |
+|---|---|
+| Measured live set; `undersized-heap` size (1.05x) | 1,804 to 1,810 MB; 1,895 to 1,901 MB |
+| Receive-thread allocation per parcel (`zgc`) | 47,639 B in every run, about 476 MB/s at 10 kHz |
+| Maximum GC pause (JFR), Parallel / G1 / Generational ZGC / Generational Shenandoah | 158 to 170 ms / 21.0 to 21.6 ms / 0.017 to 0.036 ms / 0.53 to 0.82 ms |
+| End-to-end p99.9, same order | 152.4 to 157.2 ms / 16.4 to 16.6 ms / 0.135 to 0.153 ms / 0.158 to 0.180 ms |
+| Parallel end-to-end p99; ZGC end-to-end maximum | 130.8 to 135.4 ms; 2.45 to 2.69 ms (not a GC pause: ZGC's longest pause is under 0.04 ms) |
+| `undersized-heap` allocation stalls; longest stall; p99.9 | 532 to 976; 60.7 to 156.9 ms; 49.6 to 134.9 ms (GC pauses at most 0.040 to 0.051 ms) |
+| Python `cyclic-garbage`: generation-2 collections; longest collection; p99.9 | 9 (and 99 of generation 1, 1,092 of generation 0); 144.0 to 150.6 ms; 138.1 to 144.4 ms |
+| Python `frozen`: collections; objects frozen; p99.9 | 0 in every generation; 119,780; 0.154 to 0.168 ms |
+| C++ `bulk-free`: maximum; p99.9 | 3.65 to 3.87 ms; 2.08 to 2.19 ms |
+| C++ `deferred-free`: p99.9; maximum (observed) | 0.135 to 0.141 ms; 0.79 to 0.85 ms |
+| C++ `no-free` maximum (observed); waves closed; entries destroyed inline, by the reclaimer or kept | 0.36 to 0.49 ms; 33; 320,000 |
+| Observed JVM variants, p99.9 / maximum pause | `shenandoah` 0.150 to 0.155 ms / 0.41 to 0.51 ms; `thp` 0.142 to 0.146 ms / 0.022 to 0.030 ms; `jfr-off` p99.9 0.145 to 0.159 ms |
+| Every report | 300,000 parcels counted, none dropped, `lowlat-report check` passes |
+
+The `thp` variant got no huge pages in any run: every `thp.gc.log.gz` logs
+`Large Page Support: Disabled (OS enforced)` and `java-thp.log` warns that shared-memory THP is not
+enabled. It is a second ZGC run on 4 KB pages, and its numbers say nothing about huge pages. With the
+recording off, the `jfr-off` p99.9 was 6 to 11 microseconds above `zgc`'s in the same run, inside
+ZGC's own run-to-run spread and the opposite direction from a recording cost. The C++ maxima of
+`deferred-free` and `no-free` are single operating-system events; the reclaimer claim rests on
+criterion 5.
+
+Calibrated on a quiet host on 2026-10-22 (three dry runs plus the heap sweep above, which is
+calibration data and not a committed run); criterion 3 uses the 1.05x heap that clears its bounds by
+two orders of magnitude, and the former criterion 5 second half is an observed pair.

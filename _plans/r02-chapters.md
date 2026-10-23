@@ -143,7 +143,9 @@ excerpts named below contains either sequence; grep yours.
   > `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8.
   > Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-  Ch6 adds "THP `madvise`" after the clocksource (the `thp` variant depends on it).
+  Ch6 adds "THP `madvise`" after the clocksource. That is `memory.thp_enabled`; ZGC's heap is
+  governed by `memory.thp_shmem_enabled` (`never` on this host), which is why the
+  `thp` variant got no huge pages (see Large pages below).
 - VM profile line, Ch7 only, at the top of the VM part, from
   `r02-vm-run1/vm/profile.json`, `vm/vcpupin.txt` and `vm/LABEL`:
 
@@ -198,10 +200,18 @@ excerpts named below contains either sequence; grep yours.
   still run other work and take interrupts on CPU 13 and its sibling CPU 5. No
   thread pinning on the host (it proves nothing without isolation, and isolation
   would be a host change).
-- **Large pages (Ch6).** Host THP only (`madvise`, no host change), observed;
-  hugetlbfs is versioned config in Part 5 (Q5).
-- **Unsafe (Ch7).** Agrona and Chronicle call `sun.misc.Unsafe`; JDK 25 warns at
-  first use and the warnings stay on (JEP 471, 498). Q6.
+- **Large pages (Ch6).** Host THP only (`madvise`, no host change). The host
+  refuses huge pages for ZGC: its heap is shared memory (`memfd:java_heap`),
+  governed by `shmem_enabled`, which is `never`, and every `thp.gc.log.gz` logs
+  `Large Page Support: Disabled (OS enforced)`. The `thp` variant is therefore a
+  second ZGC run on 4 KB pages, observed, and the chapter draws no conclusion
+  about huge pages. Huge pages for ZGC are versioned VM config in Part 5 (Q5; the
+  Follow-ups row "THP for ZGC refused by the host" in `r02-plan.md`).
+- **Unsafe (Ch7).** Chronicle, through its `jffi` native-call dependency, and the
+  JMH harness call `sun.misc.Unsafe` memory-access methods; Agrona is not the
+  source. JDK 25 warns at first use (JEP 471, JDK 23, deprecated the methods for
+  removal; JEP 498, JDK 24, made the warning the default) and the warnings stay
+  on. Q6.
 - **Chronicle (Ch7).** Only the open-source line (Queue 2026.7, Map 2026.1, Bytes
   2026.4, Affinity 2026.2, Apache-2.0). The commercial edition's features
   (asynchronous `BufferMode`, the pre-toucher, replication, encryption) are not
@@ -288,10 +298,11 @@ a stack value costs nothing, `std::make_unique` costs an allocator call,
 
 **Criterion 2, told plainly.** The criterion was first written on p99 (first
 window at least 5x steady). In `r02-run2` it failed: 1.7x. The cold stall is
-about 11 ms at the start and delays a few dozen parcels, about 1 % of a
-2,000-parcel window, so the window's p99 (its 20th-worst parcel) sits on the
-stall's edge and lands inside it in some runs and outside in others. The p99.9
-lands inside every time. By user decision the criterion is asserted on p99.9,
+a stall at the start: the first-window maximum is 30.3, 15.2 and 30.3 ms, and
+31, 15 and 31 parcels land above 1 ms (0.75 to 1.55 % of a 2,000-parcel
+window). The window's p99 is its 21st-worst parcel, so it sits on the stall's
+edge and lands inside it in runs 1 and 3 and outside it in run 2 (15 parcels).
+The p99.9, its 3rd-worst parcel, lands inside every time. By user decision the criterion is asserted on p99.9,
 the p99 ratio is printed as observed, and `RECHECK` re-evaluated the committed
 reports of all three runs without rerunning (`recheck.log` in each run
 directory: 58.3x, 51.7x, 98.3x). Run 2's `verify.log` still records the
@@ -358,7 +369,7 @@ Generational Shenandoah, product in JDK 25 (JEP 521), concurrent evacuation);
 the rolling manifest that makes overwritten entries die in the old generation;
 headroom against allocation rate: a concurrent collector that runs out of free
 heap makes the allocating thread wait (allocation stall), which is a pause by
-another name and does not appear as a GC pause; pre-touch; THP (`madvise`);
+another name and does not appear as a GC pause; pre-touch; the `thp` variant, refused by the host (no huge pages for ZGC's shared-memory heap);
 CPython's refcount plus generational cycle collector (3.14.8; 3.14.0–3.14.4
 shipped an incremental collector, reverted in 3.14.5) and `gc.freeze()`; C++
 ownership: `free()` is the cost, and where it runs is the choice.
@@ -373,8 +384,8 @@ ownership: `free()` is the cost, and where it runs is the choice.
 | Under Parallel the p99 is already 130.8–135.4 ms while p50 is 0.06 ms in every variant | `java-stop-the-world.json` |
 | ZGC's end-to-end maximum is 2.45–2.69 ms while its longest GC pause is under 0.04 ms: the maximum is not a GC pause; do not attribute it | `java-zgc.json` `max`; `java-zgc-gc-pause.json` |
 | Undersized heap (1,895–1,901 MB, 1.05x the live set): 532–976 allocation stalls, longest 60.7–156.9 ms, p99.9 49.6–134.9 ms against right-sized ZGC 0.135–0.153 ms (criterion 3); its GC pauses stay at 0.040–0.051 ms max, so the stalls are the whole cost | `java-undersized-heap-gc-pause.json` `runtime.alloc_stalls` (`count`, `max_ns`) and `max`; `java-undersized-heap.json`; `verify.log` criterion 3 |
-| Observed: non-generational Shenandoah p99.9 0.150–0.155 ms, max pause 0.41–0.51 ms; `thp` p99.9 0.142–0.146 ms, max pause 0.022–0.030 ms; `jfr-off` p99.9 0.145–0.159 ms. Neither THP nor the recording moves p99.9 outside ZGC's own run-to-run range; say exactly that, no more | reports; `verify.log` "observed (no bound)" |
-| Python `cyclic-garbage`: 9 generation-2 collections in the window (99 gen-1, 1,092 gen-0), longest collection 144.0–150.6 ms, p99.9 138.2–144.4 ms; `frozen`: 0 collections, 119,780 objects frozen, p99.9 0.154–0.168 ms (criterion 4) | `python-<variant>.json` and `-gc-pause.json` `notes`, `percentiles` |
+| Observed: non-generational Shenandoah p99.9 0.150–0.155 ms, max pause 0.41–0.51 ms; `thp` p99.9 0.142–0.146 ms, max pause 0.022–0.030 ms, but it got no huge pages (a second ZGC run on 4 KB pages: it shows nothing about huge pages); `jfr-off` p99.9 0.145–0.159 ms, 6 to 11 microseconds above ZGC's in the same run, inside ZGC's own run-to-run spread and the opposite direction from a recording cost; say exactly that, no more | reports; `verify.log` "observed (no bound)" |
+| Python `cyclic-garbage`: 9 generation-2 collections in the window (99 gen-1, 1,092 gen-0), longest collection 144.0–150.6 ms, p99.9 138.1–144.4 ms; `frozen`: 0 collections, 119,780 objects frozen, p99.9 0.154–0.168 ms (criterion 4) | `python-<variant>.json` and `-gc-pause.json` `notes`, `percentiles` |
 | C++ `bulk-free` max 3.65–3.87 ms and p99.9 2.08–2.19 ms against `deferred-free` p99.9 0.135–0.141 ms (criterion 5: at least 10x); 33 waves, 320,000 entries destroyed inline or by the reclaimer | `cpp-<variant>.json` `percentiles`, `notes` |
 | Observed pair: `deferred-free` max 0.79–0.85 ms, `no-free` control max 0.36–0.49 ms, both single OS-noise events; the reclaimer claim rests on criterion 5, not on these maxima | `verify.log` "cpp deferred-free max …"; README |
 | Every report: count 300,000, dropped 0, `check`, `build.flags` names GC and heap | criterion 6 |
@@ -707,7 +718,7 @@ Part 2 additions:
    called asserted.
 10. Decisions honoured: JDK 25.0.5 LTS; JDK 27 and 28 as status only; Valhalla
     conceptual with a dated box matching `VALHALLA.md`; AOT under G1 with JEP 516;
-    native-image prose only; Q4 pin is not host isolation; Q5 host THP only;
+    native-image prose only; Q4 pin is not host isolation; Q5 host THP only, `thp` refused by the host;
     Chronicle OSS only, analytics disabled, pre-toucher stub never called, no
     `fsync` claim; Unsafe warnings kept.
 11. Boundaries: no cache-locality/false-sharing lesson (Ch9), no lock-free theory
@@ -722,8 +733,8 @@ Part 2 additions:
 
 | Step | Status |
 |---|---|
-| S16 Ch5 | todo |
-| S17 Ch6 | todo |
-| S18 Ch7 | todo |
-| S19 Ch8 | todo |
-| Opus validation | todo |
+| S16 Ch5 | done |
+| S17 Ch6 | done |
+| S18 Ch7 | done |
+| S19 Ch8 | done |
+| Opus validation | done (per chapter; see `r02-plan.md` S16–S19) |

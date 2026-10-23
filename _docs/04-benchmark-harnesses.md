@@ -210,7 +210,7 @@ The first re-run showed why the check is worth having. The converter computed ev
 - Harnesses print a mean by default. Read the median and the percentiles.
 - A nanosecond-scale microbenchmark says what a function costs in isolation, not whether the line meets its 480 ms budget.
 
-The next chapter, in Part 2, asks what the JVM costs: allocation, escape analysis and JIT warm-up.
+The next chapter, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, opens Part 2.
 
 ## For deeper coverage
 

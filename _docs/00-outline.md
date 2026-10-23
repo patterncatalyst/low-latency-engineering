@@ -46,10 +46,10 @@ The arc is below. Chapters link as they ship; see the
 - Ch4 · [Benchmark harnesses: Google Benchmark, `pyperf`, JMH]({{ '/docs/04-benchmark-harnesses/' | relative_url }})
 
 ## Part 2 — The Managed-Runtime Question
-- Ch5 · What the JVM costs: allocation, escape analysis, JIT warmup vs AOT
-- Ch6 · GC for tails: Generational ZGC and Shenandoah
-- Ch7 · Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity
-- Ch8 · Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison
+- Ch5 · [What the JVM costs: allocation, escape analysis, JIT warmup vs AOT]({{ '/docs/05-jvm-costs/' | relative_url }})
+- Ch6 · [GC for tails: Generational ZGC and Shenandoah]({{ '/docs/06-gc-tails/' | relative_url }})
+- Ch7 · [Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity]({{ '/docs/07-offheap-lockfree/' | relative_url }})
+- Ch8 · [Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison]({{ '/docs/08-zero-copy-flat/' | relative_url }})
 
 ## Part 3 — Accelerating Code
 - Ch9 · Eliminating work: allocation, cache locality, false sharing
