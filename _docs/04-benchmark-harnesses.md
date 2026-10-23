@@ -179,7 +179,7 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 
 **C++, Google Benchmark, 30 repetitions.** The guarded median is 4.73 to 4.74 ns per check digit (4.728, 4.730 and 4.737 ns). The custom p99, which is the slowest repetition, is 4.75 to 4.79 ns, within 0.06 ns of the median in every run. The spread measures stability; the worst call is another question.
 
-**Java, JMH SampleTime, 3 forks.** The guarded p50 is 31 to 32 ns per check digit. The tail widens: p99 is 37 to 38 ns, p99.9 is 42 to 52 ns, and the maximum sampled invocation is 92 to 122 ns per check digit. The shape is a tight body and a maximum three to four times the median, which is what a distribution looks like and what a single number hides.
+**Java, JMH SampleTime, 3 forks.** The guarded p50 is 31 to 32 ns per check digit. The tail widens: p99 is 37 to 38 ns, p99.9 is 42 to 52 ns, and the maximum sampled invocation is 92 to 122 ns per check digit. The shape is a tight body and a maximum 2.9 to 3.8 times the median, which is what a distribution looks like and what a single number hides.
 
 **Python, pyperf, 6 processes x 4 values.** `pyperf stats` reports a median of 1.97 to 2.02 us per check digit over 24 values. The 95th percentile is 2.03 to 2.05 us and the maximum is 2.05 us in every run. Runs 1 and 2 had 5 and 4 of 24 values outside pyperf's outlier band, which is narrow at this spread; run 3 had none. Run 1 spanned 2.00 to 2.05 us, runs 2 and 3 1.95 to 2.05 and 1.96 to 2.05 us. The percentiles show that spread where a one-line summary would not.
 
@@ -189,7 +189,7 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 
 The eliminated C++ median is a fraction of a nanosecond (1.8e-10 ns in all three runs in `gbench.json`), and the Java eliminated p50 is 0 ns. `verify.sh` floors the divisor at 0.01 ns so the ratio stays finite, so the ratios are lower bounds, not measurements of how fast nothing is: at least 472x in C++ (472x, 473x, 473x) and at least 3,100x in Java (3,100x, 3,200x, 3,200x). A tool that reports 0 ns for a function that does 17 multiplications has told you the benchmark is broken, not that the function is free.
 
-**Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,894 to 1,917 ns per check, against a median measured value of 1,974 to 2,023 ns. The warm-up value is 5.6, 4.1 and 4.7 % lower than the median in runs 1 to 3, and below the minimum measured value in every run (2,001, 1,951 and 1,959 ns). Each pyperf value already times 64 calls of 1,024 checks, so the interpreter is warm before the first value finishes.
+**Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,894 to 1,917 ns per check, against a median measured value of 1,974 to 2,023 ns. The warm-up value is 5.6, 4.1 and 4.7 % lower than the median in runs 1 to 3, and below the minimum measured value in every run (2,001, 1,951 and 1,959 ns). That first value is one call of 1,024 checks (`loops=1` in `pyperf.json`), and it shows no cold-start penalty.
 
 **The tuning warning.** In all three runs pyperf warned the result may be unstable and advised `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are untuned and not comparable with a tuned VM later in the book.
 

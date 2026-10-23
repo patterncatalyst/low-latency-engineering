@@ -2,7 +2,7 @@
 title: "Latency vs bandwidth: latency is a distribution"
 order: 1
 part: "Understanding & Measuring Latency"
-description: "On a bare-metal, untuned host, equal throughput can hide an 82x to 180x difference in median latency, and one slow parcel in a hundred moves p99 up by 11 to 30 times while the median stays put. Measure the distribution, never one number."
+description: "On a bare-metal, untuned host, equal throughput can hide an 82x to 180x difference in median latency, and one slow parcel in a hundred moves p99 up by 11 to 30 times while the median stays in the fast mode. Measure the distribution, never one number."
 duration: 45 minutes
 ---
 
@@ -492,7 +492,7 @@ All numbers below come from the committed runs `r02-run1..3` in `examples/01-lat
 
 ### A. Equal throughput, different median
 
-Throughput stays at about 1,000 parcels per second: per-parcel runs measure 1,000.1 to 1,003.4 per second and batch-32 runs 1,003.1 to 1,003.4. The batch figures are up to 0.3 % higher because the first completion falls 31 ms into the run, which shortens the measured span.
+Throughput stays at about 1,000 parcels per second: per-parcel runs measure 1,000.1 to 1,003.4 per second and batch-32 runs 1,003.1 to 1,003.4. The C++ and Python batch figures are 0.3 % higher because the first completion falls 31 ms into the run, which shortens the measured span; Java's differ by under 0.16 %.
 
 | Variant | p50 across runs and languages |
 |---|---|
@@ -517,7 +517,7 @@ The Java runs show a second tail effect. Their notes record `JIT not warmed: fir
 
 ### The median itself moved
 
-The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 165 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed. One binary's median moved by up to 2.2 times. The 1 kHz consumers on this untuned host switch at random between a mode near 100 us and one near 155 to 170 us. An interleaved run of the tree before and after the last code change switched the same way in both, and the cause of the modes is not identified.
+The per-parcel median is not a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 164 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed. One binary's median moved by up to 2.2 times. Across the nine per-parcel runs on this untuned host, p50 spread from 85 to 188 us. An interleaved run of the tree before and after the last code change spread the same way in both (`examples/05-jvm-costs/results/r02-ab/`), and the cause is not identified.
 
 Variants in one run differ too: in `r02-run2` the C++ per-parcel p50 was 157 us and the bimodal p50, which does strictly more work, 95 us.
 

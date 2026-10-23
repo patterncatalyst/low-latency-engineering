@@ -9,7 +9,7 @@ failure handling.
 The running workload is a high-speed parcel sortation line. Every technique is
 measured against one end-to-end number: **scan-to-divert** latency.
 
-Status: planning. See `_plans/iteration-plan.md`.
+Status: Parts 0 to 2 (chapters 0 to 8) are written, and their examples are measured on the r02 runs. The remaining Parts are in progress. See `_plans/iteration-plan.md`.
 
 ## License
 

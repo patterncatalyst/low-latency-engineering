@@ -80,9 +80,9 @@ read prefixes from a container the compiler cannot see through.
 CPython does not remove the call. What it does is specialize hot bytecode after a few
 executions, which is why pyperf runs warm-up values first, discards them from the result and
 records them. For this function the effect is small: pyperf's own output reports
-`2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each value covers 64
-calls of the 1,024-prefix function and the interpreter is warm before the first value
-finishes. The first warm-up of the calibration run (a cold interpreter) was 1,894 to 1,917 ns
+`2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each measured value covers 64
+calls of the 1,024-prefix function. The first warm-up of the calibration run (a cold
+interpreter, one call of 1,024 checks, `loops=1` in `pyperf.json`) was 1,894 to 1,917 ns
 per check digit and the median measured value 1,974 to 2,023 ns across r02-run1..3: 5.6, 4.1 and 4.7
 percent lower than the median in runs 1 to 3, and below the minimum measured value in every run (minimum 2,001, 1,951 and 1,959 ns; first warm-up 1,909, 1,894 and 1,917 ns). `verify.sh` prints both. A function with a
 long first call would show more.

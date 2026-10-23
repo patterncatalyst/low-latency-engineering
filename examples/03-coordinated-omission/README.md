@@ -9,7 +9,7 @@ benchmark, and obvious to a clock that starts at the belt's schedule.
 The line simulator emits 1,000 parcels/s for 10 s (`seq`, `intended_emit_ns`).
 A consumer in each language receives them and, at parcel `seq` 5000, stalls for
 200 ms with a blocking sleep. `sleep` is the right tool here: it models a GC
-pause, a page fault or a lock convoy, a thread that is simply not running. From
+pause, a page fault or a lock convoy, a thread that is not running. From
 that one run it records:
 
 | Variant | Latency is | What it shows |

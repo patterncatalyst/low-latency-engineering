@@ -40,7 +40,7 @@ For a stable system, the long-run number of items inside equals the arrival rate
 
 Applied to the belt, it gives the 480 parcels in flight. Applied to a handler, `lambda` times the mean service time is the number of busy workers: the model block reports an offered utilisation of 0.60 from a 600 us service-time parameter. One worker suffices on average, with no slack for the tail Chapter 1 measured.
 
-The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.02 to 1.04 ms, p50 is 0.73 to 0.76 ms and p99 is 4.31 to 4.35 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
+The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.04 to 1.08 ms, p50 is 0.76 to 0.80 ms and p99 is 4.35 to 4.42 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
 
 ### Amdahl's Law
 
@@ -406,7 +406,7 @@ The report's warehouse sub-block gives the same 480 parcels in flight on 1.20 m 
 | | s | 1/s | N = 2 predicted / measured | N = 4 predicted / measured |
 |---|---|---|---|---|
 | C++ | 0.095 | 10.5x | 1.83x / 1.77x | 3.11x / 2.83 to 2.85x |
-| Java | 0.098 to 0.099 | 10.1 to 10.2x | 1.82x / 1.76x | 3.09x / 2.74 to 2.75x |
+| Java | 0.098 to 0.099 | 10.1 to 10.2x | 1.82x / 1.75 to 1.76x | 3.08 to 3.09x / 2.74 to 2.75x |
 | Python processes | 0.104 to 0.107 | 9.4 to 9.6x | 1.81x / 1.83 to 1.89x | 3.03 to 3.05x / 2.92 to 2.97x |
 | Python threads | 0.099 to 0.101 | 9.9 to 10.1x | 1.82x / 1.00 to 1.02x | 3.07 to 3.09x / 0.47 to 0.50x |
 

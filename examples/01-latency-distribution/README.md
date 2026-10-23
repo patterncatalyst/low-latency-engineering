@@ -14,8 +14,8 @@ so a parcel that arrives first waits for 31 more (31 ms at 1 kHz) before it is
 handled. Throughput is equal; p50 is 15.2 to 15.4 ms instead of 0.085 to 0.188 ms (r02-run1..3).
 
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
-a scanner no-read) takes a slow re-lookup path of about 2 ms. The median does
-not move. p99 jumps by 11 to 30 times, because the slow parcel and the
+a scanner no-read) takes a slow re-lookup path of about 2 ms. The median stays
+in the fast mode. p99 jumps by 11 to 30 times, because the slow parcel and the
 parcels queued behind it all land in the tail: in r02-run1..3, 2.6 to 6.8 % of
 parcels took 1 ms or more, and p99 was 2,140,159 to 6,832,127 ns. A single summary number
 describes neither group.
@@ -23,7 +23,7 @@ describes neither group.
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
 startup to about 2 ms, and not a sleep. A sleep yields the core: the OS runs
 something else, the timer wakes the thread later, and the cost shows up as
-scheduler noise rather than as the work the parcel really does. A real re-lookup
+scheduler noise rather than as the work the parcel does. A real re-lookup
 holds the core, so the parcels behind it queue. The busy loop reproduces that
 queueing.
 
@@ -148,8 +148,9 @@ three runs, in nanoseconds:
 
 The per-parcel median itself moves between runs on this untuned host (C++ 164,479,
 156,671 and 160,127 ns, Java 111,871, 187,519 and 85,439 ns across runs 1 to 3). The
-1 kHz consumers switch at random between a mode near 100 us and one near 155 to 170 us on
-this host; the cause is not identified. No criterion compares medians across runs.
+1 kHz consumers spread from 85 to 188 us in per-parcel p50 on this host, and an interleaved
+before-and-after run (`examples/05-jvm-costs/results/r02-ab/`) spread the same way in both; the
+cause is not identified. No criterion compares medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU
 governor, tuned profile, virtualisation, load.

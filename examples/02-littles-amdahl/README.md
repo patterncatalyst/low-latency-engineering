@@ -141,7 +141,7 @@ All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `
 | A, C++: L within 5 % of lambda x W-bar | PASS: error +0.28 to +0.51 % (L 1.046 to 1.087 against 1.042 to 1.083) |
 | A, Java: L within 5 % of lambda x W-bar | PASS: error +1.31 to +4.27 % (L 1.114 to 1.235 against 1.100 to 1.188); r02-run1 at +4.27 % and r02-run2 at +3.95 % are close to the 5 % bound |
 | B, C++ N = 4 within 15 % | PASS: s = 0.0951, predicted 3.11x, measured 2.83 to 2.85x (-8.6 to -9.0 %) |
-| B, Java N = 4 within 15 % | PASS: s = 0.0984 to 0.0989, predicted 3.09x, measured 2.74 to 2.75x (-11.0 to -11.3 %) |
+| B, Java N = 4 within 15 % | PASS: s = 0.0984 to 0.0989, predicted 3.08 to 3.09x, measured 2.74 to 2.75x (-11.0 to -11.3 %) |
 | B, Python threads < 1.3x | PASS: 0.47 to 0.50x (GIL enabled) |
 | B, Python processes > 2x | PASS: 2.92 to 2.97x |
 | Effective GHz (user cycles / task-clock) | C++ 4.34 to 4.35, Java 4.35 to 4.36, Python 3.69 to 3.86 (`perf stat`, no root) |
