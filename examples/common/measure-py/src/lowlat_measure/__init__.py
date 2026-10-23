@@ -17,6 +17,7 @@ from lowlat_measure.recorder import (
     decode,
     new_histogram,
 )
+from lowlat_measure.runtime import hw_counters, placement, python_build, runtime_block
 
 __all__ = [
     "HIGHEST_TRACKABLE_NS",
@@ -24,5 +25,9 @@ __all__ = [
     "SIGNIFICANT_DIGITS",
     "Recorder",
     "decode",
+    "hw_counters",
     "new_histogram",
+    "placement",
+    "python_build",
+    "runtime_block",
 ]

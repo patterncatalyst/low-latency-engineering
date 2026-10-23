@@ -3,6 +3,7 @@ package io.patterncatalyst.lowlat.measure;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -114,6 +116,34 @@ class LatencyRecorderTest {
         assertTrue(tree.get("build").get("gil_enabled").isNull());
         assertEquals(tree.get("percentiles").get("max").asLong(), decoded.getMaxValue());
         assertTrue(tree.get("percentiles").has("p99_9"));
+    }
+
+    /**
+     * The golden dataset with every new runtime field. The committed java-placement.json is what
+     * {@code lowlat-report check} reads in the Python suite; LOWLAT_REGEN_GOLDEN=1 rewrites it.
+     */
+    @Test
+    void placementHwCountersAndCountersRoundTrip(@TempDir Path dir) throws IOException {
+        Map<String, Object> runtime = new LinkedHashMap<>();
+        runtime.put("placement", RuntimeInfo.placement(List.of(2, 4), true, false));
+        runtime.put("hw_counters", RuntimeInfo.hwCounters(RuntimeInfo.HwSource.PERFNORM, 1_000_000L,
+                Map.of("L1-dcache-load-misses", 0.42)));
+        runtime.put("counters", RuntimeInfo.counters(new LinkedHashMap<>(Map.of("cas_failures", 18L,
+                "max_retries", 7L, "torn_reads", 0L))));
+        Path out = regenGolden() ? fixtures.resolve("java-placement.json") : dir.resolve("java-placement.json");
+        goldenRecorder().writeReport(out, null, null, runtime);
+
+        JsonNode rt = JSON.readTree(out).get("runtime");
+        assertEquals(List.of(2, 4), List.of(rt.get("placement").get("cpus").get(0).asInt(),
+                rt.get("placement").get("cpus").get(1).asInt()));
+        assertTrue(rt.get("placement").get("distinct_cores").asBoolean());
+        assertFalse(rt.get("placement").get("smt_siblings").asBoolean());
+        assertEquals("perfnorm", rt.get("hw_counters").get("source").asString());
+        assertEquals(1_000_000L, rt.get("hw_counters").get("ops").asLong());
+        assertEquals(18L, rt.get("counters").get("cas_failures").asLong());
+        assertTrue(rt.get("counters").get("torn_reads").isIntegralNumber());
+        assertThrows(IllegalArgumentException.class,
+                () -> RuntimeInfo.hwCounters(RuntimeInfo.HwSource.PERF, 0, Map.of()));
     }
 
     @Test

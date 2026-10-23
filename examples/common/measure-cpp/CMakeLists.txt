@@ -1,5 +1,5 @@
 # C++ measurement kit (see ../MEASUREMENT.md): HdrHistogram_c + nlohmann/json.
-add_library(lowlat_measure STATIC src/recorder.cpp)
+add_library(lowlat_measure STATIC src/recorder.cpp src/runtime.cpp)
 add_library(lowlat::measure ALIAS lowlat_measure)
 target_include_directories(lowlat_measure PUBLIC include)
 target_link_libraries(lowlat_measure PUBLIC hdr_histogram::hdr_histogram_static nlohmann_json::nlohmann_json)

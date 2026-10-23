@@ -94,6 +94,38 @@
             "involuntary": { "type": "integer", "minimum": 0 }
           }
         },
+        "placement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cpus", "distinct_cores", "smt_siblings"],
+          "description": "Where the measured threads ran: the logical CPUs they were pinned to, whether those CPUs sit on distinct physical cores, and whether any two of them are SMT siblings of one core.",
+          "properties": {
+            "cpus": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "description": "Logical CPU numbers of the pinned threads." },
+            "distinct_cores": { "type": "boolean", "description": "True when every listed CPU belongs to a different physical core." },
+            "smt_siblings": { "type": "boolean", "description": "True when at least two listed CPUs are hardware-thread siblings of one core." }
+          }
+        },
+        "hw_counters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "ops", "per_op"],
+          "description": "Hardware or simulated counters for the measured region, normalised per operation. per_op holds event name -> count per operation; never a time-average.",
+          "properties": {
+            "source": { "enum": ["perf", "cachegrind", "perfnorm"], "description": "perf stat, valgrind --tool=cachegrind, or JMH -prof perfnorm." },
+            "ops": { "type": "integer", "minimum": 1, "description": "Operations the counters were divided by." },
+            "per_op": {
+              "type": "object",
+              "additionalProperties": { "type": "number" },
+              "description": "Event name -> count per operation, e.g. 'L1-dcache-load-misses'."
+            }
+          }
+        },
+        "counters": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Exact event counts of the run, name -> integer: CAS failures, maximum retries, torn reads, litmus outcomes, lost claims."
+        },
+        "python_build": { "enum": ["gil", "free-threaded"], "description": "Python lanes only: which CPython build ran the measurement." },
         "alloc_stalls": {
           "type": "object",
           "additionalProperties": false,

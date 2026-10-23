@@ -2,10 +2,11 @@
 
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from lowlat_measure import Recorder, decode
+from lowlat_measure import Recorder, decode, hw_counters, placement, python_build, runtime_block
 from lowlat_measure.cli import main
 
 COMMON = Path(__file__).resolve().parents[2]
@@ -229,3 +230,80 @@ def test_runtime_accepts_legitimate_keys(lowlat_profile: Path, tmp_path: Path, k
     out = tmp_path / "ok.json"
     rec.write_report(out, runtime={"jit": {"steady": {key: 1}}})
     assert main(["check", str(out)]) == 0
+
+
+def test_runtime_placement_counters_round_trip(lowlat_profile: Path, tmp_path: Path) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    runtime = runtime_block(
+        placement=placement([2, 4], distinct_cores=True, smt_siblings=False),
+        hw_counters=hw_counters("perfnorm", 1_000_000, {"L1-dcache-load-misses": 0.42}),
+        counters={"cas_failures": 18, "max_retries": 7, "torn_reads": 0},
+        python_build=python_build(),
+        ctx_switches={"voluntary": 1, "involuntary": 0},
+    )
+    out = tmp_path / "r.json"
+    report = rec.write_report(out, runtime=runtime)
+    written = json.loads(out.read_text(encoding="utf-8"))["runtime"]
+    assert written == report["runtime"] == runtime
+    assert written["placement"]["cpus"] == [2, 4]
+    assert written["python_build"] in {"gil", "free-threaded"}
+    assert main(["check", str(out)]) == 0
+    assert runtime_block() == {}
+
+
+def test_runtime_block_valid_fixture() -> None:
+    assert main(["check", str(EXAMPLES / "valid-runtime-placement.json")]) == 0
+
+
+@pytest.mark.parametrize(
+    ("name", "needle"),
+    [
+        ("invalid-runtime-counters-mean.json", "mean_retries"),
+        ("invalid-runtime-hw-per-op-mean.json", "avg_misses"),
+        ("invalid-runtime-hw-source.json", "vtune"),
+        ("invalid-runtime-hw-ops-zero.json", "ops"),
+        ("invalid-runtime-counter-float.json", "torn_reads"),
+    ],
+)
+def test_runtime_new_fields_planted_failures(
+    name: str, needle: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["check", str(EXAMPLES / name)]) == 1
+    assert needle in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda r: r["placement"].pop("cpus"),
+        lambda r: r["placement"].update(cpus=[-1]),
+        lambda r: r["placement"].update(distinct_cores="yes"),
+        lambda r: r.update(python_build="nogil"),
+        lambda r: r["hw_counters"]["per_op"].update(x="many"),
+    ],
+)
+def test_runtime_new_fields_reject_malformed(
+    lowlat_profile: Path, tmp_path: Path, mutate: Callable[[dict], object]
+) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    runtime = runtime_block(
+        placement=placement([0], distinct_cores=True, smt_siblings=False),
+        hw_counters=hw_counters("perf", 1, {"cycles": 1.0}),
+    )
+    mutate(runtime)
+    out = tmp_path / "bad.json"
+    rec.write_report(out, runtime=runtime)
+    assert main(["check", str(out)]) == 1
+
+
+@pytest.mark.parametrize("language", ["cpp", "java"])
+def test_writer_placement_fixtures_check(language: str) -> None:
+    """The C++ and Java writers' reports with placement, hw_counters and counters pass check."""
+    report = FIXTURES / f"{language}-placement.json"
+    runtime = json.loads(report.read_text(encoding="utf-8"))["runtime"]
+    assert runtime["placement"]["cpus"] == [2, 4]
+    assert runtime["hw_counters"]["ops"] == 1_000_000
+    assert runtime["counters"]["cas_failures"] == 18
+    assert main(["check", str(report)]) == 0

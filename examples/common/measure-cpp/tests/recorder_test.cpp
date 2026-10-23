@@ -8,6 +8,7 @@
 
 #include <unistd.h>
 
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -17,6 +18,7 @@
 #include <string_view>
 
 #include "lowlat/measure/recorder.hpp"
+#include "lowlat/measure/runtime.hpp"
 
 namespace fs = std::filesystem;
 using lowlat::measure::Recorder;
@@ -211,6 +213,31 @@ TEST_F(Measure, RuntimeAppearsOnlyWhenGiven) {
   const json doc = r.report("", std::nullopt, runtime);
   EXPECT_EQ(doc.at("runtime"), runtime);
   EXPECT_FALSE(doc.contains("model"));
+}
+
+// Writes the golden dataset with every new runtime field. The committed cpp-placement.json is
+// what `lowlat-report check` reads in the Python suite; LOWLAT_REGEN_GOLDEN=1 rewrites it.
+TEST_F(Measure, RuntimePlacementCountersRoundTrip) {
+  namespace m = lowlat::measure;
+  const std::array cpus{2, 4};
+  json runtime = {{"placement", m::placement(cpus, true, false)},
+                  {"hw_counters", m::hw_counters(m::HwSource::perf, 1'000'000, {{"L1-dcache-load-misses", 0.42}})},
+                  {"counters", m::counters({{"cas_failures", 18}, {"max_retries", 7}, {"torn_reads", 0}})}};
+  const auto path = regen_golden() ? kFixtures / "cpp-placement.json"
+                                   : fs::temp_directory_path() / "lowlat-placement-test.json";
+  const json doc = golden_recorder().write_report(path, "", std::nullopt, runtime);
+  std::ifstream in{path};
+  const json written = json::parse(in);
+  if (!regen_golden()) fs::remove(path);
+  EXPECT_EQ(written, doc);
+  const json& rt = written.at("runtime");
+  EXPECT_EQ(rt.at("placement"), (json{{"cpus", {2, 4}}, {"distinct_cores", true}, {"smt_siblings", false}}));
+  EXPECT_EQ(rt.at("hw_counters").at("source"), "perf");
+  EXPECT_EQ(rt.at("hw_counters").at("ops"), 1'000'000);
+  EXPECT_EQ(rt.at("counters").at("cas_failures"), 18);
+  EXPECT_TRUE(rt.at("counters").at("torn_reads").is_number_integer());
+  EXPECT_TRUE(has_no_mean(written));
+  EXPECT_THROW((void)m::hw_counters(m::HwSource::perf, 0, {}), std::invalid_argument);
 }
 
 TEST_F(Measure, WriteReportCarriesModel) {
