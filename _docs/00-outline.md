@@ -51,8 +51,8 @@ The arc is below. Chapters link as they ship.
 - Ch8 · [Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison]({{ '/docs/08-zero-copy-flat/' | relative_url }})
 
 ## Part 3 — Accelerating Code
-- Ch9 · Eliminating work: allocation, cache locality, false sharing
-- Ch10 · Lock-free and wait-free synchronization
+- Ch9 · [Eliminating work: allocation, cache locality, false sharing]({{ '/docs/09-eliminating-work/' | relative_url }})
+- Ch10 · [Lock-free and wait-free synchronization]({{ '/docs/10-lockfree-waitfree/' | relative_url }})
 
 ## Part 4 — Threading & I/O Models
 - Ch11 · Stackful vs stackless: threads and fibers vs event loops and coroutines

@@ -42,7 +42,7 @@ Both use the idea in Figure 7.2. A sequence only grows, and the slot is the sequ
 
 {% include excalidraw.html file="07-ring-sequences" alt="A ring of eight slots, drawn as an illustration of the 65,536-slot ring, holds sequences 5 to 10 in slots 5, 6, 7, 0, 1 and 2. The producer, with its cursor on its own cache line, publishes sequence 11 into slot 3 (amber arrow); the consumer reads sequence 5 from slot 5. The slot is the sequence masked with slots minus one, which works because the slot count is a power of two. A dashed ghost box marks a full ring, where the producer would have to wait." caption="Figure 7.2 — A sequence only grows; masking maps it to a slot, and each side writes only its own cursor, so neither takes a lock." %}
 
-The minimum ordering is a release store by the writer and an acquire load by the reader, which `VarHandle` `setRelease` and `getAcquire` express in Java. Chapter 10, *Lock-free and wait-free synchronization* (Part 3), treats memory orders in full.
+The minimum ordering is a release store by the writer and an acquire load by the reader, which `VarHandle` `setRelease` and `getAcquire` express in Java. [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}) (Part 3), treats memory orders in full.
 
 ## How the code works
 
@@ -330,7 +330,7 @@ The next chapter, *Zero-copy and flat data: Panama (FFM), Valhalla value objects
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), as further reading.
-- Chapter 10, *Lock-free and wait-free synchronization*, in Part 3, for memory orders in full.
+- [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), in Part 3, for memory orders in full.
 - Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code: CI/CD, deployment, and rollouts gated on a latency and jitter SLO*, in Part 5, for isolation as versioned deployment config.
 - `examples/common/MEASUREMENT.md` for the report format.
 

@@ -213,7 +213,7 @@ The object table is a `ParcelState[]`, a heap object behind each reference; the 
 
 `Arena.ofConfined()` gives the table an explicit lifetime: `close()` releases the memory when the code chooses, with no collector involved, and only the creating thread may touch the segment. The `VarHandle`s are `static final` so the JIT treats them as constants.
 
-The sweep reads `encoder_tick` of every slot, and `state` and `weight_g` only for the about 2 % that are due; in the object layout each read first follows a reference. Why adjacent slots are cheaper than pointers is the subject of Chapter 9, *Eliminating work: allocation, cache locality, false sharing* (Part 3); this chapter only measures the difference.
+The sweep reads `encoder_tick` of every slot, and `state` and `weight_g` only for the about 2 % that are due; in the object layout each read first follows a reference. Why adjacent slots are cheaper than pointers is the subject of [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3); this chapter only measures the difference.
 
 C++ gets the flat layout by default: a `std::vector<ParcelState>` is contiguous, and the pointer layout is the one the code has to ask for with `std::vector<std::unique_ptr<ParcelState>>`. The two are a contrast of layouts, not of languages.
 
@@ -302,7 +302,7 @@ Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf
 - C++ spells the idea `std::start_lifetime_as`; a `reinterpret_cast` read is undefined behaviour. CPython copies no bytes but allocates per field.
 - Value classes (JEP 401) are a JDK 28 early-access preview. The book measures JDK 25 and revisits at JDK 28 GA.
 
-The next chapter, *Eliminating work: allocation, cache locality, false sharing* (Part 3), takes data-structure-level work elimination across all three languages.
+The next chapter, [*Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3), takes data-structure-level work elimination across all three languages.
 
 ## For deeper coverage
 

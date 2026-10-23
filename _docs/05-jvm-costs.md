@@ -40,7 +40,7 @@ When C2 inlines a small method into its caller, it can see whether an object bui
 
 {% include excalidraw.html file="05-escape-analysis" alt="Three JMH lanes run the same decide() call on each parcel. In the escaping lane the DivertDecision is stored in a field, so it stays on the heap and gc.alloc.rate.norm is about 24 B/op. In the scalar-replaced lane (amber) C2 keeps the fields in registers and the counter is below 1 B/op. In the --no-escape-analysis lane, scalar replacement is absent and the counter is about 24 B/op again." caption="Figure 5.2 — An object that never leaves the compiled method costs nothing on the heap: about 24 B/op becomes less than 1 B/op, and turning escape analysis off brings the 24 B back." %}
 
-Inlining and non-escape are decided per call site, so the same `decide` source allocates in one caller and not in another. A hot path should not depend on it; Chapter 9, *Eliminating work: allocation, cache locality, false sharing*, designs the data instead.
+Inlining and non-escape are decided per call site, so the same `decide` source allocates in one caller and not in another. A hot path should not depend on it; [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), designs the data instead.
 
 ### Tiered compilation and deoptimization
 
@@ -336,7 +336,7 @@ The next chapter, *GC for tails: Generational ZGC and Shenandoah*, measures the 
 - Enberg, *Latency* (Manning), for further reading on measuring and reasoning about latency.
 - Chapter 1, *Latency vs bandwidth: latency is a distribution*, and Chapter 4, *Benchmark harnesses: Google Benchmark, pyperf and JMH*, in Part 1.
 - Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, in Part 2.
-- Chapter 9, *Eliminating work: allocation, cache locality, false sharing*, in Part 3.
+- [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), in Part 3.
 - `examples/common/MEASUREMENT.md` for the report format.
 
 ---

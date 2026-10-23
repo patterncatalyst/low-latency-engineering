@@ -295,7 +295,7 @@ The next chapter, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor
 - Enberg, *Latency* (Manning), for the broader treatment of tail latency.
 - Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, in Part 2, for allocation cost and warm-up.
 - Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1, for why a pause charges every parcel behind it.
-- Chapter 9, *Eliminating work: allocation, cache locality, false sharing*, in Part 3, for removing allocation in the data structure instead of tuning the collector.
+- [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), in Part 3, for removing allocation in the data structure instead of tuning the collector.
 - JEP 490 (ZGC: remove the non-generational mode, JDK 24) and JEP 521 (Generational Shenandoah, product in JDK 25).
 - `examples/common/MEASUREMENT.md` for the report format and the checks every report passes.
 

@@ -275,11 +275,39 @@ The GPL-with-Classpath-exception tools are build- and measurement-time only; no 
 
 ## Verification status
 
-Unverified. The criteria above have run in dry runs only (uncommitted `results/latest`). The committed host measurements
-`r03-run1..3` (S8) are the evidence, and this section stays unverified until they exist and every criterion has held
-on them. What S8 must confirm:
+Behavioural. `verify.sh` asserts the eight criteria above, and all of them held on the host runs `r03-run1..3`
+(bare-metal host, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8,
+GCC 16.2, Python 3.14.8 and 3.14.8+freethreaded; lab VM down; commit 20664bd; load average 0.64 to 1.99 at each start).
+Threads sat on distinct physical cores other than CPU 0 (jcstress picks its own CPUs), placed with `sched_setaffinity`
+and asserted per thread, and the free-threaded runs kept the GIL off from start to end. Ranges over the three runs; a
+ratio is the range of each run's median over its 3 alternations, and a p99 in ns is the first alternation.
 
-- criteria 1 to 8 hold on three quiet-host runs, each bound with at least 2x margin or the margin stated;
-- every pinned thread was on its CPU, distinct physical cores, no SMT siblings;
-- the free-threaded runs report `python_build` `free-threaded` with the GIL off at start and at end;
-- `lowlat-report check` passes on every report and `validate.py host-ids` passes.
+| Quantity | Range |
+|---|---|
+| Exactly-once claims, C++ and Java `mutex`, `cas-loop`, `fetch-add`; Python `lock`, GIL and free-threaded (exact) | 0 lost or duplicated in all runs |
+| Python `--racy-claim`, free-threaded build, of 400,000 claims (exact count, at least 1 asserted) | 97,002 to 116,017 lost or duplicated; GIL build 0 |
+| `fetch-add` steps per claim (exact) | 1 |
+| `cas-loop` failed CAS, least contended of 3 runs, C++ / Java | at least 2,711,734 / 3,824,735 |
+| `mutex` voluntary switches, least-switching producer, C++ / Java (bound 100) | 5,406 to 9,746 / 47,556 to 61,712 |
+| `fetch-add` voluntary switches, most-switching producer, C++ / Java (bound 10) | 1 / 1 to 3 |
+| Claim p99, `mutex` / `cas-loop` / `fetch-add`, C++ | 2,633 to 2,985 / 478 to 502 / 400 to 468 ns |
+| Claim p99, `mutex` / `cas-loop` / `fetch-add`, Java | 8,187 to 8,383 / 1,409 to 1,837 / 516 to 584 ns |
+| Claim p99 ratio, `mutex` / `fetch-add` | C++ 6.10x to 6.45x (bound 2.5x), Java 14.13x to 15.23x (bound 3x) |
+| Consumer wait at the stalled sequence (1 ms sleep, bound 0.5 ms) | C++ 1.05 to 1.07 ms, Java 1.11 to 1.14 ms |
+| Litmus both-zero: C++ `seq-cst` / Java `volatile` (exact) | 0 / 0 |
+| Litmus both-zero: C++ release/acquire of 10,000,000 trials / Java `setRelease`/`getAcquire` jcstress samples | 2,306,475 to 9,888,040 / 85.0 to 98.6 million |
+| Torn snapshots, every read-side variant (exact) | 0 in 2.44 to 2.62 billion C++ and 1.22 to 1.30 billion Java reads |
+| Writer p99, shared lock / seqlock, C++ | 5,979 to 6,603 / 25 to 32 ns, ratio 205.5x to 231.0x (bound 3x) |
+| Writer p99, `rw-lock` / `stamped-lock`, Java | 8,083 to 8,287 / 206 to 234 ns, ratio 34.5x to 37.1x (bound 3x) |
+| Line runs, four variants | 200,000 parcels counted, none dropped on any camera, every divert command received |
+| Reports | 88 pass `lowlat-report check`; every C++ and Java report carries `build.flags`, every Python report `runtime.python_build`, every pinned run `runtime.placement` |
+| Observed: `mutex` over `fetch-add` p99.9 | C++ 5.64x to 5.92x, Java 6.24x to 6.40x |
+| Observed: seqlock reader retries | C++ 4,904,289 to 26,715,000, Java 6,125,589 to 6,366,054 |
+| Observed: per-store p50, release / `seq_cst` and `setRelease` / `volatile` | 0 / 4 ns and 0 / 4 ns |
+| Observed: Python `lock` claim p99, GIL / free-threaded | 664 to 686 ns / 13,007 to 13,367 ns |
+
+Outliers and failures: none. The narrowest margins are the C++ claim p99 ratio (2.44x to 2.58x) and the stalled-producer
+wait (2.11x to 2.29x, a margin set by construction since the sleep guarantees at least 1 ms); no asserted bound cleared
+with under 2x. The `cas-loop` against `fetch-add` comparison is observed: lock-free is not faster here, and wait-free
+bounds steps, not time. End-to-end line percentiles are observed and show no difference between variants, as expected at
+2.5 kHz per camera against a 480 ms budget.

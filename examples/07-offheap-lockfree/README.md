@@ -99,7 +99,7 @@ index sits in its own 128-byte range (`alignas(kFalseSharingRange)`, twice
 
 Same workload, same two reports (end-to-end and hand-off), UDP port 47274, no command channel,
 journal or manifest: the lane isolates the hand-off. Its acquire/release pairs correspond to
-`VarHandle` access modes in Java (`setRelease`/`getAcquire`); Chapter 10 treats memory orders in full.
+`VarHandle` access modes in Java (`setRelease`/`getAcquire`); [Chapter 10](../../_docs/10-lockfree-waitfree.md) treats memory orders in full.
 
 ## Run
 
