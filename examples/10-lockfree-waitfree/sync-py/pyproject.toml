@@ -14,7 +14,13 @@ name = "lowlat-sync"
 version = "1.0.0"
 description = "Ch10: lock-free and wait-free, Python lane (lock against shared itertools.count), GIL and free-threaded"
 requires-python = ">=3.14"
+# lowlat-measure is needed only by `sync-py report`, which runs in the GIL workspace environment
+# (lowlat_sync.lane and the measuring command import nothing from it, so a free-threaded interpreter
+# keeps the GIL off).
 dependencies = []
+
+[project.scripts]
+sync-py = "lowlat_sync.cli:main"
 
 [build-system]
 requires = ["hatchling==1.32.4"]

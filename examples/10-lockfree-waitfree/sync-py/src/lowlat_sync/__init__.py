@@ -1,8 +1,14 @@
-"""Ch10: lock-free and wait-free, Python lane. Wiring only (S4); the lane lands in S6."""
+"""Ch10: lock-free and wait-free, Python lane (the divergence).
+
+CPython publishes no atomics API, so this lane has no memory-order test and no seqlock. What it can
+show is the claim step: a `threading.Lock`, a shared `itertools.count`, and an unsynchronised
+`counter += 1`, under the GIL build and under the free-threaded build. Measure with
+`lowlat_sync.lane` (it imports nothing that re-enables the GIL) and convert the raw samples to a
+`lowlat-report/1` report with `lowlat_sync.report` in the GIL workspace environment.
+"""
 
 import sys
 import sysconfig
-import threading
 
 
 def python_build() -> str:
@@ -18,25 +24,3 @@ def python_build() -> str:
 def gil_enabled() -> bool:
     """Whether the GIL is on right now (False only for a free-threaded build that kept it off)."""
     return sys._is_gil_enabled()
-
-
-def claim_all(threads: int, per_thread: int) -> list[int]:
-    """Claim sequences under a lock from several threads; returns every claimed sequence."""
-    lock = threading.Lock()
-    next_seq = 0
-    claimed: list[list[int]] = [[] for _ in range(threads)]
-
-    def worker(slot: int) -> None:
-        nonlocal next_seq
-        for _ in range(per_thread):
-            with lock:
-                seq = next_seq
-                next_seq += 1
-            claimed[slot].append(seq)
-
-    pool = [threading.Thread(target=worker, args=(i,)) for i in range(threads)]
-    for t in pool:
-        t.start()
-    for t in pool:
-        t.join()
-    return [seq for part in claimed for seq in part]
