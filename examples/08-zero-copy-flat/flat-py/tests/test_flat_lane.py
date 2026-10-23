@@ -1,6 +1,9 @@
 """The Python lane: golden bytes, the two decode paths and what each allocates."""
 
+import base64
 import json
+import sys
+import zlib
 from pathlib import Path
 
 import pytest
@@ -126,10 +129,34 @@ def test_gbench_conversion_has_one_sample_per_repetition(tmp_path: Path) -> None
     assert lowlat_report(["check", str(path)]) == 0
 
 
-def _same_histograms(a: dict, b: dict) -> bool:
-    """True when two reports decode to equal histograms (the compressed bytes may differ)."""
+def _differs_only_in_compression(a: dict, b: dict) -> bool:
+    """True when two reports are equal apart from the compressed histogram bytes, and the decoded
+    histograms are equal (zlib output varies with the zlib version; the data does not)."""
+    if {**a, "hdr_histogram": None} != {**b, "hdr_histogram": None}:
+        return False
     ha, hb = decode_histogram(a["hdr_histogram"]), decode_histogram(b["hdr_histogram"])
-    return ha.get_total_count() == hb.get_total_count() and ha.counts == hb.counts
+    return ha.get_total_count() == hb.get_total_count() and list(ha.counts) == list(hb.counts)
+
+
+def _recompress(encoded: str, level: int) -> str:
+    """Re-encode an HdrHistogram V2 compressed string with zlib at another level."""
+    raw = base64.b64decode(encoded)
+    cookie, payload = raw[:4], zlib.decompress(raw[8:])
+    body = zlib.compress(payload, level)
+    return base64.b64encode(cookie + len(body).to_bytes(4, "big") + body).decode("ascii")
+
+
+def test_compression_only_differences_are_recognised() -> None:
+    old = json.loads((RESULTS / "r02-run1" / "jmh").glob("*.json").__next__().read_text("utf-8"))
+    new = None
+    for level in (1, 9, 6):
+        candidate = {**old, "hdr_histogram": _recompress(old["hdr_histogram"], level)}
+        if candidate["hdr_histogram"] != old["hdr_histogram"]:
+            new = candidate
+            break
+    assert new is not None, "no zlib level changed the bytes"
+    assert _differs_only_in_compression(new, old)
+    assert not _differs_only_in_compression({**new, "count": old["count"] + 1}, old)
 
 
 RESULTS = Path(__file__).resolve().parents[2] / "results"
@@ -169,9 +196,11 @@ def test_lowlat_report_converters_regenerate_the_committed_reports_byte_for_byte
         assert names, original
         for name in names:
             new, old = (regenerated / name).read_bytes(), (original / name).read_bytes()
-            if new != old and _same_histograms(json.loads(new), json.loads(old)):
+            if new != old and _differs_only_in_compression(json.loads(new), json.loads(old)):
                 pytest.fail(
-                    f"{name}: bytes differ but the decoded histograms are equal. Check the "
+                    f"{name}: bytes differ but the decoded histograms are equal "
+                    f"(Python {sys.version.split()[0]}, zlib {zlib.ZLIB_RUNTIME_VERSION}). "
+                    "Check the "
                     "interpreter (examples/.python-version is 3.14+gil, the system build) and its "
                     "zlib: HdrHistogram compresses the histogram with zlib, whose output differs "
                     "between zlib versions and between the GIL and free-threaded builds."

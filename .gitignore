@@ -38,6 +38,7 @@ examples/*/results/**/queue/
 .claude/worktrees/
 
 # valgrind --tool=cachegrind raw output (cachegrind_run keeps only a JSON summary) and
-# jcstress result trees (Ch10 verify.sh summarises them to text)
+# jcstress result files and the Ch10 results tree (verify.sh summarises them to text)
 cachegrind.out.*
-jcstress-results/
+jcstress-results-*.bin.gz
+examples/10-lockfree-waitfree/java/results/

@@ -254,7 +254,27 @@ def test_profile_records_caches_topology_and_tool_versions_without_the_kernel_bu
 # ---- interrupts ------------------------------------------------------------------------------
 
 
-@needs_perf
+def _descendants(pid: int) -> list[int]:
+    """Every process below pid, found with pgrep -P before anything is signalled."""
+    found: list[int] = []
+    queue = [pid]
+    while queue:
+        kids = subprocess.run(
+            ["pgrep", "-P", str(queue.pop())], capture_output=True, text=True, check=False
+        ).stdout.split()
+        found += [int(k) for k in kids]
+        queue += [int(k) for k in kids]
+    return found
+
+
+def _alive(pid: int) -> bool:
+    try:
+        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+    except FileNotFoundError, ProcessLookupError:
+        return False
+    return state != "Z"
+
+
 @pytest.mark.parametrize("sig", ["INT", "TERM"])
 @pytest.mark.parametrize("fn", ["perf_region", "cachegrind_run"])
 def test_interrupted_runs_write_no_json_and_leave_no_temp_dir(
@@ -262,6 +282,8 @@ def test_interrupted_runs_write_no_json_and_leave_no_temp_dir(
 ) -> None:
     if fn == "cachegrind_run" and not shutil.which("valgrind"):
         pytest.skip("valgrind not installed")
+    if fn == "perf_region" and not perf_usable():
+        pytest.skip("perf cannot count user-space events here")
     tmpdir = tmp_path / "tmp"
     tmpdir.mkdir()
     out = tmp_path / "out.json"
@@ -284,8 +306,13 @@ def test_interrupted_runs_write_no_json_and_leave_no_temp_dir(
             ["pgrep", "-P", str(proc.pid)], capture_output=True, text=True, check=False
         ).stdout.split()
         target = children[0] if children else str(proc.pid)
+        descendants = _descendants(int(target))
+        assert descendants, "the workload was not running when the signal was sent"
         os.kill(int(target), getattr(signal, f"SIG{sig}"))
         proc.wait(timeout=30)
+        time.sleep(0.5)  # the helper's EXIT trap kills perf or valgrind and the workload
+        survivors = [pid for pid in descendants if _alive(pid)]
+        assert not survivors, f"processes survived {sig}: {survivors}"
     finally:
         if proc.poll() is None:
             proc.kill()

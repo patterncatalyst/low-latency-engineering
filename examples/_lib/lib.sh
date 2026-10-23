@@ -438,6 +438,9 @@ assert_placement() {
 # the region. Exit status is non-zero when perf fails or CMD does.
 PERF_REGION_DEFAULT_EVENTS=cycles:u,instructions:u,L1-dcache-load-misses:u,LLC-load-misses:u
 
+# Stopping a run: press Ctrl-C, or `kill -- -PGID` (the whole process group). A TERM sent to the
+# calling script alone leaves the helper running in the background to finish: bash defers a trap
+# while a foreground command runs. The helper's traps kill the workload and remove the temp dir.
 perf_region() (
   # A subshell body, like time_to_ready: the EXIT/INT/TERM traps remove the temp dir on every path,
   # an interrupted run included, and OUT is written only after perf succeeded and parsed.
@@ -453,7 +456,7 @@ perf_region() (
   pid=''
   # perf runs in the background and is waited for: bash runs a trap only after a foreground
   # command ends, but `wait` returns at once when a trapped signal arrives.
-  trap 'kill "$pid" 2>/dev/null || true; rm -rf "$dir"' EXIT
+  trap '[[ -z $pid ]] || { pkill -TERM -P "$pid" 2>/dev/null; kill "$pid" 2>/dev/null; } || true; rm -rf "$dir"' EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
   mkfifo "$dir/ctl" "$dir/ack"
@@ -518,6 +521,9 @@ _perf_region_ctl() {
 # space-separated string) is passed through to valgrind, e.g. a different --D1=size,assoc,line.
 # `jq '{source, ops, per_op}' OUT` gives a runtime.hw_counters object. OUT is passed through
 # scripts/scrub-host-ids.py. Valgrind is 20-50x slower than native: size the workload for that.
+# Stopping a run: press Ctrl-C, or `kill -- -PGID` (the whole process group). A TERM sent to the
+# calling script alone leaves the helper running in the background to finish: bash defers a trap
+# while a foreground command runs. The helper's traps kill the workload and remove the temp dir.
 cachegrind_run() (
   # A subshell body with traps, as perf_region: no temp dir survives an interrupt and OUT appears
   # only once the summary parsed.
@@ -530,7 +536,7 @@ cachegrind_run() (
   status=0
   dir=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-cg.XXXXXX")
   pid=''
-  trap 'kill "$pid" 2>/dev/null || true; rm -rf "$dir"' EXIT
+  trap '[[ -z $pid ]] || { pkill -TERM -P "$pid" 2>/dev/null; kill "$pid" 2>/dev/null; } || true; rm -rf "$dir"' EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
   read -ra extra <<<"${CACHEGRIND_ARGS:-}"
@@ -539,7 +545,8 @@ cachegrind_run() (
   pid=$!
   wait "$pid" || status=$?
   if ((status)); then
-    python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter <"$dir/valgrind.log" >&2 || true
+    [[ -s $dir/valgrind.log ]] &&
+      python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter <"$dir/valgrind.log" >&2 || true
     die "cachegrind_run: command or valgrind failed (status $status)"
   fi
   ops=${LOWLAT_OPS:-}
