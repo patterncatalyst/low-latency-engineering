@@ -83,19 +83,29 @@ TEST(Layout, FatRecordIsEightyBytesAndHotColdSplitsIt) {
 }
 
 TEST(Layout, CameraCountersAreSpacedAsNamed) {
-  EXPECT_EQ(sizeof(el::AdjacentCamera), 16U);
   EXPECT_EQ(sizeof(el::LinePaddedCamera), 64U);
   EXPECT_EQ(sizeof(el::PairPaddedCamera), 128U);
   EXPECT_EQ(alignof(el::PairPaddedCamera), 128U);
 
-  const auto adjacent = el::make_bank<el::AdjacentCamera>();
-  EXPECT_TRUE(el::share_line(*adjacent, 0, 1, el::kLine));  // the defect: neighbours on one line
+  // Adjacent: all five read counters in one 64-byte line, the no-read counters in the next, whatever the heap does.
+  const auto line_of = [](const void* p) { return reinterpret_cast<std::uintptr_t>(p) / el::kLine; };
+  const auto adjacent = std::make_unique<el::AdjacentBank>();
+  EXPECT_EQ(alignof(el::AdjacentBank), el::kLine);
+  EXPECT_EQ(reinterpret_cast<std::uintptr_t>(adjacent.get()) % el::kLine, 0U);
+  for (std::size_t c = 1; c < el::kCameras; ++c) {
+    EXPECT_EQ(line_of(&adjacent->reads[0]), line_of(&adjacent->reads[c])) << c;
+    EXPECT_EQ(line_of(&adjacent->no_reads[0]), line_of(&adjacent->no_reads[c])) << c;
+  }
+  EXPECT_NE(line_of(&adjacent->reads[0]), line_of(&adjacent->no_reads[0]));
+
   const auto line = el::make_bank<el::LinePaddedCamera>();
   const auto pair = el::make_bank<el::PairPaddedCamera>();
+  const auto addr = [](const auto& camera) { return reinterpret_cast<std::uintptr_t>(&camera); };
   for (std::size_t a = 0; a < el::kCameras; ++a) {
     for (std::size_t b = a + 1; b < el::kCameras; ++b) {
       EXPECT_FALSE(el::share_line(*line, a, b, el::kLine)) << a << "," << b;
       EXPECT_FALSE(el::share_line(*pair, a, b, el::kLinePair)) << a << "," << b;  // not even the same line pair
+      EXPECT_EQ(addr((*pair)[b]) - addr((*pair)[a]), (b - a) * el::kLinePair);   // pair-padded: 128 B apart
     }
   }
 }

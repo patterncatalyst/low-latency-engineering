@@ -1,6 +1,7 @@
 package io.patterncatalyst.lowlat.eliminating;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.management.ThreadMXBean;
@@ -24,20 +25,35 @@ class LayoutAndAllocationTest {
 
     @Test
     void counterLayoutsAreSpacedAsNamed() {
-        CameraCounters adjacent = new CameraCounters(CameraCounters.ADJACENT);
-        CameraCounters line = new CameraCounters(CameraCounters.LINE_PADDED);
-        CameraCounters pair = new CameraCounters(CameraCounters.PAIR_PADDED);
-        assertEquals(16, 8 * (adjacent.readIndex(1) - adjacent.readIndex(0))); // 4 cameras per 64-byte line
-        assertEquals(64, 8 * (line.readIndex(1) - line.readIndex(0)));
-        assertEquals(128, 8 * (pair.readIndex(1) - pair.readIndex(0)));
-        // Any two cameras at least 128 bytes apart never share a 64-byte line or an aligned 128-byte pair.
-        assertTrue(8 * (pair.readIndex(CameraCounters.CAMERAS - 1) - pair.readIndex(0)) >= 128 * (CameraCounters.CAMERAS - 1));
+        for (CameraCounters.Layout layout : CameraCounters.Layout.values()) {
+            CameraCounters counters = new CameraCounters(layout);
+            assertEquals(0, counters.baseAddress() % 128, "the segment starts on a line pair");
+            long base = counters.baseAddress();
+            for (int a = 0; a < CameraCounters.CAMERAS; a++) {
+                for (int b = a + 1; b < CameraCounters.CAMERAS; b++) {
+                    long readA = base + layout.readOffset(a);
+                    long readB = base + layout.readOffset(b);
+                    switch (layout) {
+                        case ADJACENT -> { // all five read counters in one line, all five no-read counters in another
+                            assertEquals(readA / 64, readB / 64);
+                            assertEquals((base + layout.noReadOffset(a)) / 64, (base + layout.noReadOffset(b)) / 64);
+                            assertNotEquals(readA / 64, (base + layout.noReadOffset(a)) / 64);
+                        }
+                        case LINE_PADDED -> assertNotEquals(readA / 64, readB / 64);
+                        case PAIR_PADDED -> {
+                            assertNotEquals(readA / 128, readB / 128);
+                            assertEquals(128L * (b - a), readB - readA);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Test
     void everyCameraKeepsItsOwnCountUnderConcurrentWriters() throws InterruptedException {
         long increments = 200_000;
-        CameraCounters counters = new CameraCounters(CameraCounters.PAIR_PADDED);
+        CameraCounters counters = new CameraCounters(CameraCounters.Layout.PAIR_PADDED);
         List<Thread> cameras = new ArrayList<>();
         for (int c = 0; c < CameraCounters.CAMERAS; c++) {
             int camera = c;

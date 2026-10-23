@@ -59,4 +59,16 @@ class SsccTest {
             assertEquals(keys.packed(i), Sscc.pack(keys.text(i)));
         }
     }
+
+    @Test
+    void keyArithmeticMatchesBigInteger() {
+        java.math.BigInteger stride = java.math.BigInteger.valueOf(1_442_695_040_888_963_407L);
+        java.math.BigInteger space = java.math.BigInteger.valueOf(Keys.SSCC_SPACE);
+        for (long seed : new long[] {0, 1, 2026, 7}) {
+            for (long i : new long[] {0, 1, 2, 999_999, 1_000_003, 123_456_789}) {
+                long expected = java.math.BigInteger.valueOf(i + seed * 0x9E3779B1L).multiply(stride).mod(space).longValueExact();
+                assertEquals(expected, Keys.ssccOf(seed, i), "seed " + seed + " key " + i);
+            }
+        }
+    }
 }

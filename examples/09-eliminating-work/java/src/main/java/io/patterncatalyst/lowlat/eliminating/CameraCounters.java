@@ -1,76 +1,119 @@
 package io.patterncatalyst.lowlat.eliminating;
 
-import java.util.concurrent.atomic.AtomicLongArray;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.VarHandle;
 
 /**
  * Per-camera counters for the five scan-tunnel cameras: each camera has a read count and a no-read count, written
  * by that camera's thread only, sampled by a telemetry thread.
  *
- * <p>One {@link AtomicLongArray}; camera {@code c}'s counters sit at index {@code c * stride} and
- * {@code c * stride + 1}. {@code stride} is the layout: 2 longs (16 bytes) puts neighbouring cameras on one cache
- * line (false sharing); 8 (64 bytes) gives each camera a line; 16 (128 bytes) a line pair. The padding is not
- * idiomatic Java: it is a measured latency construct, and the JDK's own answer for a contended sum is
- * {@link java.util.concurrent.atomic.LongAdder}, which stripes and pads internally (a different shape: one
- * total, not one value per camera). {@code @Contended} would be the in-JDK spelling of the padding, but it is JDK-internal
- * outside java.base, so the layout is explicit instead.
+ * <p>The counters live in one {@link MemorySegment} allocated with {@code arena.allocate(size, 128)}, the Ch8
+ * idiom, because a heap array's alignment cannot be controlled: its base sits at an arbitrary 8-byte offset from a
+ * cache line, so "adjacent" counters would straddle two lines at a different place on every run. The segment
+ * starts on a 128-byte boundary, so the layout is exact:
+ * <ul>
+ * <li>{@link Layout#ADJACENT}: the five read counters side by side in the first 64-byte line (bytes 0 to 39),
+ * the five no-read counters in the second line (bytes 64 to 103). False sharing by construction.</li>
+ * <li>{@link Layout#LINE_PADDED}: each camera owns a 64-byte line.</li>
+ * <li>{@link Layout#PAIR_PADDED}: each camera owns a 128-byte line pair.</li>
+ * </ul>
  *
- * <p>Java does not control where an array sits relative to a cache line, so a stride of 8 longs keeps cameras at
- * least 64 bytes apart (never the same line) and 16 keeps them at least 128 bytes apart (never the same line pair).
+ * <p>Access goes through the {@link VarHandle} of {@link ValueLayout#JAVA_LONG}: plain read plus release store for
+ * the single writer, {@code getAndAdd} for the contrast run, a volatile read for the telemetry thread. The padding
+ * is not idiomatic Java: it is a measured latency construct, and the JDK's own answer for a contended sum is
+ * {@link java.util.concurrent.atomic.LongAdder} (one total, not one value per camera).
  */
 public final class CameraCounters {
 
     public static final int CAMERAS = 5;
-    /** Longs per camera for the layouts of the chapter. */
-    public static final int ADJACENT = 2;
-    public static final int LINE_PADDED = 8;
-    public static final int PAIR_PADDED = 16;
 
-    private final AtomicLongArray cells;
-    private final int stride;
+    /** Where each camera's two counters sit, in bytes from the (128-byte-aligned) start of the segment. */
+    public enum Layout {
+        ADJACENT(8, 64),
+        LINE_PADDED(64, 8),
+        PAIR_PADDED(128, 8);
 
-    public CameraCounters(int stride) {
-        if (stride < 2) {
-            throw new IllegalArgumentException("a camera needs two counters");
+        private final long cameraStride;
+        private final long noReadOffset;
+
+        Layout(long cameraStride, long noReadOffset) {
+            this.cameraStride = cameraStride;
+            this.noReadOffset = noReadOffset;
         }
-        this.stride = stride;
-        this.cells = new AtomicLongArray(CAMERAS * stride + PAIR_PADDED); // trailing pad: no camera shares a line with the array's neighbour
+
+        /** Bytes between neighbouring cameras' read counters. */
+        public long cameraStride() {
+            return cameraStride;
+        }
+
+        public long readOffset(int camera) {
+            return camera * cameraStride;
+        }
+
+        public long noReadOffset(int camera) {
+            return readOffset(camera) + noReadOffset;
+        }
+
+        /** Bytes of the segment, with one trailing line pair so nothing shares a line with the next allocation. */
+        long segmentBytes() {
+            return noReadOffset(CAMERAS - 1) + Long.BYTES + 128;
+        }
     }
 
-    public int stride() {
-        return stride;
+    private static final VarHandle LONG = ValueLayout.JAVA_LONG.varHandle();
+
+    private final Layout layout;
+    private final MemorySegment cells;
+
+    public CameraCounters(Layout layout) {
+        this.layout = layout;
+        // Arena.ofAuto: any thread may access it, and the collector frees it; the segment is zero-filled.
+        this.cells = Arena.ofAuto().allocate(layout.segmentBytes(), 128);
     }
 
-    /** Index of camera {@code c}'s read counter. */
-    public int readIndex(int camera) {
-        return camera * stride;
+    public Layout layout() {
+        return layout;
+    }
+
+    /** Address of the segment, for the layout test and the report. */
+    public long baseAddress() {
+        return cells.address();
     }
 
     /** Single writer: a plain read and a release store, no read-modify-write (a plain store on x86). */
     public void bumpRead(int camera) {
-        int i = camera * stride;
-        cells.setRelease(i, cells.getPlain(i) + 1);
+        bump(layout.readOffset(camera));
     }
 
     public void bumpNoRead(int camera) {
-        int i = camera * stride + 1;
-        cells.setRelease(i, cells.getPlain(i) + 1);
+        bump(layout.noReadOffset(camera));
+    }
+
+    private void bump(long offset) {
+        LONG.setRelease(cells, offset, (long) LONG.get(cells, offset) + 1);
     }
 
     /** The same increment as an atomic read-modify-write ({@code lock xadd} on x86), for the contrast run. */
     public void addRead(int camera) {
-        cells.getAndAdd(camera * stride, 1L);
+        LONG.getAndAdd(cells, layout.readOffset(camera), 1L);
     }
 
     public void addNoRead(int camera) {
-        cells.getAndAdd(camera * stride + 1, 1L);
+        LONG.getAndAdd(cells, layout.noReadOffset(camera), 1L);
     }
 
     /** A volatile read of both counters: what the telemetry thread does. */
     public long total(int camera) {
-        return cells.get(camera * stride) + cells.get(camera * stride + 1);
+        return reads(camera) + noReads(camera);
+    }
+
+    public long reads(int camera) {
+        return (long) LONG.getVolatile(cells, layout.readOffset(camera));
     }
 
     public long noReads(int camera) {
-        return cells.get(camera * stride + 1);
+        return (long) LONG.getVolatile(cells, layout.noReadOffset(camera));
     }
 }

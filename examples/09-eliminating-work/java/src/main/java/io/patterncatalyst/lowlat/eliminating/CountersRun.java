@@ -90,12 +90,12 @@ final class CountersRun {
                     + "[--hold-ms MS] [--increment store|rmw]");
             return 2;
         }
-        int stride = switch (o.variant) {
-            case "pair-padded" -> CameraCounters.PAIR_PADDED;
-            case "line-padded" -> CameraCounters.LINE_PADDED;
-            default -> CameraCounters.ADJACENT;
+        CameraCounters.Layout layout = switch (o.variant) {
+            case "pair-padded" -> CameraCounters.Layout.PAIR_PADDED;
+            case "line-padded" -> CameraCounters.Layout.LINE_PADDED;
+            default -> CameraCounters.Layout.ADJACENT;
         };
-        CameraCounters counters = new CameraCounters(stride);
+        CameraCounters counters = new CameraCounters(layout);
         LongAdder adder = new LongAdder(); // the long-adder variant: every camera adds to this one sum
         boolean useAdder = o.variant.equals("long-adder");
         long[][] batchNs = new long[o.cameras][o.batches];
@@ -114,6 +114,7 @@ final class CountersRun {
             Thread t = new Thread(() -> {
                 try (AffinityLock lock = Placement.acquire(o.cpus.get(camera))) {
                     placed[camera] = Placement.line(lock.cpuId(), "camera");
+                    warmUp(layout, camera, o.rmw, useAdder);
                     ready.countDown();
                     go.await();
                     Batch batch = o.variant.equals("long-adder") ? Batch.ADDER : o.rmw ? Batch.RMW : Batch.STORE;
@@ -199,7 +200,7 @@ final class CountersRun {
         exact.put("batch_size", (long) BATCH);
         exact.put("batches_per_camera", (long) o.batches);
         exact.put("increments", perCamera * o.cameras);
-        exact.put("stride_bytes", useAdder ? 0L : stride * 8L);
+        exact.put("stride_bytes", useAdder ? 0L : layout.cameraStride());
         exact.put("telemetry_samples", telemetrySamples.get());
         runtime.put("counters", RuntimeInfo.counters(exact));
         runtime.put("placement", RuntimeInfo.placement(o.cpus, !siblings, siblings));
@@ -211,6 +212,23 @@ final class CountersRun {
                 + (useAdder ? "; one shared LongAdder instead of per-camera counters" : ""), null, runtime);
         System.out.println("report: " + o.out);
         return 0;
+    }
+
+    private static final long WARM_UP_NANOS = 600_000_000L;
+
+    /**
+     * Runs the camera's own loop on a scratch counter set until the JIT has compiled it, before the counted region
+     * starts: the whole measured run is tens of milliseconds, the same order as the compilation, so unwarmed code
+     * would put the compiler threads' cache misses into the hardware counts.
+     */
+    private static void warmUp(CameraCounters.Layout layout, int camera, boolean rmw, boolean useAdder) {
+        CameraCounters scratch = new CameraCounters(layout);
+        LongAdder scratchAdder = new LongAdder();
+        Batch batch = useAdder ? Batch.ADDER : rmw ? Batch.RMW : Batch.STORE;
+        long end = System.nanoTime() + WARM_UP_NANOS;
+        while (System.nanoTime() < end) {
+            batch.run(scratch, scratchAdder, camera);
+        }
     }
 
     /** One batch of {@value #BATCH} increments by one camera; one loop per increment so the loop body stays small. */

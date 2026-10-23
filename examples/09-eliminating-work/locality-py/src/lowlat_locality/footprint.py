@@ -63,6 +63,12 @@ def measure(parcels: int) -> dict[str, Any]:
         make = make_dict_record if shape == "dict-per-parcel" else make_record
         return [make(scan_of(sscc, i), sscc) for i, sscc in enumerate(sscc_keys)]
 
+    sample = scan_of(sscc_keys[0], 0)
+    # sys.getsizeof of the record object itself (a dict, or a slotted instance), without its values.
+    container = {
+        "dict-per-parcel": sys.getsizeof(make_dict_record(sample, sscc_keys[0])),
+        "slots-int": sys.getsizeof(make_record(sample, sscc_keys[0])),
+    }
     tracked = {shape: _retained_bytes(lambda shape=shape: table(shape)) for shape in SHAPES}
     record_only = {
         shape: _retained_bytes(lambda shape=shape: records(shape))
@@ -74,6 +80,7 @@ def measure(parcels: int) -> dict[str, Any]:
         "parcels": parcels,
         "tracked_bytes": tracked,
         "record_only_bytes": record_only,
+        "record_container_bytes": container,
         "tracked_bytes_per_parcel": {k: v / parcels for k, v in tracked.items()},
         "example_barcode": format_sscc(sscc_keys[0]),
     }

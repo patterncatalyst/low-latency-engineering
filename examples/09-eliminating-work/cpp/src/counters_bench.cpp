@@ -1,6 +1,6 @@
 // counters-bench: five scan-tunnel camera threads bump their own counters; a telemetry thread samples them.
 //
-//   --variant adjacent-counters   the five cameras' counters back to back (16 B each: four per line)
+//   --variant adjacent-counters   the five cameras' read counters in one 64-byte line, no-reads in the next
 //   --variant pair-padded         one camera per 128-byte pair of lines
 //   --variant line-padded         one camera per 64-byte line (observed: does the adjacent line matter?)
 //   --variant smt-siblings        adjacent layout, two cameras on the two hardware threads of one core
@@ -68,9 +68,9 @@ void announce_thread(const Placed& p) {
   if (const char* path = std::getenv("LOWLAT_PLACEMENT_FILE")) std::ofstream{path, std::ios::app} << line << '\n';
 }
 
-template <class Camera>
-int run(const Options& o) {
-  const auto bank = make_bank<Camera>();
+template <class Bank>
+int run(const Options& o, Bank& bank_ref, std::size_t bytes_per_camera) {
+  Bank* const bank = &bank_ref;
   std::vector<std::vector<std::int64_t>> batch_ns(o.cameras, std::vector<std::int64_t>(o.batches));
   std::vector<Placed> placed(o.cameras + 1);
 
@@ -88,7 +88,7 @@ int run(const Options& o) {
       placed[c] = {current_tid(), o.cpus[c], "camera"};
       ready.count_down();
       go.wait(false);
-      Camera& cam = (*bank)[c];
+      auto& cam = (*bank)[c];
       for (std::size_t b = 0; b < o.batches; ++b) {
         const std::int64_t t0 = monotonic_ns();
         for (std::size_t i = 0; i < kBatch; ++i) {
@@ -152,7 +152,7 @@ int run(const Options& o) {
                                            {"batch_size", static_cast<std::int64_t>(kBatch)},
                                            {"batches_per_camera", static_cast<std::int64_t>(o.batches)},
                                            {"increments", static_cast<std::int64_t>(per_camera * o.cameras)},
-                                           {"bytes_per_camera", static_cast<std::int64_t>(sizeof(Camera))},
+                                           {"bytes_per_camera", static_cast<std::int64_t>(bytes_per_camera)},
                                            {"telemetry_samples", static_cast<std::int64_t>(telemetry_samples.load())}});
   runtime["placement"] = measure::placement(o.cpus, !siblings, siblings);
   PerfRegion::report_ops(per_camera * o.cameras);
@@ -216,9 +216,16 @@ int main(int argc, char** argv) {
       }
     }
     const Options o = parse(args);
-    if (o.variant == "pair-padded") return run<PairPaddedCamera>(o);
-    if (o.variant == "line-padded") return run<LinePaddedCamera>(o);
-    return run<AdjacentCamera>(o);
+    if (o.variant == "pair-padded") {
+      const auto bank = make_bank<PairPaddedCamera>();
+      return run(o, *bank, sizeof(PairPaddedCamera));
+    }
+    if (o.variant == "line-padded") {
+      const auto bank = make_bank<LinePaddedCamera>();
+      return run(o, *bank, sizeof(LinePaddedCamera));
+    }
+    AdjacentCounters bank;  // adjacent-counters and smt-siblings: reads share one line
+    return run(o, bank, 2 * sizeof(std::uint64_t));
   } catch (const std::exception& e) {
     std::println(stderr, "counters-bench: {}\n{}", e.what(), kUsage);
     return EXIT_FAILURE;

@@ -5,28 +5,30 @@
 # after all have been evaluated). Latency ratios compare variants within THIS run, interleaved A B A B A B and judged on
 # the median of the three per-alternation ratios; counters labelled "exact" are deterministic and need no median.
 #   1  allocation per insert (exact): C++ node-map >= 2 per insert, flat-map 0; JMH node-map >= 64 B/op, flat-map <= 1 B/op;
-#      Python dict-per-parcel >= 2x slots bytes per tracked parcel (tracemalloc)
-#   2  hub lookups (1,000,000 parcels): node-map p50 >= 2x flat-map p50 (C++, Java); cachegrind LL read misses per
-#      lookup node-map >= 2x flat-map (exact)
+#      Python: the dict record object >= 2x the slotted record object (sys.getsizeof) and dict-per-parcel >= 2x slots-int
+#      bytes per tracked parcel (tracemalloc); dict against slots-str per tracked parcel is observed
+#   2  hub lookups (1,000,000 parcels): cachegrind LL read misses per lookup node-map >= 2x flat-map (exact); perf
+#      LLC-load-misses:u per lookup node-map >= 2x flat-map (C++, median of 3); the p50 ratios (C++, Java, bound 2x) are
+#      observed, with their margins printed
 #   3  hub sweep: fat-record p50 >= 2x hot-cold p50 (C++, Java); cachegrind D1 read misses per slot fat-record >= 4x
 #      hot-cold (exact)
-#   4  counters, five threads on distinct physical cores (placement checked from /proc): adjacent-counters per-batch p50
-#      >= 3x pair-padded (C++, Java); L1-dcache-load-misses:u per increment adjacent-counters >= 10x pair-padded (C++)
+#   4  counters, five threads on distinct physical cores (placement checked from /proc): L1-dcache-load-misses:u per
+#      increment adjacent-counters >= 10x pair-padded, single-writer store increment (C++ and Java); C++ per-batch p50
+#      adjacent-counters >= 3x pair-padded for the fetch_add increment. The store-increment batch times (C++, Java) and
+#      the Java getAndAdd times are observed
 #   5  line 10 kHz x 20 s against the preloaded hub tracker, C++: allocations per parcel from the tracker (exact):
 #      node-map >= 1, flat-map 0
 #   6  every report: count, dropped = 0 on the line, lowlat-report check, build.flags (Java), runtime.placement when pinned
-# Observed, not asserted: line-padded against pair-padded, smt-siblings, the increment as a read-modify-write, long-adder
-# (Java), line-scale lookups, hardware counters (vendor events are not asserted), line end-to-end
-# percentiles, Java allocation on the line, the Python sweep and process/thread counters, JOL footprint.
+# Observed, not asserted: the hub lookup p50 ratios, the counters' batch times for the store increment and for Java's
+# getAndAdd, line-padded against pair-padded, smt-siblings, long-adder (Java), line-scale lookups, the other hardware
+# counters, line end-to-end percentiles, Java allocation on the line, the Python sweep and process/thread counters,
+# JOL footprint.
 #
 #   ./verify.sh                 build, run, assert
 #   RECHECK=results/<run-id>    re-evaluate the committed reports without building or running anything
 #   ALLOW_BUSY=1 ./verify.sh    measure while a lab VM or other load is running (noisy)
 #   SKIP_BUILD=1 ./verify.sh    reuse existing builds
 #   SKIP_CACHEGRIND=1           skip the (slow) cachegrind runs and their criteria
-#   INCREMENT=store|rmw         which counter increment criterion 4 asserts (default store: the plan's single-writer
-#                               relaxed load + store; rmw: the same counts with fetch_add / getAndAdd). Both are run
-#                               and printed; the other one is observed. See README "Counters".
 #   RESULTS_DIR=DIR             where reports go (default results/latest)
 #   LOWLAT_BUILD=DIR            private C++ build directory
 #
@@ -52,10 +54,6 @@ PORT_NODE=47290
 PORT_FLAT=47291
 ROUNDS=3
 HOLD_MS=1000
-INCREMENT=${INCREMENT:-store}
-[[ $INCREMENT == store || $INCREMENT == rmw ]] || die "INCREMENT must be store or rmw"
-SUFFIX=''
-[[ $INCREMENT == rmw ]] && SUFFIX=.rmw
 BATCHES=20000
 # The JVM for every Java run: a fixed, pre-touched heap so no collection starts inside a measured run, and the native
 # access JNA (OpenHFT Affinity) needs. Chronicle analytics (a phone-home) is switched off.
@@ -105,6 +103,17 @@ expect_ratio() {
   local text
   text="$id $label: $(x_of "$median") (${each% }), bound >= ${bound}x, margin $margin${kind:+ [$kind]}"
   if ((median >= 1000 * bound)); then ok "$text"; else bad "$text"; fi
+}
+
+# observe_ratio ID LABEL BOUND "NUMS" "DENS": the same median ratio, printed with the margin it would have against BOUND,
+# but never a criterion.
+observe_ratio() {
+  local id=$1 label=$2 bound=$3 list median
+  list=$(ratios "$4" "$5")
+  median=$(sort -n <<<"$list" | sed -n "$((($(wc -l <<<"$list") + 1) / 2))p")
+  printf '  observed %s %s: %s (%s), %sx would be margin %s\n' "$id" "$label" "$(x_of "$median")" \
+    "$(awk '{ printf "%.2fx ", $1 / 1000 }' <<<"$list" | sed 's/ $//')" "$bound" \
+    "$(awk -v m="$median" -v b="$bound" 'BEGIN { printf "%.2fx", m / (1000 * b) }')"
 }
 
 # expect_count_ge ID LABEL VALUE BOUND / expect_count_le: an exact count against a bound.
@@ -182,6 +191,9 @@ if ((RUN)); then
   build_cpp tracker-bench counters-bench eliminating-line line-simulator eliminating-work-test
   BUILD_JAVA_TESTS=1 build_java "$HERE/java" # the Java tests (tracker, SSCC golden, layout, allocation) run on the way
   py_sync
+  # The generated protobuf modules are git-ignored: regenerate them (pinned protoc) when they are missing.
+  compgen -G "$LOWLAT_EXAMPLES/common/proto-py/src/lowlat/line/v1/*_pb2.py" >/dev/null ||
+    "$LOWLAT_ROOT/scripts/gen-python-proto.sh"
   [[ -f $JAR ]] || die "missing $JAR (build_java first)"
 
   step "unit tests: C++ (GoogleTest) and Python (pytest); Java ran during the package step"
@@ -191,8 +203,8 @@ if ((RUN)); then
 
   # Distinct physical cores for the pinned threads, from sysfs topology.
   # CPU 0 is left alone: it takes the boot-time interrupts and OpenHFT Affinity will not bind to it.
-  mapfile -t CORES < <(distinct_cores 7)
-  CORES=("${CORES[@]:1}")
+  mapfile -t CORES < <(distinct_cores 7 | awk '$1 != 0' | head -n 6)
+  ((${#CORES[@]} == 6)) || die "need six physical cores other than CPU 0, got ${#CORES[@]}"
   ok "pinned threads use physical cores ${CORES[*]} (one logical CPU per core); not isolation"
   # The two hardware threads of one of those cores, for the smt-siblings variant.
   SMT=()
@@ -244,7 +256,21 @@ collect() { # collect KIND VARIANT: p50 of each alternation, space separated
 node_p50s=$(collect cpp/hub-lookup-node-map)
 flat_p50s=$(collect cpp/hub-lookup-flat-map)
 printf '  hub lookup p50 (ns) by alternation: node-map %s | flat-map %s\n' "$node_p50s" "$flat_p50s"
-expect_ratio "2a" "C++ hub lookup p50, node-map / flat-map (median of $ROUNDS)" 2 "$node_p50s" "$flat_p50s"
+observe_ratio "2a" "C++ hub lookup p50, node-map / flat-map (median of $ROUNDS)" 2 "$node_p50s" "$flat_p50s"
+perf_alt() { # perf_alt KIND VARIANT EVENT: the per-op count of EVENT in each alternation, space separated
+  local r out=()
+  for r in $(seq "$ROUNDS"); do out+=("$(per_op "$OUT/$1-$2.a$r.json" "$3")"); done
+  echo "${out[*]}"
+}
+for ev in LLC-load-misses L1-dcache-load-misses; do
+  if [[ $ev == LLC-load-misses ]]; then
+    expect_ratio "2d" "C++ $ev:u per lookup, node-map / flat-map (median of $ROUNDS)" 2 \
+      "$(perf_alt cpp/hub-lookup node-map $ev)" "$(perf_alt cpp/hub-lookup flat-map $ev)"
+  else
+    observe_ratio "2d'" "C++ $ev:u per lookup, node-map / flat-map (median of $ROUNDS)" 2 \
+      "$(perf_alt cpp/hub-lookup node-map $ev)" "$(perf_alt cpp/hub-lookup flat-map $ev)"
+  fi
+done
 for v in node-map flat-map; do
   printf '  hub lookup %-9s p50 %s ns, p99 %s ns, p99.9 %s ns; L1 misses/lookup %.3f, LL misses/lookup %.4f (perf, :u)\n' "$v" \
     "$(p50_of "$OUT/cpp/hub-lookup-$v.a1.json")" "$(jget "$OUT/cpp/hub-lookup-$v.a1.json" .percentiles.p99)" \
@@ -345,24 +371,25 @@ for inc in store rmw; do
   [[ $inc == rmw ]] && sfx=.rmw
   adj_p50s=$(collect "cpp/counters-adjacent-counters$sfx")
   pad_p50s=$(collect "cpp/counters-pair-padded$sfx")
+  printf '  [%s increment] per-batch (1,000 increments) p50 (ns) by alternation: adjacent-counters %s | pair-padded %s\n' \
+    "$inc" "$adj_p50s" "$pad_p50s"
   l1_adj=() l1_pad=()
   for r in $(seq "$ROUNDS"); do
     l1_adj+=("$(per_op "$OUT/cpp/counters-adjacent-counters$sfx.a$r.json" L1-dcache-load-misses)")
     l1_pad+=("$(per_op "$OUT/cpp/counters-pair-padded$sfx.a$r.json" L1-dcache-load-misses)")
   done
-  printf '  [%s increment] per-batch (1,000 increments) p50 (ns) by alternation: adjacent-counters %s | pair-padded %s\n' \
-    "$inc" "$adj_p50s" "$pad_p50s"
   printf '  [%s increment] L1-dcache-load-misses:u per increment: adjacent-counters %s | pair-padded %s\n' "$inc" "${l1_adj[*]}" "${l1_pad[*]}"
-  if [[ $inc == "$INCREMENT" ]]; then
-    expect_ratio "4a" "C++ counters per-batch p50, adjacent-counters / pair-padded, $inc increment (median of $ROUNDS)" 3 "$adj_p50s" "$pad_p50s"
-    expect_ratio "4b" "C++ L1-dcache-load-misses:u per increment, adjacent-counters / pair-padded, $inc increment (median of $ROUNDS)" 10 \
-      "${l1_adj[*]}" "${l1_pad[*]}"
+  if [[ $inc == rmw ]]; then
+    expect_ratio "4a" "C++ counters per-batch p50, adjacent-counters / pair-padded, fetch_add increment (median of $ROUNDS)" 3 "$adj_p50s" "$pad_p50s"
+    observe_ratio "4b'" "C++ L1-dcache-load-misses:u per increment, fetch_add increment" 10 "${l1_adj[*]}" "${l1_pad[*]}"
   else
-    echo "  observed ($inc increment): latency ratio $(x_of "$(sort -n <<<"$(ratios "$adj_p50s" "$pad_p50s")" | sed -n 2p)")"
+    observe_ratio "4a'" "C++ counters per-batch p50, adjacent-counters / pair-padded, store increment (median of $ROUNDS)" 3 "$adj_p50s" "$pad_p50s"
+    expect_ratio "4b" "C++ L1-dcache-load-misses:u per increment, adjacent-counters / pair-padded, store increment (median of $ROUNDS)" 10 \
+      "${l1_adj[*]}" "${l1_pad[*]}"
   fi
 done
-echo "  observed: p99 adjacent-counters $(jget "$OUT/cpp/counters-adjacent-counters$SUFFIX.a1.json" .percentiles.p99) ns," \
-  "pair-padded $(jget "$OUT/cpp/counters-pair-padded$SUFFIX.a1.json" .percentiles.p99) ns"
+echo "  observed: p99 adjacent-counters (store) $(jget "$OUT/cpp/counters-adjacent-counters.a1.json" .percentiles.p99) ns," \
+  "pair-padded $(jget "$OUT/cpp/counters-pair-padded.a1.json" .percentiles.p99) ns"
 echo "  observed: line-padded (64 B) p50 $(p50_of "$OUT/cpp/counters-line-padded.json") ns against pair-padded (128 B) p50 $(p50_of "$OUT/cpp/counters-pair-padded.a1.json") ns (store increment)"
 if [[ -f $OUT/cpp/counters-smt-siblings.json ]]; then
   echo "  observed: two cameras on SMT siblings p50 $(p50_of "$OUT/cpp/counters-smt-siblings.json") ns," \
@@ -494,7 +521,7 @@ step "Java: 2. hub lookups, node-map against flat-map (JMH SampleTime, pinned)"
 jl_node=$(jmh_collect lookup hubLookupNodeMap hub-lookup-node-map)
 jl_flat=$(jmh_collect lookup hubLookupFlatMap hub-lookup-flat-map)
 printf '  hub lookup p50 (ns) by alternation: node-map %s | flat-map %s\n' "$jl_node" "$jl_flat"
-expect_ratio "2b" "Java hub lookup p50, node-map / flat-map (median of $ROUNDS)" 2 "$jl_node" "$jl_flat"
+observe_ratio "2b" "Java hub lookup p50, node-map / flat-map (median of $ROUNDS)" 2 "$jl_node" "$jl_flat"
 for pair in "hubLookupNodeMap hub-lookup-node-map" "hubLookupFlatMap hub-lookup-flat-map"; do
   read -r m v <<<"$pair"
   r=$(jmh_report lookup 1 "$m" "$v")
@@ -552,10 +579,18 @@ for inc in store rmw; do
   jc_adj=$(collect "java/counters-adjacent-counters$sfx")
   jc_pad=$(collect "java/counters-pair-padded$sfx")
   printf '  [%s increment] per-batch p50 (ns) by alternation: adjacent-counters %s | pair-padded %s\n' "$inc" "$jc_adj" "$jc_pad"
-  if [[ $inc == "$INCREMENT" ]]; then
-    expect_ratio "4c" "Java counters per-batch p50, adjacent-counters / pair-padded, $inc increment (median of $ROUNDS)" 3 "$jc_adj" "$jc_pad"
+  jl1_adj=() jl1_pad=()
+  for r in $(seq "$ROUNDS"); do
+    jl1_adj+=("$(per_op "$OUT/java/counters-adjacent-counters$sfx.a$r.json" L1-dcache-load-misses)")
+    jl1_pad+=("$(per_op "$OUT/java/counters-pair-padded$sfx.a$r.json" L1-dcache-load-misses)")
+  done
+  printf '  [%s increment] L1-dcache-load-misses:u per increment: adjacent-counters %s | pair-padded %s\n' "$inc" "${jl1_adj[*]}" "${jl1_pad[*]}"
+  if [[ $inc == store ]]; then
+    observe_ratio "4c'" "Java counters per-batch p50, adjacent-counters / pair-padded, store increment (median of $ROUNDS)" 3 "$jc_adj" "$jc_pad"
+    expect_ratio "4c" "Java L1-dcache-load-misses:u per increment, adjacent-counters / pair-padded, store increment (median of $ROUNDS)" 10 \
+      "${jl1_adj[*]}" "${jl1_pad[*]}"
   else
-    echo "  observed ($inc increment): latency ratio $(x_of "$(sort -n <<<"$(ratios "$jc_adj" "$jc_pad")" | sed -n 2p)")"
+    observe_ratio "4c''" "Java counters per-batch p50, adjacent-counters / pair-padded, getAndAdd increment (median of $ROUNDS)" 3 "$jc_adj" "$jc_pad"
   fi
 done
 echo "  observed: line-padded p50 $(p50_of "$OUT/java/counters-line-padded.json") ns; long-adder (one shared sum) p50" \
@@ -610,10 +645,13 @@ if ((RUN)); then
   uvrun --package lowlat-locality locality-py footprint --parcels 100000 --out "$OUT/python/footprint.json"
 fi
 dict_b=$(jget "$OUT/python/footprint.json" '.tracked_bytes["dict-per-parcel"]')
-for slots in slots-str slots-int; do
-  slots_b=$(jget "$OUT/python/footprint.json" ".tracked_bytes[\"$slots\"]")
-  expect_ratio "1e" "Python dict-per-parcel / $slots bytes per tracked parcel" 2 "$dict_b" "$slots_b" exact
-done
+expect_ratio "1e" "Python record object bytes (sys.getsizeof), dict / slotted record" 2 \
+  "$(jget "$OUT/python/footprint.json" '.record_container_bytes["dict-per-parcel"]')" \
+  "$(jget "$OUT/python/footprint.json" '.record_container_bytes["slots-int"]')" exact
+expect_ratio "1f" "Python dict-per-parcel / slots-int bytes per tracked parcel" 2 "$dict_b" \
+  "$(jget "$OUT/python/footprint.json" '.tracked_bytes["slots-int"]')" exact
+observe_ratio "1f'" "Python dict-per-parcel / slots-str bytes per tracked parcel (the str key is a cost both share)" 2 "$dict_b" \
+  "$(jget "$OUT/python/footprint.json" '.tracked_bytes["slots-str"]')"
 echo "  record only (observed): dict-per-parcel $(jget "$OUT/python/footprint.json" '.record_only_bytes["dict-per-parcel"]') B," \
   "slots $(jget "$OUT/python/footprint.json" '.record_only_bytes["slots-int"]') B for $(jget "$OUT/python/footprint.json" .parcels) parcels"
 

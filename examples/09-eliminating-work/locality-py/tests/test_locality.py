@@ -147,6 +147,8 @@ def test_a_dict_per_parcel_costs_more_than_a_slotted_record() -> None:
     assert tracked["dict-per-parcel"] > tracked["slots-str"] > tracked["slots-int"]
     record_only = result["record_only_bytes"]
     assert 3 * record_only["dict-per-parcel"] > 5 * record_only["slots-int"]
+    container = result["record_container_bytes"]
+    assert container["dict-per-parcel"] >= 2 * container["slots-int"]
 
 
 # --- sweeps --------------------------------------------------------------------------------------

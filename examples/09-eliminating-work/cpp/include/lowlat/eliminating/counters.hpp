@@ -45,25 +45,69 @@ struct alignas(Align) CameraCounters {
   }
 };
 
-using AdjacentCamera = CameraCounters<alignof(std::uint64_t)>;  // 16 B each: four cameras per line
-using LinePaddedCamera = CameraCounters<kLine>;                 // 64 B each: one camera per line
-using PairPaddedCamera = CameraCounters<kLinePair>;             // 128 B each: one camera per line pair
+using LinePaddedCamera = CameraCounters<kLine>;      // 64 B each: one camera per line
+using PairPaddedCamera = CameraCounters<kLinePair>;  // 128 B each: one camera per line pair
 
-static_assert(sizeof(AdjacentCamera) == 16);
 static_assert(sizeof(LinePaddedCamera) == kLine);
 static_assert(sizeof(PairPaddedCamera) == kLinePair);
+
+/// The adjacent layout: the five cameras' read counters side by side in ONE cache line (5 x 8 B = 40 B, so every
+/// camera's read counter shares a line with every other's), the no-read counters in the next line. The bank is
+/// line-aligned, so the sharing is by construction and not an accident of where the allocator put it.
+struct alignas(kLine) AdjacentBank {
+  std::array<std::atomic<std::uint64_t>, kCameras> reads{};
+  alignas(kLine) std::array<std::atomic<std::uint64_t>, kCameras> no_reads{};
+};
+static_assert(sizeof(AdjacentBank) == 2 * kLine);
+static_assert(alignof(AdjacentBank) == kLine);
+
+/// A view of camera `c`'s counters in an `AdjacentBank`; the same interface as `CameraCounters`.
+class AdjacentCamera {
+ public:
+  AdjacentCamera() = default;
+  AdjacentCamera(AdjacentBank& bank, std::size_t camera) noexcept
+      : reads_{&bank.reads[camera]}, no_reads_{&bank.no_reads[camera]} {}
+  void bump_read() noexcept { reads_->store(reads_->load(std::memory_order_relaxed) + 1, std::memory_order_relaxed); }
+  void bump_no_read() noexcept {
+    no_reads_->store(no_reads_->load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+  }
+  void add_read() noexcept { reads_->fetch_add(1, std::memory_order_relaxed); }
+  void add_no_read() noexcept { no_reads_->fetch_add(1, std::memory_order_relaxed); }
+  [[nodiscard]] std::uint64_t total() const noexcept {
+    return reads_->load(std::memory_order_relaxed) + no_reads_->load(std::memory_order_relaxed);
+  }
+  [[nodiscard]] std::uint64_t no_read_count() const noexcept { return no_reads_->load(std::memory_order_relaxed); }
+
+ private:
+  std::atomic<std::uint64_t>* reads_ = nullptr;
+  std::atomic<std::uint64_t>* no_reads_ = nullptr;
+};
 
 template <class Camera>
 using CounterBank = std::array<Camera, kCameras>;
 
-/// A bank on the heap, over-aligned storage included (aligned operator new, C++17).
+/// A padded bank on the heap, over-aligned storage included (aligned operator new, C++17).
 template <class Camera>
 [[nodiscard]] std::unique_ptr<CounterBank<Camera>> make_bank() {
   return std::make_unique<CounterBank<Camera>>();
 }
 
-/// Cache lines (of `line` bytes) that the first byte of cameras `a` and `b` fall in: equal means the two
-/// cameras' counters share a line. Used by the layout tests.
+/// The adjacent bank on the heap, with one `AdjacentCamera` view per camera so it indexes like a padded bank.
+class AdjacentCounters {
+ public:
+  AdjacentCounters() : bank_{std::make_unique<AdjacentBank>()} {  // aligned operator new honours alignof == 64
+    for (std::size_t c = 0; c < kCameras; ++c) cameras_.at(c) = AdjacentCamera{*bank_, c};
+  }
+  [[nodiscard]] AdjacentCamera& operator[](std::size_t camera) noexcept { return cameras_[camera]; }
+  [[nodiscard]] const AdjacentBank& bank() const noexcept { return *bank_; }
+
+ private:
+  std::unique_ptr<AdjacentBank> bank_;
+  std::array<AdjacentCamera, kCameras> cameras_;
+};
+
+/// Whether the first bytes of cameras `a` and `b` of a padded bank fall in the same `line`-byte block: equal
+/// means the two cameras' counters share a line. Used by the layout tests.
 template <class Camera>
 [[nodiscard]] bool share_line(const CounterBank<Camera>& bank, std::size_t a, std::size_t b, std::size_t line) noexcept {
   const auto addr = [&](std::size_t i) { return reinterpret_cast<std::uintptr_t>(&bank[i]); };

@@ -3,8 +3,10 @@
 Python cannot place an object or pad a field, but it can lay out raw memory: a ``memoryview``
 cast to ``'Q'`` over ``multiprocessing.shared_memory`` (or an anonymous ``mmap`` for threads) is
 an array of 64-bit cells at known offsets from a page boundary. Each camera owns a read cell
-and a no-read cell at ``camera * stride``; ``stride`` is 16 bytes (adjacent), 64 (one line) or
-128 (a line pair).
+and a no-read cell. ``adjacent-counters`` puts the five read cells side by side in the first
+64-byte line (cells 0-4) and the five no-read cells in the next (cells 8-12); ``line-padded``
+gives each camera a 64-byte line and ``pair-padded`` a 128-byte pair. The mapping is page-aligned,
+so the lines are real.
 
 * ``mode="processes"``: five processes, each pinned to its CPU with ``os.sched_setaffinity``,
   writing the shared cells. They run in parallel, so neighbouring cameras can ping-pong a line.
@@ -30,19 +32,31 @@ from typing import Any
 BATCH = 1_000
 NO_READ_EVERY = 32
 CAMERAS = 5
-STRIDE_BYTES = {"adjacent-counters": 16, "line-padded": 64, "pair-padded": 128}
+# Bytes between neighbouring cameras' read counters: 8 (one line holds all five), 64 or 128.
+STRIDE_BYTES = {"adjacent-counters": 8, "line-padded": 64, "pair-padded": 128}
+_NO_READ_CELL_OFFSET = {
+    "adjacent-counters": 8,
+    "line-padded": 1,
+    "pair-padded": 1,
+}  # cells after the read cell
 
 
-def _pattern(camera: int, stride_bytes: int) -> list[int]:
+def cells_of(layout: str, camera: int) -> tuple[int, int]:
+    """Cell index (8 bytes each) of camera ``camera``'s read and no-read counters."""
+    read = camera * STRIDE_BYTES[layout] // 8
+    return read, read + _NO_READ_CELL_OFFSET[layout]
+
+
+def _pattern(layout: str, camera: int) -> list[int]:
     """Cell index of each increment in a batch: the read cell, every 32nd one the no-read cell."""
-    base = camera * stride_bytes // 8
-    return [base + (1 if i % NO_READ_EVERY == NO_READ_EVERY - 1 else 0) for i in range(BATCH)]
+    read, no_read = cells_of(layout, camera)
+    return [no_read if i % NO_READ_EVERY == NO_READ_EVERY - 1 else read for i in range(BATCH)]
 
 
 def _camera(
     cells: memoryview,
     camera: int,
-    stride_bytes: int,
+    layout: str,
     cpu: int | None,
     batches: int,
     announce: Callable[[dict[str, Any]], None],
@@ -50,7 +64,7 @@ def _camera(
 ) -> list[int]:
     if cpu is not None:
         os.sched_setaffinity(0, {cpu})  # pid 0 = the calling thread on Linux
-    pattern = _pattern(camera, stride_bytes)
+    pattern = _pattern(layout, camera)
     announce({"camera": camera, "pid": os.getpid(), "tid": threading.get_native_id(), "cpu": cpu})
     go.wait()
     batch_ns = []
@@ -63,10 +77,10 @@ def _camera(
     return batch_ns
 
 
-def _process_main(name, camera, stride_bytes, cpu, batches, ready_q, go, done_q, release):
+def _process_main(name, camera, layout, cpu, batches, ready_q, go, done_q, release):
     shm = shared_memory.SharedMemory(name=name)
     cells = shm.buf.cast("Q")
-    batch_ns = _camera(cells, camera, stride_bytes, cpu, batches, ready_q.put, go)
+    batch_ns = _camera(cells, camera, layout, cpu, batches, ready_q.put, go)
     done_q.put((camera, batch_ns))
     release.wait()  # parked, so the parent can read where this process last ran
     cells.release()
@@ -83,7 +97,7 @@ def run(
 ) -> dict[str, Any]:
     """Run the cameras and return the raw result: batch times per camera and where each one ran."""
     stride = STRIDE_BYTES[layout]
-    size = cameras * stride + 128
+    size = max(cells_of(layout, cameras - 1)) * 8 + 128
     cpu_of = [None] * cameras if cpus is None else cpus
     placements: list[dict[str, Any]] = []
     batch_ns: dict[int, list[int]] = {}
@@ -97,7 +111,7 @@ def run(
         procs = [
             ctx.Process(
                 target=_process_main,
-                args=(shm.name, c, stride, cpu_of[c], batches, ready_q, go, done_q, release),
+                args=(shm.name, c, layout, cpu_of[c], batches, ready_q, go, done_q, release),
             )
             for c in range(cameras)
         ]
@@ -108,7 +122,7 @@ def run(
         for _ in procs:
             camera, ns = done_q.get()
             batch_ns[camera] = ns
-        totals = [cells[c * stride // 8] + cells[c * stride // 8 + 1] for c in range(cameras)]
+        totals = [sum(cells[i] for i in cells_of(layout, c)) for c in range(cameras)]
         _announce(placements, pinned=cpus is not None)
         time.sleep(hold_ms / 1000)
         release.set()
@@ -128,7 +142,7 @@ def run(
                 placements.append(info)
 
         def worker(c: int) -> None:
-            batch_ns[c] = _camera(cells, c, stride, cpu_of[c], batches, announce, go)
+            batch_ns[c] = _camera(cells, c, layout, cpu_of[c], batches, announce, go)
             release.wait()
 
         threads = [threading.Thread(target=worker, args=(c,)) for c in range(cameras)]
@@ -139,7 +153,7 @@ def run(
         go.set()
         while len(batch_ns) < cameras:
             time.sleep(0.001)
-        totals = [cells[c * stride // 8] + cells[c * stride // 8 + 1] for c in range(cameras)]
+        totals = [sum(cells[i] for i in cells_of(layout, c)) for c in range(cameras)]
         _announce(placements, pinned=cpus is not None)
         time.sleep(hold_ms / 1000)
         release.set()

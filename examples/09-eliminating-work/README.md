@@ -24,12 +24,15 @@ measures both and says which is which.
   through the cache. In `hot-cold` columns it reads 9 bytes a slot. Java compares an array of `ParcelState`
   objects (ordinary on-heap objects, not Ch8's `MemorySegment` table) with primitive arrays.
 - **(c) False sharing of per-camera counters.** Five cameras, one writer thread each, bump their own read
-  and no-read counters while a telemetry thread samples them. `--adjacent-counters` puts them back to back.
+  and no-read counters while a telemetry thread samples them. `--adjacent-counters` puts the five read counters side by side in one 64-byte line and the five no-read
+  counters in the next, so every camera shares a line with every other.
   `pair-padded` gives each camera 128 bytes, which is `2 * std::hardware_destructive_interference_size`,
   the range the L2 spatial prefetcher fetches as a pair. `--line-padded` (64 bytes) tests Ch7's claim that one
   line isn't enough. `--smt-siblings` puts two cameras on the two hardware threads of one core, which share an
-  L1. In Java the counters are an `AtomicLongArray` with a stride, and `long-adder` is the JDK's `LongAdder`:
-  a different shape, one contended sum instead of one value per camera.
+  L1. In Java the counters sit in one `MemorySegment` from `arena.allocate(size, 128)` (Ch8's idiom), because a
+  heap array's alignment can't be controlled and an "adjacent" array would straddle two lines at a different
+  place on every run. `long-adder` is the JDK's `LongAdder`: a different shape, one contended sum instead of
+  one value per camera.
 
 The padding isn't idiomatic C++ or Java. It's a latency construct, and the comments in `counters.hpp` and
 `CameraCounters.java` say why it's there. Everything else is the idiom: standard containers and abseil in
@@ -68,7 +71,7 @@ isolation: the scheduler still shares those cores with the rest of the host.
 | C++, Java | `flat-map` | `absl::flat_hash_map<uint64, uint32>` to a slot plus columns; Agrona `Long2LongHashMap` plus primitive arrays |
 | C++, Java | `--fat-record` | one 80-byte struct per parcel; `ParcelState[]` of objects |
 | C++, Java | `hot-cold` | `due_tick` and `state` columns, cold fields apart; primitive arrays |
-| C++, Java | `--adjacent-counters` | the cameras' counters back to back, 16 B each |
+| C++, Java | `--adjacent-counters` | the five read counters in one 64-byte line, the no-read counters in the next |
 | C++, Java | `pair-padded` | one camera per 128 bytes |
 | C++, Java | `--line-padded` | one camera per 64 bytes (observed) |
 | C++, Java | `--smt-siblings` | adjacent layout, two cameras on one core's hardware threads (observed) |
@@ -92,7 +95,8 @@ its `--control` FIFOs. Cachegrind gets the sweep through a single `extern "C"` f
 function, so the lookups are measured by difference instead: a run with 200,000 lookups minus the same run
 with one.
 
-The replaced `operator new` is linked into the benchmarks and the unit test and nowhere else.
+The replaced `operator new` is linked into `tracker-bench`, `eliminating-line` and the unit test, and nowhere
+else. `counters-bench` uses the standard allocator.
 
 ### Java
 
@@ -101,7 +105,9 @@ insert-and-erase pair at line scale. `HubLookupBenchmark` and `HubSweepBenchmark
 parcels, and the object table is allocated in a shuffled order so slot order isn't allocation order. Each
 method gets its own fork, the benchmark thread is pinned with `AffinityLock`, and the heap is fixed and
 pre-touched so no collection starts inside a run. The counters and the line run are standalone harnesses in
-`Main` (`counters`, `consume`), because JMH can't give control of five pinned threads.
+`Main` (`counters`, `consume`), because JMH can't give control of five pinned threads. Each camera thread
+first runs its loop on a scratch counter set for 600 ms, so JIT compilation stays out of the hardware counts of
+the measured region, which lasts only tens of milliseconds.
 
 The lookup keys are built once, so their `String` hash codes are cached. On the line a barcode arrives as a
 new `String` and pays the hash too, which makes the JMH lookup a conservative measure of the node map.
@@ -139,10 +145,9 @@ Python can't place an object or pad a field. The lever is the number of objects,
 examples/09-eliminating-work/verify.sh
 ```
 
-A full run takes about half an hour. The usual switches from `examples/_lib/lib.sh` apply: `ALLOW_BUSY=1`,
+A full run takes about nine minutes. The usual switches from `examples/_lib/lib.sh` apply: `ALLOW_BUSY=1`,
 `SKIP_BUILD=1`, `RESULTS_DIR`, `LOWLAT_BUILD`, and `RECHECK=results/<run-id>` to re-evaluate committed
-reports without running anything. Two are specific to this example: `SKIP_CACHEGRIND=1` and
-`INCREMENT=store|rmw` (see Counters below). The JVM needs a 2 GB heap for the hub tables, and the C++ lookups
+reports without running anything. One is specific to this example: `SKIP_CACHEGRIND=1`. The JVM needs a 2 GB heap for the hub tables, and the C++ lookups
 need a few hundred MB.
 
 By hand:
@@ -171,52 +176,53 @@ uv run --project examples lowlat-report show examples/09-eliminating-work/result
 
 `verify.sh` evaluates every criterion, prints its measured value, bound and margin, and exits non-zero if any
 failed. Latency criteria compare variants inside one run, alternating A B A B A B and judged on the median of
-the three per-alternation ratios. p50 is never compared across runs. Exact counters (allocations, cachegrind
-misses) are deterministic and labelled so. The bounds are provisional until calibration confirms that each
-clears by at least 2x.
+the three per-alternation ratios. p50 is never compared across runs. Exact counters (allocations, object sizes,
+cachegrind misses) are deterministic and labelled so.
 
-1. **Allocation per insert (exact).** C++ `node-map` makes at least 2 allocations per insert and `flat-map`
-   none after `reserve`. JMH `node-map` allocates at least 64 B per insert and `flat-map` at most 1 B. Python
-   `--dict-per-parcel` holds at least 2x the bytes of `slots` per tracked parcel.
-2. **Hub lookups.** `node-map` p50 is at least 2x `flat-map` p50 in C++ and Java, and cachegrind
-   last-level read misses per lookup are at least 2x higher for `node-map` (exact). The line-scale ratio is
-   observed and expected near 1, because 4,800 parcels fit L2.
+1. **Allocation and footprint (exact).** C++ `node-map` makes at least 2 allocations per insert and `flat-map`
+   none after `reserve`. JMH `node-map` allocates at least 64 B per insert and `flat-map` at most 1 B. In
+   Python the `dict` record object (`sys.getsizeof`) is at least 2x the slotted record, and `--dict-per-parcel`
+   holds at least 2x the bytes of `slots-int` per tracked parcel. Against `slots-str` the ratio is observed,
+   because the `str` key is a cost both shapes share.
+2. **Hub lookups.** Cachegrind last-level read misses per lookup are at least 2x higher for `node-map`
+   (exact), and so is `LLC-load-misses:u` per lookup in C++ (median of three). The p50 ratios for C++ and
+   Java are observed, and their margins against 2x are printed.
 3. **Hub sweep.** `--fat-record` p50 is at least 2x `hot-cold` p50 in C++ and Java, and cachegrind L1 data
    read misses per slot are at least 4x higher for `--fat-record` (exact; the byte ratio is 80:9).
-4. **Counters**, on distinct physical cores with the placement asserted per thread. `--adjacent-counters`
-   per-batch p50 is at least 3x `pair-padded` in C++ and Java (median of three alternations), and
-   `L1-dcache-load-misses:u` per increment is at least 10x in C++.
+4. **Counters**, on distinct physical cores with the placement asserted per thread. With the single-writer
+   store increment, `L1-dcache-load-misses:u` per increment is at least 10x higher for `--adjacent-counters`
+   than for `pair-padded`, in C++ and in Java (median of three). With the `fetch_add` increment, C++ per-batch
+   p50 is at least 3x. The store-increment batch times and Java's `getAndAdd` times are observed.
 5. **Line, C++.** Allocations per parcel on the receive thread, counted around the tracker calls (exact):
    `node-map` at least 1, `flat-map` none.
 6. **Reports.** Every report has its count. The line runs have `dropped` = 0. Every report passes
    `lowlat-report check`, Java reports carry `build.flags`, and pinned runs carry `runtime.placement`.
 
 Mechanism counters come first, then hardware counters, then latency. Hardware counters assert only the
-generic `L1-dcache-load-misses:u`. A vendor snoop event is observed and never asserted, because it isn't
-portable.
+generic `LLC-load-misses:u` and `L1-dcache-load-misses:u`. A vendor snoop event is observed and never asserted,
+because it isn't portable.
 
 ### Counters: the increment is part of the experiment
 
-Each camera counter has one writer, so the plan's increment is a relaxed load and a relaxed store, with no
-read-modify-write (`bump_read`, or `setRelease(getPlain() + 1)` in Java). That keeps the layout apart from the
+Each camera counter has one writer, so the store increment is a relaxed load and a relaxed store, with no
+read-modify-write (`bump_read`, or `setRelease(get() + 1)` in Java). That keeps the layout apart from the
 cost of a `lock`-prefixed instruction. But a store buffer hides part of the coherence traffic from such a loop.
 Each core's loads of its own counter are forwarded from its own pending stores, so the layout shows up in the L1
 miss counts well before it shows up in the batch time. The same counts as an atomic read-modify-write
-(`fetch_add`, `getAndAdd`) can't hide it.
+(`fetch_add`, `getAndAdd`) can't hide it, and there the batch time shows the effect in C++.
 
-`verify.sh` runs both increments in three alternations and prints both. Criterion 4 asserts the one named
-by `INCREMENT`, `store` by default as the plan has it. The other is observed. Which increment the chapter
-asserts is a calibration decision.
+`verify.sh` runs both increments in three alternations and prints both. It asserts the miss counts for the
+store increment and the batch time for the C++ `fetch_add` increment; the rest is printed as observed.
 
 ### Observed, not asserted
 
-`--line-padded` against `pair-padded` (does the adjacent-line prefetcher matter here? That's Ch7's claim).
-`--smt-siblings`: the siblings share an L1, so line ping-pong is absent, but they also share one core's
-execution resources. `long-adder`, the other increment, line-scale lookups, and per-lookup and per-slot
-hardware counters from `perf` and `perfnorm`. The build footprint. Line end-to-end percentiles, where both
-variants fit 480 ms by orders of magnitude. The Java line's `alloc_bytes_per_parcel`, which the protobuf decode
-dominates. The JOL footprint. In Python, the sweep and the process and thread counters on the GIL and
-free-threaded builds.
+The hub lookup p50 ratios. The store-increment batch times, and Java's `getAndAdd` times. `--line-padded`
+against `pair-padded` (does the adjacent-line prefetcher matter here? That's Ch7's claim). `--smt-siblings`: the
+siblings share an L1, so line ping-pong is absent, but they also share one core's execution resources.
+`long-adder`, line-scale lookups, and the other per-lookup and per-slot hardware counters from `perf` and
+`perfnorm`. The build footprint. Line end-to-end percentiles, where both variants fit 480 ms by orders of
+magnitude. The Java line's `alloc_bytes_per_parcel`, which the protobuf decode dominates. The JOL footprint. In
+Python, the sweep and the process and thread counters on the GIL and free-threaded builds.
 
 ## Observation surfaces
 
@@ -240,14 +246,17 @@ free-threaded builds.
 | abseil-cpp | 20250512.1 | Apache-2.0 | `absl::flat_hash_map` |
 | JMH | 1.37 | GPL-2.0-only WITH Classpath-exception-2.0 | Java benchmarks |
 | JOL | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | object layout and footprint |
+| JNA and jna-platform (via Affinity) | 5.5.0 | LGPL-2.1-or-later OR Apache-2.0 | native calls behind thread pinning |
+| slf4j-api (via Affinity) | 2.0.17 | MIT | Affinity's logging facade, no provider bound |
+| jopt-simple, commons-math3 (via JMH) | 5.0.4, 3.6.1 | MIT, Apache-2.0 | JMH option parsing and statistics |
 
 The GPL-with-Classpath-exception tools are build- and measurement-time only; no hot path links them.
-protobuf (C++, Java, Python) is BSD-3-Clause. Jackson 3 is Apache-2.0, HdrHistogram BSD-2-Clause, GoogleTest
-BSD-3-Clause, nlohmann/json MIT, JUnit EPL-2.0, pytest MIT. `perf` and `valgrind` (GPL-2.0) run as tools and
+protobuf (C++, Java, Python) is BSD-3-Clause. Jackson 3 and its annotations are Apache-2.0, HdrHistogram
+BSD-2-Clause, GoogleTest BSD-3-Clause, nlohmann/json MIT, JUnit 6 EPL-2.0 (its opentest4j, apiguardian and
+jspecify dependencies are Apache-2.0), pytest MIT. `perf` and `valgrind` (GPL-2.0) run as tools and
 aren't linked. CPython is PSF-2.0. Versions are pinned in `versions.env` and `_plans/dependency-pins.md`.
 
 ## Verification status
 
-Unverified. The unit tests in all three languages pass and `verify.sh` is implemented. The calibration runs and
-the committed host measurement that confirm each bound are later steps of the r03 plan, and this section
-is filled from those runs only.
+Unverified. The unit tests in all three languages pass and `verify.sh` is implemented. The committed host
+measurement that confirms each bound is not yet recorded, and this section is filled from that run only.

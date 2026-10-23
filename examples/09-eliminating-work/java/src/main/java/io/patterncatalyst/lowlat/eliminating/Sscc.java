@@ -36,6 +36,13 @@ public final class Sscc {
 
     /** The inverse: {@code value} as 18 zero-padded digits. */
     public static String format(long value) {
-        return String.format("%018d", value);
+        // Not String.format: it allocates a Formatter and boxes per call, ~0.5 KB of garbage per key, and the
+        // benchmarks format a million keys while building the working set.
+        byte[] digits = new byte[DIGITS];
+        for (int i = DIGITS - 1; i >= 0; i--) {
+            digits[i] = (byte) ('0' + value % 10);
+            value /= 10;
+        }
+        return new String(digits, java.nio.charset.StandardCharsets.ISO_8859_1);
     }
 }
