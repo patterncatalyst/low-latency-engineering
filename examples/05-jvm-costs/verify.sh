@@ -2,7 +2,7 @@
 # Ch5 verify: what the JVM costs per parcel, and how to stop paying it on the first one.
 #   1. JMH -prof gc: `escaping` >= 24 B/op, `scalar-replaced` <= 1 B/op, `--no-escape-analysis` >= 24 B/op
 #      (the 24 B and C++ 16 B are exact object sizes: exact counters, the 2x calibration margin does not apply).
-#   2. `--unwarmed`: first-window p99 >= 5x the steady p99 (same run).
+#   2. `--unwarmed`: first-window p99.9 >= 5x the steady p99.9 (same run; the p99 ratio is observed).
 #   3. `warmed`: first-window p99 <= 3x the steady p99 (same run).
 #   4. `aot-cache`: median time to ready <= 0.8x the no-cache median (5 alternating launches); the AOT log
 #      shows the cache opened.
@@ -272,9 +272,11 @@ for v in "${JAVA_VARIANTS[@]}"; do
     "p99.9 ratio $(ratio "$(jget "$OUT/java-$v-first-$WINDOW.json" .percentiles.p99_9)" "$(jget "$OUT/java-$v-steady.json" .percentiles.p99_9)");" \
     "max ratio $(ratio "$(jget "$OUT/java-$v-first-$WINDOW.json" .percentiles.max)" "$(jget "$OUT/java-$v-steady.json" .percentiles.max)")"
 done
-first=$(p99_of "$OUT/java-unwarmed-first-$WINDOW.json")
-steady=$(p99_of "$OUT/java-unwarmed-steady.json")
-verdict "2: --unwarmed first-window p99 over steady p99" ">=" "$(ratio "$first" "$steady")" 5
+# Criterion 2 is on p99.9: the cold stall delays about 1% of a 2,000-parcel window, so the p99 (the 20th-worst
+# parcel) lands inside or outside it from run to run (1.7x to 52x in S13); the p99.9 ratio is printed above too.
+first=$(jget "$OUT/java-unwarmed-first-$WINDOW.json" .percentiles.p99_9)
+steady=$(jget "$OUT/java-unwarmed-steady.json" .percentiles.p99_9)
+verdict "2: --unwarmed first-window p99.9 over steady p99.9" ">=" "$(ratio "$first" "$steady")" 5
 first=$(p99_of "$OUT/java-warmed-first-$WINDOW.json")
 steady=$(p99_of "$OUT/java-warmed-steady.json")
 verdict "3: warmed first-window p99 over steady p99" "<=" "$(ratio "$first" "$steady")" 3

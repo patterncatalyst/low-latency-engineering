@@ -138,7 +138,7 @@ and the bound, and exits non-zero if any missed:
    `int` and a `long`), `scalar-replaced` at most 1 B, `--no-escape-analysis` at least
    24 B again. C++: `--allocating` at least 16 B and one allocation per parcel, value at
    most 1 B.
-2. `--unwarmed`: the first-window p99 is at least 5x the steady p99 of the same run.
+2. `--unwarmed`: the first-window p99.9 is at least 5x the steady p99.9 of the same run.
 3. `warmed`: the first-window p99 is at most 3x the steady p99 of the same run.
 4. `aot-cache`: the median time to ready (JVM launch to a bound socket, five launches
    alternating with the no-cache launches, after one discarded pair that fills the page
@@ -148,11 +148,13 @@ and the bound, and exits non-zero if any missed:
 6. Every line run counts 20,000 parcels, drops none, and every report passes
    `lowlat-report check`.
 
-The window is a parameter of criterion 2. The cold cost of an unwarmed JVM is a stall of a
-few dozen parcels at the start, so a 2,000-parcel window sees it at p99.9 and the maximum
-more reliably than at p99, where it is the 20th-worst parcel. `verify.sh` prints the p99,
-p99.9 and maximum ratios for every variant; S12 settles the window (`WINDOW=1000` moves
-the p99 well into the stall) before the bound is judged.
+The window is a parameter of criterion 2. The cold cost of an unwarmed JVM is a stall of
+about 11 ms at the start, which delays a few dozen parcels: about 1% of a 2,000-parcel
+window. The p99 of that window is its 20th-worst parcel, so it sits on the edge of the
+stall and lands inside it in some runs and outside it in others (first-window over steady
+p99 from 1.7x to 52x across the r02 runs). The p99.9 and the maximum fall inside the stall
+every time, so the criterion is asserted on p99.9 and the p99 ratio is printed as observed.
+`verify.sh` prints the p99, p99.9 and maximum ratios for every variant.
 
 The AOT cache is trained twice, once with the observation flags (JFR adds the `jdk.jfr`
 module, which the cache records, so the line run needs a cache trained with the same
