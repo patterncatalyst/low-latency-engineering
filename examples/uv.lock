@@ -233,6 +233,12 @@ requires-dist = [
 name = "lowlat-locality"
 version = "1.0.0"
 source = { editable = "09-eliminating-work/locality-py" }
+dependencies = [
+    { name = "lowlat-measure" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lowlat-measure", editable = "common/measure-py" }]
 
 [[package]]
 name = "lowlat-measure"
