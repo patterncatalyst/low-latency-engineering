@@ -123,3 +123,53 @@ def test_gbench_conversion_has_one_sample_per_repetition(tmp_path: Path) -> None
     assert report["language"] == "cpp"
     assert "mean real time per iteration, taken over 50000 iterations" in report["notes"]
     assert lowlat_report(["check", str(path)]) == 0
+
+
+RESULTS = Path(__file__).resolve().parents[2] / "results"
+
+
+@pytest.mark.parametrize("run", ["r02-run1", "r02-run2", "r02-run3"])
+def test_lowlat_report_converters_regenerate_the_committed_reports_byte_for_byte(
+    run: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``lowlat-report from-jmh`` and ``from-gbench`` reproduce Ch8's committed reports exactly."""
+    committed = RESULTS / run
+    monkeypatch.setenv("LOWLAT_PROFILE", str(committed / "profile.json"))
+    jmh_out, cpp_out = tmp_path / "jmh", tmp_path / "cpp"
+    assert (
+        lowlat_report(
+            [
+                *("from-jmh", str(committed / "jmh.json"), str(jmh_out)),
+                *("--example", harness_report.EXAMPLE),
+                *(a for v in sorted(harness_report.PER_PARCEL) for a in ("--per-parcel", v)),
+            ]
+        )
+        == 0
+    )
+    assert (
+        lowlat_report(
+            [
+                *("from-gbench", str(committed / "cpp" / "gbench.json"), str(cpp_out)),
+                *("--example", harness_report.EXAMPLE),
+            ]
+        )
+        == 0
+    )
+    pairs = [(jmh_out, committed / "jmh"), (cpp_out, committed / "cpp")]
+    for regenerated, original in pairs:
+        names = sorted(p.name for p in regenerated.glob("*.json"))
+        assert names == sorted(p.name for p in original.glob("*-*.json") if p.name != "gbench.json")
+        assert names, original
+        for name in names:
+            assert (regenerated / name).read_bytes() == (original / name).read_bytes(), name
+
+
+def test_harness_report_wrapper_keeps_the_old_import_working(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    committed = RESULTS / "r02-run1"
+    monkeypatch.setenv("LOWLAT_PROFILE", str(committed / "profile.json"))
+    for path in harness_report.from_jmh(committed / "jmh.json", tmp_path):
+        assert path.read_bytes() == (committed / "jmh" / path.name).read_bytes()
+    for path in harness_report.from_gbench(committed / "cpp" / "gbench.json", tmp_path):
+        assert path.read_bytes() == (committed / "cpp" / path.name).read_bytes()

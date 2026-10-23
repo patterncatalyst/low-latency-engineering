@@ -1,4 +1,4 @@
-"""``lowlat-report``: validate, show and check latency reports.
+"""``lowlat-report``: validate, show and check latency reports; convert JMH and gbench output.
 
 The JSON Schema is the single copy in ``contracts/measurement/``. It is found via the
 ``LOWLAT_SCHEMA`` environment variable, defaulting to the path inside this repository
@@ -16,7 +16,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from lowlat_measure.recorder import decode, percentiles_of
+from lowlat_measure import harness
+from lowlat_measure.recorder import decode, percentiles_of, require_profile
 from lowlat_measure.table import format_rows
 
 SCHEMA_ENV = "LOWLAT_SCHEMA"
@@ -135,6 +136,35 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
+def cmd_from_jmh(args: argparse.Namespace) -> int:
+    if not require_profile("lowlat-report"):
+        return 2
+    for path in harness.from_jmh(
+        args.source, args.out_dir, example=args.example, per_parcel=frozenset(args.per_parcel)
+    ):
+        print(path)
+    return 0
+
+
+def cmd_from_gbench(args: argparse.Namespace) -> int:
+    if not require_profile("lowlat-report"):
+        return 2
+    for path in harness.from_gbench(
+        args.source, args.out_dir, example=args.example, toolchain=args.toolchain
+    ):
+        print(path)
+    return 0
+
+
+def _add_convert(sub: Any, name: str, func: Any, text: str) -> argparse.ArgumentParser:
+    p = sub.add_parser(name, help=text, description=text)
+    p.add_argument("source", type=Path, help="the harness's JSON output")
+    p.add_argument("out_dir", type=Path, metavar="OUT_DIR", help="directory for the reports")
+    p.add_argument("--example", required=True, help="example id recorded in each report")
+    p.set_defaults(func=func)
+    return p
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="lowlat-report", description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -153,6 +183,34 @@ def build_parser() -> argparse.ArgumentParser:
                 "languages (only for reports recorded from one fixed dataset)",
             )
         p.set_defaults(func=func)
+
+    jmh = _add_convert(
+        sub,
+        "from-jmh",
+        cmd_from_jmh,
+        "convert JMH SampleTime JSON (rawDataHistogram) to java-<variant>.json reports; "
+        "needs LOWLAT_PROFILE",
+    )
+    jmh.add_argument(
+        "--per-parcel",
+        action="append",
+        default=[],
+        metavar="VARIANT",
+        help="a variant whose operation is one parcel: its gc.alloc.rate.norm becomes "
+        "runtime.alloc_bytes_per_parcel (repeatable)",
+    )
+    gbench = _add_convert(
+        sub,
+        "from-gbench",
+        cmd_from_gbench,
+        "convert Google Benchmark JSON (with repetitions) to cpp-<variant>.json reports; "
+        "needs LOWLAT_PROFILE",
+    )
+    gbench.add_argument(
+        "--toolchain",
+        default=harness.DEFAULT_TOOLCHAIN,
+        help="toolchain text appended to build.compiler (default: %(default)s)",
+    )
     return parser
 
 

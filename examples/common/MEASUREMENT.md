@@ -146,6 +146,12 @@ Record 1,000 values of 1 ms, then one value of 1 s with an expected interval of
   sharing example and variant agree across languages; use it only for reports
   recorded from one fixed dataset (the goldens), because languages measuring a
   live workload are expected to differ. Exit non-zero on any mismatch.
+- `lowlat-report from-jmh SOURCE OUT_DIR --example ID [--per-parcel VARIANT…]`: convert JMH SampleTime JSON
+  (`rawDataHistogram`, run with `-prof gc`) to `java-<variant>.json` reports through the recorder; needs
+  `LOWLAT_PROFILE`. `--per-parcel` names variants whose operation is one parcel: their
+  `gc.alloc.rate.norm` becomes `runtime.alloc_bytes_per_parcel`.
+- `lowlat-report from-gbench SOURCE OUT_DIR --example ID [--toolchain TEXT]`: convert Google Benchmark JSON
+  (with `--benchmark_repetitions`) to `cpp-<variant>.json` reports, one sample per repetition.
 
 ## Scratch files and JFR (Part 2)
 

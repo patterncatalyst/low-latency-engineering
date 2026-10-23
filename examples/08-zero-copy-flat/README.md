@@ -186,7 +186,7 @@ back to back in one `verify.sh`, so they do not depend on the machine's absolute
 |---|---|
 | JMH `-prof gc`, `gc.alloc.rate.norm` | bytes allocated per decoded parcel (a counter, not a time) |
 | `runtime.alloc_bytes_per_parcel` in the line reports | `ThreadMXBean.getThreadAllocatedBytes` of the receive thread, read twice per run |
-| JMH SampleTime percentiles | time per decode, per sweep, per clock read (loaded into HdrHistogram by `flat-py jmh-to-report`) |
+| JMH SampleTime percentiles | time per decode, per sweep, per clock read (loaded into HdrHistogram by `lowlat-report from-jmh`) |
 | JOL (`Main footprint`) | instance sizes and graph size with and without compact object headers |
 | `Main clock-check` | skew of each downcall outside the `System.nanoTime()` bracket |
 | Google Benchmark | the C++ decode variants (per 1024 records) and sweeps |

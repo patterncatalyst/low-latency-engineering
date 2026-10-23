@@ -35,7 +35,9 @@ def sh(script: str, *, cwd: Path | None = None, env: dict[str, str] | None = Non
 
 def core_id(cpu: int) -> tuple[str, str]:
     topo = SYS_CPU / f"cpu{cpu}" / "topology"
-    return (topo / "physical_package_id").read_text().strip(), (topo / "core_id").read_text().strip()
+    return (topo / "physical_package_id").read_text().strip(), (
+        topo / "core_id"
+    ).read_text().strip()
 
 
 def allowed_cpus() -> list[int]:
@@ -143,10 +145,14 @@ def perf_usable() -> bool:
         text=True,
         check=False,
     )
-    return probe.returncode == 0 and re.search(r"^\d+,", probe.stderr + probe.stdout, re.M) is not None
+    return (
+        probe.returncode == 0 and re.search(r"^\d+,", probe.stderr + probe.stdout, re.M) is not None
+    )
 
 
-needs_perf = pytest.mark.skipif(not perf_usable(), reason="perf cannot count user-space events here")
+needs_perf = pytest.mark.skipif(
+    not perf_usable(), reason="perf cannot count user-space events here"
+)
 
 
 def run_region(prog: Path, tmp: Path, name: str, outside: int, region: int) -> dict:
@@ -200,10 +206,8 @@ def test_cachegrind_run_summarises_misses_deterministically_and_leaves_no_raw_fi
     results = []
     for n in (1, 2):
         out = tmp_path / f"cg{n}.json"
-        run = sh(
-            f'CACHEGRIND_FUNCTION=region_work cachegrind_run "{out}" -- "{region_prog}" 50000 20000',
-            cwd=tmp_path,
-        )
+        cmd = f'cachegrind_run "{out}" -- "{region_prog}" 50000 20000'
+        run = sh(f"CACHEGRIND_FUNCTION=region_work {cmd}", cwd=tmp_path)
         assert run.returncode == 0, run.stdout + run.stderr
         results.append(json.loads(out.read_text()))
     first = results[0]
@@ -238,5 +242,7 @@ def test_profile_records_caches_topology_and_tool_versions_without_the_kernel_bu
         assert profile["cpu"]["caches"]["l1d"]["line_bytes"] > 0
     if profile["cpu"]["topology"]:
         assert {"cpu", "core_id"} <= set(profile["cpu"]["topology"][0])
-    build = subprocess.run(["uname", "-r"], capture_output=True, text=True, check=True).stdout.strip()
+    build = subprocess.run(
+        ["uname", "-r"], capture_output=True, text=True, check=True
+    ).stdout.strip()
     assert build not in run.stdout
