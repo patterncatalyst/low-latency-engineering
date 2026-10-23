@@ -72,6 +72,9 @@ class StagesTest {
     @EnumSource(value = Variant.ManifestKind.class, names = {"ON_HEAP", "CHRONICLE_MAP"})
     void containsAgreesWithDestination(Variant.ManifestKind kind) {
         try (Manifest manifest = kind.open(500)) {
+            for (long serial : new long[] {0, 1, 250, 499, 500, 501, 100_000, -1}) {
+                assertEquals(manifest.destination(serial) != null, manifest.contains(serial), "serial " + serial);
+            }
             assertTrue(manifest.contains(0));
             assertTrue(manifest.contains(499));
             assertFalse(manifest.contains(500));

@@ -1,7 +1,10 @@
 package io.patterncatalyst.lowlat.offheap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.patterncatalyst.lowlat.line.v1.Dimensions;
@@ -9,6 +12,7 @@ import io.patterncatalyst.lowlat.line.v1.ParcelEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.Test;
@@ -118,6 +122,55 @@ class HandOffTest {
             assertTrue(accepted >= 1 && accepted <= 17, "accepted " + accepted);
             release.countDown();
         }
+    }
+
+    /** A sink that throws at one sequence number must leave its first error in failure() and not hang close(). */
+    @ParameterizedTest
+    @EnumSource(Variant.HandOffKind.class)
+    void decideThreadFailureIsKeptAndCloseReturns(Variant.HandOffKind kind) {
+        IllegalStateException boom = new IllegalStateException("sink failed at seq 10");
+        ScanSink sink = new ScanSink() {
+            @Override
+            public void onStart() {
+            }
+
+            @Override
+            public void onScan(ScanView scan, long pickupNs) {
+                if (scan.seq() == 10) {
+                    throw boom;
+                }
+            }
+        };
+        assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
+            HandOff handOff = kind.create(1 << 10);
+            try {
+                handOff.start(sink, ThreadPlacement.UNPINNED);
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                for (long seq = 0; seq < 100 && handOff.failure() == null; seq++) {
+                    while (!handOff.publish(parcel(seq), seq) && handOff.failure() == null
+                            && System.nanoTime() < deadline) {
+                        Thread.onSpinWait();
+                    }
+                }
+                while (handOff.failure() == null && System.nanoTime() < deadline) {
+                    LockSupport.parkNanos(1_000_000);
+                }
+                assertNotNull(handOff.failure(), "the decide thread's error is reported");
+                assertSame(boom, rootOf(handOff.failure(), boom), "the first error is kept");
+            } finally {
+                handOff.close();
+            }
+        });
+    }
+
+    /** The hand-off may wrap the error; accept the original anywhere on the cause chain. */
+    private static Throwable rootOf(Throwable failure, Throwable expected) {
+        for (Throwable t = failure; t != null; t = t.getCause()) {
+            if (t == expected) {
+                return t;
+            }
+        }
+        return failure;
     }
 
     @Test

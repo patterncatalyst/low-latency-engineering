@@ -53,9 +53,11 @@ struct Decision {
 /// decide() plus the in-flight table: a barcode-keyed hash map, expired by encoder tick through a ring
 /// of barcodes in arrival order.
 ///
-/// on_parcel() allocates a hash node and an 18-character key (a copy of the barcode, in the map and
-/// again in the ring) for every parcel. That is parity with the Java Tracker's HashMap<String, ...>,
-/// not an allocation-free design: this consumer pays for the allocations the Java one does.
+/// Each parcel allocates a hash node and an 18-character key (longer than the small-string buffer)
+/// in the map. The ring slot's copy of the barcode allocates only on the first lap: after that the
+/// assignment reuses the slot's capacity. That is parity with the Java Tracker's HashMap<String, ...>
+/// for the map side, not an allocation-free design: this consumer pays the per-parcel allocations the
+/// Java one does.
 ///
 /// Barcodes are unique among in-flight parcels (an SSCC-18 is a serial number). If one arrived twice
 /// before it expired, insert_or_assign would overwrite the table entry while the ring held two

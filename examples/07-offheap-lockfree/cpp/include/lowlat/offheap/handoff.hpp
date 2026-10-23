@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <exception>
@@ -70,35 +71,42 @@ class Handoff {
 
   /// Receive thread.
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
-    // The decide thread reads `done_` only after it has popped a record, and the first record is
+    // The decide thread reads `dx_.done` only after it has popped a record, and the first record is
     // pushed after this store: the ring's release/acquire pair orders it. Written once, never again.
-    if (done_ == nullptr) done_ = &done;
+    if (dx_.done == nullptr) dx_.done = &done;
     const Scan scan{.seq = ev.seq(), .intended_ns = ev.intended_emit_ns(), .rx_ns = line::monotonic_ns()};
     if (ring_.try_push(scan)) {
-      ++published_;
+      ++rx_.published;
       if (wait_ == Wait::park) ring_.notify_consumer();
     } else {
-      ++overflow_;  // full: the belt does not wait, the count shows the loss
+      ++rx_.overflow;  // full: the belt does not wait, the count shows the loss
     }
   }
 
   /// Waits for the decide thread to handle everything, prints the sampling marker, holds, joins.
   /// Rethrows what ended the decide thread early (a negative latency, a recorder failure).
   void drain(line::Completion&) {
-    while (!failed_.load(std::memory_order_acquire) && handled_.load(std::memory_order_acquire) < published_) {
+    while (!dx_.failed.load(std::memory_order_acquire) && dx_.handled.load(std::memory_order_acquire) < rx_.published) {
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
     }
-    if (!failed_.load(std::memory_order_acquire)) {
-      std::println("window-end handled={}", handled_.load(std::memory_order_acquire));
+    if (!dx_.failed.load(std::memory_order_acquire)) {
+      std::println("window-end handled={}", dx_.handled.load(std::memory_order_acquire));
       std::fflush(stdout);
       std::this_thread::sleep_for(hold_);
     }
     stop_decide();
-    if (error_) std::rethrow_exception(error_);  // read after the join: ordered by it
+    if (dx_.error) std::rethrow_exception(dx_.error);  // read after the join: ordered by it
   }
 
-  [[nodiscard]] std::uint64_t published() const noexcept { return published_; }
-  [[nodiscard]] std::uint64_t overflow() const noexcept { return overflow_; }
+  [[nodiscard]] std::uint64_t published() const noexcept { return rx_.published; }
+  [[nodiscard]] std::uint64_t overflow() const noexcept { return rx_.overflow; }
+  /// True when the receive-written and decide-written members are in different false-sharing
+  /// ranges. Each group is a type aligned to the range, so its size is a multiple of the range and
+  /// two groups can never share one (checked by a static_assert below and by the tests).
+  [[nodiscard]] static constexpr bool writers_on_separate_lines() noexcept {
+    return alignof(ReceiveSide) >= kFalseSharingRange && alignof(DecideSide) >= kFalseSharingRange &&
+           sizeof(ReceiveSide) % kFalseSharingRange == 0 && sizeof(DecideSide) % kFalseSharingRange == 0;
+  }
   [[nodiscard]] measure::Recorder& handoff() noexcept { return handoff_; }
   [[nodiscard]] line::WindowedRecorders& handoff_windows() noexcept { return handoff_windows_; }
 
@@ -120,35 +128,48 @@ class Handoff {
         const std::int64_t handoff_ns = pickup_ns - scan->rx_ns;
         handoff_.record(handoff_ns);
         handoff_windows_.record(scan->seq, handoff_ns);
-        done_->complete(scan->seq, scan->intended_ns, line::monotonic_ns());
-        handled_.store(++handled, std::memory_order_release);
+        dx_.done->complete(scan->seq, scan->intended_ns, line::monotonic_ns());
+        dx_.handled.store(++handled, std::memory_order_release);
       }
     } catch (...) {
-      error_ = std::current_exception();
-      failed_.store(true, std::memory_order_release);
+      dx_.error = std::current_exception();
+      dx_.failed.store(true, std::memory_order_release);
     }
   }
 
   void stop_decide() {
     if (!decide_.joinable()) return;
     // A decide thread that has died never frees a slot, so a full ring must not hold the stop back.
-    while (!ring_.try_push(Scan{.seq = kStop}) && !failed_.load(std::memory_order_acquire)) std::this_thread::yield();
+    while (!ring_.try_push(Scan{.seq = kStop}) && !dx_.failed.load(std::memory_order_acquire)) std::this_thread::yield();
     if (wait_ == Wait::park) ring_.notify_consumer();
     decide_.join();
   }
+
+  // Members grouped by writer, each group in its own false-sharing range. The receive thread
+  // writes `rx_.published` on every push; the decide thread release-stores `dx_.handled` on every
+  // record. Sharing a line, the two would trade it back and forth once per record, on the hot path.
+  struct alignas(kFalseSharingRange) ReceiveSide {
+    std::uint64_t published = 0;  // receive thread only
+    std::uint64_t overflow = 0;   // receive thread only
+  };
+  struct alignas(kFalseSharingRange) DecideSide {
+    // Written once by the receive thread before the first push and only read here afterwards, so
+    // it costs one transfer, not one per record.
+    line::Completion* done = nullptr;
+    std::atomic<std::uint64_t> handled = 0;
+    std::atomic<bool> failed = false;  // set by the decide thread, after error is written
+    std::exception_ptr error;          // decide thread writes it before failed; read after the join
+  };
 
   Wait wait_;
   std::chrono::milliseconds hold_;
   SpscRing<Scan, kHandoffSlots> ring_;
   measure::Recorder handoff_;
   line::WindowedRecorders handoff_windows_;
-  line::Completion* done_ = nullptr;
-  std::uint64_t published_ = 0;  // receive thread only
-  std::uint64_t overflow_ = 0;   // receive thread only
-  std::atomic<std::uint64_t> handled_ = 0;
-  std::atomic<bool> failed_ = false;  // set by the decide thread, after error_ is written
-  std::exception_ptr error_;          // decide thread writes it before failed_; read after the join
+  ReceiveSide rx_;
+  DecideSide dx_;
   std::jthread decide_;  // last member: starts after everything it uses exists
 };
+static_assert(Handoff::writers_on_separate_lines());
 
 }  // namespace lowlat::offheap

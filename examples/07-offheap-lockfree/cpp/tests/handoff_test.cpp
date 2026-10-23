@@ -53,6 +53,7 @@ void rethrows_decide_thread_failure() {
   EXPECT_THROW(handoff.drain(done), std::runtime_error);
 }
 
+TEST(Handoff, ReceiveAndDecideWritersAreOnSeparateLines) { EXPECT_TRUE(Handoff::writers_on_separate_lines()); }
 TEST(Handoff, SpinCompletesEveryRecord) { completes_every_record<Wait::spin>(); }
 TEST(Handoff, ParkCompletesEveryRecord) { completes_every_record<Wait::park>(); }
 TEST(Handoff, SpinRethrowsDecideThreadFailureFromDrain) { rethrows_decide_thread_failure<Wait::spin>(); }

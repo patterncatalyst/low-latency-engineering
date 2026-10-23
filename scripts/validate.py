@@ -23,6 +23,11 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
                  -Dchronicle.analytics.disable=true to surefire (argLine) and to exec
                  (an <argument> or the <commandlineArgs> string);
                  a Java source naming net.openhft.chronicle disables analytics itself
+  listings       every code fence in _docs/NN-*.md that the chapter ties to a source file
+                 (a backticked `File.java` in the prose before it, else any file of the
+                 fence's language in the chapter's example) reproduces that source: each
+                 chunk between `// ...` / `# ...` elision lines is a contiguous run of
+                 lines of one candidate file (trailing whitespace ignored)
   means          "mean latency"/"average latency" fail (unless the sentence negates it);
                  every other use of mean/average in _docs is printed for review
   no-jfr         no *.jfr file is tracked by git (the JFR evidence is the text summaries)
@@ -294,6 +299,10 @@ JAVA_COMMENT = re.compile(r"/\*.*?\*/|(?<![:\"])//[^\n]*", re.S)
 DEP_MGMT = re.compile(r"<dependencyManagement>.*?</dependencyManagement>", re.S)
 CHRONICLE_DEP = re.compile(r"<artifactId>\s*chronicle-[a-z-]+\s*</artifactId>")
 ARG_LINE = re.compile(r"<argLine>[^<]*" + re.escape(ANALYTICS_FLAG))
+EXEC_PLUGIN = re.compile(
+    r"<plugin>(?:(?!</plugin>).)*?<artifactId>\s*exec-maven-plugin\s*</artifactId>.*?</plugin>",
+    re.S,
+)
 EXEC_ARG = re.compile(
     r"<argument>\s*" + re.escape(ANALYTICS_FLAG) + r"\s*</argument>"
     r"|<commandlineArgs>[^<]*" + re.escape(ANALYTICS_FLAG)
@@ -310,8 +319,9 @@ def check_chronicle(root: Path) -> None:
         poms += 1
         if not ARG_LINE.search(text):
             fail("chronicle", f"{relto(root, p)}: surefire <argLine> lacks {ANALYTICS_FLAG}")
-        if "exec-maven-plugin" in text and not EXEC_ARG.search(text):
-            fail("chronicle", f"{relto(root, p)}: exec arguments lack {ANALYTICS_FLAG}")
+        for block in EXEC_PLUGIN.findall(text):
+            if not EXEC_ARG.search(block):
+                fail("chronicle", f"{relto(root, p)}: exec arguments lack {ANALYTICS_FLAG}")
     for p in walk(root, "*.java"):
         code = JAVA_COMMENT.sub("", p.read_text(encoding="utf-8"))
         if "net.openhft.chronicle" not in code:
@@ -324,6 +334,128 @@ def check_chronicle(root: Path) -> None:
                 "ChronicleAnalytics.disable() or sets chronicle.analytics.disable",
             )
     print(f"chronicle: {poms} pom(s), {javas} source file(s) checked")
+
+
+# ---------------------------------------------------------------- listings vs source
+LISTING_EXT = {
+    "java": {".java"},
+    "cpp": {".cpp", ".hpp", ".h", ".cc"},
+    "c++": {".cpp", ".hpp", ".h", ".cc"},
+    "python": {".py"},
+    "py": {".py"},
+}
+ELISION = re.compile(r"^\s*(//|#)\s*\.\.\.\s*$")
+NAMED_SOURCE = re.compile(r"`([\w./-]+)`")
+
+
+def names_source(path: Path, token: str) -> bool:
+    """True when a backticked token names the file: `a/File.java`, `File.java`, or `File.member`
+    for a capitalised (Java class) stem."""
+    if "." in token and path.as_posix().endswith("/" + token.lstrip("/")):
+        return True
+    head = token.split(".")[0]
+    return head[:1].isupper() and head == path.stem
+
+
+def listing_sources(root: Path, doc: Path) -> list[Path]:
+    """Source files of the chapter's example, plus the shared kits it builds on."""
+    num = doc.name.split("-")[0]
+    dirs = sorted((root / "examples").glob(f"{num}-*")) if (root / "examples").is_dir() else []
+    if not dirs:
+        return []
+    dirs += [d for d in (root / "examples" / "common", root / "contracts") if d.is_dir()]
+    return [
+        p
+        for d in dirs
+        for p in sorted(d.rglob("*"))
+        if p.is_file()
+        and p.suffix in {".java", ".cpp", ".hpp", ".h", ".cc", ".py"}
+        and not SKIP_DIRS & set(p.relative_to(root).parts)
+    ]
+
+
+def listing_chunks(body: list[str]) -> list[tuple[int, list[str]]]:
+    """Split a fence body at elision lines into (offset of first line, lines) chunks."""
+    chunks: list[tuple[int, list[str]]] = []
+    cur: list[str] = []
+    start = 0
+    for i, line in enumerate(body):
+        if ELISION.match(line):
+            if cur:
+                chunks.append((start, cur))
+            cur, start = [], i + 1
+        else:
+            if not cur:
+                start = i
+            cur.append(line.rstrip())
+    if cur:
+        chunks.append((start, cur))
+    trimmed = []
+    for offset, chunk in chunks:
+        while chunk and not chunk[0].strip():
+            chunk, offset = chunk[1:], offset + 1
+        while chunk and not chunk[-1].strip():
+            chunk = chunk[:-1]
+        if chunk:
+            trimmed.append((offset, chunk))
+    return trimmed
+
+
+def contains_run(haystack: list[str], needle: list[str]) -> bool:
+    n = len(needle)
+    return any(haystack[i : i + n] == needle for i in range(len(haystack) - n + 1))
+
+
+def check_listings(root: Path) -> None:
+    fences = chunks_checked = 0
+    cache: dict[Path, list[str]] = {}
+
+    def lines_of(p: Path) -> list[str]:
+        if p not in cache:
+            cache[p] = [x.rstrip() for x in p.read_text(encoding="utf-8").splitlines()]
+        return cache[p]
+
+    for doc in sorted((root / "_docs").glob("[0-9][0-9]-*.md")):
+        sources = listing_sources(root, doc)
+        if not sources:
+            continue
+        lines = doc.read_text(encoding="utf-8").splitlines()
+        prose: list[str] = []  # prose since the previous fence
+        named: list[str] = []  # file names the latest prose paragraph gives
+        i = 0
+        while i < len(lines):
+            fence = FENCE.match(lines[i])
+            if not fence:
+                if lines[i].strip() and not CODETABS.search(lines[i]):
+                    prose.append(lines[i])
+                i += 1
+                continue
+            marker, lang = fence.group(2), fence.group(3).lower()
+            if prose:
+                named = NAMED_SOURCE.findall(" ".join(prose[-6:]))
+                prose = []
+            j = i + 1
+            while j < len(lines) and not lines[j].lstrip().startswith(marker):
+                j += 1
+            body = lines[i + 1 : j]
+            if lang in LISTING_EXT:
+                exts = LISTING_EXT[lang]
+                mine = [p for p in sources if p.suffix in exts]
+                by_name = [p for p in mine if any(names_source(p, n) for n in named)]
+                candidates = by_name or mine
+                fences += 1
+                for offset, chunk in listing_chunks(body):
+                    chunks_checked += 1
+                    if not any(contains_run(lines_of(p), chunk) for p in candidates):
+                        where = ", ".join(sorted({p.name for p in by_name})) or f"any {lang} source"
+                        fail(
+                            "listings",
+                            f"{relto(root, doc)}:{i + 2 + offset}: {lang} listing "
+                            f"({len(chunk)} lines from {chunk[0].strip()[:60]!r}) "
+                            f"is not a verbatim run of {where}",
+                        )
+            i = j + 1
+    print(f"listings: {fences} fence(s), {chunks_checked} chunk(s) checked")
 
 
 # ---------------------------------------------------------------- no mean latency
@@ -647,6 +779,31 @@ def planted(
         return collect_failures(lambda: check(root))
 
 
+CHRONICLE_POM = (
+    "<project><dependencies><dependency><artifactId>chronicle-queue</artifactId></dependency>"
+    "</dependencies><build><plugins>"
+    "<plugin><artifactId>maven-surefire-plugin</artifactId><configuration>"
+    "<argLine>-Dchronicle.analytics.disable=true</argLine></configuration></plugin>"
+    "{}</plugins></build></project>"
+)
+EXEC_CMD_GOOD = (
+    "<plugin><artifactId>exec-maven-plugin</artifactId><configuration><commandlineArgs>"
+    "-Dchronicle.analytics.disable=true -cp %classpath Main</commandlineArgs>"
+    "</configuration></plugin>"
+)
+EXEC_CMD_BAD = (
+    "<plugin><artifactId>exec-maven-plugin</artifactId><configuration><commandlineArgs>"
+    "-cp %classpath Main</commandlineArgs></configuration></plugin>"
+)
+LISTED_SRC = (
+    "class A {\n    int f() {\n    int a = 1;\n    int b = 2;\n    return a + b;\n    }\n}\n"
+)
+
+
+def listing_doc(prose_name: str, body: str, lang: str = "java") -> str:
+    return f"# Chapter\n\nThe listing shows {prose_name}.\n\n```{lang}\n{body}\n```\n"
+
+
 def self_test() -> int:
     r = "examples/05-jvm-costs/results/r02-run1/java-naive.json"
     vm = "examples/07-offheap-lockfree/results/r02-vm-run1"
@@ -816,6 +973,75 @@ def self_test() -> int:
             "",
         ),
         (
+            "chronicle exec commandlineArgs good",
+            {"examples/07-offheap-lockfree/java/pom.xml": CHRONICLE_POM.format(EXEC_CMD_GOOD)},
+            check_chronicle,
+            False,
+            "",
+        ),
+        (
+            "chronicle exec commandlineArgs missing flag",
+            {"examples/07-offheap-lockfree/java/pom.xml": CHRONICLE_POM.format(EXEC_CMD_BAD)},
+            check_chronicle,
+            False,
+            "exec arguments lack",
+        ),
+        (
+            "chronicle flag only outside the exec plugin",
+            {
+                "examples/07-offheap-lockfree/java/pom.xml": CHRONICLE_POM.format(
+                    EXEC_CMD_BAD
+                ).replace(
+                    "<build>", "<properties><x>" + ANALYTICS_FLAG + "</x></properties><build>"
+                )
+            },
+            check_chronicle,
+            False,
+            "exec arguments lack",
+        ),
+        (
+            "listings matching",
+            {
+                "examples/03-x/A.java": LISTED_SRC,
+                "_docs/03-x.md": listing_doc("`A.java`", "    int b = 2;\n    return a + b;"),
+            },
+            check_listings,
+            False,
+            "",
+        ),
+        (
+            "listings matching across an elision",
+            {
+                "examples/03-x/A.java": LISTED_SRC,
+                "_docs/03-x.md": listing_doc(
+                    "`A.java`", "    int a = 1;\n    // ...\n    return a + b;"
+                ),
+            },
+            check_listings,
+            False,
+            "",
+        ),
+        (
+            "listings drifted",
+            {
+                "examples/03-x/A.java": LISTED_SRC,
+                "_docs/03-x.md": listing_doc("`A.java`", "    int b = 3;\n    return a + b;"),
+            },
+            check_listings,
+            False,
+            "not a verbatim run of A.java",
+        ),
+        (
+            "listings unattributed command fence skipped",
+            {
+                "examples/03-x/A.java": LISTED_SRC,
+                "_docs/03-x.md": listing_doc("`A.java`", "ignored", lang="bash"),
+            },
+            check_listings,
+            False,
+            "",
+        ),
+        (
             "prerelease pyproject",
             {"examples/pyproject.toml": '[project]\nname="x"\ndependencies=["foo==2.0.0rc1"]\n'},
             check_prerelease,
@@ -954,6 +1180,7 @@ def main() -> int:
     check_codetabs(pages)
     check_shell_syntax()
     check_chronicle(ROOT)
+    check_listings(ROOT)
     check_means(pages)
     check_no_jfr(ROOT)
     check_java_flags(ROOT)

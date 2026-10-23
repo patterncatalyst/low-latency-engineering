@@ -85,7 +85,9 @@ int main(int argc, char** argv) {
     std::chrono::milliseconds hold{0};
     for (int i = 1; i < argc; ++i) {
       if (std::string_view{argv[i]} == "--sample-hold-ms" && i + 1 < argc) {
-        hold = std::chrono::milliseconds{line::cli::number<std::int64_t>("--sample-hold-ms", argv[++i])};
+        const auto ms = line::cli::number<std::int64_t>("--sample-hold-ms", argv[++i]);
+        if (ms < 0) throw std::invalid_argument("--sample-hold-ms must be >= 0");
+        hold = std::chrono::milliseconds{ms};
       } else if (std::string_view{argv[i]} == "-h" || std::string_view{argv[i]} == "--help") {
         std::print("usage: offheap-handoff [--variant atomic-spsc|atomic-wait] [--sample-hold-ms MS]\n{}",
                    line::consumer_usage());

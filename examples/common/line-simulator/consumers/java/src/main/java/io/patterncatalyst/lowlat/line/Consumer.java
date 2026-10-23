@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
 /** Java line consumer: see {@code examples/common/line-simulator/consumers/README.md}. */
 public final class Consumer {
+
+    /** Upper bound on how long the shutdown hook waits for main to finish writing the report. */
+    private static final long REPORT_WAIT_SECONDS = 60;
 
     private Consumer() {
     }
@@ -54,7 +57,7 @@ public final class Consumer {
         Thread loop = Thread.ofPlatform().name("line-consumer").unstarted(receive);
         // The report is written once, by whichever of main (the loop ended by itself) or the
         // shutdown hook (SIGINT/SIGTERM) gets here first.
-        AtomicBoolean reported = new AtomicBoolean();
+        ReportGate reported = new ReportGate();
         // SIGINT/SIGTERM: stop the loop, wait for it (the join is also the happens-before edge to
         // the single-threaded recorder), then write the report. Nothing can set the exit status
         // from here, so a failed write halts the JVM with status 1.
@@ -62,8 +65,22 @@ public final class Consumer {
             receiver.stop();
             try {
                 loop.join();
-                if (receive.state() != Future.State.FAILED && reported.compareAndSet(false, true)) {
-                    finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
+                if (receive.state() == Future.State.FAILED) {
+                    return;
+                }
+                if (reported.claim()) {
+                    try {
+                        finish(config, receiver, receive.state() == Future.State.SUCCESS ? receive.resultNow() : null);
+                    } finally {
+                        reported.done();
+                    }
+                } else if (!reported.awaitDone(REPORT_WAIT_SECONDS, TimeUnit.SECONDS)) {
+                    // main is still writing: returning would let the JVM finish the shutdown mid-write
+                    System.err.println("line-consumer-java: report write did not finish in "
+                            + REPORT_WAIT_SECONDS + " s");
+                    Runtime.getRuntime().halt(1);
+                } else if (reported.hasFailed()) {
+                    Runtime.getRuntime().halt(1); // main's write failed (already reported); keep status 1
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -84,7 +101,7 @@ public final class Consumer {
             }
             System.exit(1);
         }
-        if (!reported.compareAndSet(false, true)) {
+        if (!reported.claim()) {
             return; // the shutdown hook is writing the report and ends the JVM
         }
         int status = 0;
@@ -93,6 +110,9 @@ public final class Consumer {
         } catch (IOException | UncheckedIOException e) {
             System.err.println("line-consumer-java: cannot write report: " + e.getMessage());
             status = 1;
+            reported.failed();
+        } finally {
+            reported.done();
         }
         System.exit(status);
     }

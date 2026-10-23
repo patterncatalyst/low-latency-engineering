@@ -134,7 +134,10 @@ holds '2 * $f <= $o' "4 flat-table p50 ($flat_table ns) <= 1/2 of object-table p
   --argjson f "$flat_table" --argjson o "$object_table"
 # A collection during a table run would move the object table's scatter; both must report gc.count 0.
 for method in flatTable objectTable; do
-  collections=$(jq -er --arg m ".$method" '.[] | select(.benchmark | endswith($m)) | .secondaryMetrics["gc.count"].score' "$OUT/jmh.json")
+  collections=$(jq -er --arg m ".$method" '
+    [.[] | select(.benchmark | endswith($m)) | .secondaryMetrics["gc.count"].score]
+    | if length == 1 then .[0] else error("expected one gc.count row, found \(length)") end' \
+    "$OUT/jmh.json") || die "no single gc.count for $method"
   holds '$c == 0' "4 $method ran without a garbage collection (gc.count $collections)" --argjson c "$collections"
 done
 
