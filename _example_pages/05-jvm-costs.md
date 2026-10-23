@@ -5,8 +5,8 @@ order: 5
 permalink: /examples/05-jvm-costs/
 card_eyebrow: "Example 05 · Chapter 5"
 card_title: "Allocation, warm-up and the AOT cache"
-card_blurb: "Escape analysis takes a 24 B/op decision to under 1 B/op, and an unwarmed JVM's first 2,000 parcels have a p99.9 of 13.4 to 28.5 ms against 0.26 to 0.49 ms steady (bare-metal, untuned host)."
-description: "Escape analysis takes a 24 B/op decision to under 1 B/op, and an unwarmed JVM's first 2,000 parcels have a p99.9 of 13.4 to 28.5 ms against 0.26 to 0.49 ms steady (bare-metal, untuned host)."
+card_blurb: "Escape analysis takes a 24 B/op decision to under 1 B/op, and an unwarmed JVM's first 2,000 parcels have a p99.9 of 14.4 to 27.7 ms against 0.28 to 0.35 ms steady (bare-metal, untuned host)."
+description: "Escape analysis takes a 24 B/op decision to under 1 B/op, and an unwarmed JVM's first 2,000 parcels have a p99.9 of 14.4 to 27.7 ms against 0.28 to 0.35 ms steady (bare-metal, untuned host)."
 languages: "Java · C++"
 ---
 
@@ -28,7 +28,7 @@ examples/05-jvm-costs/verify.sh
 - `aot-cache`: the median time to ready is at most 0.8x the no-cache median, and the AOT log shows the cache opened.
 - Every Java report's `build.flags` carries the JVM arguments, and every line run counts 20,000 parcels, drops none and passes `lowlat-report check`.
 
-All of it held on the quiet-host runs `r02-run1..3`. The criterion on the unwarmed first window was first written on p99, failed on it in `r02-run2`, and is asserted on p99.9 after a recheck of all three runs; the chapter and the README give the detail.
+All of it held on the quiet-host runs `r02-run1..3`. The criterion on the unwarmed first window was first written on p99, failed on it in a run set from before S22 (commit d419992), and is asserted on p99.9; the chapter and the README give the detail.
 
 ## Chapter and source
 

@@ -85,7 +85,7 @@ nodes = [
         "w": 240,
         "h": 42,
         "style": "ink",
-        "lines": ["first-window p99.9", "13.4-28.5 ms"],
+        "lines": ["first-window p99.9", "14.4-27.7 ms"],
     },
     {
         "x": 320,
@@ -93,7 +93,7 @@ nodes = [
         "w": 240,
         "h": 42,
         "style": "ink",
-        "lines": ["first-window p99.9", "0.29-0.36 ms"],
+        "lines": ["first-window p99.9", "0.27-0.52 ms"],
     },
     {
         "x": 600,
@@ -101,7 +101,7 @@ nodes = [
         "w": 240,
         "h": 42,
         "style": "ink",
-        "lines": ["first-window p99.9", "0.61-3.2 ms"],
+        "lines": ["first-window p99.9", "0.75-1.6 ms"],
     },
 ]
 
@@ -139,8 +139,8 @@ notes = [
         "x": 440,
         "y": 398,
         "text": (
-            "Time to ready, median of 5 launches: 173-177 ms without "
-            "a trained AOT cache, 51-55 ms with one."
+            "Time to ready, median of 5 launches: 177-178 ms without "
+            "a trained AOT cache, 50-51 ms with one."
         ),
         "anchor": "middle",
         "size": 12,
