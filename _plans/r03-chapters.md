@@ -91,12 +91,12 @@ Evidence root: `examples/09-eliminating-work/results/r03-run{1,2,3}/`. Ranges ar
 | Java padded layout 0.00033-0.00037 misses per increment | `verify.log` Java '[store increment] L1-dcache-load-misses:u' pair-padded values, three runs |
 | Store batch p50 (1,000 increments): C++ 5,119-5,163 ns vs 1,606-1,616 ns, ratio 3.15-3.19x (observed) | `verify.log` '[store increment] per-batch'; observed 4a' |
 | Java store batch ratio 3.02-3.08x (observed) | `verify.log` observed 4c' |
-| Ratios would clear a 3x bound by about 5 % | 3.15x/3x = 1.05 (observed 4a' margin 1.05-1.06x); Java 1.01-1.03x |
+| Store-batch ratios sit 5-6 % (C++) and 1-3 % (Java) above 3x, not asserted | `verify.log` observed 4a' (margins 1.05-1.06x) and observed 4c' (1.01-1.03x) |
 | C++ rmw batch p50 51.9-55.9 us vs 4.89-4.90 us, ratio 10.50-11.44x (asserted at least 3x) | `verify.log` '[rmw increment] per-batch'; criterion 4a |
 | Java `getAndAdd` batch ratio 10.97-12.34x (observed) | `verify.log` observed 4c'' |
-| 64-byte padding store batch p50 1,656-1,676 ns vs 1,606-1,616 ns for 128 B (2-4 % slower, observed) | `verify.log` 'observed: line-padded (64 B)' (1,658/1,616, 1,656/1,618, 1,676/1,616) |
-| SMT siblings 4,299-4,331 ns vs 2,111-2,193 ns on distinct cores (adjacent layout, observed) | `verify.log` 'observed: two cameras on SMT siblings' |
-| Java warm-up: warming only the inner batch left the outer loop on C1's profiling tier, about 0.005 extra L1 misses per increment | `README.md` (Java section); the corrected value is the padded Java layout row above |
+| 64-byte padding store batch p50 1,656-1,676 ns vs 1,616-1,618 ns for 128 B in the same alternation (2-4 % slower, observed); 0.00016 L1 misses per increment | `verify.log` 'observed: line-padded (64 B)' (1,658/1,616, 1,656/1,618, 1,676/1,616); `cpp/counters-line-padded.json` and `cpp/counters-pair-padded.a1.json` `runtime.hw_counters.per_op.L1-dcache-load-misses` (0.000164, 0.000160, 0.000158 vs 0.000154, 0.000150, 0.000155) |
+| SMT siblings 4,299-4,331 ns vs 2,111-2,193 ns on distinct cores (adjacent layout, observed); L1 misses per increment 0.00021-0.00022 vs 0.087-0.091 | `verify.log` 'observed: two cameras on SMT siblings'; `cpp/counters-smt-siblings.json` and `cpp/counters-adjacent-counters.2-cameras.json` `runtime.hw_counters.per_op.L1-dcache-load-misses` |
+| Java: each camera warms its whole measured loop, because an inner-batch-only warm-up would leave the outer loop on C1's profiling tier; padded layout 0.00033-0.00037 (the un-warmed case is not a committed result) | `java/.../CountersRun.java` `timeBatches` warm-up; `README.md` (Java section); padded row above |
 | Python bytes per tracked parcel 790.8 (dict), 462.8 (slots-str), 385.8 (slots-int) | `python/footprint.json` `tracked_bytes_per_parcel`; `verify.log` Python block |
 | Python record container 3.41x (asserted at least 2x, exact); dict vs slots-int 2.05x (asserted, margin 1.02x); vs slots-str 1.71x (observed) | `verify.log` criteria 1e, 1f; observed 1f' |
 | Python sweep p50 41.1-41.6 ms (list of records) vs 42.9-43.3 ms (array columns), 1,000,000 slots (observed) | `verify.log` 'hub-sweep-fat-record' and 'hub-sweep-hot-cold' lines |
@@ -105,7 +105,10 @@ Evidence root: `examples/09-eliminating-work/results/r03-run{1,2,3}/`. Ranges ar
 | Line, C++: 400,000 tracker allocations (27.8 MB) on the receive thread for the node map, 0 for the flat map (exact) | `verify.log` line-node-map / line-flat-map lines; criteria 5a, 5b |
 | Line, C++ end-to-end p50 56.8-57.7 us, p99 78-83 us, p50s within 1 us per run, worst parcel 0.94-2.87 ms (observed) | `verify.log` line-node-map / line-flat-map lines; 'line end-to-end fits the 480 ms' line |
 | Java line receive-thread allocation 710.2-710.5 B vs 582.5 B per parcel (observed) | `verify.log` 'line-node-map', 'line-flat-map' (Java) lines |
-| perf vs cachegrind agree on ranking; simulated cache has no prefetcher | values above; cachegrind model per `README.md` (Cross-check) |
+| perf vs cachegrind agree on ranking; simulated cache has no prefetcher | values above; cachegrind is a cache simulation, `perf` counts hardware events |
+| Cachegrind counts lookups by difference (200,000 lookups minus one); `perf stat` counts only the timed loop through `--control` FIFOs | `README.md` (C++ section) |
+| Hub FlatMapTracker `expected` 1,062,500 = 1,000,000 + 1,000,000/16; 2^21 slots; resize threshold 0.55 x 2^21 = 1,153,433 | `java/.../HubLookupBenchmark.java` (`PARCELS + PARCELS / 16`), `FlatMapTracker.java` comment, Agrona `Long2LongHashMap` (capacity rounded to a power of two) |
+| Toolchain: Temurin 25.0.5+8, GCC 16.2, Python 3.14.8; CPU 0 left out of placement | `r03-run1/profile.json` `tools.*`; `verify.sh` (CPU 0 comment); `_plans/dependency-pins.md` (3.14.8+freethreaded) |
 
 ### Ch10 claims (S11, `examples/10-lockfree-waitfree/results/r03-run{1,2,3}/`)
 

@@ -15,9 +15,10 @@ public final class FlatMapTracker implements Tracker {
     private final RecordTable table;
 
     public FlatMapTracker(int expected, RecordTable table) {
-        // Agrona rounds the capacity up to a power of two (2^21 slots for 1.06 million parcels) and resizes at
-        // capacity * loadFactor, which is above `expected` here, so `expected` entries never resize it. Passing
-        // 2 * expected would only double the array to 2^22 slots (64 MB) and halve the load.
+        // Agrona rounds the capacity up to a power of two and resizes at capacity * loadFactor. The hub's
+        // `expected` is 1,062,500 entries, which gets 2^21 slots and a threshold of 0.55 * 2^21 = 1,153,433, so the
+        // hub map never resizes. Passing 2 * expected would only double the array to 2^22 slots (64 MB) and halve
+        // the load.
         this.index = new Long2LongHashMap(expected, 0.55f, MISSING);
         this.table = table;
     }
