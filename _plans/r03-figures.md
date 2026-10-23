@@ -144,4 +144,4 @@ Deviations from the figure list above, recorded here so the chapters (S10, S11) 
 |---|---|
 | specs and generated files | done (8 figures: 09-working-set, 09-node-vs-flat-map, 09-hot-cold-split, 09-false-sharing, 10-progress-guarantees, 10-store-buffer, 10-seqlock, 10-stalled-producer) |
 | `_data/diagrams.yml` entries | done (4 for Ch9, 4 for Ch10) |
-| chapters embed the figures (S10-S11) | todo |
+| chapters embed the figures (S10-S11) | Ch9 done (S10); Ch10 todo |
