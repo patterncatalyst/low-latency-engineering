@@ -30,7 +30,7 @@ Every measured number here carries one profile: bare-metal host, an 8-core, 16-t
 
 ## Diagram
 
-{% include excalidraw.html file="02-littles-law" alt="The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.3 to +0.5 %, Java +1.3 to +4.3 %." caption="Figure 2.1 — The consumer as a queue. Sampled L matches lambda x W-bar within 0.5 % in C++ and 4.3 % in Java; W-bar is a model input, never a reported latency." %}
+{% include excalidraw.html file="02-littles-law" alt="The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.3 to +0.5 %, Java +1.3 to +4.3 %." caption="Figure 2.1: The consumer as a queue. Sampled L matches lambda x W-bar within 0.5 % in C++ and 4.3 % in Java; W-bar is a model input, never a reported latency." %}
 
 ## Concept
 
@@ -54,7 +54,7 @@ A fixed batch of parcels is shared among N workers. Each parcel costs parallel C
 
 The formula assumes the serial part runs alone, and a lock does not guarantee that: while one worker holds it, the others can still scan. The workload therefore runs in waves. Each worker scans its parcels, all workers meet at a barrier, every worker commits under the lock, and they meet again. Nobody commits while anyone scans, and nobody scans while anyone commits. That is the structure the formula describes, and it fits a wave-picked sortation plan.
 
-{% include excalidraw.html file="02-amdahl-phases" alt="Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java." caption="Figure 2.2 — The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.83-2.85x, Java 2.74-2.75x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x." %}
+{% include excalidraw.html file="02-amdahl-phases" alt="Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java." caption="Figure 2.2: The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.83-2.85x, Java 2.74-2.75x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x." %}
 
 ## How the code works
 

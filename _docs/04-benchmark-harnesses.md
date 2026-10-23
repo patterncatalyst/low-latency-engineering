@@ -26,7 +26,7 @@ The code is in `examples/04-benchmark-harnesses/`. The run script there builds a
 
 ## Diagram
 
-{% include excalidraw.html file="04-three-harnesses" alt="A check-digit workload fans out to three lanes: Google Benchmark (C++, DoNotOptimize, 30 repetitions) to median and p99, where p99 is the slowest repetition, pyperf (Python, 6 processes, 3 warm-ups each) to median and p99 of 24 values, and JMH SampleTime (Java, 3 forks, warm-up, Blackhole) to p50, p99 and p99.9." caption="Figure 4.1 — The same check-digit workload in three harnesses. Each repeats and warms up, and each is read as percentiles rather than a single number." %}
+{% include excalidraw.html file="04-three-harnesses" alt="A check-digit workload fans out to three lanes: Google Benchmark (C++, DoNotOptimize, 30 repetitions) to median and p99, where p99 is the slowest repetition, pyperf (Python, 6 processes, 3 warm-ups each) to median and p99 of 24 values, and JMH SampleTime (Java, 3 forks, warm-up, Blackhole) to p50, p99 and p99.9." caption="Figure 4.1: The same check-digit workload in three harnesses. Each repeats and warms up, and each is read as percentiles rather than a single number." %}
 
 ## Concept
 
@@ -185,7 +185,7 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 **Dead-code elimination.** Figure 4.2 shows both variants.
 
-{% include excalidraw.html file="04-dead-code-elimination" alt="C++ and Java lanes each show a guarded variant (DoNotOptimize, Blackhole.consume) with a measured median (4.73 to 4.74 ns in C++, p50 31 to 32 ns in Java) and an eliminated variant whose result is unused and removed, timing about 0 ns, at least 472x lower in C++ and at least 3,100x lower in Java; the Python lane is a ghost box: CPython does not eliminate the work, and the contrast there is warm-up." caption="Figure 4.2 — When the result is unused, the compiler or JIT removes the work and the benchmark times nothing." %}
+{% include excalidraw.html file="04-dead-code-elimination" alt="C++ and Java lanes each show a guarded variant (DoNotOptimize, Blackhole.consume) with a measured median (4.73 to 4.74 ns in C++, p50 31 to 32 ns in Java) and an eliminated variant whose result is unused and removed, timing about 0 ns, at least 472x lower in C++ and at least 3,100x lower in Java; the Python lane is a ghost box: CPython does not eliminate the work, and the contrast there is warm-up." caption="Figure 4.2: When the result is unused, the compiler or JIT removes the work and the benchmark times nothing." %}
 
 The eliminated C++ median is a fraction of a nanosecond (1.8e-10 ns in all three runs in `gbench.json`), and the Java eliminated p50 is 0 ns. `verify.sh` floors the divisor at 0.01 ns so the ratio stays finite, so the ratios are lower bounds, not measurements of how fast nothing is: at least 472x in C++ (472x, 473x, 473x) and at least 3,100x in Java (3,100x, 3,200x, 3,200x). A tool that reports 0 ns for a function that does 17 multiplications has told you the benchmark is broken, not that the function is free.
 

@@ -28,7 +28,7 @@ The code is in `examples/03-coordinated-omission/`. The run script there builds 
 
 ## Diagram
 
-{% include excalidraw.html file="03-three-clocks" alt="A timeline of intended emit, actual send, dequeue and done, with three bars below ending at done: intended-time (amber) starts at the belt's schedule, closed-loop at the send of its own request, receipt-time at dequeue." caption="Figure 3.1 — Three clocks on one parcel. Only intended-time starts at the belt's schedule, so only it is charged for the wait." %}
+{% include excalidraw.html file="03-three-clocks" alt="A timeline of intended emit, actual send, dequeue and done, with three bars below ending at done: intended-time (amber) starts at the belt's schedule, closed-loop at the send of its own request, receipt-time at dequeue." caption="Figure 3.1: Three clocks on one parcel. Only intended-time starts at the belt's schedule, so only it is charged for the wait." %}
 
 ## Clocks
 
@@ -107,7 +107,7 @@ The consumer receives each parcel as a UDP datagram, handles it, and records a l
 - **Receipt time** starts when the consumer dequeues the datagram. It is what a service-side timer reports. It measures handling only.
 - **Closed loop** is a client that issues the next request only after the previous one completes, one request per millisecond, with the same 200 ms stall. Each request is timed from its own start. Recorded as is, it is the naive variant. Recorded through the histogram's correction call it is the corrected variant.
 
-{% include excalidraw.html file="03-coordinated-omission" alt="Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.4-11.9 us) and intended-time (p99 100.4-100.5 ms C++, 101.4-101.7 ms Java); in the closed-loop run a client feeds naive (p99 1.0-1.1 us C++, 6.9-7.1 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.2-99.3 ms Java)." caption="Figure 3.2 — A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (an 8-core, 16-thread Intel laptop CPU, Fedora 44 kernel 7.2, governor `powersave`), runs r02-run1..3." %}
+{% include excalidraw.html file="03-coordinated-omission" alt="Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.4-11.9 us) and intended-time (p99 100.4-100.5 ms C++, 101.4-101.7 ms Java); in the closed-loop run a client feeds naive (p99 1.0-1.1 us C++, 6.9-7.1 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.2-99.3 ms Java)." caption="Figure 3.2: A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (an 8-core, 16-thread Intel laptop CPU, Fedora 44 kernel 7.2, governor `powersave`), runs r02-run1..3." %}
 
 The first two variants come from the same datagrams in the same run. Parcel 5000 triggers the stall. During those 200 ms the simulator keeps emitting, so about 200 parcels wait in the socket. The consumer then drains them back to back, so receipt time records 200 fast samples. Intended time records the same 200 parcels with waits that fall from about 200 ms to near zero. The third and fourth variants come from a separate closed-loop phase in the same process.
 

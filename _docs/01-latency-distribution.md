@@ -29,7 +29,7 @@ Every number here carries one profile: bare-metal host, an 8-core, 16-thread Int
 
 ## Diagram
 
-{% include excalidraw.html file="01-batch-vs-per-parcel" alt="Two lanes of parcels arriving at 1 kHz: the per-parcel lane handles each parcel on arrival, with p50 85-188 us; the batch lane gathers parcels 1 to 32 into one handling step, and an amber arrow marks the first parcel's ~31 ms wait, with p50 15.2-15.4 ms." caption="Figure 1.1 — Batching leaves throughput unchanged but moves the p50 from 85-188 us to 15.2-15.4 ms, because the first parcel waits for 31 others." %}
+{% include excalidraw.html file="01-batch-vs-per-parcel" alt="Two lanes of parcels arriving at 1 kHz: the per-parcel lane handles each parcel on arrival, with p50 85-188 us; the batch lane gathers parcels 1 to 32 into one handling step, and an amber arrow marks the first parcel's ~31 ms wait, with p50 15.2-15.4 ms." caption="Figure 1.1: Batching leaves throughput unchanged but moves the p50 from 85-188 us to 15.2-15.4 ms, because the first parcel waits for 31 others." %}
 
 ## Concept
 
@@ -39,7 +39,7 @@ A consumer that collects 32 parcels and handles them together amortises per-call
 
 The second effect is a bimodal workload. One parcel in 100 is a scanner no-read, the barcode could not be decoded, and the controller runs a slower re-lookup that takes about 2 ms. The other 99 take the fast path. The median sits inside the large fast population. The slow path delays every parcel that arrives behind it while the core is busy, so p99 sits in the slow one.
 
-{% include excalidraw.html file="01-bimodal-tail" alt="Parcels 98 to 104 in a row, with parcel 100 drawn wide as an amber ~2 ms slow path that holds the core and parcel 101 queued behind it; p50 points to a fast-mode box (p50 95-232 us) and p99 to a slow-mode box (p99 2.1-6.8 ms), and a ghost box says one summary number describes neither group." caption="Figure 1.2 — The median stays in the fast mode while p99 lands in the slow mode, among the slow parcel and those queued behind it. One summary number describes neither group." %}
+{% include excalidraw.html file="01-bimodal-tail" alt="Parcels 98 to 104 in a row, with parcel 100 drawn wide as an amber ~2 ms slow path that holds the core and parcel 101 queued behind it; p50 points to a fast-mode box (p50 95-232 us) and p99 to a slow-mode box (p99 2.1-6.8 ms), and a ghost box says one summary number describes neither group." caption="Figure 1.2: The median stays in the fast mode while p99 lands in the slow mode, among the slow parcel and those queued behind it. One summary number describes neither group." %}
 
 ### Percentiles
 

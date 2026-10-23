@@ -20,7 +20,7 @@ decision deadline = distance(scanner -> diverter) / belt speed
 {% include excalidraw.html
    file="00-sortation-line"
    alt="A conveyor carries parcels past a checkweigher, dimensioner, scanner and labeler to a diverter; the controller must sense, decide and act within the scan-to-divert deadline."
-   caption="Figure 0.1 — The sortation line. Belt speed and the scanner-to-diverter distance set the decision deadline." %}
+   caption="Figure 0.1: The sortation line. Belt speed and the scanner-to-diverter distance set the decision deadline." %}
 
 Every chapter measures its technique against that **scan-to-divert** budget and
 reports a distribution (p50, p99, p99.9), never a mean. Coordinated omission is

@@ -26,7 +26,7 @@ The code is in `examples/00-prerequisites/`. The run script there builds and run
 
 ## Diagram
 
-{% include excalidraw.html file="00-sortation-line" alt="A conveyor carries parcels past a checkweigher, dimensioner, scanner and labeler to a diverter; the controller must sense, decide and act within the scan-to-divert deadline." caption="Figure 0.1 — The sortation line. Belt speed and the scanner-to-diverter distance set the decision deadline." %}
+{% include excalidraw.html file="00-sortation-line" alt="A conveyor carries parcels past a checkweigher, dimensioner, scanner and labeler to a diverter; the controller must sense, decide and act within the scan-to-divert deadline." caption="Figure 0.1: The sortation line. Belt speed and the scanner-to-diverter distance set the decision deadline." %}
 
 ## The host and its toolchains
 
@@ -52,7 +52,7 @@ Every host number here carries one profile: bare-metal host, an 8-core, 16-threa
 
 ## The VM lab
 
-{% include excalidraw.html file="00-lab-topology" alt="A host band holding lab-ssh.sh, libvirt-ssh-proxy, passt and Docker Engine, with a guest band inside it holding cyclictest, linuxptp, the PREEMPT_RT kernel, Docker and the snapshots lab-ready and lab-ready-rt; an amber ssh-over-AF_VSOCK path runs from the proxy to the guest, and guest traffic leaves through passt." caption="Figure 0.2 — The lab guest is reached by ssh over vsock and networked by passt, so the host needs no NAT, bridge or firewall change. VM numbers are never compared with bare-metal numbers." %}
+{% include excalidraw.html file="00-lab-topology" alt="A host band holding lab-ssh.sh, libvirt-ssh-proxy, passt and Docker Engine, with a guest band inside it holding cyclictest, linuxptp, the PREEMPT_RT kernel, Docker and the snapshots lab-ready and lab-ready-rt; an amber ssh-over-AF_VSOCK path runs from the proxy to the guest, and guest traffic leaves through passt." caption="Figure 0.2: The lab guest is reached by ssh over vsock and networked by passt, so the host needs no NAT, bridge or firewall change. VM numbers are never compared with bare-metal numbers." %}
 
 Real-time kernels, `isolcpus`, `tuned` and PTP change a machine, so they live in a disposable KVM guest; the host runs only unprivileged programs and Docker containers.
 
@@ -75,7 +75,7 @@ Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/i
 
 ## The measurement pipeline
 
-{% include excalidraw.html file="00-measurement-pipeline" alt="The C++ line simulator sends UDP datagrams on 127.0.0.1 at 1 kHz to the C++, Python and Java consumers in turn; each records into HdrHistogram and writes a lowlat-report/1 JSON report carrying the machine profile from profile.sh; lowlat-report check validates the schema, decodes the histogram and recomputes the percentiles." caption="Figure 0.3 — Every language records into HdrHistogram and writes the same report format, and the checker recomputes the percentiles instead of trusting them." %}
+{% include excalidraw.html file="00-measurement-pipeline" alt="The C++ line simulator sends UDP datagrams on 127.0.0.1 at 1 kHz to the C++, Python and Java consumers in turn; each records into HdrHistogram and writes a lowlat-report/1 JSON report carrying the machine profile from profile.sh; lowlat-report check validates the schema, decodes the histogram and recomputes the percentiles." caption="Figure 0.3: Every language records into HdrHistogram and writes the same report format, and the checker recomputes the percentiles instead of trusting them." %}
 
 `examples/common/MEASUREMENT.md` is the contract for the measurement kits. There is one kit per language, `lowlat::measure` for C++, `lowlat_measure` for Python and `measure-java`, and they share three rules.
 
