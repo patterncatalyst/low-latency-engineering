@@ -55,7 +55,7 @@ Hand-off and end-to-end latency are separate reports. Both are also written per 
 below 20,000 (the first two seconds) and the steady rest. The hand-off criteria read the steady
 window. The first window has the larger tail: for `blocking-queue` its hand-off p99 is 87 to 323 us and
 its p99.9 3.3 to 3.5 ms, against 10.5 to 11.7 us and 58 to 84 us in the steady window. The committed
-runs from before S22 (git history, d419992) show a larger first-window p99, 0.92 to 1.93 ms, and a
+runs of an earlier set (git history, d419992) show a larger first-window p99, 0.92 to 1.93 ms, and a
 smaller p99.9, 2.3 to 2.9 ms. Nothing in the runs says why the first-window p99 fell, so no cause is given.
 
 ## Variants
@@ -87,10 +87,10 @@ Affinity lock (`AffinityLock.acquireLock(3)`) held until the thread ends. See th
 
 ## C++ lane
 
-`cpp/` holds a single-producer single-consumer ring over `std::atomic<std::uint64_t>` indices.
+`cpp/` holds a single-producer single-consumer ring over 32-bit `std::atomic<std::uint32_t>` indices.
 The producer publishes with a release store, the consumer reads with an acquire load, and each
-index sits on its own cache line (`alignas(std::hardware_destructive_interference_size)`) with
-the other thread's cached copy beside it. `offheap-handoff` runs two ways of waiting:
+index sits in its own 128-byte range (`alignas(kFalseSharingRange)`, twice
+`std::hardware_destructive_interference_size`) with the other thread's cached copy beside it. `offheap-handoff` runs two ways of waiting:
 
 | Variant | Consumer waits by | Producer |
 |---|---|---|
@@ -214,7 +214,7 @@ Observed on the bare-metal host (governor `powersave`, tuned `balanced`, untuned
 all three `r02-run1..3` runs, with Disruptor margins (bound over observed) of 3.48, 2.86 and 3.38. The
 Disruptor's steady-window hand-off p99 was 674, 731 and 694 ns; the `blocking-queue` p99 was 11,719,
 10,455 and 11,743 ns, so the bounds were 2,344, 2,091 and 2,349 ns. Run 1 of the committed set from
-before S22 (git history, d419992) hit a Disruptor p99 of 2,117 ns against a bound of 2,131 ns, a margin
+an earlier set (git history, d419992) hit a Disruptor p99 of 2,117 ns against a bound of 2,131 ns, a margin
 of 1.01. It did not recur in these three runs, and no cause was measured. The bound stays at one fifth.
 
 ### What the memory-mapped append removes
@@ -222,23 +222,24 @@ of 1.01. It did not recur in these three runs, and no cause was measured. The bo
 It removes the system call, not the first-touch page fault. The appender copies a record into a
 `MAP_SHARED` mapping of the cycle file (`blockSize` 64 MiB, roll cycle `FAST_DAILY`, one 80 MiB file for
 the whole run); the first write to each new 4 KiB page takes a minor fault, about 1.9 us for the
-faulting append against a median of 0.3 us. Records are about 75 bytes, so on tmpfs a fault falls on roughly
+faulting append against a median of 0.3 us (one calibration run on tmpfs, 2026-10-22, not
+committed). Records are about 75 bytes, so on tmpfs a fault falls on roughly
 every 55th append (1.9 % of appends, more than the 1 % that a p99 looks at: there the Chronicle p99 is the
 fault); on btrfs it is 0.7 % and the p99 drops below the fault.
 How often it happens depends on the file system under the journal:
 
 | `journal_fs` | Decide-thread minor faults, 200,000 appends (15.0 MB, 3,662 pages) | Per page | Chronicle p50 / p99 / p99.9 | `write-per-parcel` p50 / p99 / p99.9 |
 |---|---|---|---|---|
-| tmpfs | 3,767 | 1.03 | 324 / 1,957 / 4,371 ns | 387 / 1,151 / 2,601 ns |
-| btrfs (zstd) | 1,459, 1,457, 1,426 | 0.39 | 318 / 913 / 5,783, 313 / 823 / 5,267, 314 / 819 / 4,951 ns | 1,073 / 2,685 / 6,059, 1,075 / 2,589 / 5,855, 1,064 / 2,499 / 5,919 ns |
+| tmpfs (calibration, 2026-10-22, not committed) | 3,767 | 1.03 | 324 / 1,957 / 4,371 ns | 387 / 1,151 / 2,601 ns |
+| btrfs (zstd), `r02-run1..3` | 1,443, 1,457, 1,442 | 0.39 | 314 / 813 / 5,263, 311 / 1,211 / 4,619, 316 / 821 / 4,959 ns | 1,059 / 3,177 / 7,971, 1,080 / 2,819 / 5,955, 1,054 / 2,643 / 5,831 ns |
 
 tmpfs takes one fault per page. On btrfs and ext4 the kernel's fault-around maps several neighbouring
 pages already in the page cache on one fault, so there are fewer (about 2.5 pages per fault here, below
 the 16-page ceiling), and `write-per-parcel` pays a full system call to a compressing file system on
-every event, which is why the p99 ratio swings from 0.6x (tmpfs: Chronicle slower) to about 3x
-(btrfs: Chronicle faster). Observed on the development host, 2026-10-22, three runs on btrfs and one on
-tmpfs; the `write-per-parcel` thread takes 66 to 81 faults over the window with no journal pages
-involved. The Chronicle OSS jar offers no way to avoid the first-touch fault: `ExcerptAppender.pretouch()`
+every event, which is why the p99 ratio swings from 0.6x (tmpfs: Chronicle slower) to 2.3x to 3.9x
+(btrfs: Chronicle faster). The btrfs row is the committed `r02-run1..3`; the tmpfs row is the one
+calibration run. The `write-per-parcel` thread takes 68 to 73 faults over the window in those runs, with
+no journal pages involved. The Chronicle OSS jar offers no way to avoid the first-touch fault: `ExcerptAppender.pretouch()`
 and `ChronicleQueue.createPretoucher()` are the pre-toucher hook, and pretouching is a Chronicle Enterprise
 feature. In the 2026.7 OSS jar `PretouchFactoryEmpty.createPretoucher(q)` calls `q.createPretoucher()`,
 which is the default method that dispatches back to the same factory, so the call recurses until
@@ -379,8 +380,8 @@ Behavioural. The host part and the VM part each assert their criteria, and all o
 
 Criterion 2 passed in all three runs, with Disruptor margins of 3.48, 2.86 and 3.38 (p99 of 674, 731 and
 694 ns against bounds of 2,344, 2,091 and 2,349 ns). The old run 1 hit an outlier that did not recur: its
-Disruptor p99 was 2,117 ns against a bound of 2,131 ns, a margin of 1.01. Those committed runs from
-before S22 are in git history at d419992. No cause was measured.
+Disruptor p99 was 2,117 ns against a bound of 2,131 ns, a margin of 1.01. Those earlier committed runs
+are in git history at d419992. No cause was measured.
 
 **VM part**, `r02-vm-run1..3` (lab guest `lowlat-target`, label `vm`, PREEMPT_RT kernel
 7.2.11-200.lowlatrt.fc44.x86_64+rt, guest command line `isolcpus=3 nohz_full=3 rcu_nocbs=3`, vCPU 3

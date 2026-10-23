@@ -285,7 +285,7 @@ for v in "${JAVA_VARIANTS[@]}"; do
     "max ratio $(ratio "$(jget "$OUT/java-$v-first-$WINDOW.json" .percentiles.max)" "$(jget "$OUT/java-$v-steady.json" .percentiles.max)")"
 done
 # Criterion 2 is on p99.9: the cold stall delays about 1% of a 2,000-parcel window, so the p99 (the 21st-worst
-# parcel) lands inside or outside it from run to run (1.7x to 52x in the committed runs); the p99.9 ratio is printed above too.
+# parcel) lands inside or outside it from run to run (1.8x to 48.2x in the committed runs); the p99.9 ratio is printed above too.
 first=$(jget "$OUT/java-unwarmed-first-$WINDOW.json" .percentiles.p99_9)
 steady=$(jget "$OUT/java-unwarmed-steady.json" .percentiles.p99_9)
 verdict_ratio "2: --unwarmed first-window p99.9 over steady p99.9" ">=" "$first" "$steady" 5

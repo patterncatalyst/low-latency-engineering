@@ -221,7 +221,7 @@ kernel 7.2.11-200.fc44, Temurin 25.0.5+8, VM down). Ranges over the three runs.
 | Observed: line end-to-end latency, both variants | p50 57.0 to 57.6 us, p99 87 to 94 us, p99.9 4.9 to 11.1 ms |
 
 The line's end-to-end latency does not show the decode saving. The p99.9 of 4.9 to 11.1 ms
-comes from unwarmed JVMs on the default heap (Ch5 measures that cost). It is lower for `flat-ffm` in each
+was measured on unwarmed JVMs on the default heap (Ch5 measures that cost). It is lower for `flat-ffm` in each
 run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and this example
 attributes no cause to it. JMH and the allocation counters resolve the saving, 141 to 146 ns and 582 to
 583 B per parcel; an end-to-end percentile at this load does not.

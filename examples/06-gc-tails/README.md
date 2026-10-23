@@ -24,7 +24,7 @@ that no GC log shows.
 | Java | `shenandoah` | `-XX:+UseShenandoahGC`, non-generational (observed) |
 | Java | `undersized-heap` | ZGC with the heap at 1.05x the measured live set: almost no headroom, so allocation stalls |
 | Java | `thp` | ZGC with `-XX:+UseTransparentHugePages` (observed). The OS refuses huge pages for ZGC's shared-memory heap (`shmem_enabled` is `never`; `Large Page Support: Disabled (OS enforced)`), so this runs on 4 KB pages |
-| Java | `jfr-off` | ZGC without the flight recorder (observed: what the recording costs) |
+| Java | `jfr-off` | ZGC without the flight recorder (observed) |
 | Python | `cyclic-garbage` | each parcel's scan history is a reference cycle: only the cyclic collector frees it |
 | Python | `frozen` | no cycles, and `gc.freeze()` after setup: refcounting frees each parcel at once, and the run has 0 collections in every generation |
 | C++ | `bulk-free` | the retired wave of manifest entries is destroyed on the hot thread, in the call that closes the wave |
@@ -138,8 +138,8 @@ is about 0.5 MB.
 6. **Every report.** `count = 300000`, `dropped = 0`, `lowlat-report check` passes, and each Java
    report's `build.flags` names its collector and its heap size.
 
-Observed, not asserted: `shenandoah` (non-generational), `thp` and `jfr-off`, printed beside `zgc` so a
-reader sees the recording's cost (`thp` got no huge pages, see above); and the `deferred-free` and `no-free`
+Observed, not asserted: `shenandoah` (non-generational), `thp` and `jfr-off`, printed beside `zgc` for
+comparison (`thp` got no huge pages, see above); and the `deferred-free` and `no-free`
 maxima. Those two maxima are single operating-system events of 0.3 to 2 ms on both sides (across
 calibration runs the ratio of one to the other ranged from 0.4 to 2.7), so the chapter reads them as a
 pair, and the claim that the reclaimer thread leaves the hot path rests on the `deferred-free` p99.9
@@ -158,7 +158,7 @@ without an out-of-memory error and without a dropped parcel (the socket buffer a
 210 ms), and `verify.sh` measures the live set first, so the size follows the workload.
 
 Observed during calibration, 2026-10-22, one run per row, 10 kHz x 30 s, ZGC with `-Xms` = `-Xmx` and
-`-XX:+AlwaysPreTouch`, 400 MB/s allocation flag (about 476 MB/s measured on the receive thread), live set
+`-XX:+AlwaysPreTouch`, 400 MB/s allocation flag (about 454 MB/s measured on the receive thread), live set
 1,806 MB. Host profile: `bare-metal-host`, i7-11800H (8 cores, SMT on), governor `powersave`, tuned
 `balanced`, THP `madvise`, kernel 7.2.11-200.fc44.x86_64. This is calibration data, not a committed run;
 `SWEEP=1 ./verify.sh` reproduces it and writes the reports.
@@ -212,7 +212,7 @@ runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, THP
 | Quantity | Range |
 |---|---|
 | Measured live set; `undersized-heap` size (1.05x) | 1,802 to 1,804 MB; 1,893 to 1,895 MB |
-| Receive-thread allocation per parcel (`zgc`) | 47,553 to 47,639 B, about 476 MB/s at 10 kHz |
+| Receive-thread allocation per parcel (`zgc`) | 47,553 to 47,639 B, about 454 MB/s at 10 kHz |
 | Maximum GC pause (JFR), Parallel / G1 / Generational ZGC / Generational Shenandoah | 158 to 162 ms / 21.4 to 22.0 ms / 0.020 to 0.039 ms / 0.61 to 0.81 ms |
 | End-to-end p99.9, same order | 152.8 to 153.9 ms / 16.5 to 17.0 ms / 0.147 to 0.149 ms / 0.164 to 0.183 ms |
 | Parallel end-to-end p99; ZGC end-to-end maximum | 130.9 to 131.8 ms; 2.61 to 6.10 ms (not a GC pause: ZGC's longest pause is under 0.04 ms) |

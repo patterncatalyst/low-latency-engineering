@@ -13,7 +13,7 @@ import generate_diagram as g  # noqa: E402
 g.OUT = os.path.join(ROOT, "assets", "diagrams")
 
 ROWS = [
-    ("sub", ["--stop-the-world", "all threads stop, full walk"], "158-162 ms", False),
+    ("sub", ["stop-the-world", "all threads stop, full walk"], "158-162 ms", False),
     ("sub", ["g1", "stop-the-world evacuation"], "21.4-22.0 ms", False),
     ("accent", ["zgc", "concurrent mark and relocate"], "0.020-0.039 ms", True),
     ("sub", ["shenandoah-gen", "concurrent evacuation"], "0.61-0.81 ms", False),

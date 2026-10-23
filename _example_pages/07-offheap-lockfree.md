@@ -32,7 +32,7 @@ scripts/lab/lab-down.sh
 - VM: the pinned decide thread has at most 10 involuntary context switches and the unpinned at least 100; the pinned hand-off p99.9 is at most half the unpinned one; the pinned thread is confined to CPU 3.
 - Every run counts 200,000 parcels, drops none, has no overflow, receives every divert command and passes `lowlat-report check`.
 
-The host part held on the quiet-host runs `r02-run1..3`; the Disruptor's p99 passed its bound with margins of 2.86 to 3.48. A margin of 1.01 in run 1 of the committed set from before S22 (git history, d419992) did not recur. The VM part held on `r02-vm-run1..3`, each from the snapshot `lab-ready-iso`, and its numbers carry the label `vm` and are never compared with the host's.
+The host part held on the quiet-host runs `r02-run1..3`; the Disruptor's p99 passed its bound with margins of 2.86 to 3.48. A margin of 1.01 in run 1 of an earlier set (git history, d419992) did not recur. The VM part held on `r02-vm-run1..3`, each from the snapshot `lab-ready-iso`, and its numbers carry the label `vm` and are never compared with the host's.
 
 ## Chapter and source
 

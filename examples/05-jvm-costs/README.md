@@ -210,7 +210,7 @@ the three runs; the first window is parcels 0 to 1,999 and the steady window is 
 | `escaping`, `--no-escape-analysis` (JMH `gc.alloc.rate.norm`) | 24 B/op in all three runs |
 | `scalar-replaced` | 0.00016 to 0.00018 B/op |
 | C++ `--allocating`, value (observed: pmr 0.00) | 16 B/op and one allocation per parcel, 1.3e-06 B/op |
-| C++ median per decision, value / `--allocating` / pmr (observed) | 2.3 ns / 11.2 to 13.1 ns / 3.7 to 4.1 ns |
+| C++ median cost per operation, value / `--allocating` / pmr (observed) | 2.3 ns / 11.2 to 13.1 ns / 3.7 to 4.1 ns |
 | `--unwarmed` first-window p99.9 against steady p99.9 | 14.4 to 27.7 ms against 0.28 to 0.35 ms; ratio 91.2x, 41.5x, 98.5x (bound 5x) |
 | `--unwarmed` first-window p99 against steady p99 (observed) | ratio 41.6x, 1.8x, 48.2x; first-window p99 8.9, 0.42, 10.4 ms |
 | `warmed` first-window p99 against steady p99 | 0.21 to 0.47 ms, ratio 1.1x, 1.0x, 1.0x (bound 3x); first-window p99.9 0.27 to 0.52 ms |
@@ -222,15 +222,17 @@ the three runs; the first window is parcels 0 to 1,999 and the steady window is 
 | C++ consumer first-window p99 over steady p99 (observed) | 1.0x, 0.9x, 1.0x |
 | Line runs | 20,000 parcels counted, none dropped, every report passes `lowlat-report check` |
 
-Criterion 2 as first written, on the p99, failed in run 2 of the earlier set (the runs from before
-S22, commit d419992): 1.7x against a bound of 5x, because the window's p99 fell outside the stall in
+Criterion 2 as first written, on the p99, failed in run 2 of an earlier set of runs (commit
+d419992): 1.7x against a bound of 5x, because the window's p99 fell outside the stall in
 that run (see above). The criterion is asserted on p99.9, and all three runs here pass it, at 91.2x,
 41.5x and 98.5x. Run 2 shows the same edge again in the observed p99 ratio, 1.8x.
 
-The p50 of the 1 kHz consumers switches at random between a mode near 100 us and one near 155 to
-170 us on this untuned host, in the tree before S22 and after it alike; the cause is not
-identified. The whole-run p50 of the C++ tracker is 158.8, 116.9 and 154.6 us, so the criteria are
-ratios inside one run and no p50 or steady p99 is compared across runs.
+The p50 of the 1 kHz consumers is not constant on this untuned host. The whole-run p50 is 103.6 to
+211.3 us across the nine Java line runs and 116.9 to 158.8 us for the C++ tracker (158.8, 116.9 and
+154.6 us), and the three steady p99 values of 461 to 468 us come from runs whose p50 is near 200 us.
+An interleaved A/B of the trees before and after the last change to the measured code found the
+same spread in both (`results/r02-ab/`); the cause is not identified. The criteria are ratios inside
+one run, and no p50 or steady p99 is compared across runs.
 
 Not asserted: compilations and deoptimizations per window, bytes per parcel, the C++ split, the
 timings and the pmr counter, the `aot-cache` first window (its 0.75 to 1.6 ms has no

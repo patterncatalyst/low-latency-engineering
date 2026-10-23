@@ -245,7 +245,7 @@ It needs 4 GB for a heap and refuses to start while a `lowlat-*` VM is running; 
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, THP `madvise`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-The live set was 1,802 to 1,804 MB, and the receive thread allocated 47,553 to 47,639 B per parcel in the `zgc` reports, about 476 MB/s at 10 kHz. Every report has count 300,000 and dropped 0, passes `lowlat-report check`, and (Java) names its collector and heap in `build.flags` (criterion 6).
+The live set was 1,802 to 1,804 MB, and the receive thread allocated 47,553 to 47,639 B per parcel in the `zgc` reports, about 454 MB/s at 10 kHz. Every report has count 300,000 and dropped 0, passes `lowlat-report check`, and (Java) names its collector and heap in `build.flags` (criterion 6).
 
 **Pauses and the tail.** Maximum GC pause is from the flight recording; p99.9 is the end-to-end latency the line sees.
 
@@ -262,9 +262,9 @@ Under Parallel the p99 is already 130.9 to 131.8 ms, while the p50 is 0.06 ms in
 
 ZGC's end-to-end maximum is 2.61 to 6.10 ms while its longest GC pause is under 0.04 ms. The maximum is therefore not a GC pause, and the book does not attribute it.
 
-**Headroom.** With the heap at 1.05 times the live set (1,893 to 1,895 MB), `undersized-heap` recorded 530 to 977 allocation stalls, the longest 61.1 to 139.9 ms, and a p99.9 of 50.4 to 113.0 ms against 0.147 to 0.149 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses stayed at 0.050 to 0.053 ms at most, so the stalls are the whole cost.
+**Headroom.** With the heap at 1.05 times the live set (1,893 to 1,895 MB), `undersized-heap` recorded 530 to 977 allocation stalls, the longest 61.1 to 139.9 ms, and a p99.9 of 50.4 to 113.0 ms against 0.147 to 0.149 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses were 0.053 ms at most, so stalls, not pauses, make the tail (run 1: longest stall 61.1 ms, end-to-end maximum 56.1 ms).
 
-**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.152 to 0.167 ms and a maximum pause of 0.68 to 0.75 ms. `thp`, which got no huge pages, gave a p99.9 of 0.149 to 0.204 ms and a maximum pause of 0.028 to 0.045 ms. With the recording off, `jfr-off` gave a p99.9 of 0.149 to 0.154 ms, 0.001 to 0.007 ms above ZGC's in the same run. ZGC's own spread is 0.002 ms, but `thp`, the same collector on the same 4 KB pages, spans 0.055 ms, so this set cannot tell that difference from noise.
+**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.152 to 0.167 ms and a maximum pause of 0.68 to 0.75 ms. `thp`, which got no huge pages, gave a p99.9 of 0.149 to 0.204 ms and a maximum pause of 0.028 to 0.045 ms. With the recording off, `jfr-off` gave a p99.9 of 0.149 to 0.154 ms, 0.001 to 0.007 ms above ZGC's in the same run. ZGC's spread is 0.002 ms, but `thp`, the same collector on 4 KB pages, spans 0.055 ms, so this set cannot tell that difference from noise.
 
 **Python.** `cyclic-garbage` ran 9 generation-2 collections in the window (99 of generation 1, 1,092 of generation 0), the longest collection 145.8 to 153.7 ms, with a p99.9 of 138.1 to 141.0 ms. `frozen` ran 0 collections with 119,780 objects frozen and a p99.9 of 0.166 to 0.170 ms. Criterion 4 asserts 0 generation-2 collections for `frozen` and at least 1 for `cyclic-garbage`.
 

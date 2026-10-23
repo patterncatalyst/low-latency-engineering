@@ -287,7 +287,7 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 
 ### What the line does not show
 
-The line runs' end-to-end latency is not a criterion, and it does not show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, from unwarmed JVMs on the default heap (Chapter 5 measures that cost). It is lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load does not. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the budget.
+The line runs' end-to-end latency is not a criterion, and it does not show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, measured on unwarmed JVMs on the default heap (Chapter 5 measures that cost). It is lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load does not. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the budget.
 
 ## Cross-check
 
