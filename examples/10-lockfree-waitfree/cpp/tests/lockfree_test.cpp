@@ -2,6 +2,7 @@
 // The allowed litmus outcome (release/acquire both-zero) depends on the hardware and the schedule,
 // so it is measured by verify.sh, never asserted here.
 #include <gtest/gtest.h>
+#include <sched.h>
 
 #include <atomic>
 #include <chrono>
@@ -114,6 +115,53 @@ TEST(Seqlock, ReadersNeverSeeATornSnapshot) {
   }
   EXPECT_EQ(torn.load(), 0U);
   EXPECT_GT(reads.load(), 0U);
+}
+
+// Negative control: the seqlock's read with the validation removed (no sequence check before or after
+// the copy) while the writer stores the same words the same way. If a reader of this cell never tore,
+// "zero torn reads" above would prove nothing. Loops until a tear is seen, bounded by a deadline.
+namespace {
+class UncheckedCell {
+ public:
+  void write(const lf::ParcelSnapshot& s) noexcept {
+    for (std::size_t i = 0; i < lf::ParcelSnapshot::kWords; ++i) {
+      std::atomic_ref<std::uint64_t>{words_[i]}.store(s.word[i], std::memory_order_relaxed);
+    }
+  }
+  [[nodiscard]] lf::ParcelSnapshot read() const noexcept {
+    lf::ParcelSnapshot s;
+    for (std::size_t i = 0; i < lf::ParcelSnapshot::kWords; ++i) {
+      s.word[i] = std::atomic_ref<std::uint64_t>{words_[i]}.load(std::memory_order_relaxed);
+    }
+    return s;
+  }
+
+ private:
+  alignas(std::atomic_ref<std::uint64_t>::required_alignment) mutable std::array<std::uint64_t, lf::ParcelSnapshot::kWords> words_{};
+};
+}  // namespace
+
+TEST(Seqlock, NegativeControlWithoutValidationReadsTornSnapshots) {
+  cpu_set_t allowed;
+  CPU_ZERO(&allowed);
+  if (sched_getaffinity(0, sizeof allowed, &allowed) != 0 || CPU_COUNT(&allowed) < 2) GTEST_SKIP() << "a torn read needs the writer and the reader on different CPUs";
+  UncheckedCell cell;
+  cell.write(lf::ParcelSnapshot::of(0));
+  std::atomic<bool> stop{false};
+  std::uint64_t torn = 0;
+  {
+    std::jthread writer{[&] {
+      for (std::uint64_t n = 1; !stop.load(std::memory_order_relaxed); ++n) cell.write(lf::ParcelSnapshot::of(n));
+    }};
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{20};
+    while (torn == 0 && std::chrono::steady_clock::now() < deadline) {
+      for (int i = 0; i < 100'000 && torn == 0; ++i) {
+        if (!cell.read().consistent()) ++torn;
+      }
+    }
+    stop.store(true, std::memory_order_relaxed);
+  }
+  EXPECT_GT(torn, 0U) << "no torn read in 20 s: the checksum cannot detect tearing, so the zero above proves nothing";
 }
 
 TEST(Seqlock, ASnapshotWithMixedWordsFailsItsChecksum) {
