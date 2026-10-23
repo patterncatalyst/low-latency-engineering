@@ -167,6 +167,49 @@ Python 3.14.0 to 3.14.4 shipped an incremental cycle GC; 3.14.5 and later (inclu
 - `chronicle-bom` is at 2026.26 and resolves queue 2026.7, map 2026.1, bytes 2026.4, affinity 2026.2 (consistent with §0). Chronicle Map replication is Enterprise too.
 - `check-prereqs.sh` still checks only "java 25"; the "warn below the pin" idea needs a `TEMURIN_VERSION` comparison, added where S5/S6 touch the script.
 
+## r03 pins (checked 2026-10-23)
+
+Sources: Maven Central `maven-metadata.xml` and POMs, `gh api repos/.../releases` and `/tags`, upstream `LICENSE` files, python.org docs, read-only host probes. No prerelease is pinned. All probes ran unprivileged; `perf_event_paranoid` was read (value 2) and never changed.
+
+| Component | Pinned version | Licence | Source queried | Checked (2026-10-23) | Notes |
+|---|---|---|---|---|---|
+| org.openjdk.jcstress:jcstress-core | 0.16 | GPL-2.0-only; the repo `LICENSE` carries the "Classpath" exception for files whose header designates it (the POM declares no licence) | Maven Central `maven-metadata.xml` (latest/release 0.16, lastUpdated 2023-02-27); `gh api repos/openjdk/jcstress/tags` (newest tag 0.16) | yes | Latest; no GitHub releases, only tags. Test-time harness only (`verify.sh`, not a CI gate, Q4), never on a hot path. Recommended bootstrap is the archetype `org.openjdk.jcstress:jcstress-java-test-archetype` 0.16 (same date) generating a project that depends on `jcstress-core` and builds an uber jar with `mvn clean verify`; S4 wires `jcstress-core` as a module dependency rather than running the archetype. No newer version, no hold. |
+| org.agrona:agrona | 2.7.0 | Apache-2.0 | Maven Central metadata (lastUpdated 2026-10-12); `gh api repos/real-logic/agrona/releases/latest` (2.7.0, prerelease=false, 2026-10-12) | yes | Still the latest. Unchanged. |
+| org.openjdk.jol:jol-core | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | Maven Central metadata (lastUpdated 2023-02-27); tags show 0.17 newest | yes | Still the latest. Unchanged. |
+| net.openhft:chronicle-bom / affinity | BOM 2026.26 / affinity 2026.2 | Apache-2.0 | Maven Central metadata: BOM release 2026.26 (2026-10-06), affinity release 2026.2 (2026-01-28) | yes | Current pin equals latest for both; unchanged from r02. |
+| abseil-cpp (`absl::flat_hash_map`) | 20250512.1 (held) | Apache-2.0 | Installed prefix `~/.cache/lowlat/prefix` | yes | Hold unchanged (protobuf v36.2 requires it; see Holds). The prefix ships `include/absl/container/flat_hash_map.h` and its `lib64/cmake/absl/abslTargets.cmake` defines the imported target `absl::flat_hash_map`, so S4 can link it without a new dependency. |
+
+### Recorded, not pinned
+
+| Tool | Version recorded | Source |
+|---|---|---|
+| valgrind | 3.27 (3.27.1 on the host) | `valgrind --version` |
+| perf | 7.2 (major.minor only) | `perf --version` |
+| uv | 0.13.0 | `uv --version`; hold unchanged |
+| GCC / Clang | 16.2.1 / 22.1.8 | `g++ --version`, `clang++ --version` (CMake presets `release-gcc` and `release`) |
+
+### perf probes at the current `perf_event_paranoid` (2)
+
+| Probe | Result | Fallback / decision |
+|---|---|---|
+| `perf stat --control fifo:ctl,ack -D -1 -e L1-dcache-load-misses:u,cycles:u -x,` around a C++ test with three equal work phases, `enable` before the middle one and `disable` after it | Works. The gated run counted 4.19 M L1 misses / 123 M cycles; an ungated whole-process run of the same program counted 12.6 M / 374 M, i.e. one third, as expected for one of three phases. Events start disabled with `-D -1`. | Use `--control` for region counting in the C and Python lanes; the program writes `enable`/`disable` to the control FIFO and reads the ack FIFO. |
+| JMH `-prof perfnorm` with `event=L1-dcache-load-misses:u,cycles:u,instructions:u` (existing example 05 `benchmarks.jar`, `AllocationBenchmark.escaping`, 1 fork, 2 short iterations) | Works. Produced `L1-dcache-load-misses:u`, `cycles:u`, `instructions:u` per op plus derived `CPI`/`IPC`. Only a plumbing check, the numbers are not results. | Java lane uses `perfnorm` with `:u` events. Always pass the `:u` suffix explicitly; JMH prints the paranoid-2 notice but proceeds. |
+| `perf c2c record -- <short program>` | Refused: "Failure to open any events for recording" (needs kernel-side access, paranoid above 1 blocks it). | Not used on the host. Cross-core line transfer is observed with `perf stat -e L1-dcache-load-misses:u,ocr.demand_rfo.l3_hit.snoop_hitm:u,machine_clears.memory_ordering:u`; `perf c2c` is not a dependency of any chapter. |
+| Event availability, `perf stat -x,` on the test program | Counted without error: `L1-dcache-load-misses:u`, `LLC-load-misses:u`, `machine_clears.memory_ordering:u`, `ocr.demand_rfo.l3_hit.snoop_hitm:u`. All four appear in `perf list`. | Asserted criteria use only the generic `L1-dcache-load-misses:u` (and `LLC-load-misses:u`); the other two are microarchitecture-specific, observed and labelled as such. |
+
+### C++26 `<hazard_pointer>` and `<rcu>` (status only, `-std=c++2c`)
+
+GCC 16.2.1 and Clang 22.1.8 (both using the host libstdc++, the standard library of the project's presets) ship neither header: `__has_include(<hazard_pointer>)` and `__has_include(<rcu>)` are false, and `__cpp_lib_hazard_pointer` and `__cpp_lib_rcu` are undefined in `<version>`. Not used; Ch10 stays on C++23 (`std::atomic`, `std::atomic_ref`). Not tested: clang with libc++.
+
+### Free-threaded CPython (Q3)
+
+- Installed `cpython-3.14.8+freethreaded` with `uv python install` (user-local, interpreter `python3.14t`). Not a system package. Build string: 3.14.8.
+- `sys._is_gil_enabled()`: `False` on the free-threaded build (`Py_GIL_DISABLED` 1); `True` on the host 3.14.8 (`Py_GIL_DISABLED` 0).
+- Documentation: the CPython 3.14 free-threading howto (docs.python.org/3.14/howto/free-threading-python.html, "Iterators") says "It is generally not thread-safe to access the same iterator object from multiple threads concurrently, and threads may see duplicate or missing elements." The 3.14 `itertools` page makes no thread-safety statement for `count` or its `__next__`. Result: **`itertools.count.__next__` is not documented thread-safe in either build.**
+- Observation (not a documentation claim): 4 threads x 1,000,000 `next(count)` calls, 3 repetitions per build: every repetition yielded exactly 4,000,000 unique values 0..3,999,999 on both the GIL and the free-threaded build.
+- Observation: racy `counter += 1` on a shared list cell, 4 threads x 1,000,000, 3 repetitions. GIL build: 0 lost increments in all three runs (the 5 ms switch interval did not interleave a read-modify-write here). Free-threaded build: 2,172,123, 2,124,129 and 2,011,474 lost of 4,000,000. `threading.Lock` around the increment gave exactly 4,000,000 in both builds (one run each).
+- Decision for the Ch10 Python lane: Ch10 asserts exactly-once for `lock` in both builds; `itertools-count` exactly-once is **observed and reported, not asserted**, because it is undocumented; the racy claim asserts at least 1 lost claim under free threading only. The GIL build may show zero lost claims, so it is reported as observed.
+
 ## Holds
 
 | Component | Held at | Latest stable | Reason | Re-check |
