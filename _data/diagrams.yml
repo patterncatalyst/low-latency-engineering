@@ -50,7 +50,7 @@
   section: "Ch3 · Measuring correctly"
   title: "A 200 ms stall, seen four ways"
   alt: "Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.4-11.9 us) and intended-time (p99 100.4-100.5 ms C++, 101.4-101.7 ms Java); in the closed-loop run a client feeds naive (p99 1.0-1.1 us C++, 6.9-7.1 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.2-99.3 ms Java)."
-  caption: "Figure 3.2 — A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (Intel Core i7-11800H, Fedora 44 kernel 7.2.11-200.fc44, governor `powersave`), runs r02-run1..3."
+  caption: "Figure 3.2 — A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (an 8-core, 16-thread Intel laptop CPU, Fedora 44 kernel 7.2, governor `powersave`), runs r02-run1..3."
 
 - name: "04-three-harnesses"
   section: "Ch4 · Benchmark harnesses"

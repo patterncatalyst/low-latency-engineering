@@ -267,9 +267,9 @@ Run from the repository root:
 examples/08-zero-copy-flat/verify.sh
 ```
 
-`ALLOW_BUSY=1` measures while the host is loaded; numbers are then noisy. The line runs use the simulator at 10 kHz for 10 s (100,000 parcels), once per wire format, to UDP 47281 (`protobuf-decode`) and 47282 (`flat-ffm`). Both runs use the common `EventReceiver`; only the decoder differs. The only JVM flag is `--enable-native-access=ALL-UNNAMED`, so collector and heap are defaults. JMH decodes the same parcels from one direct buffer.
+`ALLOW_BUSY=1` measures while the host is loaded; numbers are then noisy. The line runs use the simulator at 10 kHz for 10 s (100,000 parcels), once per wire format, to UDP 47281 (`protobuf-decode`) and 47282 (`flat-ffm`). Both use the common `EventReceiver`; only the decoder differs. The only JVM flag is `--enable-native-access=ALL-UNNAMED`, so collector and heap are defaults. JMH decodes the same parcels from one direct buffer.
 
-Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges span the committed runs `r02-run1` to `r02-run3`.
 
 **Golden bytes (criterion 1).** The C++, Java and Python readers decode the golden files of seeds 1, 42 and 2026 (eight records each) to the committed JSON, in all three runs.
 

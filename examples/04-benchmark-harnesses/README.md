@@ -119,7 +119,7 @@ least 20 values from at least 3 worker processes; the six converted reports pass
 `lowlat-report check` with the profile embedded.
 
 All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `powersave`,
-tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning in every run).
+tuned `balanced`, kernel 7.2, untuned; pyperf printed its unstable-system warning in every run).
 Ranges over the three runs:
 
 | Harness | Result |

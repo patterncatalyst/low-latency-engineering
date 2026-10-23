@@ -243,7 +243,7 @@ examples/06-gc-tails/verify.sh
 
 It needs 4 GB for a heap and refuses to start while a `lowlat-*` VM is running; `ALLOW_BUSY=1` measures anyway, with noisier numbers. `RECHECK=results/<run-id>` evaluates the criteria on a committed run without running anything. It runs 13 consumers one at a time, each at 10 kHz for 30 s (300,000 parcels), and asserts the criteria below.
 
-Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, THP `madvise`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, THP `madvise`, Temurin 25.0.5+8. Ranges span the three committed runs `r02-run1` to `r02-run3`.
 
 The live set was 1,802 to 1,804 MB, and the receive thread allocated 47,553 to 47,639 B per parcel in the `zgc` reports, about 454 MB/s at 10 kHz. Every report has count 300,000 and dropped 0, passes `lowlat-report check`, and (Java) names its collector and heap in `build.flags` (criterion 6).
 

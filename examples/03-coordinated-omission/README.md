@@ -113,7 +113,7 @@ no-stall control run and the clock probe, then asserts per language:
 - every report passes `lowlat-report check` (schema, histogram decode, percentile recompute).
 
 All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor
-`powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2.11-200.fc44). Ranges over
+`powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2). Ranges over
 the three runs, in all three languages:
 
 | Quantity | Range (p99 unless noted) |

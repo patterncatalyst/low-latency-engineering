@@ -106,12 +106,12 @@ Distro packages, resolved on this Fedora 44 host. These float with the distro an
 
 | Component | Version seen | Source | Notes |
 |---|---|---|---|
-| kernel (Fedora 44 updates) | kernel-7.2.11-200.fc44 (stable 2026-10-17) | Bodhi API; host runs `7.2.11-200.fc44.x86_64`. `dnf -C repoquery` showed 7.2.10-200 only because its cached metadata was stale. | Upstream version 7.2.11. kernel.org lists 7.2.12 as stable and 7.3 as mainline; Fedora has not shipped 7.2.12 yet. |
+| kernel (Fedora 44 updates) | kernel-7.2.11-200.fc44 (stable 2026-10-17) | Bodhi API. `dnf -C repoquery` showed 7.2.10-200 only because its cached metadata was stale. | Upstream version 7.2.11. kernel.org lists 7.2.12 as stable and 7.3 as mainline; Fedora has not shipped 7.2.12 yet. |
 | realtime-tests (cyclictest) | 2.11-1.fc44 | `dnf repoquery --whatprovides "*/cyclictest"` | Fedora's `rt-tests` is an unrelated package |
 | linuxptp | 4.4-10.fc44 via dnf cache; Bodhi shows 4.4-9.fc44 stable | dnf and Bodhi | The two sources disagree by one release; the newer dnf figure may be a cached or testing build. Treat as 4.4. |
 | tuned | 2.28.0-1.fc44 | dnf and Bodhi | |
 
-PREEMPT_RT: mainline since 6.12, and the 7.2 tree's `kernel/Kconfig.preempt` defines `config PREEMPT_RT` with `depends on EXPERT && ARCH_SUPPORTS_RT && !COMPILE_TEST`; `arch/x86/Kconfig` at v7.2 has `select ARCH_SUPPORTS_RT`. So it is selectable on x86_64 with no out-of-tree patches. However the stock Fedora kernel does not enable it: `/boot/config-7.2.11-200.fc44.x86_64` has `# CONFIG_PREEMPT_RT is not set` (with `CONFIG_PREEMPT_DYNAMIC=y`, `CONFIG_EXPERT=y`, `CONFIG_ARCH_SUPPORTS_RT=y`), Fedora's `kernel-x86_64-fedora.config` on f44 likewise, and `dnf repoquery kernel-rt` returns nothing. The r01 VM lab therefore needs a locally built RT kernel (a Fedora kernel with `CONFIG_PREEMPT_RT=y`) or a third-party build; this is not determined here and is a plan decision.
+PREEMPT_RT: mainline since 6.12, and the 7.2 tree's `kernel/Kconfig.preempt` defines `config PREEMPT_RT` with `depends on EXPERT && ARCH_SUPPORTS_RT && !COMPILE_TEST`; `arch/x86/Kconfig` at v7.2 has `select ARCH_SUPPORTS_RT`. So it is selectable on x86_64 with no out-of-tree patches. However the stock Fedora kernel does not enable it: the stock `/boot/config-$(uname -r)` has `# CONFIG_PREEMPT_RT is not set` (with `CONFIG_PREEMPT_DYNAMIC=y`, `CONFIG_EXPERT=y`, `CONFIG_ARCH_SUPPORTS_RT=y`), Fedora's `kernel-x86_64-fedora.config` on f44 likewise, and `dnf repoquery kernel-rt` returns nothing. The r01 VM lab therefore needs a locally built RT kernel (a Fedora kernel with `CONFIG_PREEMPT_RT=y`) or a third-party build; this is not determined here and is a plan decision.
 
 ## r02 pins (surveyed 2026-10-22)
 

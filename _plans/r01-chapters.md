@@ -66,8 +66,7 @@ include tags and tables. Count with
   `verify.log`; `recheck.log` in 01). Quote measured values as the range across
   the three runs, rounded sensibly, and say which runs.
 - Label every measured number with its profile once per chapter, e.g. "bare-metal
-  host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel
-  7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`,
+  host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`,
   untuned, clocksource `tsc`". Ch1–4 numbers are host bare metal, untuned.
 - VM numbers (Ch0 only: `examples/00-prerequisites/results/r01-vm-smoke/vm/`) are
   labelled VM and never compared with bare-metal numbers. The host reports in

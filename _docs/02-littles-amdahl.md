@@ -26,7 +26,7 @@ Both laws take a time-average or a time fraction as an input and predict somethi
 
 The code is in `examples/02-littles-amdahl/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
-Every measured number in this chapter carries one profile: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
+Every measured number here carries one profile: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
 
 ## Diagram
 

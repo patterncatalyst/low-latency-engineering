@@ -159,8 +159,8 @@ without an out-of-memory error and without a dropped parcel (the socket buffer a
 
 Observed during calibration, 2026-10-22, one run per row, 10 kHz x 30 s, ZGC with `-Xms` = `-Xmx` and
 `-XX:+AlwaysPreTouch`, 400 MB/s allocation flag (about 454 MB/s measured on the receive thread), live set
-1,806 MB. Host profile: `bare-metal-host`, i7-11800H (8 cores, SMT on), governor `powersave`, tuned
-`balanced`, THP `madvise`, kernel 7.2.11-200.fc44.x86_64. This is calibration data, not a committed run;
+1,806 MB. Host profile: `bare-metal-host`, an 8-core Intel laptop CPU (SMT on), governor `powersave`, tuned
+`balanced`, THP `madvise`, kernel 7.2. This is calibration data, not a committed run;
 `SWEEP=1 ./verify.sh` reproduces it and writes the reports.
 
 | Heap (x live set) | MB | Allocation stalls | Max stall | p99 | p99.9 | Minor / major collections |
@@ -207,7 +207,7 @@ CPython 3.14.8: PSF licence. Versions are pinned in `versions.env`.
 
 Behavioural. `verify.sh` asserts the six criteria above, and all of them held on the quiet-host
 runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, THP `madvise`, kernel
-7.2.11-200.fc44, Temurin 25.0.5+8, CPython 3.14.8, VM down). Ranges over the three runs.
+7.2, Temurin 25.0.5+8, CPython 3.14.8, VM down). Ranges over the three runs.
 
 | Quantity | Range |
 |---|---|
