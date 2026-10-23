@@ -35,18 +35,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The identifying strings below are built with "+" so that a grep of the tree for them (the
-# host-ids check in validate.py) does not match this file; ruff would join adjacent literals.
-HOMES = "/ho" + "me"
-I7 = "i7-" + "11800H"
+HOMES = "/ho" + "me"  # split only so the host-ids grep does not flag this line
 
 GENERIC_CPU = "Intel 8-core/16-thread laptop CPU"
 
 # ---------------------------------------------------------------------------
-# The replacement table. Applied top to bottom; each rule is a literal or a regex.
-# The identifying strings are written as two adjacent literals ("a" "b") so that a
-# grep of the tree for them (the check in validate.py, host-ids) does not match this
-# file. Python joins adjacent literals at compile time.
+# The replacement table, applied top to bottom. It holds only generic patterns: the
+# machine's own values (CPU model string, DMI product name, kernel release and build
+# line, account name) are read at run time by host_rules() and user_rules(), so no
+# identifying string is ever written in this file.
 # ---------------------------------------------------------------------------
 
 
@@ -58,42 +55,77 @@ class Rule:
     why: str = ""
 
 
+CPU_PART = r"i[3579]-\d{4,5}[A-Z]{0,2}"
+
 FIXED_RULES: list[Rule] = [
-    # CPU model: the full /proc/cpuinfo string first, then the shorter spellings.
-    Rule("11th Gen Intel(R) Core(TM) " + I7 + " @ 2.30GHz", GENERIC_CPU, why="cpu model string"),
-    Rule("Intel(R) Core(TM) " + I7, GENERIC_CPU, why="cpu model, no frequency"),
-    Rule("Intel Core " + I7, GENERIC_CPU, why="cpu model in prose"),
-    Rule(I7, GENERIC_CPU, why="cpu model, bare"),
-    # Laptop model: only the value of the DMI product_name field.
+    # CPU model: the /proc/cpuinfo spelling first, then the shorter ones.
+    Rule(
+        rf"(?:\d+(?:st|nd|rd|th) Gen )?Intel\(R\) Core\(TM\) {CPU_PART}(?: (?:CPU )?@ [\d.]+GHz)?",
+        GENERIC_CPU,
+        regex=True,
+        why="cpu model string",
+    ),
+    Rule(rf"Intel Core {CPU_PART}\b", GENERIC_CPU, regex=True, why="cpu model in prose"),
+    Rule(rf"(?<![A-Za-z0-9+/=-]){CPU_PART}\b", GENERIC_CPU, regex=True, why="cpu part, bare"),
+    # Laptop model: the value of the DMI product_name field.
     Rule(
         r'("product_name"\s*:\s*)"(?!redacted")[^"]*"',
         r'\1"redacted"',
         regex=True,
         why="dmi product_name value",
     ),
-    # Host kernel (the lab guest's `.lowlatrt` kernel never matches the first two).
-    Rule(
-        r"(?<!kernel-)7\.2\.11-200\.fc44\.x86_64(?!\.rpm)",
-        "7.2",
-        regex=True,
-        why="host kernel.release",
-    ),
+    # Host kernel: any stock Fedora release to major.minor (the lab guest's `.lowlatrt`
+    # kernel never matches, and the `kernel-...` SRPM pin is kept).
     Rule(
         r"(?<!kernel-)\b(\d+\.\d+)\.\d+-\d+\.fc\d+\.x86_64\b(?!\.rpm)",
         r"\1",
         regex=True,
-        why="any other stock Fedora kernel release, to major.minor",
+        why="stock Fedora kernel release, to major.minor",
     ),
     Rule(
-        "#1 SMP PREEMPT_DYNAMIC " + "Thu Oct 15 15:58:58 UTC 2026",
+        r"#\d+ SMP PREEMPT_DYNAMIC \w{3} \w{3} +\d{1,2} \d\d:\d\d:\d\d UTC \d{4}",
         "PREEMPT_DYNAMIC",
-        why="host kernel.version",
+        regex=True,
+        why="host kernel build line",
     ),
     # The lab guest's default cloud-init account: its home is not a secret, but a path
     # under the home root trips the host-ids check, so it is shortened like the host's.
     Rule(HOMES + "/fedora/low-latency-engineering", "<repo>", why="guest repo checkout"),
     Rule(HOMES + "/fedora", "~", why="guest home"),
 ]
+
+
+def _read(path: str) -> str:
+    try:
+        return Path(path).read_text(encoding="utf-8", errors="replace").strip()
+    except OSError:
+        return ""
+
+
+def host_rules() -> list[Rule]:
+    """Literal rules for this machine's own identifying values, read at run time."""
+    rules = []
+    for line in _read("/proc/cpuinfo").splitlines():
+        if line.startswith("model name"):
+            model = line.split(":", 1)[1].strip()
+            if model:
+                rules.append(Rule(model, GENERIC_CPU, why="this host's cpu model"))
+            break
+    product = _read("/sys/class/dmi/id/product_name")
+    if len(product) >= 4:
+        rules.append(Rule(product, "redacted", why="this host's laptop model"))
+    for args, repl in ((["uname", "-v"], "PREEMPT_DYNAMIC"), (["uname", "-r"], None)):
+        try:
+            out = subprocess.run(args, capture_output=True, text=True, check=True).stdout.strip()
+        except OSError, subprocess.CalledProcessError:
+            continue
+        if not out or "lowlatrt" in out or "PREEMPT_RT" in out:
+            continue
+        if repl is None:
+            m = re.match(r"(\d+\.\d+)", out)
+            repl = m.group(1) if m else "redacted"
+        rules.append(Rule(out, repl, why="this host's kernel"))
+    return rules
 
 
 def account_name() -> str:
@@ -123,7 +155,7 @@ def user_rules(user: str) -> list[Rule]:
 
 
 def all_rules(user: str | None = None) -> list[Rule]:
-    return FIXED_RULES + user_rules(account_name() if user is None else user)
+    return host_rules() + FIXED_RULES + user_rules(account_name() if user is None else user)
 
 
 def compile_rules(rules: list[Rule]) -> list[tuple[re.Pattern[str], str]]:

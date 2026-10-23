@@ -892,8 +892,8 @@ def listing_doc(prose_name: str, body: str, lang: str = "java") -> str:
     return f"# Chapter\n\nThe listing shows {prose_name}.\n\n```{lang}\n{body}\n```\n"
 
 
-# Split so a grep of the tree for the host kernel string does not match this file.
-HOST_KERNEL_BUILD = "7.2.11-200." + "fc44.x86_64"
+# A made-up host kernel build for the planted cases: never a real machine's.
+HOST_KERNEL_BUILD = "9.9.9-100.fc99.x86_64"
 
 
 def self_test() -> int:
@@ -1236,7 +1236,7 @@ def self_test() -> int:
         ),
         (
             "host-ids intel model",
-            {"_docs/a.md": "the i7-" + "11800H core\n"},
+            {"_docs/a.md": "the i9-99999X core\n"},
             check_host_ids,
             False,
             "Intel CPU model number",
