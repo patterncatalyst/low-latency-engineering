@@ -2,7 +2,7 @@
 title: "What the JVM costs: allocation, escape analysis, JIT warmup vs AOT"
 order: 5
 part: "The Managed-Runtime Question"
-description: "A JVM charges allocation, compilation and start-up to the first parcels of the belt. On a bare-metal, untuned host the unwarmed first-window p99.9 is 13.4-28.5 ms against 0.26-0.49 ms steady, and escape analysis takes a 24 B/op decision to under 1 B/op."
+description: "A JVM charges class loading and compilation to the first parcels of the belt, and start-up before them. On a bare-metal, untuned host the unwarmed first-window p99.9 is 13.4 to 28.5 ms against 0.26 to 0.49 ms steady, and escape analysis takes a 24 B/op decision to under 1 B/op."
 duration: 50 minutes
 ---
 
@@ -13,14 +13,14 @@ By the end of this chapter you can:
 - Explain why a Java allocation costs the bytes it adds to the next young collection, and read `gc.alloc.rate.norm`.
 - Prove with a benchmark that escape analysis removed an allocation, by switching the analysis off.
 - Describe tiered compilation and deoptimization, and why a JVM that binds at once charges them to the first parcels.
-- Move warm-up off the belt with an in-process replay, and start from a Leyden AOT cache that fails loudly.
+- Move warm-up off the belt with a replay, and start from a Leyden AOT cache that fails loudly.
 - Choose the percentile a small window can resolve.
 
 ## Why this matters
 
 The scanner sits 1.2 m upstream of the diverter and the belt moves at 2.5 m/s, so the scan-to-divert budget is 480 ms. The belt never waits for a slow consumer. Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed that a stall charges every parcel queued behind it; on the line those parcels have already travelled. Chapter 2, *Modelling with Little's Law and Amdahl's Law*, put the in-flight count at 480 parcels at 1 kHz.
 
-A controller JVM that has just started is such a stall: its first parcels arrive while the interpreter still runs code the compiler will replace. Chapter 1, *Latency vs bandwidth: latency is a distribution*, showed a Java warm-up p99.9 and said Part 2 treats the cause. This chapter measures three costs of a managed runtime: heap bytes per decision, the warm-up tail of the first parcels, and process start. Each has a mechanism that removes it.
+A controller JVM that has just started is such a stall: its first parcels arrive while classes load and the interpreter still runs code the compiler will replace. Chapter 1, *Latency vs bandwidth: latency is a distribution*, showed a Java warm-up p99.9 and said Part 2 treats the cause. This chapter measures three costs of a managed runtime: heap bytes per decision, the warm-up tail of the first parcels, and process start.
 
 The code is in `examples/05-jvm-costs/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -32,7 +32,7 @@ The code is in `examples/05-jvm-costs/`. The run script there builds and runs it
 
 ### Allocation costs bytes, not calls
 
-Each HotSpot thread allocates from a thread-local allocation buffer (TLAB), a private slice of the young generation. A `new` is a pointer bump with no lock and no system call. The cost arrives later: every byte brings the thread closer to the next young collection, a pause the belt does not wait for. Chapter 6 measures those pauses. Here the unit is bytes per operation, which JMH's `-prof gc` reports as `gc.alloc.rate.norm`: an exact counter, not a timing, so it can be asserted without a margin.
+Each HotSpot thread allocates from a thread-local allocation buffer (TLAB), a private slice of the young generation. A `new` is usually a pointer bump with no lock and no system call. The cost arrives later: every byte brings the heap closer to the next young collection, a pause the belt ignores. Here the unit is bytes per operation, which JMH's `-prof gc` reports as `gc.alloc.rate.norm`: an exact counter, not a timing, so it can be asserted without a margin.
 
 ### Escape analysis
 
@@ -40,21 +40,21 @@ When C2 inlines a small method into its caller, it can see whether an object bui
 
 {% include excalidraw.html file="05-escape-analysis" alt="Three JMH lanes run the same decide() call on each parcel. In the escaping lane the DivertDecision is stored in a field, so it stays on the heap and gc.alloc.rate.norm is about 24 B/op. In the scalar-replaced lane (amber) C2 keeps the fields in registers and the counter is below 1 B/op. In the --no-escape-analysis lane, scalar replacement is absent and the counter is about 24 B/op again." caption="Figure 5.2 — An object that never leaves the compiled method costs nothing on the heap: about 24 B/op becomes less than 1 B/op, and turning escape analysis off brings the 24 B back." %}
 
-Inlining and non-escape are decided per call site, so the same `decide` source allocates in one caller and not in another. A hot path should not depend on it; Chapter 9, *Eliminating work: allocation, cache locality, false sharing*, designs the data so there is nothing to eliminate.
+Inlining and non-escape are decided per call site, so the same `decide` source allocates in one caller and not in another. A hot path should not depend on it; Chapter 9, *Eliminating work: allocation, cache locality, false sharing*, designs the data instead.
 
 ### Tiered compilation and deoptimization
 
-Bytecode starts in the interpreter, tier 0. Counters hand a hot method to C1: tier 1 is compiled code without profiling, tiers 2 and 3 add profiling. A method that stays hot goes to C2 at tier 4, which inlines and runs escape analysis on the profile. When an assumption in compiled code breaks, such as a branch never taken before, the code is deoptimized back to the interpreter and compiled again. A JVM that binds at once runs all of this on the first parcels.
+Bytecode starts in the interpreter, tier 0. Counters hand a hot method to C1: tier 1 is compiled code without profiling, tiers 2 and 3 add profiling. A method that stays hot goes to C2 at tier 4, which inlines and runs escape analysis on the profile. When an assumption in compiled code breaks, such as a branch never taken before, the code is deoptimized back to the interpreter and compiled again. A JVM that binds at once puts class loading, interpretation and compilation on the first parcels.
 
 ### Two ways to move the cost
 
-**Replay before the bind.** Before the socket opens, the process sends synthetic parcels through the real receive path and waits until the compiler is quiet. The price is a later start.
+**Replay before the bind.** Before the socket opens, the process sends synthetic parcels through the real receive path and waits until the compiler is quiet. It costs a later start.
 
-**The Leyden AOT cache.** JDK 25's ahead-of-time cache is built from JEP 483 (class loading and linking), JEP 514 (one-step creation) and JEP 515 (method profiles). A training run started with `-XX:AOTCacheOutput` writes the cache when it exits; later runs start with `-XX:AOTCache` and `-XX:AOTMode=on`. The cache holds loaded and linked classes and method profiles, and no compiled code, so C1 and C2 still run but start from a profile. With `-XX:AOTMode=on` a cache the JVM cannot use is a startup failure; the default mode carries on without the cache, and a run that did would measure the wrong thing.
+**The Leyden AOT cache.** JDK 25's ahead-of-time cache is built from JEP 483 (class loading and linking, JDK 24), JEP 514 (one-step creation) and JEP 515 (method profiles). A training run started with `-XX:AOTCacheOutput` writes the cache when it exits; this script's later runs pass `-XX:AOTCache` and `-XX:AOTMode=on`. The cache holds loaded and linked classes and method profiles, and no compiled code, so C1 and C2 still run but start from a profile. With `-XX:AOTMode=on` a cache the JVM cannot use is a startup failure; the default mode carries on without the cache, and a run that did would measure the wrong thing.
 
-The cache is measured under G1: on JDK 25 it archives heap objects only with G1, and JEP 516 (JDK 26) lifts that limit. A cache records the module graph and JFR adds the `jdk.jfr` module, so the line run uses a cache trained with the same JFR flags.
+The cache is measured under G1: on JDK 25 it archives heap objects only with G1, and JEP 516 (final in JDK 26) lifts that limit. A cache records the module graph and JFR adds the `jdk.jfr` module, so the line run uses a cache trained with the same JFR flags.
 
-GraalVM CE native-image compiles ahead of time and is prose only here: its CE edition documents the Serial and Epsilon collectors only, and G1 in native-image is part of Oracle GraalVM.
+GraalVM CE native-image compiles ahead of time and is prose only here: its documentation lists the Serial and Epsilon collectors only, and G1 in native-image is part of Oracle GraalVM.
 
 ### The C++ contrast
 
@@ -199,7 +199,7 @@ void BM_Decide_Pmr(benchmark::State& state) {
 
 In `escaping` the result goes into the field `stored`, so the object outlives the call. In `scalarReplaced` the decision is read inside `sumOfDecisions` and never stored, and the loop returns a `long` that JMH consumes, so it is not dead code (Chapter 4, *Benchmark harnesses: Google Benchmark, pyperf and JMH*). `scalarReplacedNoEscapeAnalysis` runs the same loop in a fork with `-XX:-DoEscapeAnalysis`; the method-level `@Fork` overrides the class-level one. `@OperationsPerInvocation(BATCH)` divides by the 1,024 decisions per invocation.
 
-C++ has no escape analysis to switch off. A compiler may elide an allocation in narrow cases and the language does not promise it, so the lane makes storage explicit. `BM_Decide_Value` keeps the `Decision` on the stack and uses `benchmark::DoNotOptimize` so the work is not deleted. `BM_Decide_Allocating` puts it behind `std::make_unique`. `BM_Decide_Pmr` takes the same heap object from an arena over a stack buffer whose upstream is `std::pmr::null_memory_resource()`, so an exhausted arena throws instead of reaching the global allocator, and `arena.release()` rewinds the arena in one step.
+C++ has no escape analysis to switch off. A compiler may elide an allocation in narrow cases. `BM_Decide_Value` keeps the `Decision` on the stack and uses `benchmark::DoNotOptimize` so the work is not deleted. `BM_Decide_Allocating` puts it behind `std::make_unique`. `BM_Decide_Pmr` takes the same `Decision` object from an arena over a stack buffer whose upstream is `std::pmr::null_memory_resource()`, so an exhausted arena throws instead of reaching the global allocator,.
 
 The counters differ. JMH's `-prof gc` reads the JVM's allocation accounting. The C++ counter is the replaced global `operator new` at the top of the file, which counts calls and bytes.
 
@@ -273,7 +273,7 @@ train_aot() {
 
 ## Measure
 
-Run the example from the repository root:
+Run from the repository root:
 
 ```bash
 examples/05-jvm-costs/verify.sh
@@ -283,7 +283,7 @@ It builds both modules, runs the JMH and Google Benchmark lanes and the line run
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-**Allocation per decision.** JMH `-prof gc` reports `escaping` at 24 B/op in all three runs, the 12-byte header, the `int` and the `long`. `scalar-replaced` reports 0.00016 to 0.00017 B/op, under 1 B/op. `--no-escape-analysis` reports 24 B/op again. In C++, `--allocating` costs 16 B/op and one allocation per parcel, and the value variant 1.3e-06 B/op. The pmr arena makes 0.00 B/op through the global allocator (observed). The median per decision over 30 repetitions is 2.3 ns for the value, 11.1 to 11.2 ns for `--allocating` and 3.7 to 3.8 ns for pmr (observed). The 9 ns is nothing against 480 ms; the cost is the 16 bytes per parcel that something later has to free.
+**Allocation per decision.** JMH `-prof gc` reports `escaping` at 24 B/op in all three runs, the 12-byte header, the `int` and the `long`. `scalar-replaced` reports 0.00016 to 0.00017 B/op, under 1 B/op. `--no-escape-analysis` reports 24 B/op again. In C++, `--allocating` costs 16 B/op and one allocation per parcel, and the value variant 1.3e-06 B/op. The pmr arena makes 0.00 B/op through the global allocator (observed). The median per decision over 30 repetitions is 2.3 ns for the value, 11.1 to 11.2 ns for `--allocating` and 3.7 to 3.8 ns for pmr (observed). The allocating variant's extra 8.8 to 8.9 ns is small against 480 ms; on the JVM the cost of an allocation is the young collection it brings closer (Chapter 6).
 
 **The first window.** The first window is parcels 0 to 1,999; the steady window is the rest of the same run.
 
@@ -293,11 +293,11 @@ Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logica
 | `warmed` | 0.29 to 0.36 ms | 0.26 to 0.32 ms | 1.3x, 1.1x, 1.1x |
 | `aot-cache` (observed) | 0.61 to 3.2 ms | 0.26 to 0.31 ms | 2.2x, 2.2x, 12.5x |
 
-A 28 ms stall at 1 kHz queues about 28 parcels behind it. That is under 6 % of the 480 ms budget and still 52x to 98x the steady window. The `warmed` first-window p99 is 0.23 to 0.33 ms, 1.1x the steady p99 in all three runs against a bound of 3x. The `aot-cache` first window is observed, not attributed: 0.61, 0.69 and 3.2 ms in runs 1 to 3.
+In runs 1 and 3 the stall is about 30 ms and delays 31 parcels, under 7 % of the 480 ms budget, and the first-window p99.9 is 58x and 98x steady. The `warmed` first-window p99 is 0.23 to 0.33 ms, 1.1x the steady p99 in all three runs against a bound of 3x. The `aot-cache` first window is observed, not attributed: 0.61, 0.69 and 3.2 ms.
 
-**Time to ready.** The median of five alternating launches, after one discarded pair that fills the page cache, is 50.7 to 54.8 ms with the AOT cache and 173.1 to 176.9 ms without. The ratio is about 0.3 against a bound of 0.8, the log shows `Opened AOT cache`, and `runtime.aot.used` is true.
+**Time to ready.** The median of five alternating launches, after one discarded pair, is 50.7 to 54.8 ms with the AOT cache and 173.1 to 176.9 ms without. The ratio is about 0.3 (bound 0.8), the log shows `Opened AOT cache`, and `runtime.aot.used` is true (set from that line).
 
-**Criterion 2 and the percentile a window can resolve.** The criterion was first written on p99: the first window at least 5x the steady window. In `r02-run2` it failed at 1.7x. The p99 ratios are 24.7x, 1.7x and 52.0x, from first-window p99 values of 11.0, 0.34 and 11.0 ms. The cold stall is about 11 ms at the start and delays a few dozen parcels, about 1 % of a 2,000-parcel window. The window's p99 is its 20th-worst parcel, on the stall's edge, inside it in some runs and outside in others. The p99.9, its 2nd-worst parcel, is inside every time.
+**Criterion 2 and the percentile a window can resolve.** The criterion was first written on p99, first window at least 5x steady. In `r02-run2` it failed at 1.7x. The p99 ratios are 24.7x, 1.7x and 52.0x, from first-window p99 values of 11.0, 0.34 and 11.0 ms. The first-window maximum is 30.3, 15.2 and 30.3 ms, and the cold stall delays 31, 15 and 31 parcels above 1 ms (0.75 to 1.55 % of a 2,000-parcel window). The window's p99 is its 21st-worst parcel. Run 2 delayed only 15, so its p99 fell outside the stall; the p99.9, its 3rd-worst parcel, is inside every time.
 
 The criterion is therefore asserted on p99.9, with the p99 ratio printed as observed. `RECHECK` re-evaluated the committed reports of all three runs without rerunning them, and `recheck.log` in each run directory records 58.3x, 51.7x and 98.3x. Run 2's `verify.log` still records the original failure, and the run was not repeated. A window resolves only the percentile whose rank the effect covers, so choose the percentile for the sample count, as Chapter 1 argued, and state the window.
 
@@ -309,21 +309,21 @@ The criterion is therefore asserted on p99.9, with the p99 ratio printed as obse
 
 ## Cross-check
 
-Allocation: async-profiler 4.6's allocation event on `escaping` attributes 100 % of the sampled bytes to the `DivertDecision` leaf frame in all three runs, an independent view of the 24 B/op JMH counts. That lane is optional and user-local (`scripts/deps/install-async-profiler.sh`).
+Allocation: async-profiler 4.6's allocation event on `escaping` attributes over 99.99 % of the sampled bytes to the `DivertDecision` leaf frame in all three runs, independent of the JMH counter. That lane is optional and user-local (`scripts/deps/install-async-profiler.sh`).
 
 Warm-up: JFR's `jdk.Compilation` and `jdk.Deoptimization` events, counted per window by `JitWindows`, confirm the mechanism: the compilations are in the first window for `--unwarmed` and before the first parcel for `warmed`.
 
-Cache: the `-Xlog:aot` line and `runtime.aot.used` confirm the cache was used, not just named.
+Cache: the `-Xlog:aot` line (copied into `runtime.aot.used`) and `-XX:AOTMode=on`, which would have stopped an unusable cache at startup, show the cache was used, not just named.
 
 ## What you learned
 
 - A Java allocation costs the bytes it adds to the next young collection, and `gc.alloc.rate.norm` counts them exactly.
 - Escape analysis took the 24-byte decision to under 1 B/op, and switching it off brought the 24 B back.
-- A JVM that binds at once puts compilation on the first parcels: a first-window p99.9 of 13.4 to 28.5 ms against 0.26 to 0.49 ms steady.
-- A replay moves that work before the bind. The AOT cache cut time to ready from 173.1-176.9 ms to 50.7-54.8 ms, and `-XX:AOTMode=on` makes an unusable cache fail at startup.
-- A 2,000-parcel window resolves p99.9 of an 11 ms stall and can miss it at p99.
+- A JVM that binds at once puts class loading and compilation on the first parcels: a first-window p99.9 of 13.4 to 28.5 ms against 0.26 to 0.49 ms steady.
+- A replay moves that work before the bind. The AOT cache cut time to ready from 173.1 to 176.9 ms to 50.7 to 54.8 ms, and `-XX:AOTMode=on` makes an unusable cache fail at startup.
+- A 2,000-parcel window resolves p99.9 of a 15 to 30 ms stall and can miss it at p99.
 
-The next chapter, GC for tails: Generational ZGC and Shenandoah, measures the pauses that these bytes cause.
+The next chapter, GC for tails: Generational ZGC and Shenandoah, measures the pauses that allocation causes.
 
 ## For deeper coverage
 
@@ -335,4 +335,4 @@ The next chapter, GC for tails: Generational ZGC and Shenandoah, measures the pa
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts the exact allocation counters (JMH and C++), the `--unwarmed` first-window p99.9 at least 5x steady, the `warmed` first-window p99 at most 3x steady, the `aot-cache` time to ready at most 0.8x the no-cache median with the cache opened in the AOT log, the JVM arguments in every Java report, and 20,000 parcels, none dropped, with `lowlat-report check` passing. Observed only: compilations and deoptimizations per window, bytes per parcel, the C++ split and timings, the `aot-cache` first window and the async-profiler share. It held on `r02-run1` to `r02-run3`. Criterion 2 failed in `r02-run2` on its original p99 form and was re-evaluated on p99.9 by `RECHECK` for all three runs.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts the exact allocation counters (JMH and C++), the `--unwarmed` first-window p99.9 at least 5x steady, the `warmed` first-window p99 at most 3x steady, the `aot-cache` time to ready at most 0.8x the no-cache median with the cache opened in the AOT log, the JVM arguments in every Java report, and 20,000 parcels, none dropped, with `lowlat-report check` passing. Observed only: compilations and deoptimizations per window, bytes per parcel, the C++ split, timings and pmr counter, the `aot-cache` first window and the async-profiler share. Criterion 2 failed in `r02-run2` on its original p99 form and was re-evaluated on p99.9 by `RECHECK` for all three runs. It holds on `r02-run1` to `r02-run3` after that recheck.*
