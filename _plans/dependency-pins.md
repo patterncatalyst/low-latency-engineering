@@ -215,7 +215,7 @@ GCC 16.2.1 and Clang 22.1.8 (both using the host libstdc++, the standard library
 
 | Component | Held at | Latest stable | Reason | Re-check |
 |---|---|---|---|---|
-| CPython | 3.14.8 | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | No python-build-standalone build of 3.14.9 yet (latest `20261020` ships 3.14.8), so uv cannot provide it; Fedora 44 ships 3.14.8. Promote when a uv-managed 3.14.9 is available; pin it in `examples/.python-version`. Applies to the free-threaded build too; promote both to 3.14.9 together. | next iteration |
+| CPython | 3.14.8 | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | No python-build-standalone build of 3.14.9 yet (latest `20261020` ships 3.14.8), so uv cannot provide it; Fedora 44 ships 3.14.8. `examples/.python-version` is `3.14+gil`, which selects the system 3.14.x with the GIL (uv 0.13 otherwise prefers the user-local free-threaded build, whose zlib changes the bytes of every serialised histogram); the free-threaded build is opt-in with `--python 3.14t` (see `sync-py/pyproject.toml`). Promote when a uv-managed 3.14.9 is available; then pin it in `examples/.python-version` (as `3.14.9+gil`). Applies to the free-threaded build too; promote both to 3.14.9 together. | next iteration |
 | uv | 0.13.0 on this host | 0.13.4 | User-local tool, not changed by the build; r01 uses no 0.13.4-only feature. `uv self update` is the user's call. | next iteration |
 | JDK 27 (non-LTS) | not used | 27 GA (2026-09-15, Temurin 27.0.0+35); jdk.java.net/27 lists 27.0.1.0.2 as the current update (checked 2026-10-22) | Base is LTS 25 (Q1); libraries certify LTS | JDK 28 GA, or next LTS (JDK 29) |
 | JDK 28 / Valhalla EA, jextract EA | not used | EA only | Prerelease policy (Q2) | JDK 28 GA (~2027-03); GA jextract |

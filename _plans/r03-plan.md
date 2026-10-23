@@ -230,7 +230,7 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | `perf --version` or tool output leaks the host kernel build or home paths | profile records `7.2`; `scrub_results` on exit; `validate.py host-ids` in CI |
 | Vendor-specific PMU event missing or renamed | asserts use generic `L1-dcache-load-misses:u`; vendor event observed only; S0 probe |
 | `perf stat --control` or JMH `perfnorm` refused at paranoid 2 | S0 probe; fallback whole-process `perf stat` on a process that does only the measured region, or counters observed only; never change paranoid. S0: both work; `perf c2c` refused, not used by any chapter |
-| Setup work (building a 1M table) pollutes counters | FIFO-controlled region; cachegrind with `--toggle-collect` on the measured function; S3 planted-loop test |
+| Setup work (building a 1M table) pollutes counters | FIFO-controlled region; cachegrind with `CACHEGRIND_FUNCTION` (per-function costs of the measured function; cachegrind has no `--toggle-collect`); S3 planted-loop test |
 | Cachegrind too slow on 1M x many lookups | reduced, fixed iteration count with a seeded key sequence; deterministic counts compared per op |
 | Powersave drift between variants | variants interleaved (A B A B A B) in one `verify.sh`, median of 3; no cross-run p50 |
 | A ratio clears its bound with under 2x margin | S7 gate; bound or parameter change goes to the user; the prose states the margin |

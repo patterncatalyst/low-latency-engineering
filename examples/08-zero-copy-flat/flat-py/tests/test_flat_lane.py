@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from lowlat_flat import cli, decode, golden, harness_report
+from lowlat_measure import decode as decode_histogram
 from lowlat_measure.cli import main as lowlat_report
 
 CONTRACT = Path(__file__).resolve().parents[4] / "contracts" / "flat" / "parcel-v1"
@@ -125,6 +126,12 @@ def test_gbench_conversion_has_one_sample_per_repetition(tmp_path: Path) -> None
     assert lowlat_report(["check", str(path)]) == 0
 
 
+def _same_histograms(a: dict, b: dict) -> bool:
+    """True when two reports decode to equal histograms (the compressed bytes may differ)."""
+    ha, hb = decode_histogram(a["hdr_histogram"]), decode_histogram(b["hdr_histogram"])
+    return ha.get_total_count() == hb.get_total_count() and ha.counts == hb.counts
+
+
 RESULTS = Path(__file__).resolve().parents[2] / "results"
 
 
@@ -161,7 +168,15 @@ def test_lowlat_report_converters_regenerate_the_committed_reports_byte_for_byte
         assert names == sorted(p.name for p in original.glob("*-*.json") if p.name != "gbench.json")
         assert names, original
         for name in names:
-            assert (regenerated / name).read_bytes() == (original / name).read_bytes(), name
+            new, old = (regenerated / name).read_bytes(), (original / name).read_bytes()
+            if new != old and _same_histograms(json.loads(new), json.loads(old)):
+                pytest.fail(
+                    f"{name}: bytes differ but the decoded histograms are equal. Check the "
+                    "interpreter (examples/.python-version is 3.14+gil, the system build) and its "
+                    "zlib: HdrHistogram compresses the histogram with zlib, whose output differs "
+                    "between zlib versions and between the GIL and free-threaded builds."
+                )
+            assert new == old, name
 
 
 def test_harness_report_wrapper_keeps_the_old_import_working(

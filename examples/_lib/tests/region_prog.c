@@ -1,6 +1,6 @@
 /* Test program for lib.sh perf_region and cachegrind_run.
  *
- *   region_prog OUTSIDE REGION
+ *   region_prog OUTSIDE REGION [AFTER]
  *
  * Touches a 64 MiB buffer at a stride that misses L1 on nearly every access, OUTSIDE times with
  * the counters off, then REGION times between "enable" and "disable" on LOWLAT_PERF_CTL (when set),
@@ -40,8 +40,8 @@ static void control(int fd_ctl, int fd_ack, const char *word) {
 }
 
 int main(int argc, char **argv) {
-  if (argc != 3) return 2;
-  long outside = atol(argv[1]), region = atol(argv[2]);
+  if (argc != 3 && argc != 4) return 2;
+  long outside = atol(argv[1]), region = atol(argv[2]), after = argc == 4 ? atol(argv[3]) : 0;
   buf = malloc(SIZE);
   if (!buf) return 1;
   memset((void *)buf, 1, SIZE);
@@ -52,10 +52,11 @@ int main(int argc, char **argv) {
   control(fd_ctl, fd_ack, "enable");
   uint64_t b = region_work(region);
   control(fd_ctl, fd_ack, "disable");
+  uint64_t c = outside_work(after); /* after the region: must not be counted either */
   const char *ops = getenv("LOWLAT_OPS_FILE");
   if (ops) {
     FILE *f = fopen(ops, "w");
     if (f) { fprintf(f, "%ld\n", region); fclose(f); }
   }
-  return (a + b) == 0xdeadbeef; /* keeps the sums alive */
+  return (a + b + c) == 0xdeadbeef; /* keeps the sums alive */
 }

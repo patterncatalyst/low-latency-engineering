@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -64,10 +65,12 @@ def test_distinct_cores_prints_four_cpus_on_four_physical_cores() -> None:
     assert set(cpus) <= set(allowed_cpus())
 
 
-def test_distinct_cores_fails_clearly_when_there_are_too_few() -> None:
-    run = sh("distinct_cores 100000")
+@pytest.mark.parametrize("arg", ["100000", "0", "abc", "-1", ""])
+def test_distinct_cores_rejects_bad_or_impossible_n_with_empty_stdout(arg: str) -> None:
+    run = sh(f'distinct_cores "{arg}"')
     assert run.returncode != 0
-    assert "physical cores" in run.stderr
+    assert run.stdout == ""
+    assert run.stderr
 
 
 @pytest.mark.skipif(physical_cores() < 1, reason="no sysfs topology")
@@ -155,9 +158,9 @@ needs_perf = pytest.mark.skipif(
 )
 
 
-def run_region(prog: Path, tmp: Path, name: str, outside: int, region: int) -> dict:
+def run_region(prog: Path, tmp: Path, name: str, outside: int, region: int, after: int = 0) -> dict:
     out = tmp / f"{name}.json"
-    run = sh(f'perf_region "{out}" -- "{prog}" {outside} {region}', cwd=tmp)
+    run = sh(f'perf_region "{out}" -- "{prog}" {outside} {region} {after}', cwd=tmp)
     assert run.returncode == 0, run.stdout + run.stderr
     return json.loads(out.read_text())
 
@@ -168,12 +171,12 @@ def test_perf_region_counts_cache_misses_and_excludes_work_outside_the_region(
 ) -> None:
     region = 1_000_000
     quiet = run_region(region_prog, tmp_path, "quiet", 0, region)
-    noisy = run_region(region_prog, tmp_path, "noisy", 8 * region, region)
+    noisy = run_region(region_prog, tmp_path, "noisy", 8 * region, region, 8 * region)
     assert quiet["source"] == "perf"
     assert quiet["ops"] == region
     misses = quiet["per_op"]["L1-dcache-load-misses"]
     assert misses > 0.3, f"expected most accesses to miss L1, got {misses} per op"
-    # Eight times as much work outside the region must not move the count.
+    # Eight times as much work before and after the region must not move the count.
     outside_moved = abs(noisy["per_op"]["L1-dcache-load-misses"] - misses) / misses
     assert outside_moved < 0.10, (quiet["per_op"], noisy["per_op"])
     # The shape is runtime.hw_counters: no extra keys, no negative numbers.
@@ -246,3 +249,51 @@ def test_profile_records_caches_topology_and_tool_versions_without_the_kernel_bu
         ["uname", "-r"], capture_output=True, text=True, check=True
     ).stdout.strip()
     assert build not in run.stdout
+
+
+# ---- interrupts ------------------------------------------------------------------------------
+
+
+@needs_perf
+@pytest.mark.parametrize("sig", ["INT", "TERM"])
+@pytest.mark.parametrize("fn", ["perf_region", "cachegrind_run"])
+def test_interrupted_runs_write_no_json_and_leave_no_temp_dir(
+    fn: str, sig: str, tmp_path: Path
+) -> None:
+    if fn == "cachegrind_run" and not shutil.which("valgrind"):
+        pytest.skip("valgrind not installed")
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    out = tmp_path / "out.json"
+    script = f'LOWLAT_OPS=1 {fn} "{out}" -- sleep 60'
+    proc = subprocess.Popen(
+        ["bash", "-c", f'. "{LIB}"\n{script}'],
+        env={**os.environ, "TMPDIR": str(tmpdir), "NO_COLOR": "1"},
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        for _ in range(250):  # wait for the temp dir: the helper is then past its traps
+            if any(tmpdir.glob("lowlat-*")):
+                break
+            time.sleep(0.02)
+        time.sleep(0.5)  # let perf or valgrind start the sleeper
+        # Signal the helper's subshell (the child of the outer bash), as Ctrl-C would reach it.
+        children = subprocess.run(
+            ["pgrep", "-P", str(proc.pid)], capture_output=True, text=True, check=False
+        ).stdout.split()
+        target = children[0] if children else str(proc.pid)
+        os.kill(int(target), getattr(signal, f"SIG{sig}"))
+        proc.wait(timeout=30)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)  # the helper ran in its own session
+        except ProcessLookupError:
+            pass
+    assert not out.exists()
+    # valgrind's own vgdb pipes may remain after a hard kill; the helper's lowlat-* dir must not.
+    leftovers = list(tmpdir.glob("lowlat-*"))
+    assert not leftovers, leftovers
