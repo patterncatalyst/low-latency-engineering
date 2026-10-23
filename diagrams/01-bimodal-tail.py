@@ -71,7 +71,8 @@ notes = [
         "x": 440,
         "y": 365,
         "text": (
-            "1 parcel in 100 takes the slow path and delays the next few; the median stays in the fast mode."
+            "1 parcel in 100 takes the slow path and delays the next few; "
+            "the median stays in the fast mode."
         ),
         "anchor": "middle",
         "size": 12,
