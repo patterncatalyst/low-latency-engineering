@@ -1,0 +1,13 @@
+[project]
+name = "lowlat-locality"
+version = "1.0.0"
+description = "Ch9: eliminating work, Python lane (__slots__ against a dict per parcel, thread counters)"
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lowlat_locality"]

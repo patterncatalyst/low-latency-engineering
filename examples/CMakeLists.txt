@@ -34,6 +34,8 @@ endif()
 # Pinned protobuf from the lowlat prefix (scripts/deps/build-protobuf.sh),
 # never the distro package.
 find_package(Protobuf CONFIG REQUIRED)
+# abseil 20250512.1 from the same prefix (protobuf v36.2 requires it): Ch9's absl::flat_hash_map.
+find_package(absl CONFIG REQUIRED)
 
 # Wire contract shared by all three languages: contracts/proto.
 set(LOWLAT_PROTO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../contracts/proto")
