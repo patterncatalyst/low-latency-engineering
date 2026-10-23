@@ -179,7 +179,7 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | S12 | Wiring: `_example_pages/09`, `10`; outline links Ch9/Ch10; forward links in Ch5, Ch6, Ch7, Ch8, 07 README become links to the shipped chapters (`relative_url`), no number changes; reconciliation 09.x and 10.x plus runs rows; iteration-plan status | listed files, `_plans/reconciliation-plan.md` | S10, S11 | – | done |
 | S13 | CI + `validate.py`: `java-flags` covers `results/r0[2-9]-*` and chapters 5–10; new checks: every report with `runtime.hw_counters` names a `source`, every pinned report has `runtime.placement.cpus`, no `cachegrind.out.*` or jcstress HTML tracked, `tools.perf`/`tools.valgrind` in profiles are major.minor; `--self-test` planted case for each; CI builds and unit-tests 09/10 (deterministic tests only: exactly-once, seqlock torn-read 0, litmus `seq-cst` 0 at a small trial count); ruff over the new packages | `scripts/validate.py`, `.github/workflows/ci.yml` | S4, S12 | CI | todo |
 | S14 | Idiom + voice review: `lgtm-idiomatic-review` on 09, 10 and kit diffs; `lgtm-professional-voice` (pattern scan **and** the house-voice rubric: Geewax model, `scan.sh --stats`) on `_docs/09-10`, READMEs, `_plans/r03-*`; fix findings now | all r03 files | S13 | host (MAIN + executors) | todo |
-| S14b | House-voice pass over the shipped prose (user request 2026-10-23; fix now): Ch0–8 (`_docs/00-*`–`08-*`, incl. the outline), example READMEs 00–08, `_data/diagrams.yml` captions, site chrome (rule 14 sweep). Captions `Figure N.x — …` become `Figure N.x: …` in chapters and `_data/diagrams.yml`; contractions where the sentence allows; cadence and triads per rule 15; example-first openings. Prose only: no number, code block, command, identifier, recorded output or verification footer data changes, so no re-measure | `_docs/0[0-8]-*.md`, `examples/0[0-8]-*/README.md`, `_data/diagrams.yml`, site chrome | S13 | – (executors split per lgtm-professional-voice) | todo |
+| S14b | House-voice pass over the shipped prose (user request 2026-10-23; fix now): Ch0–8 (`_docs/00-*`–`08-*`, incl. the outline), example READMEs 00–08, `_data/diagrams.yml` captions, site chrome (rule 14 sweep). Captions `Figure N.x — …` become `Figure N.x: …` in chapters and `_data/diagrams.yml`; contractions where the sentence allows; cadence and triads per rule 15; example-first openings. Prose only: no number, code block, command, identifier, recorded output or verification footer data changes, so no re-measure | `_docs/0[0-8]-*.md`, `examples/0[0-8]-*/README.md`, `_data/diagrams.yml`, site chrome | S13 | – (executors split per lgtm-professional-voice) | done |
 | S15 | Re-measure: any S14 change to measured code or a `verify.sh` invalidates S8; re-run `r03-run1..3` and re-quote chapters, figures and reconciliation. Only where a "no regression" claim is made instead: committed interleaved A/B worded "no shift detected". Otherwise "no re-measure needed" with the diff stat | results, chapters, figures, reconciliation | S14 | host (MAIN) | todo |
 | S16 | (after S14b) Opus validation: every quoted number recomputed from committed files; §4 criteria; Jekyll in `ruby:4.0`; `validate.py` + `--self-test`; `wordcount.sh`; figures regenerate byte-identically; host-ids clean | – | S15 | host (MAIN) | todo |
 | S17 | Ship: PR `release/r03` -> main, `ci-ok` green, squash-merge (user OK), delete branch, tag `r03.x`, notes-only GitHub release; no tarball | – | S16 | GitHub (MAIN) | todo |
@@ -284,6 +284,24 @@ Asserted non-exact criteria, final full `verify.sh` run of each example (median 
 ### S8 record (2026-10-23)
 
 `r03-run1..3` for 09 and 10 at commit 20664bd, host bare metal (`virt` none, powersave, balanced, kernel 7.2), lab VM down, serial under a host lock, each start at load1 ≤ 2 (`run-start.json` per run: 0.46 to 1.99). Every `verify.sh` exited 0 with every criterion holding and no margin under 2x; 510 reports pass `lowlat-report check`; results 15 MB; `scrub-host-ids --check` clean. The first attempt of 10's runs lost its `verify.log` (verify.sh clears stale `*.log` in its results dir at start), so those runs were deleted and re-run at the same commit with the log written outside and moved in. 00–08 need no re-measure: `examples/common/line-simulator` and the shared consumers are unchanged since main; `examples/common` changed only additively (15 files changed, 831 insertions(+), 6 deletions(-): S2/S3 report fields, placement and counter writers, the promoted harness converter).
+
+### S14b record (2026-10-23, house-voice pass over the shipped prose)
+
+`scan.sh --stats` (lgtm-professional-voice, house voice, Geewax model) before and after. Contractions are contracted / (contracted + expanded) for the common pairs. Every file now has 0 ban-tier hits, 0 em dashes (figure captions use a colon, here and in `_data/diagrams.yml` and the diagram specs) and no `stiff` or `uniform` flag; remaining `check triads` candidates were read and are real lists. Prose only: scripts compared numbers, inline code, fenced blocks, includes, captions, footers and link targets before and after as multisets, identical for every file. Site chrome: the footer's link to the roadmap is gone and `_plans` no longer renders (`output: false`); no `/plans/` path in the built site.
+
+| File | Contractions before | after | Flags before | after |
+|---|---|---|---|---|
+| Ch0 `00-prerequisites` | 0/9 | 13/13 | stiff, em dash | none |
+| Ch1 `01-latency-distribution` | 0/13 | 11/14 | stiff, em dash | none |
+| Ch2 `02-littles-amdahl` | 0/20 | 21/21 | stiff, em dash | none |
+| Ch3 `03-coordinated-omission` | 0/13 | 14/15 | stiff, em dash | none |
+| Ch4 `04-benchmark-harnesses` | 0/23 | 21/23 | stiff, em dash | none |
+| Ch5 `05-jvm-costs` | 0/7 | 9/9 | stiff, em dash | none |
+| Ch6 `06-gc-tails` | 0/10 | 15/15 | stiff, em dash | none |
+| Ch7 `07-offheap-lockfree` | 1/12 | 13/13 | stiff, em dash | none |
+| Ch8 `08-zero-copy-flat` | 0/17 | 20/20 | stiff, em dash | none |
+| Outline `00-outline` | 1/1 | 1/1 | em dash (11) | none |
+| READMEs 00–08 | 0/1 to 0/21 | all contracted where the sentence allows | stiff | none |
 
 ## Follow-ups
 
