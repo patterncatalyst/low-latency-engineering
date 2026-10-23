@@ -8,7 +8,7 @@
 # This is libvirt configuration for the lab domain only (virsh vcpupin --config, plus --live when
 # the guest is running). It is a PIN, not an isolation: the host kernel can still schedule other
 # tasks on that host CPU, and nothing on the host is changed (no isolcpus, no cpuset, no IRQ
-# steering). Default host CPU 13: on the lab host (Intel 8-core/16-thread laptop CPU, 8 cores x 2 threads, siblings N and
+# steering). Default host CPU 13: on the lab host (8 cores x 2 threads, siblings N and
 # N+8) core 5 (CPUs 5 and 13) had the fewest interrupts summed over both hyperthreads in
 # /proc/interrupts on 2026-10-22; core 7 (CPUs 7 and 15) was second busiest. Re-check on another
 # host with: lscpu -e, /sys/devices/system/cpu/cpuN/topology/thread_siblings_list, /proc/interrupts.

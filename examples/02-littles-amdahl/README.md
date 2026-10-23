@@ -133,7 +133,7 @@ Behavioural. `verify.sh` runs both experiments and exits 0 only when every crite
   `lowlat-report check`.
 
 All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned
-`balanced`, kernel 7.2.11-200.fc44, no pinning or isolation; load average at the start 0.34 to
+`balanced`, kernel 7.2, no pinning or isolation; load average at the start 0.34 to
 0.55 on 16 CPUs). The values below are ranges over the three runs.
 
 | Criterion | Result (r02-run1..3) |

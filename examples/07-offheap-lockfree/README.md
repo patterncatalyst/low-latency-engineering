@@ -358,7 +358,7 @@ the first queue or map is built.
 Behavioural. The host part and the VM part each assert their criteria, and all of them held.
 
 **Host part**, `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, clocksource
-`tsc`, kernel 7.2.11-200.fc44, Temurin 25.0.5+8, VM down). Ranges over the three runs:
+`tsc`, kernel 7.2, Temurin 25.0.5+8, VM down). Ranges over the three runs:
 
 | Quantity | Range |
 |---|---|

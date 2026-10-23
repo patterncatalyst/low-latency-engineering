@@ -40,13 +40,23 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
   variant-names  a variant, option or slug is named for its defect (--naive, --unwarmed),
                  never honest/lie/lies/lying/cheat: verify.sh arrays, "--option" strings in
                  sources, result file names, report `variant` fields
+  host-ids       nothing in a tracked file identifies the development machine or its owner:
+                 no absolute home-directory path (under /home or /Users), not the runtime
+                 account name or hostname (both read at run time, never written), no CPU
+                 model number (i3/i5/i7/i9-NNNN, Ryzen N, Xeon), no product_name other than
+                 "redacted", no host kernel build number (N.N.N-N.fcNN.x86_64) outside the
+                 SRPM pin files
+                 (scripts/scrub-host-ids.py rewrites a tree that fails it)
 
     python3 scripts/validate.py --self-test   plants a bad case for each new check
                                               in a temporary tree and requires it to fail
 """
 
+import getpass
+import gzip
 import json
 import re
+import socket
 import subprocess
 import sys
 import tempfile
@@ -737,6 +747,84 @@ def check_variant_names(root: Path) -> None:
     print(f"variant-names: {n} source and report file(s)")
 
 
+# ---------------------------------------------------------------- host-ids
+# The repository is public: a tracked file must not name the machine or its owner.
+# The patterns are generic; the account name and hostname are read at run time.
+# scripts/scrub-host-ids.py holds the replacements and is the way to fix a failure.
+HOST_ID_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
+    ("home path", re.compile(r"/(?:home|Users)/[^/\s\"'`)<>]+/"), "absolute home path"),
+    ("cpu model", re.compile(r"\bi[3579]-\d{4,5}[A-Z]*\b"), "Intel CPU model number"),
+    ("cpu model", re.compile(r"\bRyzen \d"), "AMD CPU model"),
+    ("cpu model", re.compile(r"\bXeon\b"), "Xeon CPU name"),
+    (
+        "product_name",
+        re.compile(r'"product_name"\s*:\s*"(?!redacted")'),
+        'product_name is not "redacted"',
+    ),
+    (
+        "kernel build",
+        re.compile(r"\b\d+\.\d+\.\d+-\d+\.fc\d+\.x86_64\b"),
+        "host kernel with a build number",
+    ),
+]
+# Files that may hold what the guard looks for: the table that removes it, this guard, and the
+# SRPM pin of the disposable lab guest's kernel build (a dependency pin, not the host's kernel).
+HOST_ID_SELF = {"scripts/scrub-host-ids.py", "scripts/validate.py"}
+HOST_ID_KERNEL_PINS = {
+    "scripts/lab/build-rt-kernel.sh",
+    "scripts/lab/install-rt-kernel.sh",
+    "scripts/lab/README.md",
+    "_plans/dependency-pins.md",
+}
+# Names too common to look for as words (a CI runner's account is "runner").
+HOST_ID_COMMON = {"root", "user", "runner", "fedora", "ubuntu", "admin", "localhost", "github"}
+
+
+def runtime_names() -> list[str]:
+    """The account name and hostname of this machine, read now; never written anywhere."""
+    names = []
+    for read in (getpass.getuser, socket.gethostname):
+        try:
+            name = read()
+        except OSError, KeyError:
+            continue
+        if len(name) >= 4 and name.lower() not in HOST_ID_COMMON:
+            names.append(name)
+    return names
+
+
+def check_host_ids(root: Path, names: list[str] | None = None) -> None:
+    names = runtime_names() if names is None else names
+    word = [(n, re.compile(rf"(?<![A-Za-z0-9_]){re.escape(n)}(?![A-Za-z0-9_])")) for n in names]
+    n_files = 0
+    for name in tracked_files(root):
+        path = root / name
+        if name in HOST_ID_SELF or not path.is_file():
+            continue
+        try:
+            raw = path.read_bytes()
+            if raw[:2] == b"\x1f\x8b":
+                raw = gzip.decompress(raw)
+            text = raw.decode("utf-8")
+        except OSError, EOFError, UnicodeDecodeError:
+            continue  # binary
+        n_files += 1
+        for label, pat, what in HOST_ID_PATTERNS:
+            if label == "kernel build" and name in HOST_ID_KERNEL_PINS:
+                continue
+            if m := pat.search(text):
+                line = text.count("\n", 0, m.start()) + 1
+                fail("host-ids", f"{name}:{line}: {what}; run scripts/scrub-host-ids.py")
+        for _, pat in word:
+            if pat.search(text):
+                line = text.count("\n", 0, pat.search(text).start()) + 1  # type: ignore[union-attr]
+                fail(
+                    "host-ids",
+                    f"{name}:{line}: the runtime account name or hostname; run scrub-host-ids.py",
+                )
+    print(f"host-ids: {n_files} text file(s)")
+
+
 # ---------------------------------------------------------------- self-test
 GOOD_REPORT = {
     "schema": "lowlat-report/1",
@@ -802,6 +890,10 @@ LISTED_SRC = (
 
 def listing_doc(prose_name: str, body: str, lang: str = "java") -> str:
     return f"# Chapter\n\nThe listing shows {prose_name}.\n\n```{lang}\n{body}\n```\n"
+
+
+# A made-up host kernel build for the planted cases: never a real machine's.
+HOST_KERNEL_BUILD = "9.9.9-100.fc99.x86_64"
 
 
 def self_test() -> int:
@@ -1115,6 +1207,79 @@ def self_test() -> int:
             "lies",
         ),
         (
+            "host-ids home path",
+            {"_docs/a.md": "report: /ho" + "me/bob/x/cpp.json\n"},
+            check_host_ids,
+            False,
+            "absolute home path",
+        ),
+        (
+            "host-ids macOS path",
+            {"README.md": "see /Us" + "ers/bob/Dev\n"},
+            check_host_ids,
+            False,
+            "absolute home path",
+        ),
+        (
+            "host-ids runtime names",
+            {"x/log.txt": "ran as planted-account on planted-host\n"},
+            lambda r: check_host_ids(r, ["planted-account"]),
+            False,
+            "account name or hostname",
+        ),
+        (
+            "host-ids hostname",
+            {"x/log.txt": "host planted-host up\n"},
+            lambda r: check_host_ids(r, ["planted-account", "planted-host"]),
+            False,
+            "account name or hostname",
+        ),
+        (
+            "host-ids intel model",
+            {"_docs/a.md": "the i9-99999X core\n"},
+            check_host_ids,
+            False,
+            "Intel CPU model number",
+        ),
+        ("host-ids ryzen", {"_docs/a.md": "a Ryzen 7 5800X\n"}, check_host_ids, False, "AMD CPU"),
+        ("host-ids xeon", {"_docs/a.md": "an Xeon server\n"}, check_host_ids, False, "Xeon"),
+        (
+            "host-ids product_name",
+            {"examples/05-jvm-costs/results/r02-run1/p.json": '{"product_name": "Some Laptop 1"}'},
+            check_host_ids,
+            False,
+            'not "redacted"',
+        ),
+        (
+            "host-ids kernel build",
+            {
+                "examples/05-jvm-costs/results/r02-run1/profile.json": '{"release": "'
+                + HOST_KERNEL_BUILD
+                + '"}'
+            },
+            check_host_ids,
+            False,
+            "kernel with a build number",
+        ),
+        (
+            "host-ids good",
+            {
+                "examples/05-jvm-costs/results/r02-run1/profile.json": {
+                    "product_name": "redacted",
+                    "kernel": {"release": "7.2", "version": "PREEMPT_DYNAMIC"},
+                    "cpu": {"model": "Intel 8-core/16-thread laptop CPU"},
+                },
+                "examples/00-prerequisites/results/r01-vm-smoke/vm/profile.json": {
+                    "kernel": {"release": "7.2.11-200.lowlatrt.fc44.x86_64+rt"}
+                },
+                "scripts/lab/build-rt-kernel.sh": f"KERNEL_NVR=kernel-{HOST_KERNEL_BUILD}\n",
+                "_docs/a.md": "report: <repo>/examples/x.json and ~/.cache/lowlat\n",
+            },
+            lambda r: check_host_ids(r, ["planted-account"]),
+            False,
+            "",
+        ),
+        (
             "variant good",
             {
                 "examples/05-jvm-costs/verify.sh": "V=(naive)\nrun --unwarmed --client x\n",
@@ -1187,6 +1352,7 @@ def main() -> int:
     check_vm_runs(ROOT)
     check_prerelease(ROOT)
     check_variant_names(ROOT)
+    check_host_ids(ROOT)
     if failures:
         print()
         print("\n".join(failures))

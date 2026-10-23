@@ -83,7 +83,7 @@ simulator run with `dropped = 0`; and that each report validates, carries the
 machine profile and matches `lowlat-report check`. Exit 0 requires all of it.
 
 It held on all three quiet-host runs, `r02-run1..3` (bare-metal host, governor
-`powersave`, tuned `balanced`, kernel 7.2.11-200.fc44, `virt: none`): every report
+`powersave`, tuned `balanced`, kernel 7.2, `virt: none`): every report
 had `count = 5000` and `dropped = 0`. The p99 smoke values were not asserted; across
 the runs they were 183,551 to 243,839 ns (C++), 218,111 to 223,359 ns (Python) and
 319,487 to 403,455 ns (Java, which includes JIT warm-up).

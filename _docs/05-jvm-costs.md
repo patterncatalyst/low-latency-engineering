@@ -283,9 +283,9 @@ Run from the repository root:
 examples/05-jvm-costs/verify.sh
 ```
 
-It builds both modules, runs the JMH and Google Benchmark lanes and the line runs at 1 kHz for 20 s (20,000 parcels, UDP port 47250), trains the AOT caches, times five alternating launches and asserts the criteria.
+It builds both modules, runs the JMH and Google Benchmark lanes and the line runs at 1 kHz for 20 s (20,000 parcels, UDP 47250), trains the AOT caches, times five alternating launches and asserts the criteria.
 
-Profile for every number below: bare-metal host, Intel 8-core/16-thread laptop CPU, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges span the committed runs `r02-run1` to `r02-run3`.
 
 **Allocation per decision.** JMH `-prof gc` reports `escaping` at 24 B/op in all three runs, the 12-byte header, the `int` and the `long`. `scalar-replaced` reports 0.00016 to 0.00018 B/op, under 1 B/op. `--no-escape-analysis` reports 24 B/op again. In C++, `--allocating` costs 16 B/op and one allocation per parcel, and the value variant 1.3e-06 B/op. The pmr arena makes 0.00 B/op through the global allocator (observed). The median cost per operation over 30 repetitions is 2.3 ns for the value, 11.2 to 13.1 ns for `--allocating` and 3.7 to 4.1 ns for pmr (observed). The allocating variant's extra 8.9 to 10.8 ns is small against 480 ms; on the JVM an allocation costs the young collection it brings closer (Chapter 6).
 

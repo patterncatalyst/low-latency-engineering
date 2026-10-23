@@ -175,7 +175,7 @@ examples/04-benchmark-harnesses/verify.sh
 
 Set `ALLOW_BUSY=1` on a host that is running other work, and accept noisier numbers. The script builds, runs the parity tests, runs the three harnesses and fails unless the effects below appear.
 
-Profile for every number below: bare-metal host, Intel 8-core/16-thread laptop CPU, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges span the three committed runs `r02-run1` to `r02-run3`.
 
 **C++, Google Benchmark, 30 repetitions.** The guarded median is 4.73 to 4.74 ns per check digit (4.728, 4.730 and 4.737 ns). The custom p99, which is the slowest repetition, is 4.75 to 4.79 ns, within 0.06 ns of the median in every run. The spread measures stability; the worst call is another question.
 

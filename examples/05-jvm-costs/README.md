@@ -202,7 +202,7 @@ Every dependency is open source; none sits on a path that needs a paid tier.
 
 Behavioural. `verify.sh` asserts the six criteria above, and all of them held on the quiet-host
 runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, clocksource `tsc`,
-kernel 7.2.11-200.fc44, Temurin 25.0.5+8, VM down). Ranges over
+kernel 7.2, Temurin 25.0.5+8, VM down). Ranges over
 the three runs; the first window is parcels 0 to 1,999 and the steady window is the rest of the same run.
 
 | Quantity | Range |

@@ -52,11 +52,24 @@ bg_forget() {
   done
   BG_PIDS=("${keep[@]}")
 }
+# The repository is public, so a results directory must not name the machine or its owner.
+# Reports and logs written by third-party tools and by the example binaries carry absolute
+# paths ("report: <absolute path>"), so on exit every verify.sh scrubs its results directory with
+# scripts/scrub-host-ids.py (home paths, account name, CPU model, kernel build). A log captured
+# outside the script, such as verify.log, is scrubbed the same way:
+#   ./verify.sh 2>&1 | ../../scripts/scrub-host-ids.py --filter | tee results/rNN-runN/verify.log
+LOWLAT_CALLER_DIR="$(cd "$(dirname "${BASH_SOURCE[1]:-$0}")" && pwd)"
+scrub_results() {
+  local d=${1:-${RESULTS_DIR:-$LOWLAT_CALLER_DIR/results/latest}}
+  [[ -d $d ]] || return 0
+  python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" "$d" 2>/dev/null || true
+}
 _bg_cleanup() {
   local p
   for p in "${BG_PIDS[@]}"; do
     kill "$p" 2>/dev/null || true
   done
+  scrub_results
   # Scratch (JFR recordings, FIFOs) is ours only when lib.sh created it.
   [[ -z ${_LOWLAT_SCRATCH_OWNED:-} ]] || rm -rf "${LOWLAT_SCRATCH:?}"
 }

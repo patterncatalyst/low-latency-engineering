@@ -136,7 +136,7 @@ p99 is at least 20x its own p50; and the bimodal p50 stays under a quarter of th
 run's measured slow-path duration.
 
 All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor
-`powersave`, tuned `balanced`, kernel 7.2.11-200.fc44); each run's `verify.log`
+`powersave`, tuned `balanced`, kernel 7.2); each run's `verify.log`
 ends with every criterion passing. Across the
 three runs, in nanoseconds:
 

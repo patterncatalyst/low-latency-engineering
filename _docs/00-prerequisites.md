@@ -48,7 +48,7 @@ Dependencies are pinned to exact upstream releases: protobuf 36.2 (Java 4.36.2, 
 
 A latency number without the machine behind it is not publishable. `scripts/profile.sh` writes a `lowlat-profile/1` JSON object: CPU model and topology, scaling driver and governor, tuned profile, kernel release and preemption model, isolation parameters, clocksource, hugepages, whether the system is virtualized, the load average and the tool versions. It needs no root and writes `null` where a file is missing. Every report embeds it verbatim.
 
-Every host number in this chapter carries one profile: bare-metal host, Intel 8-core/16-thread laptop CPU, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
+Every host number here carries one profile: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
 
 ## The VM lab
 
@@ -333,7 +333,7 @@ The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. 
 
 ### Guest result
 
-Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the Intel 8-core/16-thread laptop CPU host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. One `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It shows that the RT kernel boots and `cyclictest` runs through the lab's ssh path; it is not a jitter measurement and not comparable with any bare-metal number. The measured before and after comes in Part 5.
+Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the Intel host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. One `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It shows that the RT kernel boots and `cyclictest` runs through the lab's ssh path; it is not a jitter measurement and not comparable with bare-metal numbers. The measured before and after comes in Part 5.
 
 ## Cross-check
 

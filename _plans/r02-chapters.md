@@ -138,9 +138,8 @@ excerpts named below contains either sequence; grep yours.
   `kernel.preempt_model`, `power.governor`, `tuned`, `clock.current_clocksource`,
   `tools.java_full`, `memory.thp_enabled`):
 
-  > Profile for every number below: bare-metal host, Intel 8-core/16-thread laptop CPU, 16
-  > logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor
-  > `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8.
+  > Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on,
+  > `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8.
   > Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
   Ch6 adds "THP `madvise`" after the clocksource. That is `memory.thp_enabled`; ZGC's heap is
@@ -149,7 +148,7 @@ excerpts named below contains either sequence; grep yours.
 - VM profile line, Ch7 only, at the top of the VM part, from
   `r02-vm-run1/vm/profile.json`, `vm/vcpupin.txt` and `vm/LABEL`:
 
-  > VM profile: lab guest `lowlat-target`, 4 vCPUs on the same Intel 8-core/16-thread laptop CPU host,
+  > VM profile: lab guest `lowlat-target`, 4 vCPUs on the same Intel host,
   > PREEMPT_RT kernel 7.2.11-200.lowlatrt.fc44.x86_64+rt, guest command line
   > `isolcpus=3 nohz_full=3 rcu_nocbs=3`, guest vCPU 3 pinned to host CPU 13 by
   > libvirt (a pin, not host isolation), tuned `virtual-guest`, clocksource
@@ -177,7 +176,7 @@ excerpts named below contains either sequence; grep yours.
   and their stale status sections are not results.
 - JVM flags are shown exactly as run, copied from `verify.sh` (`JVM_ARGS`,
   `JVM_FLAGS`, `gc_flags`) or from a report's `build.flags`. Host paths in
-  `build.flags` (`/home/…`, `/tmp/lowlat-scratch.*`) are replaced with
+  `build.flags` (`~/…`, `/tmp/lowlat-scratch.*`) are replaced with
   `<results>` and `<scratch>`; nothing else in a flag is changed.
 - Report the failures and outliers that were observed, plainly: 05 `r02-run2`'s
   original criterion 2 failure, and 07 `r02-run1`'s criterion 2 margin of 1.01
