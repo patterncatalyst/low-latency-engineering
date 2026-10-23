@@ -22,7 +22,7 @@ against `std::vector<std::unique_ptr<ParcelState>>`).
 What changes when value classes are available on a GA JDK:
 
 - Value classes aim at a flat `ParcelState[]` without leaving the heap or writing a layout by hand.
-  JEP 401 flattens only values that fit in 64 bits including the null flag; `ParcelState` is 22 bytes
+  On common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included; `ParcelState` is 22 bytes
   of fields, so it needs later null-restricted or non-atomic enhancements before the object table could
   approach the flat table's sweep time.
 - The wire side does not change. A `FlatView` over a receive buffer is a view of bytes someone else
