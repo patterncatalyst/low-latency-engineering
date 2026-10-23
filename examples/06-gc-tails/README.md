@@ -22,7 +22,7 @@ by another name.
 | Java | `shenandoah-gen` | `-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational` |
 | Java | `shenandoah` | `-XX:+UseShenandoahGC`, non-generational (observed) |
 | Java | `undersized-heap` | ZGC with the heap at 1.05x the measured live set: almost no headroom, so allocation stalls |
-| Java | `thp` | ZGC with `-XX:+UseTransparentHugePages` (observed; the host's THP mode is `madvise`) |
+| Java | `thp` | ZGC with `-XX:+UseTransparentHugePages` (observed). The OS refuses huge pages for ZGC's shared-memory heap (`shmem_enabled` is `never`; `Large Page Support: Disabled (OS enforced)`), so this runs on 4 KB pages |
 | Java | `jfr-off` | ZGC without the flight recorder (observed: what the recording costs) |
 | Python | `cyclic-garbage` | each parcel's scan history is a reference cycle: only the cyclic collector frees it |
 | Python | `frozen` | no cycles, and `gc.freeze()` after setup: refcounting frees everything and the collector has nothing to walk |
@@ -32,8 +32,8 @@ by another name.
 
 Every Java variant pre-touches the whole heap (`-XX:+AlwaysPreTouch`), so no variant pays first-touch
 page faults inside the window, and logs through `-Xlog:async`, so the log write is off the application
-threads. `-XX:+UseTransparentHugePages` changes how the same heap is backed; the host is not touched
-(THP mode `madvise` is what the profile records, and hugetlbfs large pages are out of scope for the host).
+threads. `-XX:+UseTransparentHugePages` requests huge pages for the heap; the host is not touched
+(THP mode `madvise` is what the profile records; ZGC's heap is shared memory, governed by `shmem_enabled`, which this host sets to `never`, so `thp` gets no huge pages. Changing it is a host change; huge pages for ZGC belong to the Part 5 lab VM).
 
 ## Workload
 
@@ -138,7 +138,7 @@ is about 0.5 MB, far under the 20 MB budget for the iteration.
    report's `build.flags` names its collector and its heap size.
 
 Observed, not asserted: `shenandoah` (non-generational), `thp` and `jfr-off`, printed beside `zgc` so a
-reader sees what the transparent huge pages and the recording cost; and the `deferred-free` and `no-free`
+reader sees the recording's cost (`thp` got no huge pages, see above); and the `deferred-free` and `no-free`
 maxima. Those two maxima are single operating-system events of 0.3 to 2 ms on both sides (across
 calibration runs the ratio of one to the other ranged from 0.4 to 2.7), so the chapter reads them as a
 pair, and the claim that the reclaimer thread leaves the hot path rests on the `deferred-free` p99.9
