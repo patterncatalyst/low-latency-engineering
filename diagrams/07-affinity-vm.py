@@ -70,7 +70,7 @@ notes = [
     {
         "x": 440,
         "y": 400,
-        "text": "VM only, never compared with host runs. p99.9: median of 3 alternations per run.",
+        "text": "VM only, never compared with host runs. steady p99.9: median of 3 alternations per run.",
         "anchor": "middle",
         "size": 12,
     },

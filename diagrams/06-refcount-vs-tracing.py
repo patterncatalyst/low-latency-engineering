@@ -25,8 +25,8 @@ LANES = [
         "Python: refcounts free at once; a cycle collector finds cycles",
         ["Python", "refcount + generational GC"],
         [
-            ("sub", ["cyclic-garbage", "reference cycles, gen-2 runs"], ["9 gen-2 runs", "p99.9 138-144 ms"], False),
-            ("accent", ["frozen", "no cycles, gc.freeze()"], ["0 gen-2 runs", "p99.9 0.154-0.168 ms"], True),
+            ("sub", ["cyclic-garbage", "reference cycles, gen-2 runs"], ["9 gen-2 runs", "p99.9 lat. 138-144 ms"], False),
+            ("accent", ["frozen", "no cycles, gc.freeze()"], ["0 gen-2 runs", "p99.9 lat. 0.154-0.168 ms"], True),
         ],
     ),
     (

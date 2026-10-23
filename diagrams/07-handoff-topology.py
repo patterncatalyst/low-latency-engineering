@@ -23,7 +23,7 @@ nodes = [
     {"x": 690, "y": 50, "w": 160, "h": 60, "style": "kernel", "lines": ["Command channel", "UDP, not the data queue"]},
     {"x": 690, "y": 150, "w": 160, "h": 60, "style": "sub", "lines": ["Audit journal", "chronicle-journal and", "write-per-parcel only"]},
     {"x": 40, "y": 244, "w": 250, "h": 50, "style": "sub", "lines": ["blocking-queue", "ArrayBlockingQueue, parks"]},
-    {"x": 315, "y": 244, "w": 250, "h": 50, "style": "accent", "lines": ["agrona-spsc", "busy-spin, never parks"]},
+    {"x": 315, "y": 244, "w": 250, "h": 50, "style": "accent", "lines": ["agrona-spsc", "busy-spin idle strategy"]},
     {"x": 590, "y": 244, "w": 250, "h": 50, "style": "accent", "lines": ["disruptor", "BusySpinWaitStrategy"]},
     {"x": 40, "y": 322, "w": 250, "h": 48, "style": "ink", "lines": ["voluntary ctx switches", "199,523-199,540"]},
     {"x": 315, "y": 322, "w": 250, "h": 48, "style": "ink", "lines": ["voluntary ctx switches", "29-47"]},
