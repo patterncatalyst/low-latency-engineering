@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 456" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="44" width="840" height="120" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="64" font-size="12" font-weight="700" fill="#1d1d1d">Blocking</text>
+<rect x="20" y="174" width="840" height="120" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="194" font-size="12" font-weight="700" fill="#1d1d1d">Lock-free</text>
+<rect x="20" y="304" width="840" height="120" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="324" font-size="12" font-weight="700" fill="#1d1d1d">Wait-free claim step</text>
+<rect x="40" y="82" width="190" height="56" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">mutex</text>
+<text x="135.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">std::mutex, ReentrantLock</text>
+<rect x="270" y="82" width="170" height="56" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="355.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">futex sleep</text>
+<text x="355.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">a loser parks</text>
+<rect x="490" y="70" width="350" height="42" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="665.0" y="89.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">claim p99</text>
+<text x="665.0" y="106.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 2,633-2,985 ns, Java 8,187-8,383 ns</text>
+<rect x="490" y="118" width="350" height="42" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="665.0" y="137.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">voluntary switches, least-switching</text>
+<text x="665.0" y="154.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 5,406-9,746, Java 47,556-61,712</text>
+<rect x="40" y="212" width="190" height="56" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="238.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">cas-loop</text>
+<text x="135.0" y="255.0" font-size="11.5" fill="#555555" text-anchor="middle">CAS retry loop</text>
+<rect x="270" y="212" width="170" height="56" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="355.0" y="238.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">retry</text>
+<text x="355.0" y="255.0" font-size="11.5" fill="#555555" text-anchor="middle">a failed CAS tries again</text>
+<rect x="490" y="200" width="350" height="42" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="665.0" y="219.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">claim p99</text>
+<text x="665.0" y="236.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 478-502 ns, Java 1,409-1,837 ns</text>
+<rect x="490" y="248" width="350" height="42" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="665.0" y="267.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">largest retry count in one claim</text>
+<text x="665.0" y="284.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 7-10, Java 27-55</text>
+<rect x="40" y="342" width="190" height="56" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="368.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">fetch-add</text>
+<text x="135.0" y="385.0" font-size="11.5" fill="#555555" text-anchor="middle">one lock xadd</text>
+<rect x="270" y="342" width="170" height="56" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="355.0" y="368.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">one step</text>
+<text x="355.0" y="385.0" font-size="11.5" fill="#555555" text-anchor="middle">1 step per claim, exact</text>
+<rect x="490" y="330" width="350" height="42" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="665.0" y="349.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">claim p99</text>
+<text x="665.0" y="366.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 400-468 ns, Java 516-584 ns</text>
+<rect x="490" y="378" width="350" height="42" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="665.0" y="397.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">voluntary switches, most-switching</text>
+<text x="665.0" y="414.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 1, Java 1-3</text>
+<path d="M230,110 L270,110" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M440,99 L490,91" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M440,121 L490,139" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,240 L270,240" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M440,229 L490,221" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M440,251 L490,269" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,370 L270,370" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M440,359 L490,351" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M440,381 L490,399" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Wait-free bounds the steps of a claim, not the time it takes</text>
+<text x="440" y="440" font-size="12" fill="#1d1d1d" text-anchor="middle">Claim p99, mutex over fetch-add: 6.10-6.45x in C++ and 14.13-15.23x in Java (median of 3 alternations per run).</text>
+</svg>
