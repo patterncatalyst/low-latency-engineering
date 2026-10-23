@@ -153,7 +153,11 @@ The Java record is a 24-byte object: a 12-byte header, an `int` and a `long`; re
 ```
 
 ```cpp
-// Replaceable allocation functions: count, then defer to malloc.
+// Replaceable allocation functions: count, then defer to malloc. GCC 16 cannot see that operator
+// new is malloc-backed in this translation unit and reports the free() in the matching operator
+// delete as a mismatch (-Wmismatched-new-delete); the pair is consistent.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmismatched-new-delete"
 void* operator new(std::size_t size) {
   g_allocations.fetch_add(1, std::memory_order_relaxed);
   g_bytes.fetch_add(size, std::memory_order_relaxed);
@@ -201,7 +205,7 @@ In `escaping` the result goes into the field `stored`, so the object outlives th
 
 C++ has no escape analysis to switch off. A compiler may elide an allocation in narrow cases, but the language does not promise it, so the lane makes storage explicit. `BM_Decide_Value` keeps the `Decision` on the stack and uses `benchmark::DoNotOptimize` so the work is not deleted. `BM_Decide_Allocating` puts it behind `std::make_unique`. `BM_Decide_Pmr` takes the same `Decision` object from an arena over a stack buffer whose upstream is `std::pmr::null_memory_resource()`, so an exhausted arena throws instead of reaching the global allocator, and `arena.release()` rewinds the arena in one step.
 
-The counters differ. JMH's `-prof gc` reads the JVM's allocation accounting. The C++ counter is the replaced global `operator new` at the top of the file, which counts calls and bytes.
+The counters differ. JMH's `-prof gc` reads the JVM's allocation accounting. The C++ counter is the replaced global `operator new` at the top of the file, which counts calls and bytes; the pragmas silence a GCC 16 mismatched-new-delete warning on the matching `delete`.
 
 ### Warm-up before the bind
 

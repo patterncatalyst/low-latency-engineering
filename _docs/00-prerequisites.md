@@ -254,7 +254,7 @@ Each consumer is split in two. The loop owns what every example shares: bind, re
                 recorder.addDropped(gaps.lastGap());
             }
             received++;
-            completion.begin(seq);
+            Completion.begin(seqCell, seq);
             handler.onParcel(event, completion);
         }
 ```
@@ -263,11 +263,11 @@ The C++ loop makes a blocking `recv` into a reused buffer. `EINTR` returns to th
 
 The hook is a template parameter, not a `std::function` or a virtual interface. The call resolves at compile time and inlines into the loop, so the hook adds no indirect call or allocation to the measured path, for the same reason `std::sort` takes its comparator as a template argument. A handler may also define `drain`, which the loop calls once at the end to complete parcels it still holds.
 
-Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal or idle stream goes unnoticed. The interpreter cost per datagram is on the measured path.
+Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal goes unnoticed. The interpreter cost per datagram is on the measured path.
 
-Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first and parks in a `Selector` only when the queue is empty. The loop lives in `EventReceiver<E>`, which hands each direct `ByteBuffer` to a `Decoder<E>`; the default is protobuf, read in place, and `LineReceiver` is the protobuf specialisation. It reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is `EventHandler<E>`, which `ParcelHandler` fixes to `ParcelEvent`; the receiver calls one instance, so the JIT can inline it. All three request a 4 MiB receive buffer and print what the kernel granted.
+Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first and parks in a `Selector` only when the queue is empty. The loop lives in `EventReceiver<E>`, which hands each direct `ByteBuffer` to a `Decoder<E>`; the default is protobuf, read in place, and `LineReceiver` is the protobuf specialisation. It reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is `EventHandler<E>`, which `ParcelHandler` fixes to `ParcelEvent`; one instance, so the JIT can inline it. The loop keeps a reference to the seq cell and never touches the owner-written counters. All three request a 4 MiB receive buffer and print what the kernel granted.
 
-Example 00's handler (`consumer.cpp`, `loop.py`, `LineReceiver.java`) is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the measured latency.
+Example 00's handler (`consumer.cpp`, `loop.py`, `LineReceiver.java`) is the lane lookup alone: the barcode picks one of 8 lanes, a stand-in for the real handling. It completes the parcel at once, so the work is inside the latency.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -277,7 +277,7 @@ struct LaneHandler {
   std::array<std::uint64_t, kLanes> counts{};
 
   void operator()(const v1::ParcelEvent& ev, Completion& done) {
-    ++counts[lane_for(ev.barcode())];  // the r01 "work"
+    ++counts[lane_for(ev.barcode())];  // the per-parcel work
     done.complete(ev);
   }
 };
@@ -293,14 +293,14 @@ def lane_handler(event: ParcelEvent, complete: Completion) -> None:
 ```java
     public StopReason run() throws IOException {
         return run((event, done) -> {
-            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the r01 "handle" step
+            laneCounts[Lanes.laneOf(event.getBarcode())]++; // the Chapter 0 "handle" step
             done.complete(event);
         });
 ```
 
-C++ keeps its lane counts in the handler object. Python passes the event's intended time and a fresh `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; a later chapter passes its own handler to `run(ParcelHandler)`.
+C++ keeps its lane counts in the handler object. Python passes the intended time and `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; a later chapter passes its own handler to `run(ParcelHandler)`.
 
-Each consumer flushes stdout once its socket is bound, so a run script waiting on a ready line in a redirected stdout sees it at once, not at exit. Example 00's script polls `ss` for the bound socket instead. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
+Each consumer flushes stdout once its socket is bound, so a run script waiting on a ready line sees it at once, not at exit. Example 00's script polls `ss` for the bound socket instead. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
 
 ## Measure
 

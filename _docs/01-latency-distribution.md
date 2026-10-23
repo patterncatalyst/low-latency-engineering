@@ -23,7 +23,7 @@ A parcel passes the barcode scanner and the controller has until the parcel reac
 
 That makes "how fast is it?" incomplete in two ways. A design can raise the parcels handled per second while making each parcel wait longer. A handler can be fast for 99 parcels and slow for the hundredth, so one summary number describes neither group.
 
-The code is in `examples/01-latency-distribution/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
+The code is in `examples/01-latency-distribution/`. Its `README.md` covers the run script.
 
 Every measured number in this chapter carries one profile: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
 
@@ -35,7 +35,7 @@ Every measured number in this chapter carries one profile: bare-metal host, Inte
 
 **Latency** is the time one parcel spends between its intended emission and the moment the consumer finishes handling it. **Bandwidth**, or throughput, is how many parcels per second the consumer completes.
 
-A consumer that collects 32 parcels and handles them together amortises per-call overhead. At 1 kHz the 32nd parcel arrives 31 ms after the first, so the first parcel waits 31 ms. The batch variant completes parcels at the same rate as the per-parcel variant, yet the typical parcel is 84 to 145 times later.
+A consumer that collects 32 parcels and handles them together amortises per-call overhead. At 1 kHz the 32nd parcel arrives 31 ms after the first, so the first parcel waits 31 ms. The batch variant completes parcels at the per-parcel rate, yet the typical parcel is 84 to 145 times later.
 
 The second effect is a bimodal workload. One parcel in 100 is a scanner no-read, the barcode could not be decoded, and the controller runs a slower re-lookup that takes about 2 ms. The other 99 take the fast path. The median sits inside the large fast population. The slow path delays every parcel that arrives behind it while the core is busy, so p99 sits in the slow one.
 
@@ -53,7 +53,7 @@ Each report carries a distribution, summarised by five points:
 | p99.9 | 999 in 1,000 were faster | the rare outliers |
 | max | the slowest parcel | the worst case in this run |
 
-A run of 10,000 parcels puts 100 above p99, 10 above p99.9 and one at the max. The deeper the percentile, the fewer samples stand behind it.
+A run of 10,000 parcels puts 100 above p99, 10 above p99.9 and one at the max; deeper percentiles rest on fewer samples.
 
 ### Why the report never carries a mean
 
@@ -106,7 +106,7 @@ public interface EventHandler<E> {
 
 C++ states the contract as the `ParcelHandler` concept, Python as the `Handler` and `Drain` type aliases, Java as `ParcelHandler`, which extends `EventHandler<ParcelEvent>`, whose `drain` default holds nothing. The end-of-run hook serves a handler holding parcels.
 
-The loop calls the handler right after it parses the datagram and checks the sequence number:
+The loop (`EventReceiver.java` in Java) calls the handler right after it parses the datagram and checks the sequence number:
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -125,13 +125,13 @@ The loop calls the handler right after it parses the datagram and checks the seq
 ```
 
 ```java
-            completion.begin(seq);
+            Completion.begin(seqCell, seq);
             handler.onParcel(event, completion);
 ```
 
-`begin` and `done.seq` tell `Completion` which sequence number is in flight, for its negative-latency error. After the loop ends, C++ calls `drain` only if the handler type has one (`if constexpr`), Python calls the `drain` argument unless it is `None`, and Java's `run` calls `handler.drain`.
+`begin` and `done.seq` tell `Completion` which sequence number is in flight, for its negative-latency error. Java's `begin` is static and takes a seq cell cached once, so the receive thread never touches the owner's counters. After the loop ends, C++ calls `drain` only if the handler type has one (`if constexpr`), Python calls the `drain` argument unless it is `None`, and Java's `run` calls `handler.drain`.
 
-The C++ and Python loops reuse one event object for every datagram, so a handler that holds parcels must copy what it keeps. Java parses a fresh event each time.
+The C++ and Python loops reuse one event object per datagram, so a handler that holds parcels must copy what it keeps. Java parses a fresh event.
 
 ### The three handlers
 

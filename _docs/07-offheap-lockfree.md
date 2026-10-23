@@ -90,7 +90,7 @@ The minimum ordering is a release store by the writer and an acquire load by the
 
 ```cpp
   [[nodiscard]] bool try_push(const T& value) noexcept {
-    const std::uint64_t tail = tail_.load(std::memory_order_relaxed);  // ours: no ordering needed
+    const Index tail = tail_.load(std::memory_order_relaxed);  // ours: no ordering needed
     if (tail - cached_head_ == Capacity) {
       cached_head_ = head_.load(std::memory_order_acquire);  // the consumer's frees, now visible
       if (tail - cached_head_ == Capacity) return false;
@@ -102,7 +102,7 @@ The minimum ordering is a release store by the writer and an acquire load by the
 
   /// Consumer only. Empty optional when the ring is empty.
   [[nodiscard]] std::optional<T> try_pop() noexcept {
-    const std::uint64_t head = head_.load(std::memory_order_relaxed);
+    const Index head = head_.load(std::memory_order_relaxed);
     if (head == cached_tail_) {
       cached_tail_ = tail_.load(std::memory_order_acquire);  // the producer's slot writes, now visible
       if (head == cached_tail_) return std::nullopt;
@@ -114,14 +114,14 @@ The minimum ordering is a release store by the writer and an acquire load by the
 
   // ...
 
-  alignas(kCacheLine) std::atomic<std::uint64_t> tail_{0};  // written by the producer
-  std::uint64_t cached_head_ = 0;                           // producer's last look at head_
-  alignas(kCacheLine) std::atomic<std::uint64_t> head_{0};  // written by the consumer
-  std::uint64_t cached_tail_ = 0;                           // consumer's last look at tail_
-  alignas(kCacheLine) std::array<T, Capacity> slots_{};
+  alignas(kFalseSharingRange) std::atomic<Index> tail_{0};  // written by the producer
+  Index cached_head_ = 0;                                   // producer's last look at head_
+  alignas(kFalseSharingRange) std::atomic<Index> head_{0};  // written by the consumer
+  Index cached_tail_ = 0;                                   // consumer's last look at tail_
+  alignas(kFalseSharingRange) std::array<T, Capacity> slots_{};
 ```
 
-In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads its own index relaxed, publishes with a release store, and reloads the consumer's index with an acquire load only when its cached copy says the ring is full. `tail & kMask` is the slot arithmetic of Figure 7.2, and `alignas(kCacheLine)` puts each index on its own line. Java has no `alignas` for a field, so the libraries pad their cursors themselves.
+In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads its own index relaxed, publishes with a release store, and reloads the consumer's index with an acquire load only when its cached copy says the ring is full. `tail & kMask` is the slot arithmetic of Figure 7.2, and `alignas(kFalseSharingRange)` puts each index in its own 128-byte range, because the L2 prefetcher pulls 128-byte line pairs. The indices are 32-bit: libstdc++ waits on a 4-byte atomic directly on a futex; an 8-byte one goes through a shared proxy table. Java has no `alignas` for a field, so the libraries pad their cursors themselves.
 
 `DisruptorHandOff.java` claims a sequence, writes the preallocated `Slot` and publishes.
 
@@ -143,7 +143,7 @@ In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads
     }
 ```
 
-`tryNext` claims a sequence or throws `InsufficientCapacityException` when the ring is full; the run counts an overflow and the criteria require none. The `finally` matters: a claim that is never published would stall the consumer. The C++ lane's parking consumer calls `std::atomic::wait` in `wait_for_data`, which sleeps on a futex after a short spin.
+`tryNext` claims a sequence, or throws `InsufficientCapacityException` when the ring is full; the run counts an overflow and criteria require none. The `finally` matters: a claim that is never published would stall the consumer. The C++ lane's parking consumer calls `std::atomic::wait` in `wait_for_data`, which futex-sleeps after a short spin.
 
 ```cpp
   /// Producer only: wake a consumer parked in wait_for_data(). The wake-up costs a system call
@@ -151,10 +151,11 @@ In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads
   void notify_consumer() noexcept { tail_.notify_one(); }
 
   /// Consumer only: block until the producer has published something, without spinning. The wait
-  /// parks the thread in the kernel (a futex) once its short user-space spin is over.
+  /// parks the thread in the kernel on a futex (the index is a 4-byte atomic) once the library's
+  /// short user-space spin is over.
   void wait_for_data() noexcept {
-    const std::uint64_t head = head_.load(std::memory_order_relaxed);
-    const std::uint64_t tail = tail_.load(std::memory_order_acquire);
+    const Index head = head_.load(std::memory_order_relaxed);
+    const Index tail = tail_.load(std::memory_order_acquire);
     if (tail == head) tail_.wait(tail, std::memory_order_acquire);  // returns once tail_ != tail
   }
 ```
@@ -216,13 +217,13 @@ After the command has gone out, each scan event is appended to a journal. `Chron
     }
 ```
 
-Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, the pre-toucher, replication, encryption) are not used; Appendix F surveys them. `BufferMode.None` is the only buffer mode the open-source queue offers.
+Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, pre-toucher, replication, encryption) are not used; Appendix F surveys them. `BufferMode.None` is the only open-source buffer mode.
 
-Chronicle Core posts usage analytics unless `chronicle.analytics.disable` is `true`. This example disables them in code (`ChronicleAnalytics.disable()`, above), in `java/pom.xml` and in `verify.sh`; `ChronicleAnalyticsTest` checks it, and `scripts/validate.py` fails a Chronicle source without it. In your own program, set the property before the first queue or map is built.
+Chronicle Core posts usage analytics unless `chronicle.analytics.disable` is `true`. This example disables them in code (`ChronicleAnalytics.disable()`, above), in `java/pom.xml` and in `verify.sh`; `ChronicleAnalyticsTest` checks it, and `scripts/validate.py` fails a Chronicle source without it. In your own program, set it before the first queue or map is built.
 
 The open-source pre-toucher hook is a stub that calls itself until `StackOverflowError` (confirmed with `javap`). The code never calls it. Do not call it.
 
-The open-source queue does not `fsync` on append, and no claim here depends on durability.
+The open-source queue does not `fsync` on append; no claim here depends on durability.
 
 ### The manifest and the heap
 
@@ -230,10 +231,10 @@ The shift manifest maps a barcode serial to a destination for 1,000,000 entries.
 
 ### Placement
 
-`ThreadPlacement.java` is a seam. `UNPINNED` is the scheduler's choice and the only host placement: pinning proves nothing without an isolated CPU, and isolating one would change the machine. `PINNED_ISOLATED` wraps the decide thread's body in an OpenHFT Affinity lock.
+`ThreadPlacement.java` is an enum; each constant has its own `wrap`. `UNPINNED` is the scheduler's choice and the only host placement: pinning proves nothing without an isolated CPU, and isolating one would change the machine. `PINNED_ISOLATED` wraps the decide thread's body in an OpenHFT Affinity lock.
 
 ```java
-    ThreadPlacement PINNED_ISOLATED = new ThreadPlacement() {
+    PINNED_ISOLATED("pinned-isolated") {
         @Override
         public Runnable wrap(Runnable body) {
             requireIsolatedCpu(Path.of("/proc/cmdline"), ISOLATED_CPU);
@@ -250,11 +251,10 @@ The shift manifest maps a barcode serial to a destination for 1,000,000 entries.
                 }
             };
         }
-
-        // ...
+    };
 ```
 
-`requireIsolatedCpu` refuses to start unless `/proc/cmdline` carries `isolcpus=3`. The lock is held until the thread body returns, and the thread throws if it did not land on CPU 3, so the placement fails loudly instead of measuring something else.
+`requireIsolatedCpu` refuses to start unless `/proc/cmdline` has `isolcpus=3`. The lock is held until the body returns, and the thread throws if it missed CPU 3, so a failed placement is loud, not silently measured.
 
 ## Measure
 
@@ -264,13 +264,13 @@ Run from the repository root:
 examples/07-offheap-lockfree/verify.sh
 ```
 
-It runs twelve 20 s runs, then the JMH publish benchmark. `ALLOW_BUSY=1` measures on a loaded host, noisily. `RECHECK=results/<run-id>` evaluates the criteria on committed reports without running anything. The workload is the line simulator at 10 kHz for 20 s (200,000 parcels, seed 42), windows split at parcel 20,000. Every Java run uses `-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true` plus the Chronicle `--add-opens` and `--add-exports` list, the `chronicle.jvmArgs` property in `java/pom.xml`. Chronicle, through its `jffi` native-call dependency, and the JMH harness call `sun.misc.Unsafe` memory-access methods; JDK 25 warns at first use (JEP 471, JDK 23, deprecated them for removal; JEP 498, JDK 24, made the warning the default), and the warnings stay on.
+It runs twelve 20 s runs, then JMH. `ALLOW_BUSY=1` measures on a loaded host. `RECHECK=results/<run-id>` evaluates the criteria on committed reports without running anything. The workload is the line simulator at 10 kHz for 20 s (200,000 parcels, seed 42), windows split at parcel 20,000. Every Java run uses `-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true` plus the Chronicle `--add-opens` and `--add-exports` list, the `chronicle.jvmArgs` property in `java/pom.xml`. Chronicle, through its `jffi` native-call dependency, and the JMH harness call `sun.misc.Unsafe` memory-access methods; JDK 25 warns at first use (JEP 471, JDK 23, deprecated them for removal; JEP 498, JDK 24, made the warning the default), and the warnings stay on.
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
 **Context switches (criterion 1).** Voluntary switches of the decide thread over 200,000 parcels: `blocking-queue` 199,523-199,540, `agrona-spsc` 29-47 and `disruptor` 37-41. The bounds are at most 1 % of the parcels for the spinners and at least 25 % for the queue. `linked-queue` and `disruptor-blocking-wait` park too (observed), at 199,380-199,541. `agrona-spsc-backoff` (observed) spins, yields, then parks, and the park phase returns the switches: 358,431-359,020.
 
-**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,495-10,871 ns, `agrona-spsc` 576-590 ns and `disruptor` 641-2,117 ns. The criterion is at most one fifth of `blocking-queue` in the same run. All three runs passed. Run 1 passed with a margin of 1.01: the Disruptor's p99 was 2,117 ns against a bound of 2,131 ns, one fifth of 10,655 ns. Runs 2 and 3 were 670 and 641 ns against bounds of 2,174 and 2,099 ns. Run 1 is an observed outlier with no measured cause. A spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
+**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,495-10,871 ns, `agrona-spsc` 576-590 ns and `disruptor` 641-2,117 ns. The criterion is at most one fifth of `blocking-queue` in the same run. All three runs passed. Run 1 passed with a margin of 1.01: the Disruptor's p99 was 2,117 ns against a bound of 2,131 ns, one fifth of 10,655 ns. Runs 2 and 3 were 670 and 641 ns against bounds of 2,174 and 2,099 ns. Run 1 is an observed outlier with no measured cause; a spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
 
 **Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007 B/op (both under 1 B/op), `linked-queue` 96.1-97.1 B/op. `blocking-queue`, observed, allocates 90.2-95.7 B/op for the immutable `Scan` record. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covers what an allocation costs.
 

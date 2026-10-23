@@ -118,13 +118,7 @@ Offsets are derived from the layout, and each field gets a `VarHandle` from `LAY
 
 [[nodiscard]] inline std::expected<const p1::Parcel*, ViewError> view_start_lifetime_as(
     std::span<const std::byte> bytes) noexcept {
-  if (auto ok = check_header(bytes); !ok) {
-    switch (ok.error()) {
-      case p1::DecodeError::wrong_schema: return std::unexpected{ViewError::wrong_schema};
-      case p1::DecodeError::unsupported_version: return std::unexpected{ViewError::unsupported_version};
-      case p1::DecodeError::wrong_size: return std::unexpected{ViewError::wrong_size};
-    }
-  }
+  if (const auto ok = p1::check_header(bytes); !ok) return std::unexpected{to_view_error(ok.error())};
   if (std::bit_cast<std::uintptr_t>(bytes.data()) % alignof(p1::Parcel) != 0) {
     return std::unexpected{ViewError::misaligned};
   }
@@ -150,7 +144,7 @@ def unpack_decoder(wire: bytes) -> Decode:
 
 `MemorySegment.ofBuffer` wraps the receive loop's one direct buffer, and the `datagram != wrapped` test makes that happen once, not per parcel. `view.wrap(segment, base)` re-points the single `FlatView` at the datagram the kernel just wrote. The three checks follow the contract's order: schema, version, then size. The returned view is valid only until the next `decode`, and one decoder serves one receive thread.
 
-In C++ `decode_memcpy` copies 80 bytes into a trivially copyable `Parcel`; it is correct at any alignment. `view_start_lifetime_as` copies nothing: `std::start_lifetime_as` (C++23, compiled with the pinned Clang 22 and GCC 16) begins the lifetime of a `Parcel` in the bytes already there and returns a pointer. It needs an aligned buffer, and the function refuses a misaligned one. A `reinterpret_cast<const Parcel*>(buffer)` read is not measured: no `Parcel` object exists in that storage, so the read is undefined behaviour.
+In C++ `decode_memcpy` copies 80 bytes into a trivially copyable `Parcel`; it is correct at any alignment. `view_start_lifetime_as` copies nothing: `std::start_lifetime_as` (C++23, compiled with the pinned Clang 22 and GCC 16) begins the lifetime of a `Parcel` in the bytes already there and returns a pointer. It checks the header with `p1::check_header` (errors mapped by `to_view_error`) and refuses a misaligned buffer. A `reinterpret_cast<const Parcel*>(buffer)` read is not measured: no `Parcel` object exists in that storage, so the read is undefined behaviour.
 
 In Python `Struct.unpack_from` over a `memoryview` does not copy the datagram but returns a tuple of new objects: the measured lane makes 6.7 new `int` objects per parcel, and the barcode is copied into a new `bytes`. There is no view type to re-point.
 
