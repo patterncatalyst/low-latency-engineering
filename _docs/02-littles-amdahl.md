@@ -428,7 +428,7 @@ For Little's Law, `L` and `W` come from a sampler thread and a per-parcel clock 
 
 ## What you learned
 
-- Little's Law sizes work in flight: 480 parcels between scanner and diverter. On the consumer, sampled `L` matched `lambda x W-bar` within +0.3 to +1.6 % in C++ and +2.4 to +3.6 % in Java.
+- Little's Law sizes work in flight: 480 parcels between scanner and diverter. On the consumer, sampled `L` matched `lambda x W-bar` within +0.2 to +0.6 % in C++ and +0.7 to +2.0 % in Java.
 - `W-bar` and the serial fraction are modelling inputs in a labelled `model` block; latencies stay percentiles.
 - Amdahl's Law bounds speedup at `1/s`. With `s` near 0.1, N = 4 predicts about 3.1x and the phased runs measured 2.75 to 2.85x in C++ and Java. Size workers from measured speedup, not the formula.
 - A free-running lock measured above the formula, 3.52 to 3.60x, with lock sections overlapping other workers' scanning as the likely cause.

@@ -177,7 +177,7 @@ Set `ALLOW_BUSY=1` on a host that is running other work, and accept noisier numb
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-**C++, Google Benchmark, 30 repetitions.** The guarded median is 4.73 to 4.76 ns per check digit (4.733, 4.762 and 4.734 ns). The custom p99, which is the slowest repetition, is 4.79 to 4.91 ns, within 0.15 ns of the median in every run. That spread shows the benchmark is stable, not the worst single call.
+**C++, Google Benchmark, 30 repetitions.** The guarded median is 4.73 to 4.76 ns per check digit (4.733, 4.762 and 4.734 ns). The custom p99, which is the slowest repetition, is 4.79 to 4.91 ns, within 0.15 ns of the median in every run. The spread measures stability; the worst call is another question.
 
 **Java, JMH SampleTime, 3 forks.** The guarded p50 is 32 ns per check digit in all three runs. The tail widens: p99 is 39 ns, p99.9 is 48 to 52 ns, and the maximum sampled invocation is 84 to 222 ns per check digit. The shape is a tight body and a tail several times longer than the median, which is what a distribution looks like and what a single number hides.
 
@@ -191,7 +191,7 @@ The eliminated C++ median is a fraction of a nanosecond (1.8e-10 ns in all three
 
 **Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,912 to 1,991 ns per check, against a median measured value of 1,977 to 1,989 ns. The warm-up value is 3.0 and 3.3 percent lower in runs 2 and 3, 0.4 percent higher in run 1, and below the minimum measured value in runs 2 and 3 (run 1: 1,991 against 1,966 ns). Each pyperf value already times 64 calls of 1,024 checks, so the interpreter is warm before the first value finishes.
 
-**The tuning warning.** pyperf prints that the result may be unstable and advises `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are therefore labelled untuned and are not comparable with a tuned VM later in the book.
+**The tuning warning.** In run 2 pyperf warned the result may be unstable; every run advises `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are therefore labelled untuned and are not comparable with a tuned VM later in the book.
 
 **Against the budget.** Even the slowest figure here, about 2 us per check digit in CPython, is microsecond-scale against a 480 ms window, so the check digit is not where the budget goes. A microbenchmark answers a narrow question, how much does this function cost in isolation, and it cannot answer how long a parcel waits under load. Chapter 3 covers measuring that.
 

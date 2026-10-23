@@ -55,8 +55,8 @@ Each language is also a plain program (`run` and `probe` subcommands):
 
 ### Why `intended-time` has a floor the others cannot see
 
-With no stall, `intended-time` p99 is still 0.19 to 0.28 ms while `receipt-time` is a few
-microseconds. `intended-time` starts at the belt's schedule, so it includes the
+With no stall, `intended-time` p99 is still 0.19 to 0.28 ms while `receipt-time` is 5 to 58
+microseconds (C++ 5.2 to 6.8, Python 25.1 to 26.8, Java 31.8 to 57.9). `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,
 so neither can see that part. The floor is real latency of the line, not a stall,

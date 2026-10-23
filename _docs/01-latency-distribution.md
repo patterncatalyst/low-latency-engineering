@@ -511,7 +511,7 @@ The C++ bimodal row of `r02-run2`, from its stored report, shows the shape:
 |---|---|---|---|---|
 | 121.7 us | 170.6 us | 4,145.2 us | 6,139.9 us | 6,828.0 us |
 
-p50 and p90 differ by 48.9 us, p90 and p99 by more than 3.9 ms. p99.9 and max extend past the slow-path length because of queueing.
+p50 and p90 differ by 49.0 us, p90 and p99 by more than 3.9 ms. p99.9 and max extend past the slow-path length because of queueing.
 
 The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 9.0 to 21.7 ms while C++ stays below 0.4 ms. Part 2 treats the cause; here p99.9 exposed it and p50 did not.
 

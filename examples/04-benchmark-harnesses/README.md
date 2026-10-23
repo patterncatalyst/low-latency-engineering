@@ -90,8 +90,8 @@ long first call would show more.
 ## Host state and the pyperf warning
 
 Numbers here are host bare metal, untuned: governor `powersave`, tuned profile `balanced`,
-turbo on (recorded in `profile.json` and in every report). pyperf prints "the benchmark
-result may be unstable" and advises `pyperf system tune`. The warning stays.
+turbo on (recorded in `profile.json` and in every report). In run 2 pyperf printed "the
+benchmark result may be unstable"; every run advises `pyperf system tune`. The warning stays.
 Tuning the system (governor, turbo, CPU isolation) changes the host, which this repository
 does not do; it is taught in Part 5, inside the lab VM. `pyperf system show` is read-only and
 its output is saved as `pyperf.system-show.txt`.
@@ -119,7 +119,7 @@ least 20 values from at least 3 worker processes; the six converted reports pass
 `lowlat-report check` with the profile embedded.
 
 All of it held on the quiet-host runs `r02-run1..3` (bare-metal host, governor `powersave`,
-tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning).
+tuned `balanced`, kernel 7.2.11-200.fc44, untuned; pyperf printed its unstable-system warning in run 2).
 Ranges over the three runs:
 
 | Harness | Result |
