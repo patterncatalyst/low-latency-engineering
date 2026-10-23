@@ -1,0 +1,173 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 4 iterations, 1 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.eliminating.HubSweepBenchmark.hubSweepFatRecord
+
+# Run progress: 0.00% complete, ETA 00:00:14
+# Fork: 1 of 1
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+placement pid=3896414 tid=3896480 cpu=1 role=bench
+9352814.056 ±(99.9%) 87002.719 ns/op
+# Warmup Iteration   2: 9341789.308 ±(99.9%) 82517.952 ns/op
+# Warmup Iteration   3: 9309904.593 ±(99.9%) 58437.036 ns/op
+# Warmup Iteration   4: 9300498.963 ±(99.9%) 49408.387 ns/op
+Iteration   1: 9310684.279 ±(99.9%) 41741.289 ns/op
+                 gc.alloc.rate:      0.017 MB/sec
+                 gc.alloc.rate.norm: 167.479 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              9207808.000 ns/op
+                 p0.50:              9256960.000 ns/op
+                 p0.90:              9427353.600 ns/op
+                 p0.95:              9551872.000 ns/op
+                 p0.99:              10485760.000 ns/op
+                 p0.999:             10633216.000 ns/op
+                 p0.9999:            10633216.000 ns/op
+                 p1.00:              10633216.000 ns/op
+
+Iteration   2: 9287831.704 ±(99.9%) 39952.367 ns/op
+                 gc.alloc.rate:      0.017 MB/sec
+                 gc.alloc.rate.norm: 165.963 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              9191424.000 ns/op
+                 p0.50:              9240576.000 ns/op
+                 p0.90:              9338880.000 ns/op
+                 p0.95:              9425715.200 ns/op
+                 p0.99:              10549985.280 ns/op
+                 p0.999:             10682368.000 ns/op
+                 p0.9999:            10682368.000 ns/op
+                 p1.00:              10682368.000 ns/op
+
+Iteration   3: 9304511.702 ±(99.9%) 39385.638 ns/op
+                 gc.alloc.rate:      0.017 MB/sec
+                 gc.alloc.rate.norm: 168.149 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              9207808.000 ns/op
+                 p0.50:              9256960.000 ns/op
+                 p0.90:              9404416.000 ns/op
+                 p0.95:              9489612.800 ns/op
+                 p0.99:              10530979.840 ns/op
+                 p0.999:             10633216.000 ns/op
+                 p0.9999:            10633216.000 ns/op
+                 p1.00:              10633216.000 ns/op
+
+Iteration   4: 9291927.704 ±(99.9%) 35632.265 ns/op
+                 gc.alloc.rate:      0.017 MB/sec
+                 gc.alloc.rate.norm: 166.148 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              9207808.000 ns/op
+                 p0.50:              9256960.000 ns/op
+                 p0.90:              9371648.000 ns/op
+                 p0.95:              9430630.400 ns/op
+                 p0.99:              10467082.240 ns/op
+                 p0.999:             10649600.000 ns/op
+                 p0.9999:            10649600.000 ns/op
+                 p1.00:              10649600.000 ns/op
+
+Iteration   5: 9299710.809 ±(99.9%) 40036.794 ns/op
+                 gc.alloc.rate:      0.020 MB/sec
+                 gc.alloc.rate.norm: 199.553 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              9207808.000 ns/op
+                 p0.50:              9256960.000 ns/op
+                 p0.90:              9355264.000 ns/op
+                 p0.95:              9489612.800 ns/op
+                 p0.99:              10578165.760 ns/op
+                 p0.999:             10682368.000 ns/op
+                 p0.9999:            10682368.000 ns/op
+                 p1.00:              10682368.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.eliminating.HubSweepBenchmark.hubSweepFatRecord":
+  N = 1077
+  mean = 9298916.427 ±(99.9%) 17411.024 ns/op
+
+  Histogram, ns/op:
+    [ 9000000.000,  9125000.000) = 0 
+    [ 9125000.000,  9250000.000) = 473 
+    [ 9250000.000,  9375000.000) = 504 
+    [ 9375000.000,  9500000.000) = 49 
+    [ 9500000.000,  9625000.000) = 17 
+    [ 9625000.000,  9750000.000) = 7 
+    [ 9750000.000,  9875000.000) = 3 
+    [ 9875000.000, 10000000.000) = 7 
+    [10000000.000, 10125000.000) = 3 
+    [10125000.000, 10250000.000) = 2 
+    [10250000.000, 10375000.000) = 2 
+    [10375000.000, 10500000.000) = 0 
+    [10500000.000, 10625000.000) = 4 
+    [10625000.000, 10750000.000) = 6 
+    [10750000.000, 10875000.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) = 9191424.000 ns/op
+     p(50.0000) = 9256960.000 ns/op
+     p(90.0000) = 9371648.000 ns/op
+     p(95.0000) = 9486336.000 ns/op
+     p(99.0000) = 10385162.240 ns/op
+     p(99.9000) = 10682368.000 ns/op
+     p(99.9900) = 10682368.000 ns/op
+     p(99.9990) = 10682368.000 ns/op
+     p(99.9999) = 10682368.000 ns/op
+    p(100.0000) = 10682368.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubSweepBenchmark.hubSweepFatRecord:gc.alloc.rate":
+  0.018 ±(99.9%) 0.006 MB/sec [Average]
+  (min, avg, max) = (0.017, 0.018, 0.020), stdev = 0.001
+  CI (99.9%): [0.012, 0.024] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubSweepBenchmark.hubSweepFatRecord:gc.alloc.rate.norm":
+  173.459 ±(99.9%) 56.281 B/op [Average]
+  (min, avg, max) = (165.963, 173.459, 199.553), stdev = 14.616
+  CI (99.9%): [117.177, 229.740] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubSweepBenchmark.hubSweepFatRecord:gc.count":
+  ≈ 0 counts
+
+
+# Run complete. Total time: 00:00:14
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                                 Mode   Cnt         Score       Error   Units
+HubSweepBenchmark.hubSweepFatRecord                     sample  1077   9298916.427 ± 17411.024   ns/op
+HubSweepBenchmark.hubSweepFatRecord:gc.alloc.rate       sample     5         0.018 ±     0.006  MB/sec
+HubSweepBenchmark.hubSweepFatRecord:gc.alloc.rate.norm  sample     5       173.459 ±    56.281    B/op
+HubSweepBenchmark.hubSweepFatRecord:gc.count            sample     5           ≈ 0              counts
+HubSweepBenchmark.hubSweepFatRecord:p0.00               sample         9191424.000               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p0.50               sample         9256960.000               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p0.90               sample         9371648.000               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p0.95               sample         9486336.000               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p0.99               sample        10385162.240               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p0.999              sample        10682368.000               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p0.9999             sample        10682368.000               ns/op
+HubSweepBenchmark.hubSweepFatRecord:p1.00               sample        10682368.000               ns/op
+
+Benchmark result is saved to <repo>/examples/09-eliminating-work/results/r03-run1/java/sweep-a1-hubSweepFatRecord/jmh.json

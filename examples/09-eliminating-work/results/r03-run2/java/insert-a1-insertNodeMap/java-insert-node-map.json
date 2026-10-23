@@ -1,0 +1,218 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "09-eliminating-work",
+  "language": "java",
+  "variant": "insert-node-map",
+  "unit": "ns",
+  "count": 105311,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 61,
+    "p90": 78,
+    "p99": 335,
+    "p99_9": 2977,
+    "max": 17487
+  },
+  "hdr_histogram": "HISTFAAAAr54nEWRz2sTaRjH837mmbdv3s4kTTuJk5CEpJqSllYaNWiQusbdFkQ8iWCFIoJXb/4DgoIHV1a8iKgE8bDuwaMUKVIEQQQvsvSwsOBJdkGWPXnoQeR9M9WZeZ/3eZ/vj+fhnfqNezO5nHRy4yfIdpXLBWvLm6PcT/+PC+fEpl/VA7M783B+dGJ0bvPS7Y2PZ7aPbi39N/ey87n79sjuyubPu2tf1kan/jz+8cgf3detW7Wtfb+Xn1TuVLbLL8pfZp5O7xRHhdHkK3s/v2Pum9HEc/1buCOP5V3wD5+4xV/qg3qhHqs76tqVCxd/OXlscXGuWU9baS1N0laa1urT05WkktRn67V6vVlrtWrNerM1Ozu3mC40Dyx3F2YXDy4fWui2unMLSVJJkihJC1NJNGWnoshO2YJ7C7YQRVEhmo5sZG0UWWt9YrPHuFDYOzmCybBoD/2+2cgaVzZ+mQwye54/TF3V+OhfH36A1hhtjclMtTXjpR0QecDswea7hc/HUWtPdgex3tk4Gw85Q5N5+D5jJ18S10e0GGNwZ621aBO53WqtMWiD1kbQIsZ6pkYLGK1FlCOJaBEEjShtRCMCioDsIyAUXEkhhONkApgkL6KIgbyLMRKgoEggoZBHySQxRYo0UIQoJtnvhQElysxkeeDIJQKqFJ2cnifvY4n9HKbtKBQJmaBKj3lCYhTrtNngKmUGDLmu6fG3YokODRoMiT1jSJuYkJASfdy4VZQbjgZ5yj6P/XI9y967Ssh5esSseHZIg5L0vcopVmkTysC7PlJ++AYh89xVzLPOCiFt3yvmLH0aDBhQosoKfWKGXuL6neasF/ecIzEdFG165Bmyzir/urt9o3gGHfp0qPoh2ryBjUxznjx5brp2q1S57KZ4r3imKKG8oOHv6zJtfnXF2F9JCaWVHzL0v3TAN6A3aZg=",
+  "build": {
+    "compiler": "Java 25.0.5 OpenJDK 64-Bit Server VM 25.0.5+8-LTS; JMH 1.37",
+    "gil_enabled": null,
+    "flags": "-Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1"
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T23:36:34Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 8-core/16-thread CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15",
+      "caches": {
+        "l1d": {
+          "size_bytes": 49152,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 1310720,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 25165824,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 6,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 7,
+          "core_id": 7,
+          "package_id": 0
+        },
+        {
+          "cpu": 8,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 9,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 10,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 11,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 12,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 13,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 14,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 15,
+          "core_id": 7,
+          "package_id": 0
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3904810,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none"
+    },
+    "load": {
+      "load1": 1.15,
+      "load5": 1.47,
+      "load15": 1.28,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": "3.27.1",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "JMH SampleTime, 1 forks x 5 iterations of 1 s; samples are invocations divided by @OperationsPerInvocation, rounded to whole ns",
+  "runtime": {
+    "alloc_bytes_per_parcel": 128.0091675865038,
+    "placement": {
+      "cpus": [
+        1
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    }
+  }
+}

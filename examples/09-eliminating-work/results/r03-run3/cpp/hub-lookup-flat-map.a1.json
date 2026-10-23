@@ -1,0 +1,233 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 1000000,
+  "dropped": 0,
+  "example": "09-eliminating-work",
+  "hdr_histogram": "HISTFAAABHd4nC2Rf0jUZxzHfb+f5753972f3p1Tp7MSE7vdwg4nh7jbGuxwLm4jXJNobcQYYSO2iNgixmHWpJqTZiJOrkNauTJ3HCJHyHETJ+VEwh1HiyPiaIdJSIhzIRbj+3XP88fz8Pl8ntfn/f48lV0/uouKDEeKNpf4/0RRkQjVJ2NFbz7dDGwnquq7EOWMsmG8Z3mknlMXbJMlk7VdH019h4k4+n5H/g9cmcPor4hfxq15pC+zsMrEhIg8FdHzMntJ5GaYPMO1FNIXkTyP5CUsdCN9GtFvHh6JHHjWmvOfrYmVzzkX1DFjRq5zmAn0or3N21xTU/2S1eOptFpVVTEpUlFMnuaj43iAghg2xqwj7pny1a3jr+c+HDmeOINoL5auIfMnes+w51+sP8fseZ79iSM/c/YRh26K3F8i2i2HRuSza3IxItcei8RjTtxk4h9E7mDlBlYvI3cBsa/mDvXvjb4dabywY74y7c7Zs+oTY1x5YYjIvEiIJV7lMi8ygzXk8AQbiDLKEfbwBaaRRhLHPt+7/4ugP1TnC9bW1VbXvFxVXVPtD4da9p3sxAUMYhL3cQ8DTDHDZRa4wTTXuMECu8U8z4peMSy6xTNGRFw8YJpz7Oci4hjC1+3tLY3NvkCTr7YuUOPfWbaz2ev11VZ6vX5fg7e+LlDfsNXXtLMx0BCoDwR9zb6g761Gf7C1ORAMBv3hhvCexqbgnqYPQgf3traE2zvaD7aF9rWH93WEQwdCB1vaWlr2t4WPhg+cPH6448ShbztaPzvaiY4o4jj8aQSdOBbDqQ7NRPswhvFlF2LoRQ/G0I8BnIxhHNeRxokrGEYv+jCJCQxhFKO4imnMI4Vp3EYKY8jhNpLIYh3ryCODTj5EGiu4j1Us6fsJcsgij1lk8BR3kUAe8xjHHK5jDFkUMINpXEUCF5FEChNIYA4pjCKPaYxhHIu4iyx62M8lRJnkDGOc5RgnOcX7vMUhcU5kRUFcFwsiL6bEoMiywGGR5wrXGOeAWGFKzIpluS4HlLgyapw29qkZ80PzlHnNvGjOqhvWSXvBnixOuQbdk66Ic8C6Zl5UBg2LIi6XxSr7NBbSGMHhU3sC3rKqqkqPSbVKu0LF5LKrdqfTaZKUJBWpQLVatYRUYSJVhXaTophMql01uVzOMpfH43GqZVans8zpsjutqqJKRUoJgoR+IRQpSNBBKW0UFFqumBWkg5CCBhoJGrV6UoH2xkBBSklIA220ELRoBSV0kBWUFXRQ0KiTNB5L+Rpp5hsskZJmrUonuLmFZr7H0+DH/IS/ufkL+A6N3E1wC93UZG0iXqVNx5dzm9ZPlhAsZjHBUpJCvqJLBG2aABvNdLOUgmbNi3QQekTzwnIatKBghdQeOzRhFtr0ThU00qjZ1mm6dGoOtbE4KKSQpXrOQYss5g4adU3vU3A73fxe8rmJRo0vN6eoD1r7KYOkQWpMCy0S3MZdvCP5A/kud+kuTwtW0Ey9YwWpTVVKQalLlYI2KS3czb+h6ynlDTP/A8l5WEI=",
+  "language": "cpp",
+  "notes": "op=hub-lookup; one sample = find_state() of a parcel in flight, keys visited in a seeded shuffled order (not the insertion order); 1000000 parcels preloaded; one untimed pass first",
+  "percentiles": {
+    "max": 26879,
+    "p50": 114,
+    "p90": 131,
+    "p99": 490,
+    "p99_9": 507
+  },
+  "profile": {
+    "captured_at": "2026-10-23T23:45:24Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "caches": {
+        "l1d": {
+          "line_bytes": 64,
+          "size_bytes": 49152
+        },
+        "l1i": {
+          "line_bytes": 64,
+          "size_bytes": 32768
+        },
+        "l2": {
+          "line_bytes": 64,
+          "size_bytes": 1310720
+        },
+        "l3": {
+          "line_bytes": 64,
+          "size_bytes": 25165824
+        }
+      },
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2,
+      "topology": [
+        {
+          "core_id": 0,
+          "cpu": 0,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 1,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 2,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 3,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 4,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 5,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 6,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 7,
+          "package_id": 0
+        },
+        {
+          "core_id": 0,
+          "cpu": 8,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 9,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 10,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 11,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 12,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 13,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 14,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 15,
+          "package_id": 0
+        }
+      ],
+      "vendor": "Intel"
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.25,
+      "load15": 1.31,
+      "load5": 1.44,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 3920972,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf": "7.2",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8",
+      "valgrind": "3.27.1"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "type": "none"
+    }
+  },
+  "runtime": {
+    "counters": {
+      "build_allocations": 5,
+      "build_bytes": 125964092,
+      "lookups": 1000000,
+      "parcels": 1000000
+    },
+    "placement": {
+      "cpus": [
+        1
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    },
+    "hw_counters": {
+      "source": "perf",
+      "ops": 1000000,
+      "per_op": {
+        "cycles": 558.961924,
+        "instructions": 279.090264,
+        "L1-dcache-load-misses": 5.284893,
+        "LLC-load-misses": 0.196219
+      }
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "hub-lookup-flat-map"
+}

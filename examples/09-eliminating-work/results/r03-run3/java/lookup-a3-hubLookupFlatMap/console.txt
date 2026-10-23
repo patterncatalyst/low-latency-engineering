@@ -1,0 +1,166 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupFlatMap
+
+# Run progress: 0.00% complete, ETA 00:00:16
+# Fork: 1 of 1
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+placement pid=3928491 tid=3928557 cpu=1 role=bench
+101.726 ±(99.9%) 4.785 ns/op
+# Warmup Iteration   2: 108.350 ±(99.9%) 6.740 ns/op
+# Warmup Iteration   3: 100.025 ±(99.9%) 4.841 ns/op
+Iteration   1: 95.646 ±(99.9%) 4.225 ns/op
+                 gc.alloc.rate:      0.113 MB/sec
+                 gc.alloc.rate.norm: 0.004 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              20.000 ns/op
+                 p0.50:              58.000 ns/op
+                 p0.90:              132.000 ns/op
+                 p0.95:              138.000 ns/op
+                 p0.99:              480.000 ns/op
+                 p0.999:             958.728 ns/op
+                 p0.9999:            15025.907 ns/op
+                 p1.00:              49024.000 ns/op
+
+Iteration   2: 95.788 ±(99.9%) 3.621 ns/op
+                 gc.alloc.rate:      0.100 MB/sec
+                 gc.alloc.rate.norm: 0.004 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              19.000 ns/op
+                 p0.50:              58.000 ns/op
+                 p0.90:              132.000 ns/op
+                 p0.95:              138.000 ns/op
+                 p0.99:              480.000 ns/op
+                 p0.999:             2135.260 ns/op
+                 p0.9999:            15103.408 ns/op
+                 p1.00:              17632.000 ns/op
+
+Iteration   3: 98.230 ±(99.9%) 4.022 ns/op
+                 gc.alloc.rate:      0.100 MB/sec
+                 gc.alloc.rate.norm: 0.004 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              19.000 ns/op
+                 p0.50:              59.000 ns/op
+                 p0.90:              133.000 ns/op
+                 p0.95:              139.000 ns/op
+                 p0.99:              477.000 ns/op
+                 p0.999:             2291.740 ns/op
+                 p0.9999:            15436.384 ns/op
+                 p1.00:              17344.000 ns/op
+
+Iteration   4: 91.040 ±(99.9%) 3.221 ns/op
+                 gc.alloc.rate:      0.112 MB/sec
+                 gc.alloc.rate.norm: 0.004 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              20.000 ns/op
+                 p0.50:              57.000 ns/op
+                 p0.90:              132.000 ns/op
+                 p0.95:              138.000 ns/op
+                 p0.99:              471.000 ns/op
+                 p0.999:             642.782 ns/op
+                 p0.9999:            5073.014 ns/op
+                 p1.00:              44032.000 ns/op
+
+Iteration   5: 91.438 ±(99.9%) 2.007 ns/op
+                 gc.alloc.rate:      0.075 MB/sec
+                 gc.alloc.rate.norm: 0.003 B/op
+                 gc.count:           ≈ 0 counts
+                 p0.00:              20.000 ns/op
+                 p0.50:              57.000 ns/op
+                 p0.90:              132.000 ns/op
+                 p0.95:              138.000 ns/op
+                 p0.99:              473.000 ns/op
+                 p0.999:             1148.612 ns/op
+                 p0.9999:            8579.363 ns/op
+                 p1.00:              15232.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupFlatMap":
+  N = 293321
+  mean =     94.412 ±(99.9%) 1.567 ns/op
+
+  Histogram, ns/op:
+    [    0.000,  5000.000) = 293234 
+    [ 5000.000, 10000.000) = 36 
+    [10000.000, 15000.000) = 23 
+    [15000.000, 20000.000) = 26 
+    [20000.000, 25000.000) = 0 
+    [25000.000, 30000.000) = 0 
+    [30000.000, 35000.000) = 0 
+    [35000.000, 40000.000) = 0 
+    [40000.000, 45000.000) = 1 
+
+  Percentiles, ns/op:
+      p(0.0000) =     19.000 ns/op
+     p(50.0000) =     58.000 ns/op
+     p(90.0000) =    132.000 ns/op
+     p(95.0000) =    138.000 ns/op
+     p(99.0000) =    476.000 ns/op
+     p(99.9000) =   1013.356 ns/op
+     p(99.9900) =  14986.685 ns/op
+     p(99.9990) =  19394.992 ns/op
+     p(99.9999) =  49024.000 ns/op
+    p(100.0000) =  49024.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupFlatMap:gc.alloc.rate":
+  0.100 ±(99.9%) 0.059 MB/sec [Average]
+  (min, avg, max) = (0.075, 0.100, 0.113), stdev = 0.015
+  CI (99.9%): [0.041, 0.160] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupFlatMap:gc.alloc.rate.norm":
+  0.004 ±(99.9%) 0.002 B/op [Average]
+  (min, avg, max) = (0.003, 0.004, 0.004), stdev = 0.001
+  CI (99.9%): [0.001, 0.006] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupFlatMap:gc.count":
+  ≈ 0 counts
+
+
+# Run complete. Total time: 00:00:16
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                                 Mode     Cnt      Score   Error   Units
+HubLookupBenchmark.hubLookupFlatMap                     sample  293321     94.412 ± 1.567   ns/op
+HubLookupBenchmark.hubLookupFlatMap:gc.alloc.rate       sample       5      0.100 ± 0.059  MB/sec
+HubLookupBenchmark.hubLookupFlatMap:gc.alloc.rate.norm  sample       5      0.004 ± 0.002    B/op
+HubLookupBenchmark.hubLookupFlatMap:gc.count            sample       5        ≈ 0          counts
+HubLookupBenchmark.hubLookupFlatMap:p0.00               sample             19.000           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p0.50               sample             58.000           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p0.90               sample            132.000           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p0.95               sample            138.000           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p0.99               sample            476.000           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p0.999              sample           1013.356           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p0.9999             sample          14986.685           ns/op
+HubLookupBenchmark.hubLookupFlatMap:p1.00               sample          49024.000           ns/op
+
+Benchmark result is saved to <repo>/examples/09-eliminating-work/results/r03-run3/java/lookup-a3-hubLookupFlatMap/jmh.json

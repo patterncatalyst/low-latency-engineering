@@ -1,0 +1,233 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 200000,
+  "dropped": 0,
+  "example": "09-eliminating-work",
+  "hdr_histogram": "HISTFAAAAyZ4nC2RX0ikVRjG5/zO+f7NNzPffI76jTONo6MzNsi4uratEVtd1UUQS3SxUNFNdVUXxW5XBSbDUiLL5EosEiEyyBKbxFyYyRJWsixbeBESIkPIsiwySUmIiITEd8bDOe8578M57/s8z3miejMVich/Iu0hz3YRicgXR1cXIs8ftIEfhEL1Pv3GmtgSVTbZpsld6pyKOqtMyQP10Go5m/Hd5FHqj9RKd6Nzx//NP0nuJ/f8nWAyu52vD81UTkdnLhyf/72yNny9fFxsFW8NVQebhbX+RuHG4M+l9eH7w/XKvZHGuVbl5Hxt5KC8Uq4+eTLYGnhY2ujf6XuQn8xv9x71ruSuZ7cz65lWZi7zXfZBMJ9+HDSDo6654DD4qnsmmAsWg2ownTkNNoLl9F4wGTS7a8FM527nZKrp/+3/2XHoz3stbzPxyJvxHnu3YwuJ/dhebDE2H6/HZt396I57w11yl9216JfRXWfWWXJ+tBecujVvbZhN88j4z5y0toxbxpxxoqrGfWNTrat/ZVVNq5q6Jx/JulySX8uanJWfyWXu0mBP1LjDsZjiUGyJVbElboum+EY0xB3x3qKYFlPi6ocfX/3oyqtvX7787pWJiVdeeO61wujESOGpvlKp1F0YSXek+xLdsUSmkE4kY3Yy0WnbdiypzA7bTsZiUdO0owoVNU1l20Jh26YwTQGYJra09UEqMBBYpkAQTlQYDaVQAiXDKUJItnFQbngvrkAoSYjrZy4GTphJJKaDgWxX9BQWPhIPgUE8xCRhdNoVvbM0hC3cEPRwNejiYykLyRAQRyjdRF8zsBggjwxJdeHxEmVydNHFO7ra54Ic4TJwyZNjiIu4jHGBS3whGOf1tviwlaUJuriEqY+Fo6PUMpSjW6Yw6EHgqjaGdsjDOmPv8YzW8wm/CD5AkEfg8yyGJjaOxxhjjGPxPg4prvG9INAuaVVFXMr8JMgyjEeFS1To0l5WKFJR+VDVAORxGKCo2Wj2Bin6SWn7DPBDFee4RuhlDzkkcXp4mZuCMS7yFlkkb/Jt+zfi2iNBP1LvgT5/Kijzq8lfSf4HIi64jw==",
+  "language": "cpp",
+  "notes": "op=insert; one sample = track() of a new parcel plus erase() of the one diverted 4800 parcels earlier (steady 4800 in flight); allocations counted by the replaced global operator new on this thread",
+  "percentiles": {
+    "max": 18191,
+    "p50": 157,
+    "p90": 213,
+    "p99": 268,
+    "p99_9": 702
+  },
+  "profile": {
+    "captured_at": "2026-10-23T23:36:34Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "caches": {
+        "l1d": {
+          "line_bytes": 64,
+          "size_bytes": 49152
+        },
+        "l1i": {
+          "line_bytes": 64,
+          "size_bytes": 32768
+        },
+        "l2": {
+          "line_bytes": 64,
+          "size_bytes": 1310720
+        },
+        "l3": {
+          "line_bytes": 64,
+          "size_bytes": 25165824
+        }
+      },
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2,
+      "topology": [
+        {
+          "core_id": 0,
+          "cpu": 0,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 1,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 2,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 3,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 4,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 5,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 6,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 7,
+          "package_id": 0
+        },
+        {
+          "core_id": 0,
+          "cpu": 8,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 9,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 10,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 11,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 12,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 13,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 14,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 15,
+          "package_id": 0
+        }
+      ],
+      "vendor": "Intel"
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.15,
+      "load15": 1.28,
+      "load5": 1.47,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 3904810,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf": "7.2",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8",
+      "valgrind": "3.27.1"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "type": "none"
+    }
+  },
+  "runtime": {
+    "counters": {
+      "allocated_bytes": 27800000,
+      "allocations": 400000,
+      "in_flight": 4800,
+      "inserts": 200000
+    },
+    "placement": {
+      "cpus": [
+        1
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    },
+    "hw_counters": {
+      "source": "perf",
+      "ops": 200000,
+      "per_op": {
+        "cycles": 836.72477,
+        "instructions": 1865.7673,
+        "L1-dcache-load-misses": 14.71398,
+        "LLC-load-misses": 0.00352
+      }
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "insert-node-map"
+}

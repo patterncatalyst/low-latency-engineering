@@ -1,0 +1,179 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertNodeMap
+
+# Run progress: 0.00% complete, ETA 00:00:08
+# Fork: 1 of 1
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+placement pid=3910068 tid=3910134 cpu=1 role=bench
+89.138 ±(99.9%) 5.890 ns/op
+# Warmup Iteration   2: 93.247 ±(99.9%) 11.837 ns/op
+# Warmup Iteration   3: 78.539 ±(99.9%) 7.398 ns/op
+Iteration   1: 113.615 ±(99.9%) 145.136 ns/op
+                 gc.alloc.rate:      2552.896 MB/sec
+                 gc.alloc.rate.norm: 128.010 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              44.000 ns/op
+                 p0.50:              60.000 ns/op
+                 p0.90:              79.000 ns/op
+                 p0.95:              89.000 ns/op
+                 p0.99:              324.550 ns/op
+                 p0.999:             869.945 ns/op
+                 p0.9999:            8230.240 ns/op
+                 p1.00:              910336.000 ns/op
+
+Iteration   2: 79.145 ±(99.9%) 7.942 ns/op
+                 gc.alloc.rate:      2558.417 MB/sec
+                 gc.alloc.rate.norm: 128.010 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              43.000 ns/op
+                 p0.50:              61.000 ns/op
+                 p0.90:              78.000 ns/op
+                 p0.95:              86.000 ns/op
+                 p0.99:              374.670 ns/op
+                 p0.999:             3338.488 ns/op
+                 p0.9999:            15145.717 ns/op
+                 p1.00:              17024.000 ns/op
+
+Iteration   3: 84.326 ±(99.9%) 9.516 ns/op
+                 gc.alloc.rate:      2556.900 MB/sec
+                 gc.alloc.rate.norm: 128.010 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            3.000 ms
+                 p0.00:              42.000 ns/op
+                 p0.50:              62.000 ns/op
+                 p0.90:              79.000 ns/op
+                 p0.95:              87.000 ns/op
+                 p0.99:              348.010 ns/op
+                 p0.999:             7289.576 ns/op
+                 p0.9999:            16588.120 ns/op
+                 p1.00:              16832.000 ns/op
+
+Iteration   4: 69.477 ±(99.9%) 1.946 ns/op
+                 gc.alloc.rate:      2568.754 MB/sec
+                 gc.alloc.rate.norm: 128.007 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              43.000 ns/op
+                 p0.50:              62.000 ns/op
+                 p0.90:              80.000 ns/op
+                 p0.95:              89.000 ns/op
+                 p0.99:              282.690 ns/op
+                 p0.999:             622.573 ns/op
+                 p0.9999:            4667.122 ns/op
+                 p1.00:              5384.000 ns/op
+
+Iteration   5: 71.220 ±(99.9%) 3.316 ns/op
+                 gc.alloc.rate:      2563.135 MB/sec
+                 gc.alloc.rate.norm: 128.008 B/op
+                 gc.count:           4.000 counts
+                 gc.time:            4.000 ms
+                 p0.00:              43.000 ns/op
+                 p0.50:              61.000 ns/op
+                 p0.90:              81.000 ns/op
+                 p0.95:              90.000 ns/op
+                 p0.99:              305.890 ns/op
+                 p0.999:             937.780 ns/op
+                 p0.9999:            6685.176 ns/op
+                 p1.00:              14080.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertNodeMap":
+  N = 103514
+  mean =     83.534 ±(99.9%) 29.058 ns/op
+
+  Histogram, ns/op:
+    [      0.000,  100000.000) = 103513 
+    [ 100000.000,  200000.000) = 0 
+    [ 200000.000,  300000.000) = 0 
+    [ 300000.000,  400000.000) = 0 
+    [ 400000.000,  500000.000) = 0 
+    [ 500000.000,  600000.000) = 0 
+    [ 600000.000,  700000.000) = 0 
+    [ 700000.000,  800000.000) = 0 
+    [ 800000.000,  900000.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) =     42.000 ns/op
+     p(50.0000) =     61.000 ns/op
+     p(90.0000) =     79.000 ns/op
+     p(95.0000) =     88.000 ns/op
+     p(99.0000) =    327.000 ns/op
+     p(99.9000) =   2093.460 ns/op
+     p(99.9900) =  14762.376 ns/op
+     p(99.9990) = 878936.083 ns/op
+     p(99.9999) = 910336.000 ns/op
+    p(100.0000) = 910336.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertNodeMap:gc.alloc.rate":
+  2560.020 ±(99.9%) 23.505 MB/sec [Average]
+  (min, avg, max) = (2552.896, 2560.020, 2568.754), stdev = 6.104
+  CI (99.9%): [2536.516, 2583.525] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertNodeMap:gc.alloc.rate.norm":
+  128.009 ±(99.9%) 0.005 B/op [Average]
+  (min, avg, max) = (128.007, 128.009, 128.010), stdev = 0.001
+  CI (99.9%): [128.004, 128.014] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertNodeMap:gc.count":
+  20.000 ±(99.9%) 0.001 counts [Sum]
+  (min, avg, max) = (4.000, 4.000, 4.000), stdev = 0.001
+  CI (99.9%): [20.000, 20.000] (assumes normal distribution)
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.InsertBenchmark.insertNodeMap:gc.time":
+  19.000 ±(99.9%) 0.001 ms [Sum]
+  (min, avg, max) = (3.000, 3.800, 4.000), stdev = 0.447
+  CI (99.9%): [19.000, 19.000] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:00:08
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                           Mode     Cnt       Score    Error   Units
+InsertBenchmark.insertNodeMap                     sample  103514      83.534 ± 29.058   ns/op
+InsertBenchmark.insertNodeMap:gc.alloc.rate       sample       5    2560.020 ± 23.505  MB/sec
+InsertBenchmark.insertNodeMap:gc.alloc.rate.norm  sample       5     128.009 ±  0.005    B/op
+InsertBenchmark.insertNodeMap:gc.count            sample       5      20.000           counts
+InsertBenchmark.insertNodeMap:gc.time             sample       5      19.000               ms
+InsertBenchmark.insertNodeMap:p0.00               sample              42.000            ns/op
+InsertBenchmark.insertNodeMap:p0.50               sample              61.000            ns/op
+InsertBenchmark.insertNodeMap:p0.90               sample              79.000            ns/op
+InsertBenchmark.insertNodeMap:p0.95               sample              88.000            ns/op
+InsertBenchmark.insertNodeMap:p0.99               sample             327.000            ns/op
+InsertBenchmark.insertNodeMap:p0.999              sample            2093.460            ns/op
+InsertBenchmark.insertNodeMap:p0.9999             sample           14762.376            ns/op
+InsertBenchmark.insertNodeMap:p1.00               sample          910336.000            ns/op
+
+Benchmark result is saved to <repo>/examples/09-eliminating-work/results/r03-run2/java/insert-a2-insertNodeMap/jmh.json

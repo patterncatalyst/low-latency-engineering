@@ -303,6 +303,10 @@ Asserted non-exact criteria, final full `verify.sh` run of each example (median 
 | Outline `00-outline` | 1/1 | 1/1 | em dash (11) | none |
 | READMEs 00–08 | 0/1 to 0/21 | all contracted where the sentence allows | stiff | none |
 
+### S15 record (2026-10-23)
+
+S14 found a measured-path bug in Java `Sscc.pack` (it accepted non-ASCII Unicode digits; fixed to ASCII-only in one pass, with tests) and replaced the Python threads mode's 1 ms polling wait with barriers (df7d72f). Example 09 was therefore re-measured: `r03-run1..3` replaced at commit 9802788 (same code as df7d72f), host bare metal, lab VM down, serial under the host lock, load1 at start 1.15 to 1.25; every criterion held, no margin under 2x, 246 reports pass `check`. Example 10 needs no re-measure: the S14 `[[nodiscard]]` change left all six measured C++ binaries instruction-identical (objdump per function), and the Java and Python changes in 10 are outside the measured loops (javap identical for 10's classes). Ch9, its figures, the 09 README and the reconciliation are re-quoted from the new 09 runs.
+
 ## Follow-ups
 
 | Item | Decision |
