@@ -18,9 +18,9 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-A parcel travels 1.2 m at 2.5 m/s from the scanner to the diverter, which leaves 480 ms from scan to divert. The receive thread hands each scan to a decide thread, and the belt does not wait: a stall charges every parcel behind it, as Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed. At 10 kHz, 4,800 parcels are in flight inside the budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*), so a consumer that wakes late holds a real queue.
+A parcel travels 1.2 m at 2.5 m/s from the scanner to the diverter, which leaves 480 ms from scan to divert. The receive thread hands each scan to a decide thread, and the belt does not wait: a stall charges every parcel behind it, as Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed. At 10 kHz, 4,800 parcels are in flight inside the budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*), so a consumer that wakes late has thousands of parcels behind it.
 
-A `BlockingQueue` is the idiomatic hand-off. This chapter measures that cost against spinning rings, a memory-mapped audit journal, an off-heap manifest and a pinned thread. None of this is a default: a spinning consumer holds a core at 100 %.
+A `BlockingQueue` is the idiomatic hand-off. This chapter measures what it costs against spinning rings, a memory-mapped audit journal, an off-heap manifest and a pinned thread. None of this is a default: a spinning consumer holds a core at 100 %.
 
 The code is in `examples/07-offheap-lockfree/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -32,13 +32,13 @@ The code is in `examples/07-offheap-lockfree/`. The run script there builds and 
 
 ### Parking and spinning
 
-A `BlockingQueue` consumer in `take()` parks when the queue is empty, and the next `put` wakes it through the kernel. At 10 kHz the queue is empty nearly every time a parcel arrives, so nearly every parcel pays a park and a wake. A spinning consumer polls in a loop and never blocks. That removes the wake-up and costs a core whether parcels arrive or not, so it belongs on a dedicated, pinned thread. On an ordinary host the scheduler decides where a spinner runs.
+A `BlockingQueue` consumer in `take()` parks when the queue is empty, and the next `offer` wakes it through the kernel. At 10 kHz the queue is empty nearly every time a parcel arrives, so nearly every parcel pays a park and a wake. A spinning consumer polls in a loop and never blocks. That removes the wake-up and costs a core whether parcels arrive or not, so it belongs on a dedicated, pinned thread.
 
 ### Libraries and the ring
 
-Agrona's `OneToOneRingBuffer` sits over an `UnsafeBuffer` on a direct `ByteBuffer`. The scan is written as bytes outside the heap (`tryClaim`, write, `commit`), so a publish allocates nothing and the collector never sees the records. The consumer polls with an `IdleStrategy`; `BusySpinIdleStrategy` spins. The LMAX Disruptor uses a ring of preallocated `Slot` objects: claim a sequence, overwrite the slot, publish. Its `BusySpinWaitStrategy` spins and its `BlockingWaitStrategy` parks on a lock and condition.
+Agrona's `OneToOneRingBuffer` sits over an `UnsafeBuffer` on a direct `ByteBuffer`. The scan is written as bytes outside the heap (`tryClaim`, write, `commit`), so a publish allocates under 1 B and the collector never sees the records. The consumer polls with an `IdleStrategy`; `BusySpinIdleStrategy` spins. The LMAX Disruptor uses a ring of preallocated `Slot` objects: claim a sequence, overwrite the slot, publish. Its `BusySpinWaitStrategy` spins and its `BlockingWaitStrategy` waits on a monitor (`synchronized` and `Object.wait`).
 
-Both use the idea in Figure 7.2. A sequence only grows, and the slot is the sequence masked with `slots - 1`, which is why the slot count (`--slots`, 65,536) is a power of two. Each side writes only its own cursor, on its own cache line, so neither takes a lock.
+Both use the idea in Figure 7.2. A sequence only grows, and the slot is the sequence masked with `slots - 1`, which is why the slot count (`--slots`, 65,536) is a power of two. Each side writes only its own cursor, so neither takes a lock, and each cursor sits on its own cache line.
 
 {% include excalidraw.html file="07-ring-sequences" alt="A ring of eight slots, drawn as an illustration of the 65,536-slot ring, holds sequences 5 to 10 in slots 5, 6, 7, 0, 1 and 2. The producer, with its cursor on its own cache line, publishes sequence 11 into slot 3 (amber arrow); the consumer reads sequence 5 from slot 5. The slot is the sequence masked with slots minus one, which works because the slot count is a power of two. A dashed ghost box marks a full ring, where the producer would have to wait." caption="Figure 7.2 — A sequence only grows; masking maps it to a slot, and each side writes only its own cursor, so neither takes a lock." %}
 
@@ -48,7 +48,7 @@ The minimum ordering is a release store by the writer and an acquire load by the
 
 ### The hand-off
 
-`RingHandOff.java` sizes the ring at 64 bytes a record (an 8-byte header and the 56-byte scan) over a direct buffer. `publish` resolves the barcode before it claims, because a throw after `tryClaim` would leave a claim open. In `consume`, `read` returns the records handled and the idle strategy decides whether to spin, yield or park. The C++ lane, `spsc_ring.hpp`, makes the same ideas explicit.
+`RingHandOff.java` sizes the ring at 64 bytes a record (an 8-byte header and the 56-byte scan) over a direct buffer. `publish` resolves the barcode before it claims, because a throw after `tryClaim` would leave a claim open. In `consume`, the idle strategy decides from `read`'s count whether to spin, yield or park. The C++ lane, `spsc_ring.hpp`, makes the same ideas explicit.
 
 {% include codetabs.html langs="Java|C++" %}
 
@@ -121,7 +121,7 @@ The minimum ordering is a release store by the writer and an acquire load by the
   alignas(kCacheLine) std::array<T, Capacity> slots_{};
 ```
 
-In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads its own index relaxed, publishes with a release store, and reloads the consumer's index with an acquire load only when its cached copy says the ring is full. `tail & kMask` is the slot arithmetic of Figure 7.2, and `alignas(kCacheLine)` puts each index on its own line. Java has no `alignas` for a field, so the libraries lay out and pad their cursors themselves, a reason to use them rather than write the structure by hand.
+In C++ the producer owns `tail_` and the consumer owns `head_`. `try_push` reads its own index relaxed, publishes with a release store, and reloads the consumer's index with an acquire load only when its cached copy says the ring is full. `tail & kMask` is the slot arithmetic of Figure 7.2, and `alignas(kCacheLine)` puts each index on its own line. Java has no `alignas` for a field, so the libraries pad their cursors themselves.
 
 `DisruptorHandOff.java` claims a sequence, writes the preallocated `Slot` and publishes.
 
@@ -216,15 +216,21 @@ After the command has gone out, each scan event is appended to a journal. `Chron
     }
 ```
 
-Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial edition's features (asynchronous write buffers, the pre-toucher, replication, encryption) are not used and are surveyed in Appendix F. `BufferMode.None` is the only buffer mode the open-source queue offers. Chronicle Core posts usage analytics unless `chronicle.analytics.disable` is `true`, so this example disables them in code (`ChronicleAnalytics.disable()`, above), in `java/pom.xml`, in `verify.sh` and in a test; set the property before the first queue or map is built in your own program. The open-source pre-toucher hook is a stub that calls itself until `StackOverflowError` (confirmed with `javap`); the code never calls it, and you should not. The open-source queue does not `fsync` on append: a record survives a process crash through the page cache, a power loss can take pages not yet written back, and no claim here depends on durability.
+Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, the pre-toucher, replication, encryption) are not used; Appendix F surveys them. `BufferMode.None` is the only buffer mode the open-source queue offers.
+
+Chronicle Core posts usage analytics unless `chronicle.analytics.disable` is `true`. This example disables them in code (`ChronicleAnalytics.disable()`, above), in `java/pom.xml` and in `verify.sh`; `ChronicleAnalyticsTest` checks it, and `scripts/validate.py` fails a Chronicle source without it. In your own program, set the property before the first queue or map is built.
+
+The open-source pre-toucher hook is a stub that calls itself until `StackOverflowError` (confirmed with `javap`). The code never calls it. Do not call it.
+
+The open-source queue does not `fsync` on append, and no claim here depends on durability.
 
 ### The manifest and the heap
 
-The shift manifest maps a barcode serial to a destination for 1,000,000 entries. A `HashMap` keeps a node, a boxed key and a `String` per entry in the old generation for the life of the program. A Chronicle Map keeps the entries in native memory and leaves the heap with the map handle. Its lookup costs more than the `HashMap`'s; what it buys is heap footprint.
+The shift manifest maps a barcode serial to a destination for 1,000,000 entries. A `HashMap` keeps a node, a boxed key and a `String` per entry in the old generation for the life of the program. A Chronicle Map keeps the entries in native memory and leaves far less on the heap. Its lookup costs more than the `HashMap`'s; what it buys is heap footprint.
 
 ### Placement
 
-`ThreadPlacement.java` is a seam. `UNPINNED` is the scheduler's choice and the only placement the host part uses: pinning proves nothing without an isolated CPU, and isolating one would change the machine. `PINNED_ISOLATED` wraps the decide thread's body in an OpenHFT Affinity lock.
+`ThreadPlacement.java` is a seam. `UNPINNED` is the scheduler's choice and the only host placement: pinning proves nothing without an isolated CPU, and isolating one would change the machine. `PINNED_ISOLATED` wraps the decide thread's body in an OpenHFT Affinity lock.
 
 ```java
     ThreadPlacement PINNED_ISOLATED = new ThreadPlacement() {
@@ -248,37 +254,37 @@ The shift manifest maps a barcode serial to a destination for 1,000,000 entries.
         // ...
 ```
 
-`requireIsolatedCpu` refuses to start unless `/proc/cmdline` carries `isolcpus=3`. The lock is held until the thread body returns, and the thread throws if it did not land on CPU 3, so the placement fails loudly instead of measuring something else. The JDK has no CPU-affinity API, so a library is the idiomatic route.
+`requireIsolatedCpu` refuses to start unless `/proc/cmdline` carries `isolcpus=3`. The lock is held until the thread body returns, and the thread throws if it did not land on CPU 3, so the placement fails loudly instead of measuring something else.
 
 ## Measure
 
-Run the example from the repository root:
+Run from the repository root:
 
 ```bash
 examples/07-offheap-lockfree/verify.sh
 ```
 
-It runs twelve 20 s runs, then the JMH publish benchmark. `ALLOW_BUSY=1` measures while the host is loaded, and the numbers are then noisy. `RECHECK=results/<run-id>` evaluates the criteria on committed reports without running anything. The workload is the line simulator at 10 kHz for 20 s (200,000 parcels, seed 42), windows split at parcel 20,000. Every Java run uses `-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true` plus the Chronicle `--add-opens` and `--add-exports` list, the `chronicle.jvmArgs` property in `java/pom.xml`. Agrona and Chronicle call `sun.misc.Unsafe`; JDK 25 warns at first use (JEP 471, JEP 498), and the warnings stay on.
+It runs twelve 20 s runs, then the JMH publish benchmark. `ALLOW_BUSY=1` measures on a loaded host, noisily. `RECHECK=results/<run-id>` evaluates the criteria on committed reports without running anything. The workload is the line simulator at 10 kHz for 20 s (200,000 parcels, seed 42), windows split at parcel 20,000. Every Java run uses `-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC -Dchronicle.analytics.disable=true` plus the Chronicle `--add-opens` and `--add-exports` list, the `chronicle.jvmArgs` property in `java/pom.xml`. Chronicle, through its `jffi` native-call dependency, and the JMH harness call `sun.misc.Unsafe` memory-access methods; JDK 25 warns at first use (JEP 471, JDK 23, deprecated them for removal; JEP 498, JDK 24, made the warning the default), and the warnings stay on.
 
 Profile for every number below: bare-metal host, Intel Core i7-11800H, 16 logical CPUs, Fedora 44 kernel 7.2.11-200.fc44 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges are across the three committed runs `r02-run1` to `r02-run3`.
 
-**Context switches (criterion 1).** Voluntary switches of the decide thread over 200,000 parcels: `blocking-queue` 199,523-199,540, `agrona-spsc` 29-47 and `disruptor` 37-41. The bounds are at most 1 % of the parcels for the spinners and at least 25 % for the queue. `linked-queue` and `disruptor-blocking-wait` park too, at 199,380-199,541. `agrona-spsc-backoff` (observed) spins, yields, then parks, and the park phase returns the switches: 358,431-359,020.
+**Context switches (criterion 1).** Voluntary switches of the decide thread over 200,000 parcels: `blocking-queue` 199,523-199,540, `agrona-spsc` 29-47 and `disruptor` 37-41. The bounds are at most 1 % of the parcels for the spinners and at least 25 % for the queue. `linked-queue` and `disruptor-blocking-wait` park too (observed), at 199,380-199,541. `agrona-spsc-backoff` (observed) spins, yields, then parks, and the park phase returns the switches: 358,431-359,020.
 
-**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,495-10,871 ns, `agrona-spsc` 576-590 ns and `disruptor` 641-2,117 ns. The criterion is at most one fifth of `blocking-queue` in the same run. All three runs passed. Run 1 passed with a margin of 1.01: the Disruptor's p99 was 2,117 ns against a bound of 2,131 ns, one fifth of 10,655 ns. Runs 2 and 3 were 670 and 641 ns against bounds of 2,174 and 2,099 ns. The bound stays at one fifth, and run 1 is an observed outlier; no cause was measured. A spinning consumer on an unisolated host is at the scheduler's mercy, which motivates the VM part.
+**Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,495-10,871 ns, `agrona-spsc` 576-590 ns and `disruptor` 641-2,117 ns. The criterion is at most one fifth of `blocking-queue` in the same run. All three runs passed. Run 1 passed with a margin of 1.01: the Disruptor's p99 was 2,117 ns against a bound of 2,131 ns, one fifth of 10,655 ns. Runs 2 and 3 were 670 and 641 ns against bounds of 2,174 and 2,099 ns. The bound stays at one fifth, and run 1 is an observed outlier with no measured cause. A spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
 
-**Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0 B/op, Disruptor 0.001 B/op (under 1 B/op), `linked-queue` 96.1-97.1 B/op. `blocking-queue`, observed, allocates 90.2-95.7 B/op for the immutable `Scan` record.
+**Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007 B/op (both under 1 B/op), `linked-queue` 96.1-97.1 B/op. `blocking-queue`, observed, allocates 90.2-95.7 B/op for the immutable `Scan` record. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covers what an allocation costs.
 
-**Journal (criterion 4).** The tailer reads back 200,000 events in order for both journals. The Chronicle decide thread makes 0 write system calls and `write-per-parcel` 200,000. The append removes the system call and not the first-touch page fault: Chronicle's decide thread takes 1,427-1,459 minor faults against 64-67 for `write-per-parcel`. The journal is 15,002,637 B on btrfs (block size 64 MiB, roll cycle `FAST_DAILY`) in 3,662 pages, so the faults are 38-39 % of the page count, consistent with the kernel mapping several cached pages per fault. Steady-window append latency is observed only, because the file system under the journal sets it: Chronicle p50 311-322 ns, p99 800-835 ns, p99.9 4,643-5,299 ns; `write-per-parcel` p50 1,071-1,079 ns, p99 2,485-3,023 ns, p99.9 5,139-7,607 ns.
+**Journal (criterion 4).** The tailer reads back 200,000 events in order for both journals. The Chronicle decide thread makes 0 write system calls and `write-per-parcel` 200,000. The append removes the system call and not the first-touch page fault: Chronicle's decide thread takes 1,427-1,459 minor faults against 64-67 for `write-per-parcel`. The journal is 15,002,637 B on btrfs (block size 64 MiB, roll cycle `FAST_DAILY`) in 3,662 pages, so the faults are 39-40 % of the page count, consistent with the kernel mapping several cached pages per fault. Steady-window append latency is observed only, as the journal's file system sets it: Chronicle p50 311-322 ns, p99 800-835 ns, p99.9 4,643-5,299 ns; `write-per-parcel` p50 1,071-1,079 ns, p99 2,485-3,023 ns, p99.9 5,139-7,607 ns.
 
-**Heap (criterion 5).** After a full collection the old generation holds 13.99-14.00 MB with `chronicle-map-manifest` against 137.3-137.4 MB with `on-heap-manifest`, from a 3.8 MB baseline. Observed lookup p50 and p99: Chronicle Map 280-282 and 1,204-1,313 ns, `HashMap` 31-33 and 402-445 ns. Observed: the `on-heap-manifest` hand-off p99.9 is 227-397 us against 1.2-2.4 us for `chronicle-map-manifest`; run 1's G1 log records a young pause of 23.1 ms at 15.9 s.
+**Heap (criterion 5).** After a full collection the old generation holds 13.99-14.00 MB with `chronicle-map-manifest` against 137.3-137.4 MB with `on-heap-manifest`, from a 3.8 MB baseline. Observed whole-run lookup p50 and p99 (200,000 lookups): Chronicle Map 280-282 and 1,204-1,313 ns, `HashMap` 31-33 and 402-445 ns. Observed: the `on-heap-manifest` hand-off p99.9 is 227-397 us against 1.2-2.4 us for `chronicle-map-manifest`; run 1's G1 log records a young pause of 23.1 ms at 15.9 s. Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, covers the collectors.
 
 **The C++ lane (observed).** `atomic-spsc` hand-off p50, p99 and p99.9 are 121-127, 326-329 and 431-511 ns with 0 voluntary switches. `atomic-wait` is 1,908-2,006, 9,023-9,439 and 53,855-76,863 ns with 199,861-199,892 voluntary switches.
 
 **Every run (criterion 6).** Count 200,000, dropped 0, no overflow, every divert command received, every report passes `check`.
 
-## The VM part: pinning to an isolated vCPU
+### The VM part: pinning to an isolated vCPU
 
-A spinner behaves well only where it owns a core. The host is not changed: the isolation lives in a lab guest restored from a snapshot.
+The isolation lives in a lab guest restored from a snapshot; the host is not changed.
 
 ```bash
 scripts/lab/revert-vm.sh lowlat-target lab-ready-iso && scripts/lab/lab-up.sh
@@ -299,33 +305,33 @@ PROFILE_ARGS="isolcpus=3 nohz_full=3 rcu_nocbs=3"
 
 Each run does the 10 kHz, 20 s workload unpinned and pinned, alternated three times inside one boot, with `agrona-spsc`.
 
-**Involuntary switches (criterion 1).** Per 200,000-parcel run, the unpinned decide thread was preempted 174,388-313,298 times and the pinned one 0-5 times, in all nine alternations of each. The bounds are at most 10 for pinned and at least 100 for unpinned.
+**Involuntary switches (criterion 1).** Per 200,000-parcel run, the unpinned decide thread was preempted 174,388-313,298 times and the pinned one 0-5 times, in all nine alternations of each. Bounds: pinned at most 10, unpinned at least 100.
 
-**Tail (criterion 2).** Steady-window hand-off p99.9, the median of three alternations in each run: unpinned 1.09-1.86 ms (1,864,703, 1,087,487 and 1,640,447 ns), pinned 51-55 us (51,167, 54,559 and 52,383 ns). The criterion is pinned at most half of unpinned.
+**Tail (criterion 2).** Steady-window hand-off p99.9, the median of three alternations in each run: unpinned 1.09-1.86 ms (1,864,703, 1,087,487 and 1,640,447 ns), pinned 51-55 us (51,167, 54,559 and 52,383 ns). Bound: pinned at most half of unpinned.
 
 **Placement (criterion 3).** The pinned thread's `Cpus_allowed_list` was CPU 3 and `/proc` showed it on CPU 3. The unpinned thread was allowed on CPUs 0-3 and seen on CPUs 0-2.
 
-Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and does not remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall as a pause it cannot explain. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own it, and Chapter 14 covers PREEMPT_RT. This part is a preview.
+Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and does not remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own isolation, and Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, covers the kernel. 
 
 ## Cross-check
 
-The counters and the latencies come from different sources and agree. `verify.sh` reads the decide thread's switches from `/proc/<pid>/task/<tid>/status`, and the percentiles come from the in-process recorder: the blocking queue shows nearly one voluntary switch per parcel and a p99 well above the rings'. The journal's `syscw` from `/proc/<pid>/task/<tid>/io` matches the readback count. JMH's allocation counter agrees with the old-generation reading. The C++ lane reproduces the park and spin split on different primitives. In the VM, `Cpus_allowed_list` confirms the placement.
+The decide thread's switches (read from `/proc/<pid>/task/<tid>/status`) and the in-process percentiles agree: the blocking queue shows nearly one voluntary switch per parcel and a p99 well above the rings'. The `syscw` from `/proc/<pid>/task/<tid>/io` is 200,000 for `write-per-parcel`, matching its readback count, and 0 for Chronicle. JMH's bytes per publish and the old-generation reading are two independent views of the heap and measure different things. The C++ lane reproduces the park and spin split. In the VM, `Cpus_allowed_list` and `/proc` showing CPU 3 confirm the placement.
 
 ## What you learned
 
 - A parking consumer pays a kernel wake per parcel, visible as about one voluntary switch each; a spinning consumer pays a core instead and belongs on a pinned, dedicated thread.
-- Agrona and Disruptor rings publish without allocating (0 and 0.001 B/op) and map a sequence to a slot with a mask.
+- Agrona and Disruptor rings publish under 1 B/op (0.0004 and 0.0007) and map a sequence to a slot with a mask.
 - The divert command travels on its own socket and never shares a queue with the scans.
-- A memory-mapped journal removes the system call and not the first-touch fault; a Chronicle Map moves the manifest off the heap at the price of a slower lookup.
+- A memory-mapped journal removes the system call, not the first-touch fault; a Chronicle Map trims the heap at the price of a slower lookup.
 - A pin to an isolated vCPU removed the preemption in the VM; it narrows the tail and is not host isolation.
 
-The next chapter, Zero-copy and flat data, removes the copy and the allocation from the decode that feeds this hand-off.
+The next chapter, *Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison*, removes most of the allocation from the decode that feeds this hand-off.
 
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), as further reading.
 - Chapter 10, *Lock-free and wait-free synchronization*, in Part 3, for memory orders in full.
-- Chapters 15 and 18 above, in Part 5, for isolation as versioned deployment config.
+- Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code*, in Part 5, for isolation as versioned deployment config.
 - `examples/common/MEASUREMENT.md` for the report format.
 
 ---
