@@ -18,9 +18,9 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-A parcel passes the scanner and the diverter has 480 ms to be told which lane to open: 1.2 m of belt at 2.5 m/s. Every technique in this book is judged against that scan-to-divert budget, and the belt never waits for a slow controller. A load generator that pauses when the consumer stalls answers a different question.
+A parcel passes the scanner and the diverter has 480 ms to be told which lane to open: 1.2 m of belt at 2.5 m/s. Every technique in this book is judged against that scan-to-divert budget, and the belt never waits for a slow controller. A load generator that pauses when the consumer stalls answers a different question, and it flatters the consumer.
 
-This chapter builds the instrument: the toolchains, the workload, the report format and the lab where privileged work happens. Nothing here is a latency result; the percentile columns show the pipeline carries data end to end and loses nothing.
+This chapter builds the instrument: the toolchains, the workload, the report format and the lab where privileged work happens. Nothing here is a latency result. The percentile columns only show that the pipeline carries data end to end and loses nothing.
 
 The code is in `examples/00-prerequisites/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -46,7 +46,7 @@ Dependencies are pinned to exact upstream releases: protobuf 36.2 (Java 4.36.2, 
 
 ### The machine profile
 
-A latency number without the machine behind it is not publishable. `scripts/profile.sh` writes a `lowlat-profile/1` JSON object: CPU model and topology, scaling driver and governor, tuned profile, kernel release and preemption model, isolation parameters, clocksource, hugepages, whether the system is virtualized, the load average and the tool versions. It needs no root and writes `null` where a file is missing. Every report embeds it verbatim.
+A latency number without the machine behind it isn't publishable. `scripts/profile.sh` writes a `lowlat-profile/1` JSON object: CPU model and topology, scaling driver and governor, tuned profile, kernel release and preemption model, isolation parameters, clocksource, hugepages, whether the system is virtualized, the load average and the tool versions. It needs no root and writes `null` where a file is missing. Every report embeds it verbatim.
 
 Every host number here carries one profile: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`.
 
@@ -56,7 +56,7 @@ Every host number here carries one profile: bare-metal host, an 8-core, 16-threa
 
 Real-time kernels, `isolcpus`, `tuned` and PTP change a machine, so they live in a disposable KVM guest; the host runs only unprivileged programs and Docker containers.
 
-Every lab script keys off `LAB_PREFIX=lowlat`, so the guest is `lowlat-target`. A name guard refuses any domain not named `lowlat-*`. The lifecycle:
+Every lab script keys off `LAB_PREFIX=lowlat`, so the guest is `lowlat-target`. A name guard refuses any domain that isn't named `lowlat-*`. The lifecycle:
 
 ```bash
 scripts/lab/provision-vm.sh lowlat-target   # verify image checksum, overlay disk, cloud-init, boot
@@ -69,7 +69,7 @@ Networking uses QEMU's passt backend. Guest traffic leaves through unprivileged 
 
 The guest carries `realtime-tests` (which provides `cyclictest`), `linuxptp`, `tuned`, `perf`, the toolchains and Docker Engine, and loads `ptp_kvm` at boot so `/dev/ptp0` exposes the host clock; `lab-ready` is the stock-kernel baseline. `check-prereqs.sh --vm` passes 9 of 9 guest checks, and `phc2sys` locks to `/dev/ptp0` within a few ns (`results/r01-lab/`, VM).
 
-Fedora 44 ships no `kernel-rt`, and the stock kernel lacks `CONFIG_PREEMPT_RT`. `scripts/lab/build-rt-kernel.sh` therefore rebuilds Fedora's kernel SRPM `kernel-7.2.11-200.fc44` with the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway, digest-pinned `fedora:44` container, installs nothing on the host and fails unless the config contains `CONFIG_PREEMPT_RT=y`.
+Fedora 44 ships no `kernel-rt`, and the stock kernel lacks `CONFIG_PREEMPT_RT`, so `scripts/lab/build-rt-kernel.sh` rebuilds Fedora's kernel SRPM `kernel-7.2.11-200.fc44` with the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway, digest-pinned `fedora:44` container, installs nothing on the host and fails unless the config contains `CONFIG_PREEMPT_RT=y`.
 
 Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies and verifies the RPMs, installs the RT kernel beside the stock one, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for the real-time chapters.
 
@@ -77,7 +77,7 @@ Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/i
 
 {% include excalidraw.html file="00-measurement-pipeline" alt="The C++ line simulator sends UDP datagrams on 127.0.0.1 at 1 kHz to the C++, Python and Java consumers in turn; each records into HdrHistogram and writes a lowlat-report/1 JSON report carrying the machine profile from profile.sh; lowlat-report check validates the schema, decodes the histogram and recomputes the percentiles." caption="Figure 0.3: Every language records into HdrHistogram and writes the same report format, and the checker recomputes the percentiles instead of trusting them." %}
 
-`examples/common/MEASUREMENT.md` is the contract for the measurement kits. There is one kit per language, `lowlat::measure` for C++, `lowlat_measure` for Python and `measure-java`, and they share three rules.
+`examples/common/MEASUREMENT.md` is the contract for the measurement kits. There's one kit per language, `lowlat::measure` for C++, `lowlat_measure` for Python and `measure-java`, and they share three rules.
 
 1. **One histogram shape.** Nanoseconds, one hour as the highest trackable value, three significant digits. Encoded histograms are interchangeable between languages.
 2. **The library's own recording calls.** `hdr_record_value`, `record_value` and `recordValue` for plain samples, and the corrected variants in Part 1. No percentile code is hand-rolled.
@@ -89,9 +89,9 @@ If `LOWLAT_PROFILE` is unset the kits fail rather than write a report. The `lowl
 
 The simulator is a C++23 program that emits one UDP datagram per parcel, each a serialized `lowlat.line.v1.ParcelEvent`: a gap-free `seq`, a valid SSCC-18 barcode, weight and dimensions from a seeded generator, an encoder tick, and two timestamps: `intended_emit_ns`, when the schedule says the parcel is due, and `actual_emit_ns`, when the simulator sent it. Both are nanoseconds on the simulator machine's `CLOCK_MONOTONIC`, so producer and consumer must share a host or a VM.
 
-The intended time is a pure function of the parcel number, `t0 + seq * 1e9 / rate`. The simulator sleeps to that absolute deadline with `clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME)`, which cannot accumulate error. If it wakes late it sends at once. It never skips a parcel and never stretches the schedule, because the belt does not.
+The intended time is a pure function of the parcel number, `t0 + seq * 1e9 / rate`. The simulator sleeps to that absolute deadline with `clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME)`, which can't accumulate error. If it wakes late it sends at once. It never skips a parcel and never stretches the schedule, because the belt doesn't.
 
-The send uses `MSG_DONTWAIT` over UDP, so a full socket buffer costs a counted drop and never a stall; TCP flow control would add backpressure the line does not have. A consumer computes `done_ns - intended_emit_ns`, never `done_ns - actual_emit_ns`. The first includes the sender's lateness and any queue in front of the consumer. The second hides both, which is how a stalled system produces a flattering distribution.
+The send uses `MSG_DONTWAIT` over UDP, so a full socket buffer costs a counted drop and never a stall; TCP flow control would add backpressure the line doesn't have. A consumer computes `done_ns - intended_emit_ns`, never `done_ns - actual_emit_ns`. The first includes the sender's lateness and any queue in front of the consumer. The second hides both. That's how a stalled system produces a flattering distribution.
 
 ## How the code works
 
@@ -259,11 +259,11 @@ Each consumer is split in two. The loop owns what every example shares: bind, re
         }
 ```
 
-The C++ loop makes a blocking `recv` into a reused buffer. `EINTR` returns to the loop head to check the stop flag; `EAGAIN` means the receive timeout expired, which is how an idle stream is noticed. The receive timestamp is taken once per datagram, right after `recv` returns, and kept in `last_rx_ns` for the idle timeout. It is stamped on receipt, not completion, since a handler may hold parcels. A malformed datagram is counted and skipped; a reordered one is not handled twice.
+The C++ loop makes a blocking `recv` into a reused buffer. `EINTR` returns to the loop head to check the stop flag; `EAGAIN` means the receive timeout expired, which is how an idle stream is noticed. The receive timestamp is taken once per datagram, right after `recv` returns, and kept in `last_rx_ns` for the idle timeout. It's stamped on receipt, not completion, since a handler may hold parcels. A malformed datagram is counted and skipped; a reordered one isn't handled twice.
 
 The hook is a template parameter, not a `std::function` or a virtual interface. The call resolves at compile time and inlines into the loop, so the hook adds no indirect call or allocation to the measured path, for the same reason `std::sort` takes its comparator as a template argument. A handler may also define `drain`, which the loop calls once at the end to complete parcels it still holds.
 
-Python reuses one `bytearray`, a `memoryview` slice so the parse does not copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal goes unnoticed. The interpreter cost per datagram is on the measured path.
+Python reuses one `bytearray`, a `memoryview` slice so the parse doesn't copy, and one `ParcelEvent`, so a handler must not keep the event. A 50 ms socket timeout bounds how long a signal goes unnoticed. The interpreter cost per datagram is on the measured path.
 
 Java diverges in how it waits. `channel.receive` on a non-blocking `DatagramChannel` returns null when nothing is queued, so the loop drains first and parks in a `Selector` only when the queue is empty. The loop lives in `EventReceiver<E>`, which hands each direct `ByteBuffer` to a `Decoder<E>`; the default is protobuf, read in place, and `LineReceiver` is the protobuf specialisation. It reads `System.nanoTime()`, which on Linux is the simulator's `CLOCK_MONOTONIC`. The hook is `EventHandler<E>`, which `ParcelHandler` fixes to `ParcelEvent`; one instance, so the JIT can inline it. The loop keeps a reference to the seq cell and never touches the owner-written counters. All three request a 4 MiB receive buffer and print what the kernel granted.
 
@@ -329,11 +329,11 @@ Three runs (`r02-run1` to `r02-run3`) on the bare-metal host above. All nine rep
 | Python | 107.0 to 186.2 | 218.1 to 223.4 | 297.5 to 308.5 |
 | Java | 83.2 to 186.1 | 319.5 to 403.5 | 13,312.0 to 23,740.4 |
 
-The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. The consumer's note gives the likely cause: the JIT is not warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
+The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. The consumer's note gives the likely cause: the JIT isn't warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
 
 ### Guest result
 
-Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the Intel host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. One `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It shows that the RT kernel boots and `cyclictest` runs through the lab's ssh path; it is not a jitter measurement and not comparable with bare-metal numbers. The measured before and after comes in Part 5.
+Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the Intel host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. One `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It shows that the RT kernel boots and `cyclictest` runs through the lab's ssh path; it isn't a jitter measurement and isn't comparable with bare-metal numbers. The measured before and after comes in Part 5.
 
 ## Cross-check
 
@@ -344,7 +344,7 @@ Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the 
 - The lab has three layers: a Fedora 44 host that only runs unprivileged programs, three pinned toolchains, and a `lowlat-` KVM guest where every privileged change happens, reached over vsock and passt.
 - A report is publishable only with its machine profile; `check-prereqs.sh` and `profile.sh` describe and verify the host and the guest.
 - The simulator sends on `intended_emit_ns` and never waits, and consumers measure from that intended time, so lateness and queueing stay in the distribution.
-- Each consumer is a receive, parse and gap-check loop that calls a per-parcel handler in C++, Python and Java; they diverge in how they wait, how they bind the hook and how they avoid copies.
+- Each consumer is a receive, parse and gap-check loop that calls a per-parcel handler in C++, Python and Java; they diverge in how they wait and how they bind the hook.
 - A VM number is labelled VM, and the smoke test proves the pipeline, not a latency.
 
 Next, Chapter 1 uses this workload to show that latency is a distribution.

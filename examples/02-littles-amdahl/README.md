@@ -32,7 +32,7 @@ premise).
 
 **Why 997 us, not 1000.** The arrivals are deterministic, one every 1 ms. A sampler on a 1 ms
 tick sees the same phase of the arrival cycle every time, just after an arrival, and over-counts
-by about half a parcel; a 1 ms sampler did exactly that during development. A period that is not a divisor of the arrival period lets the phase drift through the
+by about half a parcel; a 1 ms sampler did exactly that during development. A period that isn't a divisor of the arrival period lets the phase drift through the
 whole cycle, which is the sampling Little's Law assumes.
 
 **The warehouse framing.** The scan-to-divert budget is 480 ms (1.2 m of belt at 2.5 m/s). The
@@ -71,30 +71,30 @@ Criteria: C++ and Java speedup at N = 4 within +-15 % of the prediction; Python 
 
 ### Why waves, and what happens without them
 
-Amdahl's formula assumes the serial part runs alone. A lock does not guarantee that: while one
+Amdahl's formula assumes the serial part runs alone. A lock doesn't guarantee that: while one
 worker is in the lock section the others can be in their parallel part, so the two overlap and the
 run beats the formula. The workload therefore runs in **waves**: each worker scans its 160
 parcels (60 in Python), all workers meet at a barrier (`std::barrier`, `CyclicBarrier`, `threading.Barrier` /
 `multiprocessing.Barrier`), then every worker commits its updates under the lock, and they
-meet again. That is the strictly serial structure the formula describes, and it is a fair model of
+meet again. That's the strictly serial structure the formula describes, and it's a fair model of
 a wave-picked sortation plan whose next wave depends on the committed table.
 
 `--sync free` (C++ and Java) removes the barriers. verify.sh runs it as an observation, not a
 criterion: the same work then lands at 3.5 to 3.6x at N = 4 (r02-run1..3, 3.51 to 3.59x) against a predicted 3.1x, because
 the lock sections overlap the other workers' scanning. The bound for a free-running
-lock is not Amdahl's curve but `min(N, 1 / s)`. The lesson for the code: fine-grained locking
-buys back part of what Amdahl charges, and it still cannot pass 1 / s.
+lock isn't Amdahl's curve but `min(N, 1 / s)`. The lesson for the code: fine-grained locking
+buys back part of what Amdahl charges, and it still can't pass 1 / s.
 
 Under phased synchronisation the measured speedup sits under the prediction at N = 4: 8.6 to
 9.0 % in C++ and 11.0 to 11.3 % in Java (r02-run1..3): contended lock hand-off, cache-line movement of the shared table and the barriers
-are costs the formula does not have. Amdahl is an upper bound that is already generous.
+are costs the formula doesn't have. Amdahl is an upper bound that is already generous.
 
 ### What the Python pair shows
 
 Threads stay under 1x (0.47 to 0.50x at N = 4 in r02-run1..3; the CPU-bound loop holds the GIL,
 `build.gil_enabled` is `true` in the report) because every barrier and lock hand-off also pays
 GIL hand-off. Processes track the prediction. The prediction for threads covers only the lock; the
-GIL is not in the model, which is the point of the comparison. Free-threaded Python is Appendix E.
+GIL isn't in the model, which is the point of the comparison. Free-threaded Python is Appendix E.
 
 ## Files
 
