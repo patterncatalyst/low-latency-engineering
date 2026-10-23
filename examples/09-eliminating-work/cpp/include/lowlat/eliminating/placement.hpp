@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <print>
 #include <stdexcept>
@@ -30,7 +31,7 @@ inline void pin_current_thread(int cpu) {
   CPU_ZERO(&set);
   CPU_SET(cpu, &set);
   if (const int rc = pthread_setaffinity_np(pthread_self(), sizeof(set), &set); rc != 0) {
-    throw std::system_error(rc, std::generic_category(), "pthread_setaffinity_np(cpu " + std::to_string(cpu) + ")");
+    throw std::system_error(rc, std::generic_category(), std::format("pthread_setaffinity_np(cpu {})", cpu));
   }
 }
 
@@ -39,12 +40,16 @@ inline void pin_current_thread(int cpu) {
 /// Prints "placement pid= tid= cpu= role=" for the calling thread. verify.sh reads these lines to check
 /// /proc/<pid>/task/<tid>/stat while the threads hold; when LOWLAT_PLACEMENT_FILE is set the line is appended
 /// to that file as well, because `perf stat` holds back the measured program's stdout until it exits.
-inline void announce_placement(int cpu, std::string_view role) {
-  const std::string line = "placement pid=" + std::to_string(::getpid()) + " tid=" + std::to_string(current_tid()) +
-                           " cpu=" + std::to_string(cpu) + " role=" + std::string{role};
+inline void announce_placement(pid_t tid, int cpu, std::string_view role) {
+  const std::string line = std::format("placement pid={} tid={} cpu={} role={}", ::getpid(), tid, cpu, role);
   std::println("{}", line);
-  std::fflush(stdout);
   if (const char* path = std::getenv("LOWLAT_PLACEMENT_FILE")) std::ofstream{path, std::ios::app} << line << '\n';
+}
+
+/// The calling thread's own placement line, flushed so a reader of the pipe sees it at once.
+inline void announce_placement(int cpu, std::string_view role) {
+  announce_placement(current_tid(), cpu, role);
+  std::fflush(stdout);
 }
 
 /// "2,4,6" -> {2, 4, 6}. Throws std::invalid_argument on anything else.

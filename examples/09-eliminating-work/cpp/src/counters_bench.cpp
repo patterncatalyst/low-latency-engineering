@@ -60,14 +60,6 @@ struct Placed {
   const char* role = "";
 };
 
-// The placement line of a thread other than the caller (the thread's own tid, recorded when it pinned itself).
-void announce_thread(const Placed& p) {
-  const std::string line = "placement pid=" + std::to_string(::getpid()) + " tid=" + std::to_string(p.tid) +
-                           " cpu=" + std::to_string(p.cpu) + " role=" + p.role;
-  std::println("{}", line);
-  if (const char* path = std::getenv("LOWLAT_PLACEMENT_FILE")) std::ofstream{path, std::ios::app} << line << '\n';
-}
-
 template <class Bank>
 int run(const Options& o, Bank& bank_ref, std::size_t bytes_per_camera) {
   Bank* const bank = &bank_ref;
@@ -129,7 +121,7 @@ int run(const Options& o, Bank& bank_ref, std::size_t bytes_per_camera) {
   perf.disable();
   stop_telemetry.store(true);
 
-  for (const Placed& p : placed) announce_thread(p);
+  for (const Placed& p : placed) announce_placement(p.tid, p.cpu, p.role);
   std::fflush(stdout);
   if (o.hold_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds{o.hold_ms});
   release.store(true);

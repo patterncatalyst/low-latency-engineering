@@ -61,7 +61,6 @@ final class SeqlockRun {
         }
     }
 
-    @SuppressWarnings("try") // the pin is held by the try block; the body needs no reference to it
     static Result run(SnapshotCell cell, int readers, long durationMs, long periodNs, List<Integer> cpus, Placement.Gate gate,
             LatencyRecorder updateNs) throws Exception {
         AtomicBoolean stop = new AtomicBoolean();
@@ -70,7 +69,7 @@ final class SeqlockRun {
         long[][] totals = new long[readers][]; // {reads, torn, retries}: each reader stores its own once, read after join
         List<Thread> threads = new ArrayList<>();
         threads.add(Thread.ofPlatform().name("writer").uncaughtExceptionHandler(Placement.recordTo(failure)).unstarted(() -> {
-            try (Placement.Pin pin = gate.workerReady(cpus.get(0), "writer")) {
+            try (Placement.Pin _ = gate.workerReady(cpus.get(0), "writer")) {
                 long[] snapshot = new long[SnapshotCell.WORDS];
                 long due = System.nanoTime();
                 for (long n = 1; !stop.get(); n++) {
@@ -90,7 +89,7 @@ final class SeqlockRun {
             int index = r;
             threads.add(Thread.ofPlatform().name("reader-" + r).uncaughtExceptionHandler(Placement.recordTo(failure))
                     .unstarted(() -> {
-                        try (Placement.Pin pin = gate.workerReady(cpus.get(index + 1), "reader-" + index)) {
+                        try (Placement.Pin _ = gate.workerReady(cpus.get(index + 1), "reader-" + index)) {
                             long[] snapshot = new long[SnapshotCell.WORDS];
                             long reads = 0;
                             long torn = 0;

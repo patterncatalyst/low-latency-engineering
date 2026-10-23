@@ -16,10 +16,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <format>
 #include <map>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <print>
 #include <stdexcept>
 #include <string>
@@ -81,10 +83,6 @@ void write(const measure::Recorder& r, const Options& o, std::string_view suffix
 }
 
 // --- claim --------------------------------------------------------------------------------------
-
-struct ClaimThreadResult {
-  lf::CtxSwitches ctx;
-};
 
 template <lf::SequenceClaim Claim>
 int run_claim(const Options& o, const std::string& variant) {

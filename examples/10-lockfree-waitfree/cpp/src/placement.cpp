@@ -2,23 +2,22 @@
 
 #include <pthread.h>
 #include <sched.h>
-#include <sys/syscall.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <charconv>
 #include <cstdio>
 #include <format>
-#include <print>
-#include <thread>
 #include <fstream>
-#include <mutex>
 #include <map>
-#include <algorithm>
+#include <mutex>
+#include <print>
 #include <ranges>
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <thread>
 #include <utility>
 
 #include "lowlat/measure/runtime.hpp"
@@ -55,7 +54,7 @@ void pin_current_thread(int cpu) {
   }
 }
 
-std::int64_t current_tid() noexcept { return ::syscall(SYS_gettid); }
+std::int64_t current_tid() noexcept { return ::gettid(); }
 
 CtxSwitches thread_ctx_switches() {
   std::ifstream status{"/proc/thread-self/status"};

@@ -56,17 +56,7 @@ public final class Keys {
 
     /** The same {@code n} keys visited in a seeded random order: lookups into a table filled in insertion order. */
     public static Keys makeLookup(int n, long seed, long orderSeed) {
-        int[] order = new int[n];
-        for (int i = 0; i < n; i++) {
-            order[i] = i;
-        }
-        Random rng = new Random(orderSeed);
-        for (int i = n - 1; i > 0; i--) { // Fisher-Yates
-            int j = rng.nextInt(i + 1);
-            int t = order[i];
-            order[i] = order[j];
-            order[j] = t;
-        }
+        int[] order = shuffledOrder(n, orderSeed);
         String[] text = new String[n];
         long[] packed = new long[n];
         for (int i = 0; i < n; i++) {
@@ -74,6 +64,25 @@ public final class Keys {
             text[i] = Sscc.format(packed[i]);
         }
         return new Keys(text, packed);
+    }
+
+    /**
+     * The indices 0..n-1 in a seeded random order: a Fisher-Yates shuffle over a primitive {@code int[]}.
+     * {@code Collections.shuffle} would need a {@code List<Integer>} and box every index in the setup heap.
+     */
+    static int[] shuffledOrder(int n, long seed) {
+        int[] order = new int[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = i;
+        }
+        Random rng = new Random(seed);
+        for (int i = n - 1; i > 0; i--) { // Fisher-Yates
+            int j = rng.nextInt(i + 1);
+            int t = order[i];
+            order[i] = order[j];
+            order[j] = t;
+        }
+        return order;
     }
 
     public int size() {

@@ -47,6 +47,11 @@ class ClaimLog {
   /// Producer: the next sequence number (the progress guarantee is Claim's).
   std::uint64_t claim(ClaimStats& stats) { return claim_.claim(stats); }
 
+  // The waits in publish() and read() are busy-spins with a PAUSE hint, not std::atomic::wait. A futex
+  // wait and wake costs microseconds of system call and wake-up latency on a path whose claim takes
+  // nanoseconds. The producer and consumer threads are pinned to cores of their own, so a spin burns
+  // only their own CPU. It is a latency construct, not advice for general code (see the README).
+
   /// Producer: waits until the ring has room for `seq`, writes the payload and publishes the slot.
   void publish(std::uint64_t seq, const Payload& payload, ClaimStats& stats) noexcept {
     while (seq >= stats.room_limit) {

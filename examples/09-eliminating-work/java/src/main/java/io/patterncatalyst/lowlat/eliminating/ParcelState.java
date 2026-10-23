@@ -8,6 +8,9 @@ package io.patterncatalyst.lowlat.eliminating;
  * columns of {@link ColumnTable} are measured against.
  */
 public final class ParcelState {
+    // Byte codes, not an enum: they are the codes the byte[] state column of ColumnTable holds and the
+    // one-byte field of the C++ lane's `enum class State : std::uint8_t`. An enum field would be a
+    // reference, which changes the object layout that JOL and the sweep measure.
     public static final byte EMPTY = 0;
     public static final byte IN_FLIGHT = 1;
     public static final byte DIVERTED = 2;

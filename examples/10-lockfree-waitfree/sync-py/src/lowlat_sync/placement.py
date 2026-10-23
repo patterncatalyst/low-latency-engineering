@@ -9,6 +9,7 @@ thread's CPU in /proc and start its load on `released`.
 
 import os
 import sys
+import sysconfig
 import threading
 import time
 from pathlib import Path
@@ -104,8 +105,6 @@ class Gate:
 
 def require_gil_off_if_free_threaded() -> None:
     """Exit when a free-threaded interpreter has the GIL back on (an import re-enabled it)."""
-    import sysconfig
-
     if sysconfig.get_config_var("Py_GIL_DISABLED") and sys._is_gil_enabled():
         raise SystemExit(
             "this free-threaded interpreter re-enabled the GIL (an extension does not support it)"

@@ -145,6 +145,8 @@ final class CountersRun {
                 while (!release.get()) {
                     LockSupport.parkNanos(10_000_000L);
                 }
+                // Keeps the sampled totals observable, so the JIT cannot drop the reads (the C++ lane does
+                // the same with std::println).
                 if (sink == 1) {
                     System.out.print("");
                 }

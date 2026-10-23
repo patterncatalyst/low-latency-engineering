@@ -8,12 +8,15 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include <array>
 #include <atomic>
 #include <cerrno>
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <system_error>
 #include <thread>
+#include <utility>
 
 #include "lowlat/line/clock.hpp"
 #include "lowlat/line/consumer.hpp"

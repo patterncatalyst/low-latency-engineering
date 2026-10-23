@@ -106,7 +106,6 @@ final class ClaimRun {
     }
 
     /** One run; {@code merged} receives every producer's claim times, {@code consumerWait} the consumer's waits. */
-    @SuppressWarnings("try") // the pin is held by the try block; the body needs no reference to it
     static Result run(String variant, int producers, long perThread, int capacity, boolean stalled, long stalledSeq,
             List<Integer> cpus, Placement.Gate gate, LatencyRecorder merged, LatencyRecorder consumerWait) throws Exception {
         long total = producers * perThread;
@@ -124,7 +123,7 @@ final class ClaimRun {
             int index = k;
             threads.add(Thread.ofPlatform().name("producer-" + k).uncaughtExceptionHandler(Placement.recordTo(failure))
                     .unstarted(() -> {
-                        try (Placement.Pin pin = gate.workerReady(cpus.get(index), "producer-" + index)) {
+                        try (Placement.Pin _ = gate.workerReady(cpus.get(index), "producer-" + index)) {
                             long[] before = Placement.ctxSwitches();
                             ClaimStats mine = stats[index];
                             LatencyRecorder recorder = claimNs[index];
@@ -145,7 +144,7 @@ final class ClaimRun {
         }
         threads.add(Thread.ofPlatform().name("consumer").uncaughtExceptionHandler(Placement.recordTo(failure))
                 .unstarted(() -> {
-                    try (Placement.Pin pin = gate.workerReady(cpus.get(producers), "consumer")) {
+                    try (Placement.Pin _ = gate.workerReady(cpus.get(producers), "consumer")) {
                         ClaimLog.Reader reader = log.reader();
                         for (long seq = 0; seq < total; seq++) {
                             if (reader.read(seq) != seq * PAYLOAD_STRIDE) {

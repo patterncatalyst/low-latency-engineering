@@ -171,7 +171,6 @@ final class LineRun {
      * run until every camera has seen {@code perCamera} parcels. {@code feeder} supplies the parcels
      * in-process; null leaves them to the simulator.
      */
-    @SuppressWarnings("try") // the pin is held by the try block; the body needs no reference to it
     private static Pass pass(String variant, int[] ports, long perCamera, List<Integer> cpus, Placement.Gate gate, Feeder feeder,
             boolean announce) throws Exception {
         Mailbox mailbox = mailboxFor(variant);
@@ -196,7 +195,7 @@ final class LineRun {
                     int index = camera;
                     receiveThreads.add(Thread.ofPlatform().name("camera-" + camera).uncaughtExceptionHandler(Placement.recordTo(failure))
                             .unstarted(() -> {
-                                try (Placement.Pin pin = gate.workerReady(cpus.get(index), "camera-" + index)) {
+                                try (Placement.Pin _ = gate.workerReady(cpus.get(index), "camera-" + index)) {
                                     receivers.get(index).run(handlers.get(index));
                                 } catch (IOException e) {
                                     throw new UncheckedIOException(e);
@@ -204,7 +203,7 @@ final class LineRun {
                             }));
                 }
                 Thread tracker = Thread.ofPlatform().name("tracker").uncaughtExceptionHandler(Placement.recordTo(failure)).unstarted(() -> {
-                    try (Placement.Pin pin = gate.workerReady(cpus.get(CAMERAS), "tracker")) {
+                    try (Placement.Pin _ = gate.workerReady(cpus.get(CAMERAS), "tracker")) {
                         track(mailbox, receivers, commands, endToEnd, handled, trackerCounts);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();

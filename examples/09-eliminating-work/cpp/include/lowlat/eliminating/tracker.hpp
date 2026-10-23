@@ -62,7 +62,7 @@ class NodeTracker {
 
   [[nodiscard]] std::size_t sweep_due(std::uint64_t tick) const noexcept {
     std::size_t due = 0;
-    for (const auto& [key, r] : map_) due += (r.state == State::in_flight) & (r.due_tick <= tick);
+    for (const auto& [key, r] : map_) due += is_due(r.state, r.due_tick, tick);
     return due;
   }
 

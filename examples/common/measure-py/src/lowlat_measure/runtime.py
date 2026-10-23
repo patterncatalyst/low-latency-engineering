@@ -29,7 +29,13 @@ def hw_counters(source: HwSource, ops: int, per_op: Mapping[str, float]) -> dict
 
 
 def python_build() -> PythonBuild:
-    """``runtime.python_build`` for the running interpreter."""
+    """``runtime.python_build`` for the running interpreter.
+
+    Reports whether the GIL is on now (``sys._is_gil_enabled()``): a free-threaded interpreter
+    that re-enabled the GIL, for example by importing this package's HdrHistogram extension,
+    reports "gil". The build itself is sysconfig's ``Py_GIL_DISABLED``, which
+    ``lowlat_sync.python_build`` reads.
+    """
     return "gil" if sys._is_gil_enabled() else "free-threaded"
 
 

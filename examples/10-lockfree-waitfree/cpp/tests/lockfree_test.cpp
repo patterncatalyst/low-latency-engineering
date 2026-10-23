@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <sched.h>
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>

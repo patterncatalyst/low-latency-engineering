@@ -5,6 +5,7 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 /**
  * The counted region of {@code perf stat --control} (examples/_lib/lib.sh {@code perf_region}): when verify.sh runs a
@@ -48,7 +49,7 @@ final class PerfRegion {
         if (ctl == null) {
             return;
         }
-        Files.write(ctl, word.getBytes(StandardCharsets.US_ASCII), java.nio.file.StandardOpenOption.WRITE);
+        Files.write(ctl, word.getBytes(StandardCharsets.US_ASCII), StandardOpenOption.WRITE);
         try (RandomAccessFile in = new RandomAccessFile(ack.toFile(), "r")) { // blocks until perf answers "ack"
             in.readLine();
         }

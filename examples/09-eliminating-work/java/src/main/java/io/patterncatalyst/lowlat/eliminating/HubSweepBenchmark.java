@@ -1,6 +1,5 @@
 package io.patterncatalyst.lowlat.eliminating;
 
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import net.openhft.affinity.AffinityLock;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -62,17 +61,7 @@ public class HubSweepBenchmark {
         public void setup() {
             pin();
             Keys keys = Keys.make(PARCELS, 2026);
-            int[] allocationOrder = new int[PARCELS];
-            for (int i = 0; i < PARCELS; i++) {
-                allocationOrder[i] = i;
-            }
-            Random rng = new Random(42);
-            for (int i = PARCELS - 1; i > 0; i--) {
-                int j = rng.nextInt(i + 1);
-                int t = allocationOrder[i];
-                allocationOrder[i] = allocationOrder[j];
-                allocationOrder[j] = t;
-            }
+            int[] allocationOrder = Keys.shuffledOrder(PARCELS, 42);
             ParcelState[] rows = new ParcelState[PARCELS];
             Scan scan = new Scan();
             for (int slot : allocationOrder) { // object for slot `slot` is the next one on the heap

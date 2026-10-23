@@ -1,5 +1,7 @@
 package io.patterncatalyst.lowlat.eliminating;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * SSCC-18 barcode to 64-bit key. The wire carries the barcode as 18 ASCII digits; the primitive map keys
  * on the packed {@code long}, so the packing happens once, at the edge, with {@link Long#parseLong}.
@@ -43,6 +45,6 @@ public final class Sscc {
             digits[i] = (byte) ('0' + value % 10);
             value /= 10;
         }
-        return new String(digits, java.nio.charset.StandardCharsets.ISO_8859_1);
+        return new String(digits, StandardCharsets.ISO_8859_1);
     }
 }

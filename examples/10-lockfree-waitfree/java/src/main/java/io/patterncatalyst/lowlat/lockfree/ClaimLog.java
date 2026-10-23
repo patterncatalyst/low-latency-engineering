@@ -44,6 +44,9 @@ final class ClaimLog {
 
     /** Producer: waits until the ring has room for {@code seq}, writes the payload and publishes the slot. */
     void publish(long seq, long payload, ClaimStats stats) {
+        // A busy-spin with Thread.onSpinWait (PAUSE), not LockSupport.park: a park and unpark round trip costs
+        // microseconds on a path whose claim takes nanoseconds, and the threads are pinned to cores of their
+        // own. Same reason as the C++ log. A latency construct, not advice for general code.
         while (seq >= stats.roomLimit) {
             stats.roomLimit = consumed.getAcquire() + capacity();
             if (seq >= stats.roomLimit) {
@@ -67,6 +70,9 @@ final class ClaimLog {
         long read(long seq) {
             int slot = (int) (seq & mask);
             waitedNs = 0;
+            // A busy-spin with Thread.onSpinWait (PAUSE), not LockSupport.park: a park and unpark round trip costs
+            // microseconds on a path whose claim takes nanoseconds, and the threads are pinned to cores of their
+            // own. Same reason as the C++ log. A latency construct, not advice for general code.
             if (stamps.getAcquire(slot) != seq + 1) {
                 long missedAt = System.nanoTime();
                 while (stamps.getAcquire(slot) != seq + 1) {

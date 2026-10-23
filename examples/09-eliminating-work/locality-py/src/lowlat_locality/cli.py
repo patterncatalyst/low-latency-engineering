@@ -37,6 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     fp = sub.add_parser("footprint", help="bytes per tracked parcel by record shape")
     fp.add_argument("--parcels", type=_positive, default=100_000)
     fp.add_argument("--out", type=Path, required=True)
+    fp.set_defaults(func=run_footprint)
 
     sw = sub.add_parser("sweep", help="due sweep: list of objects against array columns")
     sw.add_argument("--variant", choices=("fat-record", "hot-cold"))
@@ -47,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     sw.add_argument("--cpu", type=int)
     sw.add_argument("--hold-ms", type=int, default=0)
     sw.add_argument("--out", type=Path, required=True)
+    sw.set_defaults(func=run_sweep)
 
     ct = sub.add_parser("counters", help="five camera counters; writes raw batch times as JSON")
     ct.add_argument("--layout", choices=("adjacent-counters", "pair-padded", "line-padded"))
@@ -57,11 +59,13 @@ def build_parser() -> argparse.ArgumentParser:
     ct.add_argument("--batches", type=_positive, default=3_000)
     ct.add_argument("--hold-ms", type=int, default=0)
     ct.add_argument("--out", type=Path, required=True, help="raw result JSON")
+    ct.set_defaults(func=run_counters)
 
     cr = sub.add_parser("counters-report", help="raw counters JSON to a latency report")
     cr.add_argument("raw", type=Path)
     cr.add_argument("--out", type=Path, required=True)
     cr.add_argument("--example", default="09-eliminating-work")
+    cr.set_defaults(func=run_counters_report)
     return parser
 
 
@@ -172,13 +176,7 @@ def run_counters_report(args: argparse.Namespace) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    handlers = {
-        "footprint": run_footprint,
-        "sweep": run_sweep,
-        "counters": run_counters,
-        "counters-report": run_counters_report,
-    }
-    return handlers[args.command](args)
+    return args.func(args)
 
 
 if __name__ == "__main__":

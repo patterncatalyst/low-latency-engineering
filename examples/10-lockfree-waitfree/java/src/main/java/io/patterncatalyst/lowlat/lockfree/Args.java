@@ -1,6 +1,7 @@
 package io.patterncatalyst.lowlat.lockfree;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ final class Args {
     List<Integer> cpus(int needed) {
         String list = values.get("cpus");
         if (list == null || list.isBlank()) {
-            return java.util.Collections.nCopies(needed, -1);
+            return Collections.nCopies(needed, -1);
         }
         List<Integer> cpus = Placement.parseCpus(list);
         if (cpus.size() < needed) {

@@ -8,6 +8,7 @@
 //
 //   lockfree-line --variant mutex|fetch-add [--base-port 47300] [--expect 50000] [--cpus A,B,C,D,E]
 //                 [--hold-ms N] [--report FILE]
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -16,6 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <filesystem>
 #include <format>
 #include <map>
 #include <print>
@@ -23,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <type_traits>
 #include <vector>
 
 #include "lowlat/line/cli.hpp"

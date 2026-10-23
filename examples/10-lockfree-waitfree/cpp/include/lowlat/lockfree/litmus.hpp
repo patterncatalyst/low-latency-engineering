@@ -47,6 +47,9 @@ LitmusCounts run_litmus(std::uint64_t trials, int cpu_a, int cpu_b, std::uint64_
     std::atomic<std::uint64_t> value{0};
   };
   Flag flag_a, flag_b;     // the litmus variables
+  // A hand-rolled spin barrier, not std::barrier: std::barrier may put a waiting thread to sleep in the
+  // kernel, and the thread that wakes trails the other by microseconds, so the two stations' bodies would
+  // rarely overlap and the store-buffer outcome would almost never show.
   Flag step_a, step_b;     // the spin barrier: each station publishes how far it has got
   std::vector<std::uint8_t> r1(trials), r2(trials);
 

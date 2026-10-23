@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 
 SSCC_DIGITS = 18
+# Plain ints, not an IntEnum: the hot-cold sweep keeps states in a bytearray, which holds ints, and
+# the codes are the C++ and Java byte codes.
 EMPTY, IN_FLIGHT, DIVERTED = 0, 1, 2
 DIVERT_TICKS = 1200  # 1.2 m at 1000 pulses per metre
 

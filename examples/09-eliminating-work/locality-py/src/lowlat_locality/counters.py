@@ -27,6 +27,7 @@ import threading
 import time
 from collections.abc import Callable
 from multiprocessing import shared_memory
+from pathlib import Path
 from typing import Any
 
 BATCH = 1_000
@@ -77,7 +78,17 @@ def _camera(
     return batch_ns
 
 
-def _process_main(name, camera, layout, cpu, batches, ready_q, go, done_q, release):
+def _process_main(
+    name: str,
+    camera: int,
+    layout: str,
+    cpu: int | None,
+    batches: int,
+    ready_q: Any,
+    go: Any,
+    done_q: Any,
+    release: Any,
+) -> None:
     shm = shared_memory.SharedMemory(name=name)
     cells = shm.buf.cast("Q")
     batch_ns = _camera(cells, camera, layout, cpu, batches, ready_q.put, go)
@@ -195,5 +206,5 @@ def announce_placement(pid: int, tid: int, cpu: int, role: str) -> None:
     line = f"placement pid={pid} tid={tid} cpu={cpu} role={role}"
     print(line, flush=True)
     if path := os.environ.get("LOWLAT_PLACEMENT_FILE"):
-        with open(path, "a", encoding="utf-8") as out:
+        with Path(path).open("a", encoding="utf-8") as out:
             out.write(line + "\n")
