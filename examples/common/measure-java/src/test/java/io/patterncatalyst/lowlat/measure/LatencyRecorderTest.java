@@ -134,6 +134,9 @@ class LatencyRecorderTest {
         goldenRecorder().writeReport(out, null, null, runtime);
 
         JsonNode rt = JSON.readTree(out).get("runtime");
+        if (!regenGolden()) {
+            assertEquals(JSON.readTree(fixtures.resolve("java-placement.json")).get("runtime"), rt);
+        }
         assertEquals(List.of(2, 4), List.of(rt.get("placement").get("cpus").get(0).asInt(),
                 rt.get("placement").get("cpus").get(1).asInt()));
         assertTrue(rt.get("placement").get("distinct_cores").asBoolean());

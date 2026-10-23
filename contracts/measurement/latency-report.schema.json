@@ -98,9 +98,11 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["cpus", "distinct_cores", "smt_siblings"],
+          "if": { "properties": { "distinct_cores": { "const": true } }, "required": ["distinct_cores"] },
+          "then": { "properties": { "smt_siblings": { "const": false } } },
           "description": "Where the measured threads ran: the logical CPUs they were pinned to, whether those CPUs sit on distinct physical cores, and whether any two of them are SMT siblings of one core.",
           "properties": {
-            "cpus": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "description": "Logical CPU numbers of the pinned threads." },
+            "cpus": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "integer", "minimum": 0 }, "description": "Logical CPU numbers of the pinned threads." },
             "distinct_cores": { "type": "boolean", "description": "True when every listed CPU belongs to a different physical core." },
             "smt_siblings": { "type": "boolean", "description": "True when at least two listed CPUs are hardware-thread siblings of one core." }
           }
@@ -115,14 +117,15 @@
             "ops": { "type": "integer", "minimum": 1, "description": "Operations the counters were divided by." },
             "per_op": {
               "type": "object",
-              "additionalProperties": { "type": "number" },
+              "minProperties": 1,
+              "additionalProperties": { "type": "number", "minimum": 0 },
               "description": "Event name -> count per operation, e.g. 'L1-dcache-load-misses'."
             }
           }
         },
         "counters": {
           "type": "object",
-          "additionalProperties": { "type": "integer" },
+          "additionalProperties": { "type": "integer", "minimum": 0 },
           "description": "Exact event counts of the run, name -> integer: CAS failures, maximum retries, torn reads, litmus outcomes, lost claims."
         },
         "python_build": { "enum": ["gil", "free-threaded"], "description": "Python lanes only: which CPython build ran the measurement." },

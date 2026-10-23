@@ -236,10 +236,10 @@ def test_runtime_placement_counters_round_trip(lowlat_profile: Path, tmp_path: P
     rec = Recorder("t", "v")
     rec.record(1000)
     runtime = runtime_block(
-        placement=placement([2, 4], distinct_cores=True, smt_siblings=False),
-        hw_counters=hw_counters("perfnorm", 1_000_000, {"L1-dcache-load-misses": 0.42}),
-        counters={"cas_failures": 18, "max_retries": 7, "torn_reads": 0},
-        python_build=python_build(),
+        pinned=placement([2, 4], distinct_cores=True, smt_siblings=False),
+        hw=hw_counters("perfnorm", 1_000_000, {"L1-dcache-load-misses": 0.42}),
+        event_counts={"cas_failures": 18, "max_retries": 7, "torn_reads": 0},
+        build=python_build(),
         ctx_switches={"voluntary": 1, "involuntary": 0},
     )
     out = tmp_path / "r.json"
@@ -289,8 +289,8 @@ def test_runtime_new_fields_reject_malformed(
     rec = Recorder("t", "v")
     rec.record(1000)
     runtime = runtime_block(
-        placement=placement([0], distinct_cores=True, smt_siblings=False),
-        hw_counters=hw_counters("perf", 1, {"cycles": 1.0}),
+        pinned=placement([0], distinct_cores=True, smt_siblings=False),
+        hw=hw_counters("perf", 1, {"cycles": 1.0}),
     )
     mutate(runtime)
     out = tmp_path / "bad.json"
@@ -307,3 +307,20 @@ def test_writer_placement_fixtures_check(language: str) -> None:
     assert runtime["hw_counters"]["ops"] == 1_000_000
     assert runtime["counters"]["cas_failures"] == 18
     assert main(["check", str(report)]) == 0
+
+
+def test_hw_counters_rejects_non_positive_ops() -> None:
+    for ops in (0, -1):
+        with pytest.raises(ValueError, match="ops"):
+            hw_counters("perf", ops, {"cycles": 1.0})
+
+
+@pytest.mark.parametrize("path", sorted(EXAMPLES.glob("invalid-*.json")), ids=lambda p: p.name)
+def test_every_invalid_example_fails(path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["check", str(path)]) == 1
+    assert capsys.readouterr().err
+
+
+@pytest.mark.parametrize("path", sorted(EXAMPLES.glob("valid*.json")), ids=lambda p: p.name)
+def test_every_valid_example_passes(path: Path) -> None:
+    assert main(["check", str(path)]) == 0

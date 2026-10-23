@@ -224,13 +224,17 @@ TEST_F(Measure, RuntimePlacementCountersRoundTrip) {
                   {"hw_counters", m::hw_counters(m::HwSource::perf, 1'000'000, {{"L1-dcache-load-misses", 0.42}})},
                   {"counters", m::counters({{"cas_failures", 18}, {"max_retries", 7}, {"torn_reads", 0}})}};
   const auto path = regen_golden() ? kFixtures / "cpp-placement.json"
-                                   : fs::temp_directory_path() / "lowlat-placement-test.json";
+                                   : fs::path{testing::TempDir()} / std::format("cpp-placement-{}.json", ::getpid());
   const json doc = golden_recorder().write_report(path, "", std::nullopt, runtime);
   std::ifstream in{path};
   const json written = json::parse(in);
   if (!regen_golden()) fs::remove(path);
   EXPECT_EQ(written, doc);
   const json& rt = written.at("runtime");
+  if (!regen_golden()) {
+    std::ifstream committed{kFixtures / "cpp-placement.json"};
+    EXPECT_EQ(rt, json::parse(committed).at("runtime"));
+  }
   EXPECT_EQ(rt.at("placement"), (json{{"cpus", {2, 4}}, {"distinct_cores", true}, {"smt_siblings", false}}));
   EXPECT_EQ(rt.at("hw_counters").at("source"), "perf");
   EXPECT_EQ(rt.at("hw_counters").at("ops"), 1'000'000);

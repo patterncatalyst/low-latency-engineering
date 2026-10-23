@@ -19,7 +19,12 @@ def placement(cpus: Iterable[int], *, distinct_cores: bool, smt_siblings: bool) 
 
 
 def hw_counters(source: HwSource, ops: int, per_op: Mapping[str, float]) -> dict[str, Any]:
-    """``runtime.hw_counters``: counters for the measured region, per operation."""
+    """``runtime.hw_counters``: counters for the measured region, per operation.
+
+    Raises ``ValueError`` when ``ops`` is below 1.
+    """
+    if ops < 1:
+        raise ValueError(f"ops must be positive: {ops}")
     return {"source": source, "ops": ops, "per_op": dict(per_op)}
 
 
@@ -30,23 +35,25 @@ def python_build() -> PythonBuild:
 
 def runtime_block(
     *,
-    placement: Mapping[str, Any] | None = None,
-    hw_counters: Mapping[str, Any] | None = None,
-    counters: Mapping[str, int] | None = None,
-    python_build: PythonBuild | None = None,
+    pinned: Mapping[str, Any] | None = None,
+    hw: Mapping[str, Any] | None = None,
+    event_counts: Mapping[str, int] | None = None,
+    build: PythonBuild | None = None,
     **other: Any,
 ) -> dict[str, Any]:
     """A ``runtime`` object from the parts given; omitted parts stay out of the report.
 
-    ``other`` passes through the existing keys (``gc``, ``jit``, ``ctx_switches``, ...).
+    ``pinned`` is a :func:`placement`, ``hw`` a :func:`hw_counters`, ``event_counts`` the
+    ``counters`` map and ``build`` a :func:`python_build` value. ``other`` passes through the
+    existing keys (``gc``, ``jit``, ``ctx_switches``, ...).
     """
     block: dict[str, Any] = dict(other)
-    if placement:
-        block["placement"] = dict(placement)
-    if hw_counters:
-        block["hw_counters"] = dict(hw_counters)
-    if counters:
-        block["counters"] = dict(counters)
-    if python_build:
-        block["python_build"] = python_build
+    if pinned:
+        block["placement"] = dict(pinned)
+    if hw:
+        block["hw_counters"] = dict(hw)
+    if event_counts:
+        block["counters"] = dict(event_counts)
+    if build:
+        block["python_build"] = build
     return block

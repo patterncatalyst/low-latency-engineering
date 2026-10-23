@@ -5,6 +5,7 @@ import java.lang.management.ManagementFactory;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Builds the optional {@code runtime} block of a report from the running JVM. The caller
@@ -70,16 +71,16 @@ public final class RuntimeInfo {
         Map<String, Object> hw = new LinkedHashMap<>();
         hw.put("source", source.json());
         hw.put("ops", ops);
-        hw.put("per_op", new LinkedHashMap<>(perOp));
+        hw.put("per_op", new TreeMap<>(perOp));
         return hw;
     }
 
     /**
-     * {@code runtime.counters}: exact event counts (CAS failures, max retries, torn reads, ...). Put
+     * {@code runtime.counters}: exact event counts (CAS failures, max retries, torn reads, ...), sorted by name so the report is stable. Put
      * the result under {@code "counters"} in the runtime map.
      */
     public static Map<String, Object> counters(Map<String, Long> counts) {
-        return new LinkedHashMap<>(counts);
+        return new TreeMap<>(counts);
     }
 
     /** True for a JVM argument that selects or tunes the collector or the heap. */

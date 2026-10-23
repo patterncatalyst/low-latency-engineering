@@ -16,6 +16,9 @@ namespace lowlat::measure {
 
 /// Where `hw_counters` came from.
 enum class HwSource { perf, cachegrind, perfnorm };
+NLOHMANN_JSON_SERIALIZE_ENUM(HwSource, {{HwSource::perf, "perf"},
+                                        {HwSource::cachegrind, "cachegrind"},
+                                        {HwSource::perfnorm, "perfnorm"}})
 
 /// `runtime.placement`: the logical CPUs the measured threads were pinned to, whether they sit on
 /// distinct physical cores, and whether any two are SMT siblings.
