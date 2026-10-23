@@ -9,7 +9,7 @@ structs (`FlatTable`) and solves for the wire with `FlatView`.
 
 | Item | State |
 |---|---|
-| JEP 401, Value Classes and Objects (Preview) | integrated into the JDK 28 mainline; a preview feature, so it needs `--enable-preview` even in a GA release |
+| JEP 401, Value Objects (Preview) | integrated into the JDK 28 mainline; a preview feature, so it needs `--enable-preview` even in a GA release |
 | JDK 28 | early access only (build 20 on 2026-10-15); no GA date, the six-month cadence puts it near March 2027 |
 | Valhalla EA build | `27-jep401ea3+1-1` (2026-03-11) at https://jdk.java.net/valhalla/, under Oracle's early-access terms |
 | Project policy | no prerelease versions in any build, script or measured number (`_plans/r02-plan.md`, decision Q2) |
@@ -21,8 +21,10 @@ against `std::vector<std::unique_ptr<ParcelState>>`).
 
 What changes when value classes are available on a GA JDK:
 
-- `ParcelState` becomes a value class and `ParcelState[]` can be stored flat, so the object table
-  would approach the flat table's sweep time without leaving the heap or writing a layout by hand.
+- Value classes aim at a flat `ParcelState[]` without leaving the heap or writing a layout by hand.
+  JEP 401 flattens only values that fit in 64 bits including the null flag; `ParcelState` is 22 bytes
+  of fields, so it needs later null-restricted or non-atomic enhancements before the object table could
+  approach the flat table's sweep time.
 - The wire side does not change. A `FlatView` over a receive buffer is a view of bytes someone else
   owns, not a value; a value class does not replace reading a network record in place.
 - The off-heap table keeps its other properties: an `Arena` with an explicit lifetime, no collector

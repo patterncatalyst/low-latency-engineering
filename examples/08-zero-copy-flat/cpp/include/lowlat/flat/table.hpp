@@ -50,7 +50,8 @@ struct TableData {
 [[nodiscard]] std::vector<std::unique_ptr<ParcelState>> make_pointer_table(const TableData& data);
 
 /// Total weight in grams of the in-flight parcels whose encoder_tick has reached `due_tick`: the
-/// parcels the diverter must act on now. Reads three fields of every slot.
+/// parcels the diverter must act on now. Reads encoder_tick of every slot; state and weight_g only for
+/// the about 2 percent that are due (the && short-circuits).
 [[nodiscard]] inline std::uint64_t sweep_due(std::span<const ParcelState> table, std::uint64_t due_tick) noexcept {
   std::uint64_t weight = 0;
   for (const ParcelState& p : table) {
