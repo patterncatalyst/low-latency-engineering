@@ -149,7 +149,7 @@ The finding to expect is that at line rates most of these differences fit the bu
 - **Asserts** (provisional; S7):
   1. (exact) every synchronised variant (Python: `lock` only; `itertools-count` is observed), every language and Python build: each sequence 0..N-1 claimed exactly once (bitmap). Python `--racy-claim` under free threading: lost or duplicated claims at least 1 (exact; it demonstrates the race).
   2. (exact) `fetch-add` steps per claim = 1; `cas-loop` failed CAS at least 1 in total (contention present); `mutex` producers' voluntary context switches at least 100, against `fetch-add` at most 10 per producer (max over producers; S7).
-  3. Claim p99, same run, median of 3 alternations: `mutex` at least 3x `fetch-add` (C++, Java); p99.9 observed (S7 calibration). `cas-loop` against `fetch-add` observed: lock-free is not "faster", and wait-free bounds steps, not time.
+  3. Claim p99, same run, median of 3 alternations: `mutex` at least 2.5x `fetch-add` in C++ and at least 3x in Java; p99.9 observed (S7 calibration). `cas-loop` against `fetch-add` observed: lock-free is not "faster", and wait-free bounds steps, not time.
   4. `--stalled-producer` (1 ms sleep): the consumer's wait at that sequence is at least 0.5 ms in the `fetch-add` log. The sleep guarantees at least 1 ms, so the margin is 2x by construction.
   5. (exact) Litmus: C++ `seq-cst` both-zero = 0 and Java volatile `0, 0` = 0 (forbidden by the model); C++ `release-acquire` and Java acquire/release both-zero at least 1 (expected thousands per 10M; S7 records the margin).
   6. (exact) Seqlock: torn snapshots 0 in every variant. Writer p99 `seqlock` at most 1/3 of `shared-mutex` (same run, C++; Java `stamped-lock` against `rw-lock`). p99.9 observed (S7).
@@ -169,9 +169,9 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | S2 | Report contract, additive in `lowlat-report/1`: `runtime.placement` {`cpus`, `distinct_cores`, `smt_siblings`}, `runtime.hw_counters` {`source` (`perf`, `cachegrind`, `perfnorm`), `ops`, `per_op` {event: number}}, `runtime.counters` {name: integer} (CAS failures, max retries, torn reads, litmus outcomes); `noMean` covers all; `check` validates; fixtures (pass and planted fail); C++ and Java writers fill `placement` | `contracts/measurement/latency-report.schema.json`, `contracts/measurement/examples/` (schema fixtures, pass and planted fail), `measure-py`, `measure-cpp`, `measure-java`, `measure-fixtures/` (writer goldens `cpp-placement.json`, `java-placement.json`) | S0 | host | done |
 | S3 | `profile.sh`: `cpu.caches` (L1d/L2/L3 size, line size from sysfs), `cpu.topology` (core id per logical CPU), `tools.perf` (`7.2`), `tools.valgrind`. `lib.sh`: `distinct_cores N`, `smt_pair`, `assert_placement PID TID CPU`, `perf_region OUT -- CMD` (FIFO-controlled `perf stat -x,` writing `hw_counters`), `cachegrind_run OUT -- CMD` (summary only, scrubbed), `interleave N VARIANTS...`. Promote `harness_report.py` (`from_jmh`/`from_gbench`) from 08 into `lowlat_measure` as `lowlat-report from-jmh`/`from-gbench`; 08 `verify.sh` re-pointed; identity test regenerates 08's committed `r02-run1` JMH reports byte-identical; `RECHECK` on 08 `r02-run1..3` passes. `.gitignore`: `cachegrind.out.*`, `jcstress-results/` | `scripts/profile.sh`, `examples/_lib/lib.sh`, `examples/common/measure-py/**`, `examples/08-zero-copy-flat/{verify.sh,flat-py}`, `.gitignore` | S2 | host | done |
 | S4 | Build wiring: modules `09-eliminating-work` (Java `*-java` with JMH, Agrona, Affinity, JOL), `10-lockfree-waitfree` (JMH, Agrona, Affinity, jcstress per Q4) in `examples/pom.xml`; `dependencyConvergence` passes without a disabled rule; `-Xlint:all -Werror` kept; C++ targets `lowlat::eliminating_work`, `lowlat::lockfree` linking `absl::flat_hash_map` from the prefix; uv packages `lowlat-locality` (`09-*/locality-py`), `lowlat-sync` (`10-*/sync-py`); one wiring test each | `examples/pom.xml`, `examples/09-*/java/pom.xml`, `examples/10-*/java/pom.xml`, `examples/09-*/cpp/CMakeLists.txt`, `examples/10-*/cpp/CMakeLists.txt`, `*-py/pyproject.toml` | S0, S2 | host | done |
-| S5 | Example 09 (C++, Java, Python) + `verify.sh` (criteria §2 Ch9) + README (technique, workload, expected effect, observation surfaces: terminal output, Grafana "no panel by design" (Part 7), licences) | `examples/09-eliminating-work/**` | S3, S4 | host | built, not done: criteria 4a, 4c and 1e miss their provisional bounds in the S5 dry run (see the S5 report; bounds unchanged) |
-| S6 | Example 10 (C++, Java, Python) + `verify.sh` + README; jcstress summary to text | `examples/10-lockfree-waitfree/**` | S3, S4 | host | built; dry run misses 2 provisional bounds (S7 calibrates) |
-| S7 | Calibration gate: 3 quiet dry runs of 09 and 10 into `results/latest` (uncommitted); margin table per asserted criterion; every bound clears at least 2x (exact counters exempt and labelled); tuned parameters (batch size, trial counts, hub size) into READMEs; any bound change or sub-2x margin goes to the user and is recorded in Follow-ups | READMEs, this file's Follow-ups | S5, S6 | host (MAIN) | todo |
+| S5 | Example 09 (C++, Java, Python) + `verify.sh` (criteria §2 Ch9) + README (technique, workload, expected effect, observation surfaces: terminal output, Grafana "no panel by design" (Part 7), licences) | `examples/09-eliminating-work/**` | S3, S4 | host | done |
+| S6 | Example 10 (C++, Java, Python) + `verify.sh` + README; jcstress summary to text | `examples/10-lockfree-waitfree/**` | S3, S4 | host | done |
+| S7 | Calibration gate: 3 quiet dry runs of 09 and 10 into `results/latest` (uncommitted); margin table per asserted criterion; every bound clears at least 2x (exact counters exempt and labelled); tuned parameters (batch size, trial counts, hub size) into READMEs; any bound change or sub-2x margin goes to the user and is recorded in Follow-ups | READMEs, this file's Follow-ups | S5, S6 | host (MAIN) | done |
 | S8 | Host measurement `r03-run{1,2,3}` for 09 and 10, serial, VM down, load1 at most 2 at start, one recorded commit; `verify.log` through `scrub-host-ids.py --filter`. 00–08 not re-measured unless a step touched the shared receive path (then re-measure all, as r02 S13); otherwise `lowlat-report check` over every committed report and record "no re-measure needed" with the diff stat of `examples/common/` | `examples/09-*/results/r03-run*/`, `examples/10-*/results/r03-run*/` | S7 | host (MAIN) | todo |
 | S9 | Figures 9.1–9.4, 10.1–10.3 (+10.4), r01 visual grammar, S8 ranges only; `_plans/r03-figures.md` value table completed | `_plans/r03-figures.md`, `diagrams/09-*.py`, `diagrams/10-*.py`, `assets/diagrams/`, `_data/diagrams.yml` | S8 | host | todo |
 | S10 | Ch9 prose from `_plans/r03-chapters.md` | `_docs/09-eliminating-work.md`, `_plans/r03-chapters.md` | S9 | – | todo |
@@ -262,6 +262,25 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 8. **Ch10 line run** with four simulator instances as four tunnel cameras (no simulator change). Recommendation: yes.
 9. **Slugs.** `09-eliminating-work`, `10-lockfree-waitfree` (permalinks `/docs/09-eliminating-work/`, `/docs/10-lockfree-waitfree/`). Recommendation: accept.
 
+### S7 margin table (2026-10-23, final calibration runs; host bare metal, untuned)
+
+Asserted non-exact criteria, final full `verify.sh` run of each example (median of 3 alternations); earlier full runs in brackets where the margin was close. Exact counters (allocations, B/op, cachegrind, exactly-once, steps, litmus, torn reads, line counts) are exempt and pass exactly.
+
+| Example | Criterion | Measured | Bound | Margin |
+|---|---|---|---|---|
+| 09 | 2d C++ `LLC-load-misses:u` per lookup, node-map / flat-map | 25.3x | ≥2x | 12.7x |
+| 09 | 3a C++ hub sweep p50, fat-record / hot-cold | 7.45x | ≥2x | 3.7x |
+| 09 | 3b Java hub sweep p50 | 20.9x | ≥2x | 10.5x |
+| 09 | 4a C++ counters batch p50, adjacent / pair-padded, `fetch_add` | 10.6x (11.9x, 10.7x) | ≥3x | 3.5x |
+| 09 | 4b C++ L1 misses per increment, store | 608x | ≥10x | 61x |
+| 09 | 4c Java L1 misses per increment, store (after the whole-loop warm-up fix) | 295x | ≥10x | 29x |
+| 10 | 2 `mutex` least-switching producer, voluntary switches, C++ / Java | 8,108 / 33,678 | ≥100 | 81x / 337x |
+| 10 | 2 `fetch-add` most-switching producer, C++ / Java | 0 / 4 | ≤10 | ∞ / 2.5x |
+| 10 | 3 claim p99 `mutex` / `fetch-add`, C++ | 5.84x (7.94x, 6.72x) | ≥2.5x | 2.3x |
+| 10 | 3 claim p99, Java | 15.1x (13.4x, 15.9x) | ≥3x | 5.0x |
+| 10 | 4 stalled consumer wait, C++ / Java | 1.07 / 1.14 ms | ≥0.5 ms | 2.1x / 2.3x (by construction) |
+| 10 | 6 writer p99 seqlock vs lock, C++ / Java | 216x / 29.9x | ≥3x | 72x / 10x |
+
 ## Follow-ups
 
 | Item | Decision |
@@ -279,6 +298,7 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | S7 calibration, Ch9 Python 1e | Assert record container bytes (`sys.getsizeof`) dict ≥2x slots and bytes per tracked parcel dict ≥2x `slots-int`, both exact; per tracked parcel dict vs `slots-str` (1.71x) observed, with the shared-cost dilution explained in prose |
 | S7 calibration, Ch9 hub lookups 2a/2b | Assert the miss counters per lookup (cachegrind LL, exact, ≥2x; plus perf `LLC-load-misses:u` or `L1-dcache-load-misses:u` per lookup ≥2x, C++); hub lookup p50 ratios (C++ 3.46x, Java 2.61x) observed with margins stated |
 | S7 calibration, Ch10 tails | Claim (criterion 3) and writer (criterion 6) ratios asserted at **p99** ≥3x; p99.9 observed (it sits at the host's interrupt floor, ~3–5 µs). Java `fetch-add` voluntary context switches bounded **per producer** (max over producers ≤10), `mutex` per producer as before. Pinned threads skip CPU 0. Criterion 4 (stall wait ≥0.5 ms for a 1 ms stall) keeps its 2x margin by construction, stated as such |
+| S7 calibration, Ch10 C++ claim p99 (2026-10-23, user) | C++ `mutex`/`fetch-add` p99 bound lowered to 2.5x (runs 7.94x, 6.72x, 5.84x; worst margin 2.3x); Java stays at 3x (13.4x, 15.9x) |
 | Ch10 Java pinning call (2026-10-23, S6 validation) | OpenHFT `Affinity.setAffinity(cpu)` rather than `AffinityLock`: the lock chooses its CPU from its own inventory, while the harness already picks one `--cpus` list for C++, Java and Python. `verify.sh` takes six distinct physical cores and drops the first, so pinned threads start at the second core (CPU 0 carries most interrupts; example 09 does the same) |
 | S6 note, free-threaded lane (2026-10-23, S4 validation) | Under `python3.14t`, importing `pyhdrh` (through `lowlat_measure`) re-enables the GIL with a RuntimeWarning. The free-threaded lane must not import `lowlat_measure` in the measured process, or must verify `sys._is_gil_enabled()` is False after its imports and fail otherwise. |
 | S6 note, jcstress runs (2026-10-23, S4 validation) | Pass `-jvmArgsPrepend --enable-native-access=ALL-UNNAMED`; scrub the summary (JNA's warning prints an absolute jar path); never call `-h`. |

@@ -216,7 +216,8 @@ those of the S7 calibration (`_plans/r03-plan.md`, Follow-ups).
    total (exact count, contention present); voluntary context switches are counted per producer thread: the
    least-switching `mutex` producer has at least 100 and the most-switching `fetch-add` producer at most 10 (median of 3
    runs; `producer_voluntary_ctx_min` and `producer_voluntary_ctx_max` in the report). C++ and Java.
-3. **Claim tail.** `mutex` claim p99 is at least 3x `fetch-add`'s, median of 3 alternations. C++ and Java. The p99.9
+3. **Claim tail.** `mutex` claim p99 is at least 2.5x `fetch-add`'s in C++ and at least 3x in Java, median of 3
+   alternations. C++ ran 5.8x to 7.9x across calibration runs, so 2.5x keeps a 2x margin; Java ran 13x to 16x. The p99.9
    ratio is observed, not asserted: the tail there is a handful of samples, and the host's interrupts put a floor of a
    few microseconds under it. `cas-loop` against `fetch-add` is observed: lock-free is not faster, and wait-free bounds steps, not time.
 4. **Stalled producer.** With a 1 ms sleep between claim and publish, the consumer waits at least 0.5 ms at that

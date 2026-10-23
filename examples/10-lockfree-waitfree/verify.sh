@@ -11,7 +11,8 @@
 #   2  steps and contention (exact, then calibrated): fetch-add takes exactly 1 step per claim; cas-loop fails at least
 #      1 CAS; voluntary context switches per producer: mutex, the least-switching producer >= 100; fetch-add, the
 #      most-switching producer <= 10 (median of 3 runs), C++ and Java
-#   3  claim p99: mutex >= 3x fetch-add (median of 3 alternations), C++ and Java. p99.9 and cas-loop are observed.
+#   3  claim p99: mutex >= 2.5x fetch-add in C++ and >= 3x in Java (median of 3 alternations; the C++ bound was
+#      set at S7 from runs of 5.8-7.9x). p99.9 and cas-loop are observed.
 #   4  --stalled-producer (1 ms sleep between claim and publish): the consumer waits >= 0.5 ms at that sequence in the
 #      fetch-add log, C++ and Java
 #   5  litmus (exact): C++ seq-cst and Java volatile (jcstress) never read 0, 0; C++ release-acquire and Java
@@ -421,7 +422,8 @@ for lang in cpp java; do
     cas+=("$(alt_ratio "$OUT/$lang-cas-loop-alt$n.json" "$OUT/$lang-fetch-add-alt$n.json")")
     tail+=("$(alt_ratio999 "$OUT/$lang-mutex-alt$n.json" "$OUT/$lang-fetch-add-alt$n.json")")
   done
-  crit_ratio "3" "$lang claim p99" "mutex over fetch-add, per alternation: ${ratios[*]} thousandths" "$(median_of "${ratios[@]}")" 3000
+  bound=3000; [[ $lang == cpp ]] && bound=2500  # S7: C++ ran 5.8-7.9x, Java 13-16x
+  crit_ratio "3" "$lang claim p99" "mutex over fetch-add, per alternation: ${ratios[*]} thousandths" "$(median_of "${ratios[@]}")" "$bound"
   printf '  observed: %s mutex over fetch-add p99.9 per alternation: %s thousandths (median %s)\n' "$lang" "${tail[*]}" "$(median_of "${tail[@]}")"
   printf '  observed: %s cas-loop over fetch-add p99 per alternation: %s thousandths (lock-free is not faster; wait-free bounds steps, not time)\n' "$lang" "${cas[*]}"
   for v in "${CLAIM_VARIANTS[@]}"; do
