@@ -31,6 +31,7 @@ class Run:
     cpus: list[int] = field(default_factory=list)
     voluntary: int = 0
     involuntary: int = 0
+    ctx_recorded: bool = False  # voluntary and involuntary hold a reading (zeros included)
     notes: str = ""
 
 
@@ -262,6 +263,7 @@ def pingpong_threads(
     if failures:
         raise RuntimeError("a ping-pong thread failed") from failures[0]
     run.cpus = [c for c in pins if c >= 0]
+    run.ctx_recorded = True
     run.voluntary = ctx[0][0] + ctx[1][0]
     run.involuntary = ctx[0][1] + ctx[1][1]
     run.counters.update({"ctx_voluntary_a": ctx[0][0], "ctx_voluntary_b": ctx[1][0]})
@@ -364,6 +366,7 @@ def pingpong_asyncio(
     if failures:
         raise RuntimeError("the event-loop thread failed") from failures[0]
     run.cpus = gate_cpus(cpu)
+    run.ctx_recorded = True
     run.voluntary, run.involuntary = out["voluntary"], out["involuntary"]
     run.notes = (
         f"pingpong; model=asyncio-tasks (asyncio.Future); rounds={rounds}; batch={batch}; "

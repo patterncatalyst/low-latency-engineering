@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <coroutine>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,11 @@
 #include "lowlat/tasks/workloads.hpp"
 
 namespace lowlat::tasks {
+
+// gtest finds PrintTo by argument-dependent lookup in the enum's namespace; without one, an enum parameter shows up as
+// "4-byte object" in the test name.
+void PrintTo(Variant v, std::ostream* os) { *os << name_of(v); }
+
 namespace {
 
 using namespace std::chrono_literals;

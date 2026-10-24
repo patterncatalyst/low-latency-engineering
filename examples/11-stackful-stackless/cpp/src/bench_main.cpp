@@ -45,7 +45,7 @@ int write(const tasks::Run& run, tasks::Variant v, const tasks::Options& o) {
   nlohmann::json runtime;
   if (!run.cpus.empty()) runtime["placement"] = tasks::placement_of(run.cpus);
   if (!run.counters.empty()) runtime["counters"] = measure::counters(run.counters);
-  if (run.ctx.voluntary > 0 || run.ctx.involuntary > 0) {
+  if (run.ctx_recorded) {
     runtime["ctx_switches"] = {{"voluntary", run.ctx.voluntary}, {"involuntary", run.ctx.involuntary}};
   }
   rec.write_report(std::filesystem::path{path}, run.notes, std::nullopt, runtime);

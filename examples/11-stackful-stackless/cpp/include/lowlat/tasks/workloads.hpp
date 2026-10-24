@@ -33,6 +33,7 @@ struct Run {
   std::map<std::string, std::int64_t> counters; ///< exact counts and memory readings (runtime.counters)
   std::vector<int> cpus;                        ///< CPUs the measured threads were pinned to (runtime.placement)
   CtxSwitches ctx;                              ///< context switches of the measured threads
+  bool ctx_recorded = false;                    ///< ctx holds a reading (zeros included)
   std::string notes;
 };
 

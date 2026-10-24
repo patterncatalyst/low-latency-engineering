@@ -61,7 +61,7 @@ record Run(long[] samples, Map<String, Long> counters, List<Integer> cpus, long[
         if (!counters.isEmpty()) {
             runtime.put("counters", RuntimeInfo.counters(new HashMap<>(counters)));
         }
-        if (ctxSwitches != null && ctxSwitches[0] + ctxSwitches[1] > 0) {
+        if (ctxSwitches != null) {
             runtime.put("ctx_switches", Map.of("voluntary", ctxSwitches[0], "involuntary", ctxSwitches[1]));
         }
         recorder.writeReport(report, notes, null, runtime);

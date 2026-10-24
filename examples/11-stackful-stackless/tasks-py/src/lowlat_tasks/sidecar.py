@@ -38,7 +38,7 @@ def sidecar_for(run: Run, variant: str, *, gil_at_start: bool) -> dict[str, Any]
         runtime["placement"] = placement_of(run.cpus)
     if run.counters:
         runtime["counters"] = dict(run.counters)
-    if run.voluntary or run.involuntary:
+    if run.ctx_recorded:
         runtime["ctx_switches"] = {"voluntary": run.voluntary, "involuntary": run.involuntary}
     gil = f"gil_at_start={str(gil_at_start).lower()}; gil_at_end={str(gil_enabled()).lower()}"
     notes = f"{run.notes}; {gil}"

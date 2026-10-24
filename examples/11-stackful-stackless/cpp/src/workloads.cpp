@@ -360,6 +360,7 @@ void finish_pingpong(Run& r, const PingPongParams& p, std::uint64_t acc, std::ui
                      const CtxSwitches& b, const Gate& gate) {
   sink(acc);
   r.ctx = {a.voluntary + b.voluntary, a.involuntary + b.involuntary};
+  r.ctx_recorded = true;
   r.cpus = gate.cpus();
   r.counters["round_trips"] = static_cast<std::int64_t>(p.rounds);
   r.counters["round_trips_served"] = static_cast<std::int64_t>(served);
