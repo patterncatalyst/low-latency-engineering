@@ -76,10 +76,43 @@ scrub_results() {
   [[ -d $d ]] || return 0
   python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" "$d" 2>/dev/null || true
 }
+# _descendants PID: the PIDs of every descendant of PID (children first, then theirs), from /proc.
+_descendants() {
+  local c
+  for c in $(pgrep -P "$1" 2>/dev/null); do
+    echo "$c"
+    _descendants "$c"
+  done
+}
+
+# _alive PID: true while PID is a live process (a zombie awaiting its parent's wait counts as gone).
+_alive() {
+  local state
+  state=$(awk '/^State:/ {print $2}' "/proc/$1/status" 2>/dev/null) || return 1
+  [[ -n $state && $state != Z ]]
+}
+
+# _bg_cleanup: runs on EXIT. Stops every tracked background PID and then the whole descendant tree of this shell (a launcher
+# such as `uv run` or `env` leaves grandchildren that BG_PIDS never saw; one that outlives the script keeps its inherited
+# lock descriptors, and a flock held that way blocks every later run): TERM, up to LOWLAT_KILL_GRACE seconds (default 3) for
+# them to go, then KILL for whatever is left. Then scrubs the results and removes the scratch dir.
 _bg_cleanup() {
-  local p
+  local p kids i left
+  trap - TERM INT
   for p in "${BG_PIDS[@]}"; do
     kill "$p" 2>/dev/null || true
+  done
+  # shellcheck disable=SC2207
+  kids=($(_descendants $$))
+  ((${#kids[@]} == 0)) || kill -TERM "${kids[@]}" 2>/dev/null || true
+  for ((i = 0; i < ${LOWLAT_KILL_GRACE:-3} * 10; i++)); do
+    left=0
+    for p in "${kids[@]}"; do _alive "$p" && left=1; done
+    ((left)) || break
+    sleep 0.1
+  done
+  for p in "${kids[@]}"; do
+    ! _alive "$p" || kill -KILL "$p" 2>/dev/null || true
   done
   scrub_results
   # Scratch (JFR recordings, FIFOs) is ours only when lib.sh created it.
