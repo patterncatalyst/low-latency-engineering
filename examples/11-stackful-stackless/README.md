@@ -220,8 +220,8 @@ provisional and sit in variables at the top of `verify.sh`; calibration (S10) de
 Observed, not asserted: how the other lanes' neighbours wake with no blocking call, `std::binary_semaphore` against
 `condition_variable` (the semaphore spins first, so its hand-off rarely reaches the kernel), HALO on a coroutine that
 doesn't escape (clang 22 at `-O2` still reached `operator new` for all 1,000 coroutines of the control loop), Java's
-`jdk.VirtualThreadPinned` counts (a `synchronized` block 0 under JEP 491, a native frame one per blocked task), the Python
-hand-off in each build, the address space and kernel bytes each task costs, and the line percentiles. `verify.sh` flags any asserted
+`jdk.VirtualThreadPinned` counts (a `synchronized` block 0 under JEP 491, a native frame one per blocked task), and the Python
+hand-off in each build. The address space and kernel bytes each task costs are printed beside the asserted ratios, and so are the line percentiles. `verify.sh` flags any asserted
 bound that clears with under 2x margin.
 
 ## Observation surfaces
