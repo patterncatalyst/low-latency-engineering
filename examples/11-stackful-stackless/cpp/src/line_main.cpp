@@ -20,6 +20,8 @@
 #include <boost/context/protected_fixedsize_stack.hpp>
 #include <boost/fiber/all.hpp>
 
+#include <sched.h>
+
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -119,7 +121,11 @@ void poll_until_zero(const std::atomic<std::uint64_t>& counter) {
 
 class ThreadHandler {
  public:
-  explicit ThreadHandler(Decider& decider) : decider_{&decider} {}
+  explicit ThreadHandler(Decider& decider) : decider_{&decider} {
+    // The receive thread is pinned and std::thread inherits its mask, so each lookup thread widens its own
+    // mask back to what the process was allowed before the pin.
+    ::sched_getaffinity(0, sizeof allowed_, &allowed_);
+  }
   void start(tasks::Gate&, int) {}
 
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
@@ -128,6 +134,7 @@ class ThreadHandler {
     outstanding_.fetch_add(1, std::memory_order_acq_rel);
     // A thread per lookup. Completion is single-writer, so the threads take turns at it under a mutex.
     std::thread{[this, scan = Scan::of(ev)] {
+      ::sched_setaffinity(0, sizeof allowed_, &allowed_);
       std::this_thread::sleep_for(kLookupWait);
       const std::int64_t done_ns = decider_->decide(scan);
       {
@@ -143,6 +150,7 @@ class ThreadHandler {
 
  private:
   Decider* decider_;
+  cpu_set_t allowed_{};
   line::Completion* done_ = nullptr;
   std::mutex mutex_;
   std::atomic<std::uint64_t> outstanding_{0};
