@@ -191,7 +191,7 @@ jobs:
       - name: Install packages (container only)
         run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
       - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.5"
           enable-cache: false
