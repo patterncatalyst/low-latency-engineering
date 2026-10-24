@@ -12,9 +12,26 @@
   </parent>
 
   <artifactId>where-code-runs-java</artifactId>
-  <name>where-code-runs-java (Ch13 CPU-count probe, see ../README.md)</name>
+  <name>where-code-runs-java (Ch13 JVM CPU-view probe, see ../README.md)</name>
+
+  <properties>
+    <shade.mainClass>io.patterncatalyst.lowlat.ch13.CpuProbe</shade.mainClass>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+  </dependencies>
 
   <build>
     <finalName>where-code-runs-java</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+      </plugin>
+    </plugins>
   </build>
 </project>
