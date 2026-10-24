@@ -100,7 +100,7 @@ Every bench loop ends in an external-linkage sink or a checked sum (`sink.cpp`),
 
 `std::binary_semaphore` isn't the `os-thread` hand-off. libstdc++'s semaphore spins and yields briefly before it waits on a
 futex, so two pinned threads handing a turn back and forth can complete a round trip without either entering the kernel;
-the run shows 24 voluntary switches in 1.2 million round trips. A `std::condition_variable` goes straight to the futex, so
+one `verify.sh` run counted 123 voluntary switches in 1,020,000 round trips (observed; S11 records the committed figure). A `std::condition_variable` goes straight to the futex, so
 each hand-off is a sleep and a wake, which is the mechanism the chapter is about. The semaphore run is kept as an observed
 result.
 
@@ -114,6 +114,9 @@ counts are kept. The JFR file never lands in the tree.
 
 Pinning of a virtual thread is the carrier's: a call to `Affinity.setAffinity` from a virtual thread lands on the carrier
 thread that's running it. With one carrier, both ping-pong threads print the same tid and CPU, and `verify.sh` checks both lines.
+The virtual-thread run's context-switch count is read by the ping thread from `/proc/thread-self`, which is the carrier that thread is
+on when it reads. With `parallelism=1` there is one carrier unless the scheduler compensates for a pinned virtual thread, and the
+ping-pong never pins, so the count is the carrier's; a second carrier would split it, and nothing in the report would show that.
 
 ### Python
 
@@ -146,7 +149,7 @@ examples/11-stackful-stackless/verify.sh
 
 Environment (from `examples/_lib/lib.sh`): `ALLOW_BUSY=1`, `SKIP_BUILD=1`, `RESULTS_DIR`, `LOWLAT_BUILD`; also
 `RECHECK=results/<run-id>` (evaluate the criteria on committed reports; the placement checks need a live run) and
-`STRICT_PLAN_BOUNDS=1` (assert the bounds of the plan, not the working bounds). A full run takes about 12 minutes, a clean
+Run it as `flock -o "$LOCK" ./verify.sh` when another example measures on the host: `-o` keeps the lock descriptor out of the script and everything it starts, and the script stops its whole process tree on TERM or INT. A full run takes about 12 minutes, a clean
 build included. The 10,000-thread runs need the process and map limits of an ordinary desktop session.
 
 The Python lane under each build, by hand, from `examples/`:
@@ -186,35 +189,37 @@ Reports land in `results/latest/`: `cpp-<workload>-<variant>[-alt<N>].json`, `ja
 `verify.sh` evaluates every criterion, prints each measured value beside its bound and margin, and exits non-zero on any miss.
 Latency ratios compare variants within one run, alternating A B C A B C A B C and taking the median of the three
 per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. The bounds are
-provisional and sit in variables at the top of `verify.sh`; calibration (S10) decides which stay asserted.
+provisional and sit in variables at the top of `verify.sh`; calibration (S10, see `_plans/r04-plan.md`) decides which stay asserted.
 
-1. **Memory per waiting task.** C++ `coroutine` frame bytes are at most 1,024 per parked task (exact: the promise's counting
-   `operator new`, on frames that escape into a vector) and there is one allocation per frame (exact). Python asyncio task
-   bytes (measured by `tracemalloc`, not exact) are at most 1/10 of a thread's RSS increment, in each build. Java
-   `virtual-thread` heap per parked task (`MemoryMXBean` after a forced collection) is at most 1/5 of a `platform-thread`'s RSS
-   increment (the plan said 1/10; the first runs measured 1/11.4, a margin of 1.14x, so the working bound is 1/5).
-2. **RSS of 10,000 parked tasks.** `os-thread` over `fiber` over `coroutine` in C++ (at least 1.5x, then at least 2x), and
-   `platform-thread` over `virtual-thread` in Java (at least 4x). The plan said 10x each. A thread's resident cost is a
-   touched stack page or two and its thread block, and a fiber's is one touched stack page, so resident memory separates
-   them by 2x to 4x. What differs by orders of magnitude is address space (about 9 MB for a thread, 68 KiB for a fiber,
-   26 bytes for a coroutine) and the kernel's side of a thread (page tables and a 16 KiB kernel stack, 29 KiB in all against
-   4 KiB for the fiber). `verify.sh` prints both beside the asserted ratios, and S10 decides which criterion stays asserted.
-   `STRICT_PLAN_BOUNDS=1` asserts the plan's 10x.
+1. **Memory per waiting task, on the quantity that shows the gap.** C++ `os-thread` over `fiber` on address space per task
+   (`VmSize` growth over the 10,000 tasks) at least 10x; C++ fiber stack bytes per task over the counted coroutine frame
+   bytes at least 10x; the coroutine frame itself at most 1,024 bytes (exact: the promise's counting `operator new`, on frames
+   that escape into a vector) with one allocation per frame (exact). Java `platform-thread` address space per task over
+   `virtual-thread` heap per task (`MemoryMXBean` after a forced collection) at least 10x. Python thread RSS over asyncio task
+   bytes (measured by `tracemalloc`, not exact) at least 5x, in each build.
+2. **Parked tasks armed, and RSS observed.** For the C++ `fiber` and `coroutine` variants, the number of tasks that had reached
+   their wait when the memory was read equals 10,000 (exact). In the other parked runs the start gate opens only when every task
+   has arrived, so the count can't differ and `verify.sh` doesn't count it as a criterion. RSS ratios are printed, not asserted,
+   and the plan's 10x is printed beside them. A parked thread's resident cost is a touched stack page or two plus its thread
+   block, and a fiber's is one touched stack page, so resident memory separates them by 2x to 4x. What differs by orders of
+   magnitude is address space (about 9 MB for a thread, 68 KiB for a fiber, 26 bytes for a coroutine) and the kernel's side of a
+   thread (page tables and a 16 KiB kernel stack: 29 KiB in all against 4 KiB for the fiber).
 3. **Voluntary context switches per round trip (exact counts from `/proc`).** C++ `os-thread` at least 0.9 (the run counts
    both threads, so two per round trip when each hand-off sleeps), `fiber` and `coroutine` at most 0.001.
 4. **Round-trip p50, same run, median of 3 alternations.** C++ `os-thread` at least 5x `fiber` and at least 5x `coroutine`;
    Java `platform-thread` at least 2x `virtual-thread`.
-5. **The blocking call.** With `--blocking-sleep-in-fiber`, the neighbours' wake-lateness p99 is at least 1 ms for a 2 ms
-   call (C++, the lowest of 3 alternations); with `--blocking-sleep-in-coroutine` the same holds in Python. Both are 2x by
-   construction. asyncio's own epoll granularity puts the Python baseline p99 near 1 ms, so the Python run also asserts
-   the blocking p99 is at least 1.5x the baseline in the same run, and asyncio's debug mode logs exactly one
-   `Executing <...> took N seconds` warning per blocking call (exact; `slow_callback_duration` 1 ms).
+5. **The blocking call.** With `--blocking-sleep-in-fiber`, the neighbours' wake-lateness p99 is at least 1 ms for a 2 ms call
+   (C++, the lowest of 3 alternations; 2x by construction). In Python, asyncio's debug mode logs exactly one
+   `Executing <...> took N seconds` warning per blocking call (exact; `slow_callback_duration` 1 ms). A p99 of 1 ms doesn't
+   separate a blocked asyncio loop from a healthy one: asyncio rounds its epoll timeout up to a whole millisecond
+   (`selectors.EpollSelector.select`), so even the baseline p99 sits at or over 1 ms. The Python p99, its ratio to the baseline,
+   and the fraction of wakes later than 1.5 ms (blocking against baseline) are printed. The fraction of wakes later than 1.5 ms is asserted at 2x, blocking against baseline (a floor of one late wake stands in for a baseline with none).
 6. **Line.** 200,000 parcels counted, `dropped` 0, every divert command received, for the five line variants. End-to-end
    percentiles are observed: every variant sits at the 2 ms lookup plus the scheduling noise around it, orders of magnitude
    inside the 480 ms budget, so the saving is memory and CPU per wait, not latency.
 7. **Reports and gates.** Every report passes `lowlat-report check`, with count above 0, `dropped` 0, `build.flags` (C++ and
    Java), `runtime.placement` for pinned runs and `runtime.python_build` for Python; every run that records a start gate has a
-   skew under 1 ms (exact counter); every ping-pong served exactly the configured round trips with its payload intact (exact);
+   skew under 1 ms (a timing bound); every ping-pong served exactly the configured round trips with its payload intact (exact);
    free-threaded runs kept the GIL off.
 
 Observed, not asserted: how the other lanes' neighbours wake with no blocking call, `std::binary_semaphore` against
@@ -260,7 +265,7 @@ on a hot path.
 
 ## Provenance
 
-The `Task<T>` and the promise-level frame counter in `cpp/include/lowlat/tasks/frames.hpp` are adapted from the user's companion
+The `Task<T>` and the promise-level frame counter in `cpp/include/lowlat/tasks/frames.hpp` are adapted from the companion
 project cpp-concurrency-and-parallelism, example `11-coroutines-in-depth` (a `Generator<T>` and `Task<T>` with symmetric
 transfer, and a HALO probe), brought up from C++20 to C++23: `std::generator` replaces its hand-rolled `Generator`. The fiber
 setup in `cpp/src/workloads.cpp` (Boost.Fiber on `protected_fixedsize_stack`, a `buffered_channel` hand-off) is adapted from its
@@ -269,5 +274,5 @@ Each adapted file says so in its first lines.
 
 ## Verification status
 
-Unverified until S11. `verify.sh` has run end to end on the host and its working bounds hold; the committed measurement runs
-(`r04-run1..3`) are S11, and the margins of the bounds are S10's to calibrate.
+Unverified until S11. `verify.sh` has run end to end on the host and its bounds hold; the committed measurement runs
+(`r04-run1..3`) are S11 and the margins of the bounds are S10's to calibrate (`_plans/r04-plan.md`).
