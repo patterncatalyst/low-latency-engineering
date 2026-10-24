@@ -4,7 +4,7 @@ layout: plan
 render_with_liquid: false
 ---
 
-# r03 figures — S9
+# r03 figures: S9
 
 Two or more figures per chapter for Ch9–Ch10 (Part 3). One spec per figure in `diagrams/NN-slug.py`, generated into `assets/diagrams/NN-slug.{svg,excalidraw}` by `scripts/generate_diagram.py`; never hand-edited. Visual grammar as [r01-figures.md](r01-figures.md): canvas 880 wide, 300–460 high; headline note at `x` 440, `y` 28, size 14, bold, `#b8650a`; at most one takeaway; style roles; edges end on box edges; languages in the order C++, Python, Java; ASCII; no mean.
 

@@ -17,9 +17,9 @@ GitHub release; no tarball is built.
   examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
   Claim log: `_plans/reconciliation-plan.md`.
 - **r02: complete** (merged in #4, tag `r02.x`). Part 2 (Ch5–8). Step status: `_plans/r02-plan.md`.
-- **r03 (`release/r03`): in progress.** Part 3 (Ch9–10). Steps S0 to S12 done (examples 09 and 10, measured on
-  `r03-run1..3`, Ch9 and Ch10 written and validated, figures, site wiring); remaining S13 to S17 (CI and `validate.py`
-  checks, idiom and voice review including S14b, re-measure if needed, Opus validation, release). Step status: `_plans/r03-plan.md`. Claim log:
+- **r03 (`release/r03`): in progress.** Part 3 (Ch9–10). Steps S0 to S16 done (examples 09 and 10, measured on
+  `r03-run1..3`, Ch9 and Ch10 written and validated, figures, site wiring, CI and `validate.py` checks, idiom and
+  voice review including S14b, the S15 re-measure of 09, Opus validation); S17 (PR, tag, release) remains. Step status: `_plans/r03-plan.md`. Claim log:
   `_plans/reconciliation-plan.md`.
 - Everything after r03 is planned, not started.
 

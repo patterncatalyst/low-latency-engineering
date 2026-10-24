@@ -191,7 +191,7 @@ The eliminated C++ median is a fraction of a nanosecond (1.8e-10 ns in all three
 
 **Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,894 to 1,917 ns per check, against a median measured value of 1,974 to 2,023 ns. The warm-up value is 5.6, 4.1 and 4.7 % lower than the median in runs 1 to 3, and below the minimum measured value in every run (2,001, 1,951 and 1,959 ns). That first value is one call of 1,024 checks (`loops=1` in `pyperf.json`), and it shows no cold-start penalty.
 
-**The tuning warning.** In all three runs pyperf warned the result may be unstable and advised `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are untuned, so they won't compare with a tuned VM later in the book.
+**The tuning warning.** In all three runs pyperf warned the result may be unstable and advised `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are untuned, so they aren't comparable with a tuned VM later in the book.
 
 **Against the budget.** Even the slowest figure here, about 2 us per check digit in CPython, is microsecond-scale against a 480 ms window, so the check digit isn't where the budget goes. A microbenchmark answers a narrow question, how much does this function cost in isolation, and it can't answer how long a parcel waits under load. Chapter 3 covers measuring that.
 

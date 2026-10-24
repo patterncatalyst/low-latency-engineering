@@ -54,7 +54,7 @@ Bytecode starts in the interpreter, tier 0. Counters hand a hot method to C1: ti
 
 The cache is measured under G1: on JDK 25 it archives heap objects only with G1, and JEP 516 (final in JDK 26) lifts that limit. JFR adds the `jdk.jfr` module to the module graph the cache records, so the line run uses a cache trained with the same JFR flags.
 
-GraalVM CE native-image compiles ahead of time and isn't measured here. Its documentation lists the Serial and Epsilon collectors only; G1 in native-image belongs to Oracle GraalVM.
+GraalVM CE native-image compiles ahead of time and isn't measured here, because its documentation lists the Serial and Epsilon collectors only; G1 in native-image belongs to Oracle GraalVM.
 
 ### The C++ contrast
 

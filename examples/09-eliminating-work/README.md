@@ -46,7 +46,7 @@ C++, JDK collections, Agrona and `LongAdder` in Java, dataclasses with `slots=Tr
 - **Two working sets.** The line tracker holds 4,800 parcels in flight (Ch2). The hub tracker holds
   1,000,000, preloaded from a seeded family of distinct SSCCs and visited in a shuffled order, so the order of
   lookups isn't the order of allocations (as in Ch8). A node map of 1,000,000 parcels allocates about
-  150 MB in C++ and can't fit the 24 MB L3. `tracker-bench` prints the exact bytes each build allocated.
+  150 MB in C++ and can't fit the 24 MiB L3. `tracker-bench` prints the exact bytes each build allocated.
 - **Cameras.** Five camera threads, each pinned to its own physical core, each timing every batch of 1,000
   increments. A telemetry thread, also pinned, samples all counters about once a millisecond, off the
   cameras' path.
@@ -54,8 +54,10 @@ C++, JDK collections, Agrona and `LongAdder` in Java, dataclasses with `slots=Tr
   preloaded hub tracker: UDP 47290 for `node-map`, 47291 for `flat-map`. Each parcel is tracked and the
   oldest preloaded parcel is retired, so the table stays at hub size. The simulator and the consumer library
   aren't modified. The handlers plug into the consumer's `consume_with` and `EventReceiver`.
-- **SSCC packing** (`std::from_chars`, `Long.parseLong`, `int()`) is checked against the barcodes in the
-  `contracts/flat/parcel-v1` golden JSON by the unit tests in all three languages.
+- **SSCC packing** (`std::from_chars` in C++, `int()` after an ASCII-digit check in Python, and in Java a single loop that
+  accepts only the ASCII digits `0` to `9`, because `Long.parseLong` also takes non-ASCII Unicode digits that
+  would alias the barcode) is checked against the barcodes in the `contracts/flat/parcel-v1` golden JSON by the unit
+  tests in all three languages.
 
 Placement is an experiment control. Each measured thread is pinned to one logical CPU of a distinct
 physical core, chosen from sysfs topology by `distinct_cores`; CPU 0 is left alone. The pin is

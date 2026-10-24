@@ -109,9 +109,9 @@ In #A, `map_.find(scan.barcode)` takes a `string_view` because the hash is trans
 
 ### What the saving is
 
-The allocation counters are exact. C++ `node-map` makes 2 allocations per insert and `flat-map` makes 0 after `reserve`. JMH's `gc` profiler gives 128 B per insert-and-erase pair for the Java node map and 0.014-0.016 B for the flat map. Insert latency doesn't improve: the Java line-scale insert p50 is 60-61 ns for the node map and 99-102 ns for the flat one. What the flat map removes is garbage, whose price Chapter 6 measures.
+The allocation counters are exact. C++ `node-map` makes 2 allocations per insert and `flat-map` makes 0 after `reserve`. JMH's `gc` profiler gives 128 B per insert-and-erase pair for the Java node map and 0.014-0.016 B for the flat map. Insert latency gets worse: the Java line-scale insert p50 is 60-62 ns for the node map and 99-103 ns for the flat one, across all nine alternations. The flat map removes garbage, whose price Chapter 6 measures.
 
-At hub scale the lookups differ. The C++ lookup p50 is 389-393 ns for the node map and 113 ns for the flat map: 3.43-3.48x within each run, observed. Java's is 321-322 ns against 57-58 ns, 5.53-5.67x (observed). Cachegrind, a simulated cache with this host's geometry, counts 5.94 last-level read misses per node-map lookup and 0.70 per flat-map lookup, 8.54x and exact. On the hardware, `perf stat` (user-space events) counts 5.00-5.13 and 0.19-0.20 in the first alternation. L1 misses only halve, about 10.0 against 5.3 per lookup, so the misses that disappear are the ones that went to memory. Even 393 ns is under a millionth of the 480 ms budget; the flat map buys CPU per parcel and headroom at saturation, not a deadline.
+At hub scale the C++ lookup p50 is 389-393 ns for the node map and 113 ns for the flat map: 3.43-3.48x within each run, observed. Java's is 321-322 ns against 57-58 ns, 5.53-5.67x (observed). Cachegrind, a simulated cache with this host's geometry, counts 5.94 last-level read misses per node-map lookup and 0.70 per flat-map lookup, 8.54x and exact. On the hardware, `perf stat` (user-space events) counts 5.00-5.13 and 0.19-0.20 in the first alternation. L1 misses only halve, about 10.0 against 5.3 per lookup, so the misses that disappear went to memory. Even 393 ns is under a millionth of the 480 ms budget; the flat map buys CPU and headroom, not a deadline.
 
 ## Hot and cold columns
 
@@ -262,9 +262,9 @@ class ParcelRecord:
 
 `slots=True` drops the per-instance `__dict__`; the fields sit in fixed slots. The record container is 3.41x smaller (asserted at 2x or more, exact), and the whole tracked parcel is 2.05x smaller against the `int`-keyed shape, a thin 1.02x margin over its bound, though the count is exact. Against the `str`-keyed shape it's 1.71x, observed, because the 18-character key costs the same in both.
 
-Columns don't help: sweeping 1,000,000 slots takes a p50 of 40.9-41.0 ms over a list of records and 43.1-43.7 ms over `array('Q')`, because iterating the array builds an `int` per element (observed).
+Columns don't help: sweeping 1,000,000 slots takes a p50 of 40.9-41.0 ms over a list of records and 43.1-43.7 ms over `array('Q')`, since iterating the array builds an `int` per element (observed).
 
-The hardware effect survives the interpreter. Camera processes sharing an array through `multiprocessing.shared_memory` take a batch p50 of 150,143-151,551 ns adjacent against 55,647-56,767 ns padded, 2.67-2.70x within each run, and free-threaded threads 165,631-221,951 ns against 60,351-61,279 ns. Threads under the GIL show no difference, 62,463-68,543 ns against 65,119-78,975 ns, because only one runs at a time (all observed).
+The hardware effect survives the interpreter. Camera processes sharing an array through `multiprocessing.shared_memory` take a batch p50 of 150,143-151,551 ns adjacent against 55,647-56,767 ns padded, 2.67-2.70x within each run, and free-threaded threads 165,631-221,951 ns against 60,351-61,279 ns. Threads under the GIL show no consistent difference, 62,463-68,543 ns against 65,119-78,975 ns, because only one runs at a time (all observed).
 
 ## Measure
 
@@ -274,7 +274,7 @@ Run from the repository root:
 examples/09-eliminating-work/verify.sh
 ```
 
-A full run takes about nine minutes; `RECHECK=results/<run-id>` re-evaluates committed reports. Comparisons alternate A B A B A B, take the median of three ratios, and stay inside one run.
+A full run takes about nine minutes; `RECHECK=results/<run-id>` re-checks committed reports. Comparisons alternate A B A B A B and take the median of three ratios inside one run.
 
 | Criterion | Claim | Bound | Measured |
 |---|---|---|---|
@@ -288,13 +288,13 @@ A full run takes about nine minutes; `RECHECK=results/<run-id>` re-evaluates com
 | 4a | C++ read-modify-write batch p50 | at least 3x | 9.89-11.96x |
 | 5a, 5b | C++ line allocations per parcel, node map, flat map | at least 1, 0 | 2, 0 (exact) |
 
-The line run (10 kHz, 20 s, preloaded hub) shows 400,000 tracker allocations on the receive thread (27.8 MB) for the node map and none for the flat map. End-to-end the two are indistinguishable: p50 56.8-57.6 us and p99 78.8-79.7 us for both, the p50s within 1 us in each run, and the worst parcel 0.46-4.80 ms against 480 ms. At line rate the saving is CPU and headroom rather than latency. On the Java line the receive thread allocates 710.2 B per parcel against 582.5 B, the difference being the node map's insert.
+The line run (10 kHz, 20 s, preloaded hub) has 400,000 tracker allocations on the receive thread (27.8 MB) for the node map and none for the flat map. End-to-end the two are indistinguishable: p50 56.8-57.6 us and p99 78.8-79.7 us for both, the p50s within 1 us in each run, and the worst parcel 0.46-4.80 ms against 480 ms. At line rate the saving is CPU and headroom rather than latency. On the Java line the receive thread allocates 710.2 B per parcel against 582.5 B, the difference being the node map's insert.
 
 ## Cross-check
 
-`perf` and cachegrind count independently. `perf stat` counts only the timed loop, through its `--control` FIFOs. Cachegrind can't isolate libstdc++'s hash and compare inside one function, so it counts lookups by difference: a run of 200,000 lookups minus the same run with one. Per slot, `perf` gives 1.2525-1.2526 L1 misses for the fat record and 0.1410 for the columns, against cachegrind's 1.2500 and 0.1406. Per lookup, `perf` counts 5.00-5.13 last-level misses for the node map against cachegrind's 5.94. A simulated cache has no prefetcher, so the counts differ; both rank the designs the same way.
+`perf` and cachegrind count independently. `perf stat` counts only the timed loop, through its `--control` FIFOs. Cachegrind can't isolate libstdc++'s hash and compare inside one function, so it counts lookups by difference: 200,000 lookups minus one. Per slot, `perf` gives 1.2525-1.2526 L1 misses for the fat record and 0.1410 for the columns, against cachegrind's 1.2500 and 0.1406. Per lookup, `perf` counts 5.00-5.13 last-level misses for the node map against cachegrind's 5.94. A simulated cache has no prefetcher, so the counts differ; both rank the designs alike.
 
-In Java, a warm-up of only the inner batch would leave the outer loop on C1's profiling tier, whose profile counters all five threads write. Each camera therefore warms its whole measured loop first, and the padded layout measures 0.0006-0.0009.
+In Java, warming only the inner batch would leave the outer loop on C1's profiling tier, whose counters all five threads write, so each camera warms its whole measured loop first, and the padded layout measures 0.00033-0.0013 L1 misses per increment. The six runs above 0.0004 retired 3.9-6.2 million more JVM instructions than the line-padded layout's 44.198 per increment.
 
 ## What you learned
 
@@ -302,9 +302,9 @@ In Java, a warm-up of only the inner batch would leave the outer loop on C1's pr
 - Both hub trackers exceed the 24 MiB L3, so layout sets the misses per lookup.
 - A sweep that reads 9 of 80 bytes touches 1.25 lines per slot as a fat record and 0.1406 as columns.
 - False sharing shows in L1 misses per increment (590-622x in C++); batch time moves about 3x for stores and 10x for read-modify-writes. SMT siblings were slower than distinct cores.
-- At 4,800 parcels the tracker fits L2 and all of this is headroom.
+- At 4,800 parcels the tracker fits L2; all of this is headroom.
 
-The next chapter, [*Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}) (Part 3), asks what a stalled writer does to the rest. Isolation is Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5).
+The next chapter, [*Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}) (Part 3), asks what a stalled writer does. Isolation is Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5).
 
 ## For deeper coverage
 

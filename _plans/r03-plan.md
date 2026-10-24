@@ -69,7 +69,7 @@ The finding to expect is that at line rates most of these differences fit the bu
 
 ## 2. Per chapter
 
-### Ch9 — `examples/09-eliminating-work/` (host)
+### Ch9: `examples/09-eliminating-work/` (host)
 
 - **Technique:**
   - (a) Data-structure allocation and pointer chasing on the barcode lookup: node-based map against open addressing on a packed 64-bit SSCC key.
@@ -113,7 +113,7 @@ The finding to expect is that at line rates most of these differences fit the bu
 - **Observed:** `--line-padded` against `pair-padded` (does the adjacent-line prefetcher matter on this host; Ch7's claim), `--smt-siblings` (siblings share L1: expected no penalty), `long-adder`, the vendor snoop-hit event, line end-to-end percentiles ("both fit 480 ms by orders of magnitude"), Java line `alloc_bytes_per_parcel` (decode dominates), Python sweep and process counters.
 - **Figures:** 9.1 `09-working-set`; 9.2 `09-node-vs-flat-map`; 9.3 `09-hot-cold-split`; 9.4 `09-false-sharing`.
 
-### Ch10 — `examples/10-lockfree-waitfree/` (host)
+### Ch10: `examples/10-lockfree-waitfree/` (host)
 
 - **Technique:**
   - (a) Progress guarantees on a multi-producer claim: blocking (`mutex`), lock-free (`cas-loop`), wait-free claim step (`fetch-add`). The guarantee belongs to an operation, not to a structure: a producer stalled between claim and publish blocks the consumer of a fetch-add log. ABA avoided by monotonic 64-bit sequences; reclamation (hazard pointers, epochs) in prose; in Java the collector does it.
@@ -177,11 +177,11 @@ Executor is Sonnet unless the row says MAIN. Opus validates each step with `lgtm
 | S10 | Ch9 prose from `_plans/r03-chapters.md` | `_docs/09-eliminating-work.md`, `_plans/r03-chapters.md` | S9 | – | done |
 | S11 | Ch10 prose | `_docs/10-lockfree-waitfree.md` | S9 | – | done |
 | S12 | Wiring: `_example_pages/09`, `10`; outline links Ch9/Ch10; forward links in Ch5, Ch6, Ch7, Ch8, 07 README become links to the shipped chapters (`relative_url`), no number changes; reconciliation 09.x and 10.x plus runs rows; iteration-plan status | listed files, `_plans/reconciliation-plan.md` | S10, S11 | – | done |
-| S13 | CI + `validate.py`: `java-flags` covers `results/r0[2-9]-*` and chapters 5–10; new checks: every report with `runtime.hw_counters` names a `source`, every pinned report has `runtime.placement.cpus`, no `cachegrind.out.*` or jcstress HTML tracked, `tools.perf`/`tools.valgrind` in profiles are major.minor; `--self-test` planted case for each; CI builds and unit-tests 09/10 (deterministic tests only: exactly-once, seqlock torn-read 0, litmus `seq-cst` 0 at a small trial count); ruff over the new packages | `scripts/validate.py`, `.github/workflows/ci.yml` | S4, S12 | CI | done |
-| S14 | Idiom + voice review: `lgtm-idiomatic-review` on 09, 10 and kit diffs; `lgtm-professional-voice` (pattern scan **and** the house-voice rubric: Geewax model, `scan.sh --stats`) on `_docs/09-10`, READMEs, `_plans/r03-*`; fix findings now | all r03 files | S13 | host (MAIN + executors) | todo |
+| S13 | CI + `validate.py`: `java-flags` covers `results/r0[2-9]-*` and chapters 5–10; new checks: every report with `runtime.hw_counters` names a `source`, every pinned report has `runtime.placement.cpus`, no `cachegrind.out.*` or jcstress HTML tracked, `tools.perf` in profiles is major.minor and `tools.valgrind` is major.minor[.patch]; `--self-test` planted case for each; CI builds and unit-tests 09/10 (deterministic tests only: exactly-once, seqlock torn-read 0, litmus `seq-cst` 0 at a small trial count); ruff over the new packages | `scripts/validate.py`, `.github/workflows/ci.yml` | S4, S12 | CI | done |
+| S14 | Idiom + voice review: `lgtm-idiomatic-review` on 09, 10 and kit diffs; `lgtm-professional-voice` (pattern scan **and** the house-voice rubric: Geewax model, `scan.sh --stats`) on `_docs/09-10`, READMEs, `_plans/r03-*`; fix findings now | all r03 files | S13 | host (MAIN + executors) | done |
 | S14b | House-voice pass over the shipped prose (user request 2026-10-23; fix now): Ch0–8 (`_docs/00-*`–`08-*`, incl. the outline), example READMEs 00–08, `_data/diagrams.yml` captions, site chrome (rule 14 sweep). Captions `Figure N.x — …` become `Figure N.x: …` in chapters and `_data/diagrams.yml`; contractions where the sentence allows; cadence and triads per rule 15; example-first openings. Prose only: no number, code block, command, identifier, recorded output or verification footer data changes, so no re-measure | `_docs/0[0-8]-*.md`, `examples/0[0-8]-*/README.md`, `_data/diagrams.yml`, site chrome | S13 | – (executors split per lgtm-professional-voice) | done |
-| S15 | Re-measure: any S14 change to measured code or a `verify.sh` invalidates S8; re-run `r03-run1..3` and re-quote chapters, figures and reconciliation. Only where a "no regression" claim is made instead: committed interleaved A/B worded "no shift detected". Otherwise "no re-measure needed" with the diff stat | results, chapters, figures, reconciliation | S14 | host (MAIN) | todo |
-| S16 | (after S14b) Opus validation: every quoted number recomputed from committed files; §4 criteria; Jekyll in `ruby:4.0`; `validate.py` + `--self-test`; `wordcount.sh`; figures regenerate byte-identically; host-ids clean | – | S15 | host (MAIN) | todo |
+| S15 | Re-measure: any S14 change to measured code or a `verify.sh` invalidates S8; re-run `r03-run1..3` and re-quote chapters, figures and reconciliation. Only where a "no regression" claim is made instead: committed interleaved A/B worded "no shift detected". Otherwise "no re-measure needed" with the diff stat | results, chapters, figures, reconciliation | S14 | host (MAIN) | done |
+| S16 | (after S14b) Opus validation: every quoted number recomputed from committed files; §4 criteria; Jekyll in `ruby:4.0`; `validate.py` + `--self-test`; `wordcount.sh`; figures regenerate byte-identically; host-ids clean | – | S15 | host (MAIN) | done |
 | S17 | Ship: PR `release/r03` -> main, `ci-ok` green, squash-merge (user OK), delete branch, tag `r03.x`, notes-only GitHub release; no tarball | – | S16 | GitHub (MAIN) | todo |
 
 ## 4. Acceptance criteria
@@ -289,7 +289,7 @@ Note (S15): this table is the calibration history. Example 09's committed values
 
 ### S14b record (2026-10-23, house-voice pass over the shipped prose)
 
-`scan.sh --stats` (lgtm-professional-voice, house voice, Geewax model) before and after. Contractions are contracted / (contracted + expanded) for the common pairs. Every file now has 0 ban-tier hits, 0 em dashes (figure captions use a colon, here and in `_data/diagrams.yml` and the diagram specs) and no `stiff` or `uniform` flag; remaining `check triads` candidates were read and are real lists. Prose only: scripts compared numbers, inline code, fenced blocks, includes, captions, footers and link targets before and after as multisets, identical for every file. Site chrome: the footer's link to the roadmap is gone and `_plans` no longer renders (`output: false`); no `/plans/` path in the built site.
+`scan.sh --stats` (lgtm-professional-voice, house voice, Geewax model) before and after. Contractions are contracted / (contracted + expanded) for the common pairs. Every file now has 0 ban-tier hits, 0 em dashes (figure captions use a colon, here and in `_data/diagrams.yml` and the diagram specs) and no `stiff` or `uniform` flag; remaining `check triads` candidates were read and are real lists. Prose only: scripts compared numbers, inline code, fenced blocks, includes, captions, footers and link targets before and after as multisets, identical for Ch0–8 and READMEs 00–08. Three chrome files are not identical, because f0848ab also removed content from them (rule 13: narrative and plan links): `README.md` (line 12, the pointer to the iteration plan), `_example_pages/05-jvm-costs.md` (line 31, the commit hash and the earlier p99 failure) and `_example_pages/07-offheap-lockfree.md` (line 35, the margin of 1.01 from an earlier set and its commit). Site chrome: the footer's link to the roadmap is gone and `_plans` no longer renders (`output: false`); no `/plans/` path in the built site.
 
 | File | Contractions before | after | Flags before | after |
 |---|---|---|---|---|

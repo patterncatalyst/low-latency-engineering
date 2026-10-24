@@ -10,7 +10,7 @@ description: "At 1,000,000 parcels an open-addressing flat map looks a parcel up
 languages: "C++ · Java · Python"
 ---
 
-The in-flight parcel tracker looks a barcode up, inserts or updates the parcel, and sweeps for parcels that reached the diverter at every encoder tick. The example removes work from that tracker in three places: the lookup map (a node map against open addressing on a packed 64-bit key), the record layout the sweep reads (an 80-byte struct against hot columns of 9 B), and the counters five scan-tunnel cameras write (adjacent in one cache line against padded). C++ leads, Java follows in its idiom, and Python shows what the object model costs. The tracker is measured at the line's 4,800 parcels, where it fits L2, and at hub scale, 1,000,000 parcels, where it does not.
+The in-flight parcel tracker looks a barcode up, inserts or updates the parcel, and sweeps for parcels that reached the diverter at every encoder tick. The example removes work from that tracker in three places: the lookup map (a node map against open addressing on a packed 64-bit key), the record layout the sweep reads (an 80-byte struct against hot columns of 9 B), and the counters five scan-tunnel cameras write (adjacent in one cache line against padded). C++ leads, Java follows in its idiom, and Python shows what the object model costs. The tracker is measured at the line's 4,800 parcels, where it fits L2, and at hub scale, 1,000,000 parcels, where it doesn't.
 
 ## Run
 
@@ -26,7 +26,7 @@ examples/09-eliminating-work/verify.sh
 - Hub lookups: cachegrind last-level read misses per lookup are at least 2x higher for the node map (exact), and so are `perf` `LLC-load-misses:u` per lookup in C++.
 - Hub sweep: the fat-record p50 is at least 2x the hot/cold p50 in C++ and Java, and cachegrind D1 read misses per slot are at least 4x higher (exact).
 - Counters: L1 misses per increment are at least 10x higher adjacent than padded in C++ and Java, and the C++ `fetch_add` per-batch p50 is at least 3x.
-- Line, C++: the node map allocates on the receive thread (at least 1 per parcel) and the flat map does not (exact).
+- Line, C++: the node map allocates on the receive thread (at least 1 per parcel) and the flat map doesn't (exact).
 - Every report passes `lowlat-report check`, the line runs count 200,000 parcels with none dropped, and every pinned report carries its thread placement.
 
 All of it held on the host runs `r03-run1..3` (bare-metal host, untuned, commit 9802788). The lookup p50 ratios, the store-increment batch times and the Python lane are observed and not asserted.

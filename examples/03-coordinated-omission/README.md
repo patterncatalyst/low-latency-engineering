@@ -59,7 +59,7 @@ With no stall, `intended-time` p99 is still 0.19 to 0.42 ms while `receipt-time`
 us (C++ 5.2 to 8.0, Python 25.7 to 27.8, Java 53.8 to 74.9). `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,
-so neither can see that part. The floor is latency in the line itself, with no stall involved,
+so neither can see that part. That gap is latency on the path (late send, loopback, socket queue), not a stall,
 and it's why the control is judged against 1 ms rather than against the other clocks.
 
 ## Clock probe

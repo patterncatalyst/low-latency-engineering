@@ -1,4 +1,4 @@
-"""Figure 2.1: the consumer as a queue: L = lambda x W.
+"""Figure 2.1, the consumer as a queue: L = lambda x W.
 
 Regenerate from the repo root:  python3 diagrams/02-littles-law.py
 """

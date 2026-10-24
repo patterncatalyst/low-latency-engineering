@@ -4,7 +4,7 @@ layout: plan
 render_with_liquid: false
 ---
 
-# r03 chapters — S10–S11
+# r03 chapters: S10–S11
 
 One chapter per example, written from the example's code and its committed S8 (or S15) results. Binding for both chapters. Shape, numbers, voice, Liquid and listing rules follow [r02-chapters.md](r02-chapters.md) unless this brief changes them. Each executor edits only its own chapter file; `_data/diagrams.yml`, READMEs, the outline and `_example_pages/` are S12's.
 
@@ -26,7 +26,7 @@ One chapter per example, written from the example's code and its committed S8 (o
 - **House voice from the first draft** (`lgtm-professional-voice`, "House voice: write it this way", modelled on Geewax's *API Design Patterns*; paste it into the executor prompt). Open each section on a concrete thing in the line (the tracker, a camera thread, the diverter) before naming the abstraction. Contract negations and "it is" forms. Vary sentence length. No rhetorical triads; three real items (three languages, three percentiles) are a list, not a cadence. Captions are `Figure N.x: …` with a colon, never an em dash. Before handing back: `scan.sh --tier ban` 0 and `scan.sh --stats` with no `stiff`, `uniform` or `em dash` flag.
 - **No VM part:** if a reader asks about isolation, point to Chapter 15 (Part 5).
 
-## Ch9 — arc
+## Ch9: arc
 
 | Section | Technique -> workload -> expected effect -> how asserted |
 |---|---|
@@ -35,12 +35,12 @@ One chapter per example, written from the example's code and its committed S8 (o
 | Layout | Fat record against hot/cold columns -> sweep of 1M slots for due parcels each tick (Ch8's sweep with the record you would naturally write) -> bytes and lines touched per slot drop about 9x -> cachegrind D1 misses per slot (exact); same-run p50 ratio. Says why Ch8's flat table won |
 | False sharing | Five camera counters adjacent against padded to 128 B -> per-camera threads on distinct cores -> each write steals the line -> L1 misses per increment, same-run batch p50; observed 64 B padding (Ch7's prefetcher claim, now measured), SMT siblings (shared L1: no penalty), `LongAdder` |
 | Python | Fewer objects, not layout: `slots`, `int` keys (tracemalloc, exact); array sweep still boxes; processes show the hardware effect under interpreter cost (observed) |
-| Line | 10 kHz x 20 s with the hub table loaded: allocation per parcel (C++ exact), end-to-end percentiles observed; both variants fit 480 ms by orders of magnitude; the saving is CPU per parcel and headroom, said plainly |
+| Line | 10 kHz x 20 s with the hub table loaded: allocation per parcel (C++ exact), end-to-end percentiles observed; both variants fit 480 ms by orders of magnitude; the saving is CPU per parcel and headroom, stated without a latency claim |
 | Cross-check | perf hardware counters against cachegrind's simulated counts, for the same functions |
 
 Boundaries: TLAB and escape analysis are Ch5 (back-link); the GC cost of a node map's garbage is Ch6 (back-link); the flat off-heap table and FFM are Ch8 (back-link, no re-measure of 08); ring padding was asserted in Ch7 by design, and Ch9 measures it.
 
-## Ch10 — arc
+## Ch10: arc
 
 | Section | Technique -> workload -> expected effect -> how asserted |
 |---|---|
@@ -57,7 +57,7 @@ Boundaries: SPSC rings, Agrona/Disruptor idle strategies and Chronicle are Ch7 (
 
 ## Claims and evidence tables
 
-Filled in at S10/S11 from `r03-run1..3`, in the r02-chapters form (claim | evidence file and field). Report failures and outliers plainly.
+Filled in at S10/S11 from `r03-run1..3`, in the r02-chapters form (claim | evidence file and field). Report failures and outliers as they are.
 
 ### Ch9 (S10)
 
@@ -71,7 +71,7 @@ Evidence root: `examples/09-eliminating-work/results/r03-run{1,2,3}/` (re-measur
 | Hub build footprint 148.1 MB node map, 126.0 MB flat map (exact) | `verify.log` 'build footprint' (148142568 B, 125964092 B) |
 | C++ node map 2 allocations per insert; flat map 0 after reserve (exact) | `verify.log` 1a, 1b |
 | JMH 128 B per insert-and-erase pair (node map), 0.014-0.016 B (flat map) | `verify.log` 1c, 1d; `insert-node-map`, `insert-flat-map` line |
-| Java line-scale insert p50 60-61 ns node map, 99-102 ns flat map (observed) | `verify.log` 'insert-node-map ... p50' line, all three runs |
+| Java line-scale insert p50 60-62 ns node map, 99-103 ns flat map across all nine alternations (observed); the insert gets worse | `java/insert-aN-insert{NodeMap,FlatMap}/java-insert-*-map.json` p50, three runs |
 | C++ hub lookup p50 389-393 ns node map, 113 ns flat map (median of 3 alternations) | `verify.log` 'hub lookup p50 (ns) by alternation' (C++) |
 | C++ lookup p50 ratio 3.43-3.48x (observed) | `verify.log` observed 2a |
 | Java lookup p50 321-322 ns vs 57-58 ns; ratio 5.53-5.67x (observed) | `verify.log` 'hub lookup p50 (ns) by alternation' (Java); observed 2b |
@@ -88,7 +88,7 @@ Evidence root: `examples/09-eliminating-work/results/r03-run{1,2,3}/` (re-measur
 | Java `ParcelState` 96 B per object (JOL) | `java/footprint.json` `parcel_state_instance_bytes`; `verify.log` 'JOL footprint' |
 | L1 misses per increment, store: C++ 0.093-0.094 vs 0.00016, ratio 590-622x (asserted at least 10x) | `verify.log` '[store increment] L1-dcache-load-misses:u'; criterion 4b |
 | Java store L1-miss ratio 106-167x (asserted at least 10x) | `verify.log` criterion 4c |
-| Java padded layout 0.0006-0.0009 misses per increment | `verify.log` Java '[store increment] L1-dcache-load-misses:u' pair-padded values, three runs |
+| Java padded layout 0.00033-0.0013 L1 misses per increment; the six of nine runs above 0.0004 retired 3.9-6.2 million more instructions than line-padded's 44.198 per increment | `java/counters-pair-padded.aN.json` and `counters-line-padded.json` `runtime.hw_counters.per_op`, three runs |
 | Store batch p50 (1,000 increments): C++ 5,115-5,279 ns vs 1,597-1,624 ns, ratio 3.18-3.29x (observed) | `verify.log` '[store increment] per-batch'; observed 4a' |
 | Java store batch ratio 2.89-3.06x (observed) | `verify.log` observed 4c' |
 | Store-batch ratios sit 6-10 % (C++) above 3x and 4 % below to 2 % above (Java), not asserted | `verify.log` observed 4a' (margins 1.06-1.10x) and observed 4c' (0.96-1.02x) |
@@ -96,7 +96,7 @@ Evidence root: `examples/09-eliminating-work/results/r03-run{1,2,3}/` (re-measur
 | Java `getAndAdd` batch ratio 11.02-12.29x (observed) | `verify.log` observed 4c'' |
 | 64-byte padding store batch p50 1,653-1,692 ns vs 1,603-1,625 ns for 128 B in the same alternation (2-6 % slower, observed); 0.00016 L1 misses per increment | `verify.log` 'observed: line-padded (64 B)' (1,665/1,624, 1,653/1,625, 1,692/1,603); `cpp/counters-line-padded.json` and `cpp/counters-pair-padded.a1.json` `runtime.hw_counters.per_op.L1-dcache-load-misses` (0.000156, 0.000158, 0.000157 vs 0.000156, 0.000155, 0.000156) |
 | SMT siblings 4,311-4,383 ns vs 1,948-2,197 ns on distinct cores (adjacent layout, observed); L1 misses per increment 0.00020-0.00022 vs 0.081-0.098 | `verify.log` 'observed: two cameras on SMT siblings'; `cpp/counters-smt-siblings.json` and `cpp/counters-adjacent-counters.2-cameras.json` `runtime.hw_counters.per_op.L1-dcache-load-misses` |
-| Java: each camera warms its whole measured loop, because an inner-batch-only warm-up would leave the outer loop on C1's profiling tier; padded layout 0.0006-0.0009 (the un-warmed case is not a committed result) | `java/.../CountersRun.java` `timeBatches` warm-up; `README.md` (Java section); padded row above |
+| Java: each camera warms its whole measured loop, because an inner-batch-only warm-up would leave the outer loop on C1's profiling tier; padded layout 0.00033-0.0013 (the un-warmed case is not a committed result) | `java/.../CountersRun.java` `timeBatches` warm-up; `README.md` (Java section); padded row above |
 | Python bytes per tracked parcel 790.8 (dict), 462.8 (slots-str), 385.8 (slots-int) | `python/footprint.json` `tracked_bytes_per_parcel`; `verify.log` Python block |
 | Python record container 3.41x (asserted at least 2x, exact); dict vs slots-int 2.05x (asserted, margin 1.02x); vs slots-str 1.71x (observed) | `verify.log` criteria 1e, 1f; observed 1f' |
 | Python sweep p50 40.9-41.0 ms (list of records) vs 43.1-43.7 ms (array columns), 1,000,000 slots (observed) | `verify.log` 'hub-sweep-fat-record' and 'hub-sweep-hot-cold' lines |

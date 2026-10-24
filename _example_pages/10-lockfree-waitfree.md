@@ -10,7 +10,7 @@ description: "At p99 a mutex claim costs 6.10-6.45x a fetch-add claim in C++ and
 languages: "C++ · Java · Python"
 ---
 
-Four tunnel cameras claim slots in one log, two induction stations race for one belt gap, and the diverter reads parcel state while the tracker writes it. Each is a synchronisation question with a blocking, a lock-free and a wait-free answer: `mutex`, `cas-loop` and `fetch-add` for the claim; release/acquire against `seq_cst` (Java: `setRelease`/`getAcquire` against `volatile`, tested with jcstress) for the induction gap; a shared lock against a seqlock (Java: `StampedLock`) for the read side. A stalled producer shows that a wait-free claim does not make the consumer's wait bounded. Python runs the claim under the GIL and the free-threaded build.
+Four tunnel cameras claim slots in one log, two induction stations race for one belt gap, and the diverter reads parcel state while the tracker writes it. Each is a synchronisation question with a blocking, a lock-free and a wait-free answer: `mutex`, `cas-loop` and `fetch-add` for the claim; release/acquire against `seq_cst` (Java: `setRelease`/`getAcquire` against `volatile`, tested with jcstress) for the induction gap; a shared lock against a seqlock (Java: `StampedLock`) for the read side. A stalled producer shows that a wait-free claim doesn't make the consumer's wait bounded. Python runs the claim under the GIL and the free-threaded build.
 
 ## Run
 
