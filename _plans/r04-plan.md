@@ -246,7 +246,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 | S1 | Record D1–D17 answers; iteration-plan status (r03 complete, #6, `r03.x`; r04 in progress); commit this plan, `r04-chapters.md`, `r04-figures.md` | `_plans/iteration-plan.md`, `_plans/r04-*.md`, `CLAUDE.md` only if D9 changes a rule | user answers | opus (MAIN) | done |
 | S2 | Report and profile contract, additive in `lowlat-report/1` | `contracts/measurement/latency-report.schema.json`, `contracts/measurement/examples/`, `examples/common/measure-{py,cpp,java}/**`, `examples/common/measure-fixtures/`, `scripts/profile.sh`, `scripts/scrub-host-ids.py` | S0 | sonnet | done |
 | S3 | `lib.sh` helpers: lanes, containers, raw-sample conversion | `examples/_lib/lib.sh`, `examples/_lib/tests/`, `examples/common/measure-py/**` | S2 | sonnet | done (pending validation) |
-| S4 | Build wiring: Boost, liburing, C++23 floor, Maven modules, Quarkus module, uv packages, CI | `examples/cmake/deps.cmake`, `examples/CMakeLists.txt`, `examples/1[1-3]-*/cpp/CMakeLists.txt`, `examples/pom.xml`, `examples/1[1-3]-*/java/pom.xml`, `examples/12-io-engines/quarkus/pom.xml`, `examples/pyproject.toml`, `examples/1[1-3]-*/*-py/pyproject.toml`, `.github/workflows/ci.yml` | S0, S2 | sonnet | done (pending validation) |
+| S4 | Build wiring: Boost, liburing, C++23 floor, Maven modules, Quarkus module, uv packages, CI | `examples/cmake/deps.cmake`, `examples/CMakeLists.txt`, `examples/1[1-3]-*/cpp/CMakeLists.txt`, `examples/pom.xml`, `examples/1[1-3]-*/java/pom.xml`, `examples/12-io-engines/quarkus/pom.xml`, `examples/pyproject.toml`, `examples/1[1-3]-*/*-py/pyproject.toml`, `.github/workflows/ci.yml` | S0, S2 | sonnet | done |
 | S5 | Lab: guest profile `stock-unpinned`, snapshot `lab-ready-r04`, images built and digest-pinned in the guest | `scripts/lab/guest-profiles/stock-unpinned.conf`, `scripts/lab/README.md`, `scripts/lab/install-guest-tools.sh` (liburing/strace if needed), `scripts/check-prereqs.sh` (`--vm` r04 checks), `examples/13-where-code-runs/containers/{cpp,java,python}/Containerfile`, `examples/13-where-code-runs/compose.yaml` | S0, S4 | opus (MAIN) | todo |
 | S6 | Example 11 (C++, Java, Python both builds) + `verify.sh` + README | `examples/11-stackful-stackless/**` | S3, S4 | sonnet | todo |
 | S7 | Example 12 (C++, plain-JDK Java, Quarkus service + open-loop client, Python) + `verify.sh` + README | `examples/12-io-engines/**` | S3, S4 | sonnet | todo |
@@ -437,7 +437,8 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
   - **`image-pins`**: no `FROM … :latest` or tagless `FROM`; tag + digest for every base image.
   - **`no-privileged`**: no `--privileged`, `--cap-add=ALL` or `seccomp=unconfined` in tracked scripts, except a named allow-list entry if D-something needs a custom seccomp file (a file, never `unconfined`).
   - **`ft-reports`**: every report with `runtime.python_build` `free-threaded` also records `gil_enabled: false`.
-  - `java-flags` extended to chapters 5–13; `placement` extended to chapters 11–12 with an UNPINNED list for the single-thread micro benches.
+  - **`versions-consumers`** (S4 validation): every pin in `versions.env` appears verbatim in its consumer (Boost and liburing URL/SHA256 in `examples/cmake/deps.cmake`, `BOOST_SHA256` in `ci.yml`, `QUARKUS_PLATFORM_VERSION` in `examples/12-io-engines/quarkus/pom.xml`, `UVLOOP_VERSION` in `examples/12-io-engines/io-py/pyproject.toml`).
+- `java-flags` extended to chapters 5–13; `placement` extended to chapters 11–12 with an UNPINNED list for the single-thread micro benches.
 - Acceptance: each new check fails on its planted case under `--self-test` and passes on the tree; `ci-ok` green.
 
 **S18 prose fact check + voice pass**
