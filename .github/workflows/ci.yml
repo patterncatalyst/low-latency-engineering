@@ -37,7 +37,7 @@ env:
   # java job installs the pinned Temurin tarball instead (JAVA_PACKAGES + the steps below).
   FEDORA_PACKAGES: >-
     git tar zstd jq which findutils diffutils
-    clang gcc-c++ cmake ninja-build zlib-ng-compat-devel
+    clang gcc-c++ make cmake ninja-build zlib-ng-compat-devel
     python3.14 uv
   # Maven comes from Fedora; the JDK it runs on is the pinned Temurin, because Fedora's
   # java-25-openjdk floats (25.0.4 while Temurin is 25.0.5). maven-unbound is the Maven build
@@ -150,8 +150,16 @@ jobs:
           cmake --preset release
           cmake --build --preset release
           ctest --preset release
+      # Chapters 11 to 13 build the pinned Boost 1.92.0 (FetchContent) and liburing 2.15
+      # (ExternalProject, static, inside the build tree). Docker's default seccomp profile on a
+      # runner blocks io_uring, so the Ch12 ring test skips with its reason (EPERM or ENOSYS);
+      # this step prints that reason so a skip is visible, not silent.
+      - name: Ch12 io_uring test (passes, or skips with the printed reason)
+        working-directory: examples
+        run: ctest --preset release -R '^Ring\.' -V | grep -E 'Passed|Skipped|SKIPPED|io_uring_queue_init'
 
-  # Python: the uv workspace, the generated protobuf modules, pytest and ruff.
+  # Python: the uv workspace (every *-py member, chapters 11 to 13 included; lowlat-io pins
+  # uvloop 0.23.0), the generated protobuf modules, pytest and ruff.
   python:
     needs: [changes, protobuf]
     if: needs.changes.outputs.run == 'true'
@@ -180,7 +188,8 @@ jobs:
           uv run ruff check . ../scripts ../diagrams
           uv run ruff format --check . ../scripts ../diagrams
 
-  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-10) and runs the tests,
+  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-13, and the standalone
+  # Ch12 Quarkus module with its @QuarkusTest smoke test) and runs the tests,
   # including the 05 AOT-cache smoke test (a child JVM trains a cache, then runs with -XX:AOTMode=on).
   # The JDK is the Temurin tarball pinned in versions.env (TEMURIN_URL, SHA-checked), the same
   # build the lab guest runs; the tarball is cached on its SHA and re-verified on every run.
