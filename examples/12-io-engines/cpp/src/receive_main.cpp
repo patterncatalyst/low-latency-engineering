@@ -10,7 +10,7 @@
 //   acceptor-pool    one io-uring thread + hand-off to four decide workers    (hand-off)
 //
 //   io-receive --variant NAME [--base-port 47320] [--expect 50000] [--cpus A,B,C,D,E] [--hold-ms N]
-//              [--idle-ms 1500] [--decide-ns 0] [--report FILE]
+//              [--idle-ms 1500] [--receive-ns 0] [--decide-ns 0] [--report FILE]
 //   io-receive --probe-uring       exit 0 when io_uring works here, 77 (skip) on EPERM / ENOSYS
 //
 // Provenance: the raw epoll loop and the pinned-thread start protocol follow the companion project
@@ -96,6 +96,9 @@ int run(const lf::Options& o) {
   const int idle_ms = static_cast<int>(o.number("idle-ms", 1500));
   const std::string report_path = o.text("report", "");
   const auto work_ns = static_cast<std::int64_t>(o.number("decide-ns", 0));
+  // Modelled receive-side work per datagram, done by whichever thread received it: the validation a real camera frame
+  // carries (a checksum, a framing check) that this wire does not. A single acceptor does it for every camera.
+  const auto receive_ns = static_cast<std::int64_t>(o.number("receive-ns", 0));
   std::vector<int> cpus(plan.threads(), -1);
   if (const std::string list = o.text("cpus", ""); !list.empty()) {
     cpus = lf::parse_cpu_list(list);
@@ -160,6 +163,7 @@ int run(const lf::Options& o) {
     }
     try {
       auto handle = [&](std::size_t camera, std::span<const std::byte> bytes) {
+        io::spin_work(receive_ns);
         if (const auto parcel = io::accept(cameras[camera], bytes, counters)) {
           if (pool) {
             pool->send(*parcel, counters);
@@ -247,9 +251,9 @@ int run(const lf::Options& o) {
                                            {"rcvbuf_granted", shared.rcvbuf[0]},
                                            {"threads", count(plan.threads())}});
   const std::string notes = std::format(
-      "receive; cameras={}; expect_per_camera={}; flat wire; engine={}; receivers={}; workers={}; idle_ms={}; decide_ns={}",
+      "receive; cameras={}; expect_per_camera={}; flat wire; engine={}; receivers={}; workers={}; idle_ms={}; receive_ns={}; decide_ns={}",
       io::kCameras, expect, plan.engine == Engine::epoll ? "epoll" : plan.engine == Engine::recvmmsg ? "recvmmsg" : "io_uring",
-      plan.receivers, plan.workers, idle_ms, work_ns);
+      plan.receivers, plan.workers, idle_ms, receive_ns, work_ns);
   merged.write_report(std::filesystem::path{report_path}, notes, std::nullopt, runtime);
   std::println("report: {}", report_path);
   return 0;

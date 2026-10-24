@@ -25,11 +25,11 @@ no equivalent, the divergence is the lesson: the JDK has no io_uring, and neithe
   workers through Ch10's multi-producer log. The measure is cross-thread hand-offs per parcel, counted exactly: 0 against 1.
 - **(c) The Java service tier.** The sort-plan lookup over HTTP/1.1 on loopback waits 2 ms for its downstream. The
   Quarkus service answers it four ways. `event-loop`: a Mutiny `Uni` completed by a non-blocking Vert.x timer, so no
-  thread holds the wait. `worker-pool`: `@Blocking` and `Thread.sleep(2)` on a worker pool fixed at 16 threads.
+  thread holds the wait. `worker-pool`: `@Blocking` and `Thread.sleep(2)` on a worker pool fixed at 8 threads.
   `virtual-thread`: `@RunOnVirtualThread` and `Thread.sleep(2)`, which parks the virtual thread and frees its carrier.
   And the defect `blocking-on-event-loop`: the same `Thread.sleep(2)` on the event loop, which holds one of its few
-  threads for the whole wait. The load exceeds the pool on purpose. By Little's law (Ch2), 10 kHz x 2 ms is 20 requests in
-  flight, and a pool of 16 cannot hold them.
+  threads for the whole wait. The load exceeds the pool on purpose. By Little's law (Ch2), 5 kHz x 2 ms is 10 requests in
+  flight, and a pool of 8 cannot hold them.
 - **(d) Python.** `asyncio-datagram` (`loop.create_datagram_endpoint`, the selector loop) against `blocking-thread` (one
   thread per socket, under the GIL and under the free-threaded build) against `uvloop` (GIL build only).
 
@@ -44,18 +44,28 @@ and the pinned threads exist to expose the mechanism; they are not advice for ge
   decodes `seq` and `intended_emit_ns` at fixed offsets, checks the sequence, looks up the lane for the SSCC and records
   `now - intended_emit_ns` into an HdrHistogram. UDP ports 47320 to 47335, one per camera.
   - **Line.** 2.5 kHz per camera x 20 s: 200,000 parcels.
-  - **Saturation.** A rate per camera, picked as the highest with `dropped = 0` for the slowest variant of the lane.
-    It is a variable at the top of `verify.sh` (`SAT_RATE_CPP`, `SAT_RATE_JAVA`, `SAT_RATE_PY`), provisional until the
-    S10 calibration. `DECIDE_NS` is the decide work this example does not build (the tracker lookup and the divert
-    command's encode), modelled as a busy-wait of that many nanoseconds per parcel. Without it one receive thread has a
-    capacity the four simulators cannot exceed, and nothing saturates. The same value applies to every C++ variant.
+  - **Saturation.** A rate per camera, chosen so the mechanism shows with `dropped = 0`. They are variables at the top of
+    `verify.sh`. `DECIDE_NS` (3 us) is the decide work this example does not build (the tracker lookup and the divert
+    command's encode), modelled as a busy-wait per parcel. Without it one receive thread has a capacity the four
+    simulators cannot exceed, and nothing saturates. The three single-thread engines run at 60 kHz per camera (240 kHz
+    offered, one thread, 3 us of decide work each: about 72 percent busy). The layout pair, `thread-per-core` against
+    `acceptor-pool`, runs at 66 kHz per camera with `RECEIVE_NS_LAYOUT` (3.5 us) of modelled receive-side work per
+    datagram, done by whichever thread received it: the validation a real camera frame carries (a checksum, a framing
+    check) that this flat wire doesn't. That is what a single acceptor can't spread over cores. One acceptor then has a
+    capacity of about 260 kHz against 264 kHz offered, and four threads each carry a quarter of the work at about
+    half load. Without the receive-side work both layouts keep up until the simulators themselves fall behind
+    (around 150 kHz per camera on this host), so the difference never shows. The input is a model, like `DECIDE_NS`,
+    and both are printed in each report's notes.
   - The commands keep their own channel (Ch10): this example measures the receive and decide path and sends no divert
     command.
 - **(c) the service.** `GET /plan/<variant>/<sscc>` over HTTP/1.1 on loopback (TCP 47336), 2 ms downstream wait. The open-loop
   client (plain JDK: virtual threads and `java.net.http.HttpClient`) sends request `i` at `start + i / rate` whatever
   happened to the earlier ones, and measures from that intended time. It runs 3 s of warm-up and then `Q_SECONDS` of
-  measurement at `Q_RATE` (10 kHz): the Little's-law in-flight number, `Q_RATE x 2 ms`, is printed and recorded in the
-  report's `model` block. The client records its own lateness (a second report, variant `client-lateness`) and counts the
+  measurement at `Q_RATE` (5 kHz): the Little's-law in-flight number, `Q_RATE x 2 ms` = 10 against a pool of 8, is printed and
+  recorded in the report's `model` block. The plan's example was 12 kHz against 16; a JDK HTTP/1.1 client and a four-core
+  Quarkus service on this host fall behind in every variant above about 6 kHz, the pool or not, so the pool shrank to 8 and
+  the rate to 5 kHz to keep `lambda x W` above it. The defect variant runs at `DEFECT_RATE` (1.8 kHz): four event loops each
+  blocked for 2 ms carry at most 2 kHz, so it is driven below that and the queue it shows is the loop's, not the client's. The client records its own lateness (a second report, variant `client-lateness`) and counts the
   requests it started more than a millisecond late; the JDK client opens a connection for every request that finds none
   idle, so a request never waits for a connection, and `max_in_flight` is the evidence.
   HTTP/1.1 on loopback is a harness, not a transport recommendation (Part 6).
@@ -86,7 +96,7 @@ spin barrier and reads the clock; the spread of those reads is the recorded `sta
 | Java | `virtual-thread-blocking` | four virtual threads in a blocking `DatagramChannel.receive`, one carrier thread |
 | Java | `thread-per-core` | four pinned platform threads, each its own `SO_REUSEPORT` channel and a blocking `receive` |
 | Quarkus | `event-loop` | `Uni` completed by a Vert.x timer: no thread holds the 2 ms |
-| Quarkus | `worker-pool` | `@Blocking`, `Thread.sleep(2)` on a worker pool fixed at 16 |
+| Quarkus | `worker-pool` | `@Blocking`, `Thread.sleep(2)` on a worker pool fixed at 8 |
 | Quarkus | `virtual-thread` | `@RunOnVirtualThread`, `Thread.sleep(2)` |
 | Quarkus | `blocking-on-event-loop` | the defect: `Thread.sleep(2)` on the event loop |
 | Python | `asyncio-datagram` | `loop.create_datagram_endpoint`, one thread, default selector loop |
@@ -161,8 +171,8 @@ of the `all-config` guide):
 
 | Key | Phase | Default | Used for |
 |---|---|---|---|
-| `quarkus.thread-pool.max-threads` | run time | unset: the greater of 8 x CPUs and 200 | fixed at 16 |
-| `quarkus.thread-pool.core-threads` | run time | 1 | 16, so the pool is 16 from the first request |
+| `quarkus.thread-pool.max-threads` | run time | unset: the greater of 8 x CPUs and 200 | fixed at 8 |
+| `quarkus.thread-pool.core-threads` | run time | 1 | 8, so the pool is 8 from the first request |
 | `quarkus.thread-pool.prefill` | run time | true | left on |
 | `quarkus.vertx.event-loops-pool-size` | run time | unset: `max(2, min(heap / 10 MiB, CPUs))` | not set; the count is recorded |
 | `quarkus.vertx.max-event-loop-execute-time` | run time | 2 s (a bare number is seconds, `1ms` parses as one millisecond) | `1ms` in `%defect` |
@@ -197,6 +207,27 @@ as little-endian `int64` nanoseconds and a JSON sidecar (`build.compiler` is its
 converts them with `lowlat-report from-samples` in the GIL environment, and the converter refuses a free-threaded report
 with the GIL on. The measuring command refuses to run, or to finish, with the GIL on in the free-threaded build.
 
+## Hand-rolled constructs, and why
+
+Idiom first: Asio runs the `asio-io-uring` lane, `std::jthread` carries the C++ threads and joins them at scope end,
+`std::print` and `std::expected` are used throughout, Quarkus gets `@RunOnVirtualThread`, `@Blocking` and Mutiny `Uni`, the
+Java client uses `HttpClient` on virtual threads, and the Python lane uses `asyncio.run` and `create_datagram_endpoint`.
+What is written by hand, and the reason:
+
+- **`epoll_wait` plus `recvmsg` loop (C++).** The point is to count the system calls; Asio's reactor runs the same loop and
+  hides the calls. It is shown once, beside the idiom.
+- **`io_uring` multishot `recvmsg` over a provided-buffer ring (C++).** liburing has no higher-level API for this; the
+  `Ring` and `BufRing` wrappers are RAII over its calls. Asio's backend can't expose the call counts.
+- **`spin_work` (C++, Java) and the spinning hand-off workers.** The busy-wait stands in for decide work this example
+  doesn't build. The workers spin on Ch10's `ClaimLog` so the hand-off cost shown is the cache-line movement, not a futex
+  wake-up. Neither is advice for general code.
+- **`SpinStart` and the start gate.** A futex barrier can wake threads a millisecond apart on an idle core; the spin brings
+  them to one instant so the recorded start skew means something. `std::latch` and `CountDownLatch` do the coarse gate.
+- **`EngineCounters` padded to twice `std::hardware_destructive_interference_size`.** Per-thread counters written on every
+  datagram would otherwise share a line. The doubling is for the L2 spatial prefetcher.
+- **The open-loop dispatcher (Java).** `HttpClient` has no open-loop mode; the dispatcher computes each intended send time
+  and measures from it (Ch3). It parks until close to the time and then spins, because a late wake-up costs the schedule.
+
 ## Layout
 
 | Path | Contents |
@@ -214,10 +245,15 @@ examples/12-io-engines/verify.sh
 ```
 
 Environment (from `examples/_lib/lib.sh`): `ALLOW_BUSY=1`, `SKIP_BUILD=1`, `RESULTS_DIR`, `LOWLAT_BUILD`; also
-`RECHECK=results/<run-id>` (evaluate the criteria on committed reports; the placement checks need a live run) and
-`ONLY=cpp,java,python,quarkus` (a development aid). The workload variables at the top of `verify.sh` (`SAT_RATE_CPP`,
-`DECIDE_NS`, `Q_RATE`, `POOL`) can be overridden from the environment. Run it under the host benchmark lock when another
-example measures on this host. A full run takes about 20 minutes, a clean build included.
+`RECHECK=results/<run-id>` (evaluate the criteria on committed reports; the placement checks need a live run),
+`SMOKE=1 RESULTS_DIR=DIR` (small workloads, a check of the script: every criterion is printed, none enforced, and the
+output is no result) and `ONLY=cpp,java,python,quarkus` (a development aid). The workload variables at the top of
+`verify.sh` (`SAT_RATE_CPP`, `SAT_RATE_LAYOUT`, `DECIDE_NS`, `Q_RATE`, `DEFECT_RATE`) can be overridden from the
+environment. Run it as `flock -o "$LOCK" ./verify.sh` when another example measures on this host: `-o` keeps the lock
+descriptor out of the script and everything it starts, and the script stops its whole process tree on TERM or INT. The
+open-loop client also ends on its own when the service is gone: every request has a timeout, the dispatcher stops after
+1,000 errors, and a daemon watchdog halts the JVM at a hard deadline (`Runtime.halt` runs no shutdown hook, so nothing can
+hold it up). A full run takes about 15 minutes, a clean build included.
 
 If io_uring is blocked (a seccomp profile, `kernel.io_uring_disabled`, an old kernel), `io-receive --probe-uring` exits 77,
 the io_uring parts are skipped with the reason written to `uring-skipped.txt`, and the C++ unit test skips itself. The
@@ -245,7 +281,7 @@ The service by hand (`mvn -B -f examples/12-io-engines/quarkus/pom.xml verify`, 
 ```bash
 java -Xms512m -Xmx512m -Dquarkus.http.port=47336 -jar examples/12-io-engines/quarkus/target/quarkus-app/quarkus-run.jar
 java -cp examples/12-io-engines/java/target/io-engines-java.jar io.patterncatalyst.lowlat.ch12.Main client \
-    --variant virtual-thread --base-url http://127.0.0.1:47336 --rate 10000 --seconds 5 --report /tmp/vt.json
+    --variant virtual-thread --base-url http://127.0.0.1:47336 --rate 5000 --seconds 5 --report /tmp/vt.json
 ```
 
 Reports land in `results/latest/`: `cpp/<variant>-sat-alt<N>.json`, `cpp/<variant>-line.json`, the same under `java/`,
@@ -263,9 +299,10 @@ provisional until the S10 calibration (`_plans/r04-plan.md`).
    of `epoll`'s system calls per parcel (`epoll_wait` + `recvmsg`); `recvmmsg` makes fewer than 1 system call per parcel.
    The CQEs per enter are printed.
 2. **Hand-offs per parcel (exact).** `thread-per-core` 0, `acceptor-pool` 1.
-3. **Receive tail at saturation, C++.** `thread-per-core` p99 is at most 1/2 of `acceptor-pool`'s, median of 3.
+3. **Receive tail at saturation, C++.** `thread-per-core` p99 is at most 1/2 of `acceptor-pool`'s, median of 3, at the
+   layout rate with the modelled receive-side work.
    `io-uring` against `epoll` p99 is observed.
-4. **Quarkus at 10 kHz x 2 ms > 16.** `worker-pool` p99 is at least 3x `virtual-thread` p99, median of 3. `event-loop`
+4. **Quarkus at 5 kHz x 2 ms > 8.** `worker-pool` p99 is at least 3x `virtual-thread` p99, median of 3. `event-loop`
    against `virtual-thread` is observed.
 5. **The defect.** `blocking-on-event-loop` logs at least one blocked-thread warning (exact; the in-process count must equal
    the log's) and its p99 is at least 2 ms.
@@ -275,8 +312,10 @@ provisional until the S10 calibration (`_plans/r04-plan.md`).
    `runtime.placement` (pinned runs) or `runtime.python_build` (Python), and the free-threaded runs kept the GIL off.
 8. **Start gates.** The recorded start skew of every multi-thread run is under 1 ms; every pinned thread is on its CPU.
 9. **The service (exact counters).** The worker pool's active maximum equals the fixed pool size; the event-loop and
-   virtual-thread variants use no worker thread; the client saw no error, answered every request and started (almost) none
-   of them late.
+   virtual-thread variants use no worker thread; the client saw no error and answered every request. How many requests
+   the client started more than 1 ms late is printed, not bounded: the overloaded `worker-pool` run holds thousands of
+   connections open in the client, and the latency is measured from the intended time anyway, so a late start shows in the
+   percentiles instead of hiding.
 
 Observed, not asserted: `asio-io-uring`; `io-uring` against `epoll` tails; the plain-JDK variants against each other;
 every Python variant; `uvloop`; `event-loop` against `virtual-thread`; the `strace -f -c` cross-check. The summaries are
@@ -315,6 +354,6 @@ Example 12 also builds on example 10's `lowlat::lockfree` library (the multi-pro
 
 ## Verification status
 
-Unverified. The code builds and its unit tests pass, but no `verify.sh` run is committed yet. The three recorded runs
-(`r04-run1..3`) and the calibrated bounds come with S10 and S11; until then every bound above is provisional and this section
-carries no measured numbers.
+Unverified until S11. The code builds, its unit tests pass and `verify.sh` completes on a quiet host, but no run is committed
+yet. The recorded runs and the calibration of the bounds come with S10 and S11 (`_plans/r04-plan.md`); until then every
+bound above is provisional and this section carries no measured numbers.
