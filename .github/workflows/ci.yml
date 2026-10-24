@@ -186,7 +186,7 @@ jobs:
     if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
-    # uv downloads the CPython that examples/.python-version pins (3.14.9+gil), not Fedora's python3.14.
+    # uv downloads the CPython that examples/.python-version pins (3.14.9, the GIL build), not Fedora's python3.14.
     steps:
       - name: Install packages (container only)
         run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
