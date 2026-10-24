@@ -100,7 +100,7 @@ Every bench loop ends in an external-linkage sink or a checked sum (`sink.cpp`),
 
 `std::binary_semaphore` isn't the `os-thread` hand-off. libstdc++'s semaphore spins and yields briefly before it waits on a
 futex, so two pinned threads handing a turn back and forth can complete a round trip without either entering the kernel;
-the `verify.sh` runs so far counted between 123 and 395 voluntary switches in 1,020,000 round trips (observed, and it varies; S11 records the committed figure). A `std::condition_variable` goes straight to the futex, so
+the `verify.sh` runs so far counted between 91 and 395 voluntary switches in 1,020,000 round trips (observed, and it varies; S11 records the committed figure). A `std::condition_variable` goes straight to the futex, so
 each hand-off is a sleep and a wake, which is the mechanism the chapter is about. The semaphore run is kept as an observed
 result.
 
