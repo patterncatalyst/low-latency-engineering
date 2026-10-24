@@ -458,7 +458,8 @@ def test_container_run_records_the_merged_environment_and_hides_the_id(
     }
     everything = run.stdout + run.stderr + out.read_text()
     assert CID not in everything
-    assert f"/home/{os.environ.get('USER', 'nobody')}/" not in everything  # scrubbed
+    # scrubbed; Path.home(), not $USER, which a CI container leaves unset
+    assert f"{Path.home()}/" not in everything
     log = calls(tmp_path)
     create = next(line for line in log if line.startswith("create"))
     # the wrapper, entrypoint, private cgroupns and default hostname are added; the command follows

@@ -108,6 +108,17 @@ final class ClaimRun {
     /** One run; {@code merged} receives every producer's claim times, {@code consumerWait} the consumer's waits. */
     static Result run(String variant, int producers, long perThread, int capacity, boolean stalled, long stalledSeq,
             List<Integer> cpus, Placement.Gate gate, LatencyRecorder merged, LatencyRecorder consumerWait) throws Exception {
+        return run(variant, producers, perThread, capacity, stalled, stalledSeq, Duration.ofMillis(1), cpus, gate, merged,
+                consumerWait);
+    }
+
+    /**
+     * As above with the stall length given. The measured run stalls 1 ms; a test on an oversubscribed machine stalls
+     * longer, so the unpinned consumer reaches the stalled slot before it is published.
+     */
+    static Result run(String variant, int producers, long perThread, int capacity, boolean stalled, long stalledSeq,
+            Duration stall, List<Integer> cpus, Placement.Gate gate, LatencyRecorder merged, LatencyRecorder consumerWait)
+            throws Exception {
         long total = producers * perThread;
         ClaimLog log = new ClaimLog(claimFor(variant), capacity);
         byte[] claimed = new byte[(int) total]; // claimed[seq] = 1, written by whoever claimed seq
@@ -132,7 +143,7 @@ final class ClaimRun {
                                 long seq = log.claim(mine);
                                 recorder.record(System.nanoTime() - t0);
                                 if (stalled && seq == stalledSeq) {
-                                    sleep(Duration.ofMillis(1)); // claimed, not yet published
+                                    sleep(stall); // claimed, not yet published
                                 }
                                 claimed[(int) seq] = 1;
                                 log.publish(seq, seq * PAYLOAD_STRIDE, mine);
