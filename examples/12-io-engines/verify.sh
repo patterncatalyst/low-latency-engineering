@@ -345,7 +345,20 @@ if ((RUN)); then
   fi
 else
   URING_OK=1
-  [[ -f $OUT/uring-skipped.txt ]] && URING_OK=0
+  if [[ -f $OUT/uring-skipped.txt ]]; then
+    # A skip is believed only if the probe that came with the reports says io_uring really failed and no io_uring report exists.
+    URING_OK=0
+    if [[ ! -f $OUT/uring-probe.txt ]]; then
+      bad "uring-skipped.txt without a uring-probe.txt: a skip nothing backs up"
+      URING_OK=1
+    elif grep -q 'errno 0' "$OUT/uring-probe.txt"; then
+      bad "uring-skipped.txt, but uring-probe.txt says io_uring_setup worked (errno 0): the skip is not believed"
+      URING_OK=1
+    elif compgen -G "$OUT/cpp/io-uring-*.json" >/dev/null; then
+      bad "uring-skipped.txt, but io_uring reports exist: the skip is not believed"
+      URING_OK=1
+    fi
+  fi
 fi
 
 # ---- running one pass ----------------------------------------------------------------------------------------------------
@@ -608,6 +621,7 @@ expected_reports() {
   fi
   if lane_on quarkus; then
     for v in "${SERVICE_VARIANTS[@]}" event-loop-ctl; do for n in 1 2 3; do echo "quarkus/$v-alt$n.json"; done; done
+    echo "quarkus/blocked-thread-warnings-in-log.txt"
   fi
 }
 step "completeness: every variant x alternation report is present, and every lane ran"
@@ -637,6 +651,10 @@ for f in "$OUT"/cpp/*-sat*.json "$OUT"/java/*-sat*.json "$OUT"/python/*-sat*.jso
   esac
   want=$((rate * SAT_SECONDS * CAMERAS))
   count=$(jget "$f" .count) dropped=$(jget "$f" .dropped)
+  parcels=$(counter "$f" parcels)
+  if ((parcels != count)); then
+    bad "sat $name: counters.parcels $parcels differs from count $count (the program's own count and the histogram's must agree)"
+  fi
   if ((count == want && dropped == 0)); then
     ok "sat $name: count $count (bound == $want), dropped $dropped (exact 0)"
   else
@@ -704,7 +722,7 @@ if ok_lane cpp; then
       printf '  observed: C++ saturation p99, thread-per-core over acceptor-pool, per alternation: %s thousandths (median %s; the plan'"'"'s bound is <= %s, asserted only when it clears twice over)\n' \
         "${ratios[*]}" "$(median_of "${ratios[@]}")" "$TPC_P99_RATIO_MAX_PERMILLE"
     fi
-    printf '  observed: the hand-off cost at line rate (2.5 kHz per camera): thread-per-core p50 / p99 / p99.9 %s; acceptor-pool %s\n' \
+    printf '  observed: the hand-off cost at line rate (2.5 kHz per camera): thread-per-core p50 / p99 / p99.9 / max %s; acceptor-pool %s\n' \
       "$(pct "$OUT/cpp/thread-per-core-line.json")" "$(pct "$OUT/cpp/acceptor-pool-line.json")"
     printf '  observed: C++ io-uring over epoll p99 per alternation: %s thousandths (median %s)\n' "${e_vs_u[*]}" "$(median_of "${e_vs_u[@]}")"
   fi
@@ -744,6 +762,8 @@ if ok_lane quarkus; then
       bad "5 alt$n: requests in a handler at once $inh against $loops event-loop threads (exact bound: <=, and at least one loop)"
     fi
     ratios+=("$(alt_ratio "$f" "$c")")
+    cinh=$(counter "$c" service_in_handler_max) cloops=$(counter "$c" event_loop_threads_seen)
+    crit_ge "5" "alt$n control: event-loop at the defect's rate has more requests in a handler at once ($cinh) than event-loop threads (exact; the defect's <= $cloops signature discriminates)" "$cinh" "$((cloops + 1))"
     printf '  observed: alt%s defect p99 %s us (the 2 ms sleep alone meets a 2 ms bound); event-loop control at %s Hz p99 %s us\n' "$n" "$(($(p99 "$f") / 1000))" "$DEFECT_RATE" "$(($(p99 "$c") / 1000))"
   done
   if ((CRIT5_CTL_ASSERTED)); then

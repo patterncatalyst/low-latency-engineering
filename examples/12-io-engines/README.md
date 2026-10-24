@@ -224,8 +224,9 @@ What is written by hand, and the reason:
 - **`io_uring` multishot `recvmsg` over a provided-buffer ring (C++).** liburing has no higher-level API for this; the
   `Ring` and `BufRing` wrappers are RAII over its calls. Asio's backend can't expose the call counts.
 - **`spin_work` (C++, Java) and the spinning hand-off workers.** The busy-wait stands in for decide work this example
-  doesn't build. The workers spin on Ch10's `ClaimLog` so the hand-off cost shown is the cache-line movement, not a futex
-  wake-up. Neither is advice for general code.
+  doesn't build. The workers spin on Ch10's `ClaimLog` so the hand-off is a cache-line transfer and not a futex
+  wake-up. At line rate the acceptor-pool tail came out no worse than thread-per-core's (p99 97 against 106 us in one run), so
+  the hand-off cost is small there; the exact hand-off counts are what the example asserts. Neither is advice for general code.
 - **`SpinStart` and the start gate.** A futex barrier can wake threads a millisecond apart on an idle core; the spin brings
   them to one instant so the recorded start skew means something. `std::latch` and `CountDownLatch` do the coarse gate.
 - **`EngineCounters` padded to twice `std::hardware_destructive_interference_size`.** Per-thread counters written on every
@@ -316,7 +317,7 @@ provisional until the S10 calibration (`_plans/r04-plan.md`).
    against `virtual-thread` is observed.
 5. **The defect.** At 1.85 kHz, `blocking-on-event-loop` logs at least one blocked-thread warning during the measured run
    (exact; the in-process count and the log's `has been blocked for` lines are two views of the same log records and must
-   agree), and requests in a handler at once never exceed the event-loop threads (exact). Its p99 against `event-loop` driven at the same
+   agree), and requests in a handler at once never exceed the event-loop threads (exact), while the `event-loop` control at the same rate has more than that (13 to 16 against 4), so the signature discriminates. Its p99 against `event-loop` driven at the same
    1.85 kHz in the same alternation is observed unless it clears the bound twice over. The defect's p99 against 2 ms is
    observed: the sleep alone meets it.
 6. **Line.** 200,000 parcels counted and `dropped` 0 for every C++, plain-JDK and Python variant. Percentiles are
