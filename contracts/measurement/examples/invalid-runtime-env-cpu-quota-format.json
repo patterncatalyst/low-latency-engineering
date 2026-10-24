@@ -1,0 +1,125 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "ch13-where-code-runs",
+  "language": "python",
+  "variant": "example",
+  "unit": "ns",
+  "count": 7,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 61023,
+    "p90": 95039,
+    "p99": 1200127,
+    "p99_9": 1200127,
+    "max": 1200127
+  },
+  "hdr_histogram": "HISTFAAAADh4nJNpmSzMwMAgygABzFCakYGB2c1gxwIG+w8Qge3pTN8ZmbYzMn1lYlrMzNTNxtRtzQQA93sKMA==",
+  "build": {
+    "compiler": "CPython 3.14.8",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-21T17:28:45Z",
+    "host_label": "container",
+    "cpu": {
+      "model": "Intel 8-core/16-thread laptop CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15"
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 335784,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "kvm",
+      "container": "docker"
+    },
+    "load": {
+      "load1": 0.41,
+      "load5": 0.41,
+      "load15": 0.31,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise"
+    },
+    "lab": {
+      "running_domains": [
+        "lowlat-target"
+      ]
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.3\" 2026-04-21 LTS",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0"
+    }
+  },
+  "notes": "Illustrative contract example: seven hand-picked values, not a measurement.",
+  "runtime": {
+    "environment": {
+      "kind": "container",
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "container": {
+        "runtime": "docker",
+        "image": "localhost/lowlat-cpp:r04-1",
+        "image_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "network": "bridge",
+        "cpu_quota": "2 cpus",
+        "cpuset": null,
+        "seccomp": "default"
+      },
+      "cgroup": {
+        "cpu_max": "200000 100000",
+        "cpuset_effective": "0-3",
+        "nr_throttled": 12,
+        "throttled_usec": 480000
+      }
+    },
+    "counters": {
+      "io_uring_setup_errno": 1
+    }
+  }
+}

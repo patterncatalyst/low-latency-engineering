@@ -391,6 +391,13 @@ def test_runtime_environment_rejects_bad_container(
         "invalid-runtime-env-container-missing.json",
         "invalid-runtime-env-container-no-guest.json",
         "invalid-runtime-env-vm-no-guest.json",
+        "invalid-runtime-env-host-container.json",
+        "invalid-runtime-env-host-guest.json",
+        "invalid-runtime-env-vm-container.json",
+        "invalid-runtime-env-seccomp-name.json",
+        "invalid-runtime-env-cpu-quota-format.json",
+        "invalid-runtime-env-cgroup-missing-key.json",
+        "invalid-runtime-env-image-port-colon.json",
     ],
 )
 def test_runtime_environment_planted_failures(

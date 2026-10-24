@@ -303,7 +303,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
   - `runtime.counters` reused for syscalls, CQEs, hand-offs and warnings.
 - `profile.sh`, additive:
   - `virt.container` (`systemd-detect-virt --container`, falling back to `/.dockerenv`, `/run/.containerenv`, `/proc/1/cgroup`);
-  - `cgroup` block from `/sys/fs/cgroup/{cpu.max,cpuset.cpus.effective,cpu.stat}`;
+  - `cgroup` block from `cpu.max`, `cpuset.cpus.effective` and `cpu.stat` of the process's own cgroup (`/sys/fs/cgroup` plus the path in `/proc/self/cgroup`);
   - `host_label` = `container` inside a container (the container hostname is its ID: never recorded).
 - Container profile written by a static path that needs no `jq` in the image: the host-side driver runs `profile.sh` in the guest and merges the container fields read through `docker inspect` and the container's cgroup files. Alternatively a small Python profile writer; S2 picks one, recorded.
 - `scrub-host-ids.py` learns container IDs (64-hex and 12-hex) and guest-user home paths.

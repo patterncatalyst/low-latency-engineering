@@ -62,7 +62,7 @@ struct CgroupInfo {
 /// `runtime.environment`. `guest_profile` (snapshot/profile, e.g. "lab-ready-r04/stock-unpinned") is
 /// required by the schema for vm and container, and `container` for container: `lowlat-report check`
 /// enforces both, so this builder does not.
-[[nodiscard]] nlohmann::json environment(EnvKind kind, std::optional<std::string> guest_profile = std::nullopt,
+[[nodiscard]] nlohmann::json environment(EnvKind kind, const std::optional<std::string>& guest_profile = std::nullopt,
                                          const std::optional<ContainerInfo>& container = std::nullopt,
                                          const std::optional<CgroupInfo>& cgroup = std::nullopt);
 

@@ -91,13 +91,11 @@ FIXED_RULES: list[Rule] = [
         regex=True,
         why="host kernel build line",
     ),
-    # The lab guest's default cloud-init account: its home is not a secret, but a path
-    # under the home root trips the host-ids check, so it is shortened like the host's.
-    Rule(HOMES + "/fedora/low-latency-engineering", "<repo>", why="guest repo checkout"),
-    Rule(HOMES + "/fedora", "~", why="guest home"),
+    # (The lab guest's home paths are guest_rules(), read from lab.env at run time.)
     # Container IDs (64-hex and 12-hex) only where the context says container: a hostname or
     # container key, a docker/podman/containerd cgroup or storage path, a `docker ps` row, the
-    # HOSTNAME environment variable. A bare hex run is never touched, so `sha256:<64 hex>`
+    # HOSTNAME environment variable, and a line that is only 64 hex (`docker run -d` stdout).
+    # Other bare hex runs are never touched, so `sha256:<64 hex>`
     # digests (image_digest, @sha256: in image references) survive.
     Rule(
         r'("(?:[Hh]ostname|container(?:[_-]?[Ii][Dd])?|ContainerId|Id)"\s*:\s*")[0-9a-f]{12}(?:[0-9a-f]{52})?(")',
@@ -118,13 +116,19 @@ FIXED_RULES: list[Rule] = [
         why="container id in a cgroup or storage path",
     ),
     Rule(
-        r"(?m)^[0-9a-f]{12}(?=\s+\S+\s+\"[^\"\n]*\"\s)",
+        r"(?m)^[0-9a-f]{12}(?:[0-9a-f]{52})?(?=\s{2,}\S+\s{2,}\"[^\"\n]*\"\s)",
         "<container-id>",
         regex=True,
-        why="docker ps row",
+        why="docker ps row (docker pads its columns with two or more spaces)",
     ),
     Rule(
-        r"\b(HOSTNAME=)[0-9a-f]{12}\b",
+        r"(?m)^[0-9a-f]{64}(?=\r?$)",
+        "<container-id>",
+        regex=True,
+        why="a line of exactly 64 hex: `docker run -d` stdout",
+    ),
+    Rule(
+        r"\b(HOSTNAME=)[0-9a-f]{12}(?:[0-9a-f]{52})?\b",
         r"\1<container-id>",
         regex=True,
         why="container hostname variable",
@@ -375,7 +379,22 @@ SELF_TEST_CASES: list[tuple[str, str, str]] = [
         '0123456789ab   img:1.0   "/bin/sh"   2 min ago   Up',
         '<container-id>   img:1.0   "/bin/sh"   2 min ago   Up',
     ),
+    (
+        "docker ps --no-trunc row",
+        "ab" * 32 + '   img:1.0   "/bin/sh"   2 min ago   Up',
+        '<container-id>   img:1.0   "/bin/sh"   2 min ago   Up',
+    ),
+    (
+        "git log --abbrev=12 survives",
+        '0123456789ab  fix "quoted" thing in the parser',
+        '0123456789ab  fix "quoted" thing in the parser',
+    ),
+    ("git log --oneline survives", '0123456789ab feat: x "y" z', '0123456789ab feat: x "y" z'),
     ("HOSTNAME variable", "HOSTNAME=0123456789ab", "HOSTNAME=<container-id>"),
+    ("HOSTNAME 64-hex", "HOSTNAME=" + "ab" * 32, "HOSTNAME=<container-id>"),
+    ("docker run -d stdout", "ab" * 32 + "\n", "<container-id>\n"),
+    ("bare 64-hex mid-line survives", "key " + "ab" * 32 + " end", "key " + "ab" * 32 + " end"),
+    ("sha256 on its own line survives", "sha256:" + "ab" * 32 + "\n", "sha256:" + "ab" * 32 + "\n"),
     (
         "sha256 digest survives",
         "image_digest: sha256:" + "ab" * 32,

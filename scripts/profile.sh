@@ -259,10 +259,13 @@ g_virt() {
   jq -nc --arg v "${v:-unknown}" --arg c "$c" '{type: $v, container: $c}'
 }
 
-# cgroup v2 facts of the cgroup this process runs in (inside a container: the container's own
-# cgroup). Each field is null when its file is missing or unreadable.
+# cgroup v2 facts of the cgroup this process runs in: /sys/fs/cgroup plus the path in
+# /proc/self/cgroup. In a container with a private cgroup namespace that path is "/", so the
+# files are the container's own. Each field is null when its file is missing or unreadable.
 g_cgroup() {
-  local cg=/sys/fs/cgroup nt tu
+  local cg=/sys/fs/cgroup nt tu rel
+  rel=$(sed -n 's/^0:://p' /proc/self/cgroup 2>/dev/null | head -n1 || true)
+  if [[ -n $rel && $rel != / && -d $cg$rel ]]; then cg=$cg$rel; fi
   # shellcheck disable=SC2016  # awk program, not shell
   nt=$(try awk '$1 == "nr_throttled" {print $2}' "$cg/cpu.stat")
   # shellcheck disable=SC2016  # awk program, not shell

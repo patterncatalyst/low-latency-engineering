@@ -215,6 +215,9 @@ TEST_F(Measure, RuntimeAppearsOnlyWhenGiven) {
   EXPECT_FALSE(doc.contains("model"));
 }
 
+// The same digest the Java and Python tests use.
+const std::string kDigest = "sha256:abababababababababababababababababababababababababababababababab";
+
 // Writes the golden dataset with every new runtime field. The committed cpp-placement.json is
 // what `lowlat-report check` reads in the Python suite; LOWLAT_REGEN_GOLDEN=1 rewrites it.
 TEST_F(Measure, RuntimePlacementCountersRoundTrip) {
@@ -226,7 +229,7 @@ TEST_F(Measure, RuntimePlacementCountersRoundTrip) {
                   {"environment",
                    m::environment(m::EnvKind::container, "lab-ready-r04/stock-unpinned",
                                   m::ContainerInfo{"docker", "localhost/lowlat-cpp:r04-1",
-                                                   "sha256:" + [] { std::string d; for (int i = 0; i < 32; ++i) d += "ab"; return d; }(),
+                                                   kDigest,
                                                    m::NetworkMode::bridge, "2", std::nullopt, "default"},
                                   m::CgroupInfo{"200000 100000", "0-3", 12, 480000})}};
   const auto path = regen_golden() ? kFixtures / "cpp-placement.json"

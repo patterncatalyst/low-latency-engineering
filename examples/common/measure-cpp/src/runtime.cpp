@@ -14,11 +14,14 @@ nlohmann::json hw_counters(HwSource source, std::uint64_t ops, const std::map<st
 }
 
 namespace {
-nlohmann::json opt(const std::optional<std::string>& v) { return v ? nlohmann::json(*v) : nlohmann::json(nullptr); }
-nlohmann::json opt(const std::optional<std::int64_t>& v) { return v ? nlohmann::json(*v) : nlohmann::json(nullptr); }
+// An empty optional is written as null.
+template <typename T>
+nlohmann::json opt(const std::optional<T>& v) {
+  return v ? nlohmann::json(*v) : nlohmann::json(nullptr);
+}
 }  // namespace
 
-nlohmann::json environment(EnvKind kind, std::optional<std::string> guest_profile,
+nlohmann::json environment(EnvKind kind, const std::optional<std::string>& guest_profile,
                            const std::optional<ContainerInfo>& container, const std::optional<CgroupInfo>& cgroup) {
   nlohmann::json env = {{"kind", kind}};
   if (guest_profile) env["guest_profile"] = *guest_profile;
