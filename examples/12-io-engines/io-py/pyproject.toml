@@ -1,0 +1,13 @@
+[project]
+name = "lowlat-io"
+version = "1.0.0"
+description = "Ch12: I/O engines, Python lane (asyncio and uvloop), wiring skeleton"
+requires-python = ">=3.14"
+dependencies = ["uvloop==0.23.0"]
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lowlat_io"]

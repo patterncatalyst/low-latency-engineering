@@ -1,0 +1,13 @@
+[project]
+name = "lowlat-place"
+version = "1.0.0"
+description = "Ch13: where the code runs, Python lane (CPU counts under a container), wiring skeleton"
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lowlat_place"]
