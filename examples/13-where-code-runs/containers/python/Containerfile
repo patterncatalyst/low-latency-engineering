@@ -1,0 +1,43 @@
+# Ch13 Python lane image: uv-managed CPython (the release in examples/.python-version) and the
+# place-py package, on ubi-minimal.
+#
+# Build context: the REPOSITORY ROOT. From the root, in the lab guest:
+#   docker build -f examples/13-where-code-runs/containers/python/Containerfile -t lowlat/place-py:r04 .
+#
+# The interpreter follows examples/.python-version, so it is the same CPython release (GIL build)
+# as the host and guest lanes, and a change to that file is the only edit a promotion needs.
+# The uv binary is the upstream static (musl) release, hash-checked. Network is needed at build
+# time (python-build-standalone via uv, hatchling from PyPI).
+
+FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e AS build
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG UV_VERSION=0.13.0
+ARG UV_SHA256=b0828fc4cdc47d65951e94b5f0a15a5364420e8dcd88723f3b21e7a2eb30bbc3
+# hadolint ignore=DL3041
+RUN microdnf -y --setopt=install_weak_deps=0 install tar gzip \
+    && microdnf clean all
+RUN curl -fsSL --retry 3 -o /tmp/uv.tgz \
+        "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-x86_64-unknown-linux-musl.tar.gz" \
+    && echo "${UV_SHA256}  /tmp/uv.tgz" | sha256sum -c - \
+    && tar -xzf /tmp/uv.tgz -C /usr/local/bin --strip-components=1 \
+    && rm -f /tmp/uv.tgz \
+    && uv --version
+ENV UV_PYTHON_INSTALL_DIR=/opt/python UV_PYTHON_DOWNLOADS=manual UV_PYTHON_PREFERENCE=only-managed \
+    UV_LINK_MODE=copy UV_NO_CACHE=1
+COPY examples/.python-version /tmp/python-version
+RUN uv python install "$(cat /tmp/python-version)" \
+    && uv venv /opt/venv --python "$(cat /tmp/python-version)"
+COPY examples/13-where-code-runs/place-py /src/place-py
+RUN uv pip install --python /opt/venv/bin/python /src/place-py \
+    && /opt/venv/bin/python -VV \
+    && /opt/venv/bin/python -c "import sys, lowlat_place; assert sys._is_gil_enabled(); print(lowlat_place.cpu_counts())"
+
+FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e AS runtime
+LABEL org.opencontainers.image.title="lowlat place-py" \
+      org.opencontainers.image.description="Ch13 Python lane: uv-managed CPython (GIL build) and lowlat-place" \
+      org.opencontainers.image.licenses="Apache-2.0"
+COPY --from=build /opt/python /opt/python
+COPY --from=build /opt/venv /opt/venv
+ENV PATH=/opt/venv/bin:/usr/bin:/bin HOME=/tmp PYTHONUNBUFFERED=1
+USER 10001:10001
+CMD ["python", "-c", "import lowlat_place; print(lowlat_place.cpu_counts())"]

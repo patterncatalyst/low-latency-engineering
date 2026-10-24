@@ -72,7 +72,14 @@ scripts/lab/destroy-vm.sh lowlat-target     # tear down, disks included
 cloud-init user-data and exits without touching libvirt.
 
 Snapshot names: `lab-ready` (tooled baseline) is the default. Later
-snapshots such as `lab-ready-rt` are passed as the second argument.
+snapshots are passed as the second argument:
+
+| Snapshot | Guest |
+|---|---|
+| `lab-ready` | stock Fedora kernel, Docker, tooled baseline (no Temurin) |
+| `lab-ready-rt` | PREEMPT_RT kernel, no isolation, no pin |
+| `lab-ready-iso` | RT kernel + `isolate-cpu3` + vcpupin + Temurin |
+| `lab-ready-r04` | the `stock-unpinned` "ordinary VM" (r04, D8): stock kernel, 4 vCPU unpinned, no isolation, Temurin, `strace`, `perf`, `stress-ng`, Docker with the Ch13 images |
 
 ## Sizing
 
@@ -98,8 +105,10 @@ With passt networking the peer cannot reach the target directly (see above).
 ## Measurement labelling
 
 Numbers measured in the guest are labelled `vm` and are never compared with
-bare-metal numbers. Record the guest profile (vCPUs, tuned profile, pinning,
-isolation) with every result.
+bare-metal numbers, with one exception: Chapter 13 (D9; see `CLAUDE.md`) compares
+host, VM and container lanes within one interleaved run on this machine, every
+number lane-labelled, and host against VM is observed only, never asserted. Record
+the guest profile (vCPUs, tuned profile, pinning, isolation) with every result.
 
 ## Conventions
 
@@ -187,3 +196,32 @@ scripts/lab/revert-vm.sh lowlat-target lab-ready-rt    # RT kernel, no isolation
 scripts/lab/apply-guest-profile.sh --remove            # or undo in place
 scripts/lab/pin-vcpu.sh --remove
 ```
+
+## The ordinary VM (`stock-unpinned`, snapshot `lab-ready-r04`)
+
+Chapter 13 needs a guest that looks like a cloud VM: the stock Fedora 44 kernel (7.2 series),
+4 vCPUs unpinned, no `isolcpus`/`nohz_full`/`rcu_nocbs`, the guest's tuned profile recorded and
+left alone, the pinned Temurin, `strace`, `perf`, `stress-ng`, and Docker Engine with the
+Ch13 images. `guest-profiles/stock-unpinned.conf` documents it and
+`scripts/lab/apply-guest-profile.sh stock-unpinned` enforces the command-line part: it strips
+any isolation argument from the stock boot entry (and does nothing, with no reboot, when there is
+none). It needs the stock kernel running, so start from `lab-ready`, not `lab-ready-rt`.
+
+```bash
+scripts/lab/revert-vm.sh lowlat-target lab-ready
+scripts/lab/lab-up.sh
+scripts/lab/pin-vcpu.sh --remove                       # removes any <cputune> (harmless when there is none)
+scripts/lab/install-guest-tools.sh                     # Temurin, stress-ng, strace, perf
+scripts/lab/apply-guest-profile.sh stock-unpinned
+scripts/lab/deploy-to-vm.sh                            # examples, scripts, contracts, versions.env
+scripts/lab/lab-ssh.sh lowlat-target 'cd low-latency-engineering && examples/13-where-code-runs/containers/build-images.sh'
+scripts/check-prereqs.sh --vm                          # the r04 checks; --rt for the RT guest
+scripts/lab/snapshot-vm.sh lowlat-target lab-ready-r04
+scripts/lab/lab-down.sh
+```
+
+`check-prereqs.sh --vm` fails on a PREEMPT_RT kernel, on isolation arguments, on a stopped Docker
+service, on a user outside the `docker` group, and on any image whose ID differs from
+`examples/13-where-code-runs/containers/IMAGES.lock`; it records the Docker Engine version, the
+active tuned profile, `kernel.io_uring_disabled` and whether the guest has a virtual PMU
+(`perf stat -e cycles:u true`).

@@ -1,0 +1,20 @@
+# IMAGES.lock - the Ch13 container images, one line each. Plain text, whitespace-separated fields:
+#
+#   <local-name>:<tag>@<built-image-digest>  <runtime-base-ref@digest>  [builder=<builder-base-ref@digest>]
+#
+#   field 1  the image as container_run (examples/_lib/lib.sh) takes it: name:tag@sha256:<64 hex>.
+#            The digest is the image ID printed by `docker image inspect --format '{{.Id}}' NAME:TAG`
+#            in the lab guest; container_run checks that the image it ran has this ID (or this
+#            RepoDigest) and records it as runtime.environment.container.image_digest.
+#            `sha256:PENDING` means "not built yet": container_run refuses it, and
+#            check-prereqs.sh --vm warns and skips the digest check.
+#   field 2  the final-stage FROM of the Containerfile: registry/repo:tag@index-digest, copied from
+#            _plans/dependency-pins.md ("Images"). build-images.sh refuses to run if a Containerfile's
+#            FROM lines disagree with this file.
+#   field 3  (only where a builder stage uses another base) the builder-stage base.
+#
+# Blank lines and lines starting with # are ignored by every reader. Local names carry a tag and
+# never `latest`. Fill the digests with examples/13-where-code-runs/containers/build-images.sh (in the guest).
+lowlat/place-cpp:r04@sha256:PENDING registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e builder=registry.access.redhat.com/ubi10/ubi:10.2-1792744468@sha256:7495bfa53ae7a81a58aeface0bb4858d12741832c542c29dc690d67b183b73b0
+lowlat/place-java:r04@sha256:PENDING registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e builder=registry.access.redhat.com/ubi10/ubi:10.2-1792744468@sha256:7495bfa53ae7a81a58aeface0bb4858d12741832c542c29dc690d67b183b73b0
+lowlat/place-py:r04@sha256:PENDING registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e

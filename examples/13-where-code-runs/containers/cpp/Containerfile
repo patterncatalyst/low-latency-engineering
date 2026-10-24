@@ -1,0 +1,89 @@
+# Ch13 C++ lane image: the line simulator, the C++ line consumer and the Ch13 cgroup probe,
+# built once with the UBI 10 GCC and run unchanged in every lane (D10).
+#
+# Build context: the REPOSITORY ROOT (the build needs examples/, contracts/, versions.env and
+# scripts/deps/). From the root, in the lab guest:
+#   docker build -f examples/13-where-code-runs/containers/cpp/Containerfile -t lowlat/place-cpp:r04 .
+#
+# Network is needed at build time: protobuf and abseil (scripts/deps/build-protobuf.sh), the CMake
+# dependencies (cmake/deps.cmake: HdrHistogram_c, Google Benchmark, nlohmann/json, Boost 1.92.0,
+# liburing 2.15). Every download is checked against a sha256 pinned in the repo (URL_HASH in
+# CMake, versions.env for protobuf, the ARGs below for the toolchain). No subscription is used:
+# only the public UBI repositories.
+
+# ---- toolchain: UBI 10 GCC 14 + the pinned upstream CMake and Ninja -------------------------------
+# UBI 10 AppStream ships cmake 3.31.8 (the repo needs 4.3 or later) and no ninja-build at all
+# (checked 2026-10-24 against the public ubi10 BaseOS/AppStream/CodeReady repositories), so both
+# come from the upstream release binaries, hash-checked. Pins: _plans/dependency-pins.md "S5".
+FROM registry.access.redhat.com/ubi10/ubi:10.2-1792744468@sha256:7495bfa53ae7a81a58aeface0bb4858d12741832c542c29dc690d67b183b73b0 AS toolchain
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG CMAKE_VERSION=4.4.4
+ARG CMAKE_SHA256=e5bb807f7728cb60cd8b27ebc97a2edb469b68655f21e844a600c3575b76f5bb
+ARG NINJA_VERSION=1.13.2
+ARG NINJA_SHA256=5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6
+# hadolint ignore=DL3041
+RUN dnf -y --setopt=install_weak_deps=False install \
+        gcc-c++ make git python3 unzip tar gzip xz \
+    && dnf clean all \
+    && g++ --version | head -n1
+RUN curl -fsSL --retry 3 -o /tmp/cmake.tgz \
+        "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz" \
+    && echo "${CMAKE_SHA256}  /tmp/cmake.tgz" | sha256sum -c - \
+    && tar -xzf /tmp/cmake.tgz -C /opt \
+    && ln -s "/opt/cmake-${CMAKE_VERSION}-linux-x86_64/bin/cmake" /usr/local/bin/cmake \
+    && ln -s "/opt/cmake-${CMAKE_VERSION}-linux-x86_64/bin/ctest" /usr/local/bin/ctest \
+    && curl -fsSL --retry 3 -o /tmp/ninja.zip \
+        "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" \
+    && echo "${NINJA_SHA256}  /tmp/ninja.zip" | sha256sum -c - \
+    && unzip -q /tmp/ninja.zip -d /usr/local/bin \
+    && rm -f /tmp/cmake.tgz /tmp/ninja.zip \
+    && cmake --version | head -n1 && ninja --version
+
+# ---- protobuf + abseil, built from the pinned tarballs into a prefix -------------------------------
+# Only versions.env and the build script are copied, so this layer is cached until the pins change.
+FROM toolchain AS deps
+ENV LOWLAT_PREFIX=/opt/lowlat-prefix
+WORKDIR /src
+COPY versions.env /src/versions.env
+COPY scripts/deps/build-protobuf.sh /src/scripts/deps/build-protobuf.sh
+RUN CC=gcc CXX=g++ bash /src/scripts/deps/build-protobuf.sh
+
+# ---- build -----------------------------------------------------------------------------------------
+# An explicit configure that mirrors the `release-gcc` preset (Release, -O2 -g -fno-omit-frame-pointer
+# -DNDEBUG, g++) and replaces its host-only CMAKE_PREFIX_PATH ($HOME/.cache/lowlat/prefix). Tests
+# are off (no GoogleTest in the image). Add a binary here when a later step creates it: put its
+# CMake target in TARGETS and its file name in BINARIES (the Ch12 receive consumer and the Ch13
+# executables of S6 and S7 are not in the tree yet; lowlat_place is the Ch13 cgroup_probe library).
+FROM deps AS build
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG TARGETS="line-simulator line-consumer lowlat_place"
+ARG BINARIES="line-simulator line-consumer"
+COPY contracts /src/contracts
+COPY examples /src/examples
+RUN cmake -S /src/examples -B /build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+        "-DCMAKE_C_FLAGS_RELEASE=-O2 -g -fno-omit-frame-pointer -DNDEBUG" \
+        "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -g -fno-omit-frame-pointer -DNDEBUG" \
+        -DCMAKE_PREFIX_PATH=/opt/lowlat-prefix \
+        -DBUILD_TESTING=OFF -DLOWLAT_BUILD_R04=ON \
+    && cmake --build /build --target ${TARGETS} \
+    && mkdir -p /out/bin \
+    && for b in ${BINARIES}; do \
+         f="$(find /build -type f -name "$b" -perm -u+x | head -n1)"; \
+         [ -n "$f" ] || { echo "binary $b not built" >&2; exit 1; }; \
+         install -m 0755 "$f" /out/bin/; \
+       done
+
+# ---- runtime: ubi-minimal + libstdc++, binaries only -----------------------------------------------
+FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e AS runtime
+LABEL org.opencontainers.image.title="lowlat place-cpp" \
+      org.opencontainers.image.description="Ch13 C++ lane: line simulator, line consumer, built with the UBI 10 GCC" \
+      org.opencontainers.image.licenses="Apache-2.0"
+# libstdc++ is in the UBI 10 BaseOS repository; installing it is a no-op when the base already has it.
+# hadolint ignore=DL3041
+RUN microdnf -y --setopt=install_weak_deps=0 install libstdc++ \
+    && microdnf clean all
+COPY --from=build /out/bin/ /usr/local/bin/
+ENV PATH=/usr/local/bin:/usr/bin:/bin
+USER 10001:10001

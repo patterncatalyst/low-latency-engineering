@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-guest-tools.sh - install the pinned Temurin JDK and stress-ng into the lab guest.
+# install-guest-tools.sh - install the pinned Temurin JDK, stress-ng, strace and perf into the lab guest.
 #
 #   ./install-guest-tools.sh [vm]        # default lowlat-target
 #
@@ -7,7 +7,8 @@
 # host into ~/.cache/lowlat/downloads (sha256-checked), copied over ssh/vsock, checked again in the
 # guest and unpacked to /opt/temurin-<TEMURIN_VERSION>. It is made the guest's java and javac by
 # `alternatives` (so non-login ssh commands see it) and JAVA_HOME/PATH via /etc/profile.d.
-# Fedora's java-25-openjdk stays installed but is no longer selected. stress-ng comes from dnf.
+# Fedora's java-25-openjdk stays installed but is no longer selected. stress-ng, strace and perf
+# come from dnf, only when absent.
 # Idempotent. Guest-only: nothing on the host changes. cloud-init does the same for a rebuilt guest.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -54,10 +55,12 @@ gssh "set -e
   done
   printf 'export JAVA_HOME=$JDK_DIR\\nexport PATH=\$JAVA_HOME/bin:\$PATH\\n' | sudo tee /etc/profile.d/temurin.sh >/dev/null"
 
-step "stress-ng"
-gssh 'rpm -q stress-ng >/dev/null 2>&1 || sudo dnf -y -q install stress-ng'
+step "stress-ng, strace, perf"
+gssh 'for p in stress-ng strace perf; do rpm -q "$p" >/dev/null 2>&1 || sudo dnf -y -q install "$p"; done'
 
 jv="$(gssh 'java -version 2>&1')"
 [[ "$jv" == *"\"$TEMURIN_VERSION\""* && "$jv" == *Temurin* ]] || die "guest java is not Temurin $TEMURIN_VERSION: $jv"
 ok "guest java: $(head -n1 <<<"$jv") ($(grep -o 'Temurin[^ ]*' <<<"$jv" | head -n1))"
 ok "stress-ng: $(gssh 'stress-ng --version' | head -n1)"
+ok "strace: $(gssh 'strace -V' | head -n1)"
+ok "perf: $(gssh 'perf --version' | head -n1)"

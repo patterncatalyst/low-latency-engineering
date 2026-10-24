@@ -327,3 +327,17 @@ Each line is a fact the chapters may assert, with its source and the date checke
 | JDK 27 (non-LTS) | not used | 27 GA (2026-09-15, Temurin 27.0.0+35); jdk.java.net/27 lists 27.0.1.0.2 as the current update (checked 2026-10-22) | Base is LTS 25 (Q1); libraries certify LTS | JDK 28 GA, or next LTS (JDK 29) |
 | JDK 28 / Valhalla EA, jextract EA | not used | EA only | Prerelease policy (Q2) | JDK 28 GA (~2027-03); GA jextract |
 | GraalVM CE 25 Innovation | not pinned | graal-25.4.4.1.1 | Prose only (Q3) | only if native-image is ever run in an example |
+
+## S5 additions (2026-10-24): container image toolchain
+
+Pins used only inside the Ch13 Containerfiles (`examples/13-where-code-runs/containers/`). The base images are the UBI 10 rows in "Images (UBI, newest first)" above; the index digests were re-checked on 2026-10-24 with `skopeo inspect --raw` (sha256 of the manifest list equals the pinned digest for both `ubi10/ubi:10.2-1792744468` and `ubi10/ubi-minimal:10.2-1792742351`). Nothing here is installed on the host.
+
+| Component | Pinned version | Licence | Source queried | Checksum | Notes |
+|---|---|---|---|---|---|
+| CMake (upstream binary, builder stage only) | 4.4.4 | BSD-3-Clause | `gh api repos/Kitware/CMake/releases/latest` (v4.4.4, prerelease=false); `https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4-linux-x86_64.tar.gz` | SHA256 `e5bb807f7728cb60cd8b27ebc97a2edb469b68655f21e844a600c3575b76f5bb` (GitHub asset digest; equal to the line in `cmake-4.4.4-SHA-256.txt`) | UBI 10 AppStream (public repo metadata, 2026-10-24) carries `cmake` 3.31.8-1.el10 only; the repo needs 4.3 or later (`cmake_minimum_required(VERSION 4.3)`). |
+| Ninja (upstream binary, builder stage only) | 1.13.2 | Apache-2.0 | `gh api repos/ninja-build/ninja/releases/latest` (v1.13.2, prerelease=false); asset `ninja-linux.zip` | SHA256 `5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6` (GitHub asset digest) | `ninja-build` is in none of UBI 10 BaseOS, AppStream or CodeReady Builder (public repo metadata, 2026-10-24). |
+| Apache Maven (builder stage only) | 3.9.16 | Apache-2.0 | Maven Central `maven-metadata.xml` for `org.apache.maven:apache-maven` (newest 3.9.x); `https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz` | SHA256 `80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb` (computed from the downloaded file, 9278065 bytes; Central's `.sha512` is `831a8591...6f6`) | Latest stable 3.9 line. Maven 4.0.0 is only at `4.0.0-rc-7` (2026-10-01), a prerelease, not used. The POMs require `[3.9,)`. |
+| uv (upstream static binary, python image) | 0.13.0 | Apache-2.0 OR MIT | `gh api repos/astral-sh/uv/releases/tags/0.13.0`; asset `uv-x86_64-unknown-linux-musl.tar.gz` | SHA256 `b0828fc4cdc47d65951e94b5f0a15a5364420e8dcd88723f3b21e7a2eb30bbc3` (GitHub asset digest) | Same uv version as the host (see the hold table: 0.13.5 exists, the user updates uv themselves). It installs the CPython named by `examples/.python-version` (3.14.8 GIL build until uv can see 3.14.9). |
+| GCC, libstdc++ (UBI 10 AppStream/BaseOS) | 14.3.1-4.4.el10 | GPL-3.0-or-later WITH GCC-exception-3.1 | public UBI 10 repository metadata, 2026-10-24 | n/a (dnf's own signatures) | Unchanged from the Images note: at least 14, so `<generator>` and `<print>` exist. |
+
+The same versions are in `versions.env` (`CMAKE_*`, `NINJA_*`, `MAVEN_*`, `UV_*`) and repeated as `ARG` defaults in the Containerfiles.
