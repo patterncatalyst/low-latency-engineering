@@ -63,7 +63,7 @@ scripts/lab/lab-up.sh                       # start, wait for ssh over vsock
 scripts/lab/lab-status.sh                   # state, ssh destination, readiness, snapshots
 scripts/lab/lab-ssh.sh [vm [command...]]   # ssh as fedora (passwordless sudo)
 scripts/lab/deploy-to-vm.sh                 # rsync examples/ and scripts/ into the guest
-scripts/lab/revert-vm.sh lowlat-target [snapshot]   # undo a destructive run; steps the guest clock to NTP
+scripts/lab/revert-vm.sh lowlat-target [snapshot]   # undo a destructive run; resets the guest clock
 scripts/lab/lab-down.sh                     # graceful shutdown; FORCE=1 to power off
 scripts/lab/destroy-vm.sh lowlat-target     # tear down, disks included
 ```
