@@ -1,9 +1,15 @@
 [project]
 name = "lowlat-io"
 version = "1.0.0"
-description = "Ch12: I/O engines, Python lane (asyncio and uvloop), wiring skeleton"
+description = "Ch12: I/O engines, Python lane (asyncio, a blocking thread per socket, uvloop), GIL and free-threaded"
 requires-python = ">=3.14"
+# uvloop is imported only inside the function that runs on it; the measuring process under the
+# free-threaded build never imports it, nor lowlat_measure (both would re-enable the GIL or are not
+# declared free-threading safe). The raw samples are converted in the GIL workspace environment.
 dependencies = ["uvloop==0.23.0"]
+
+[project.scripts]
+io-py = "lowlat_io.cli:main"
 
 [build-system]
 requires = ["hatchling==1.32.4"]

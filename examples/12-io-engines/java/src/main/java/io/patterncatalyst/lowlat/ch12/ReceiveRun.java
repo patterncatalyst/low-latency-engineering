@@ -75,14 +75,15 @@ final class ReceiveRun {
         }
 
         long arriveAndGo() {
+            if (Thread.currentThread().isVirtual()) {
+                // One carrier runs all four virtual threads. Spinning, or yielding in a loop, would keep the
+                // pool's local queue busy and starve the threads still waiting to be resumed; the carrier runs
+                // them one after the other in microseconds, which is the skew this records.
+                return System.nanoTime();
+            }
             arrived.incrementAndGet();
-            boolean virtual = Thread.currentThread().isVirtual();
             while (arrived.get() < threads) {
-                if (virtual) {
-                    Thread.yield(); // one carrier runs all four: spinning would never let the others arrive
-                } else {
-                    Thread.onSpinWait();
-                }
+                Thread.onSpinWait();
             }
             return System.nanoTime();
         }

@@ -73,6 +73,7 @@ public class ServiceStats {
         }
     }
 
+    /** Clears the per-run counters after the warm-up. The blocked-thread count keeps counting. */
     void reset() {
         requests.set(0);
         inHandlerMax.reset();
@@ -80,7 +81,7 @@ public class ServiceStats {
         eventLoopThreads.clear();
         workerThreads.clear();
         carrierThreads.clear();
-        blockedWarnings.set(0);
+        // blockedWarnings is not reset: it counts the server's whole life, as the log does
     }
 
     /** {@code name value} lines. */
