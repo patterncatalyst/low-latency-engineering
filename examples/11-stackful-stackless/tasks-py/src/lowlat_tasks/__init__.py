@@ -1,15 +1,28 @@
-"""Ch11 wiring skeleton: run n asyncio tasks to completion and count them."""
+"""Ch11: stackful and stackless tasks, Python lane.
 
-import asyncio
+Python has no standard-library stackful coroutine, so the comparison is OS threads against asyncio
+tasks (stackless: a coroutine's frame lives on the heap). greenlet and gevent are third-party
+stackful coroutines and are named in the chapter, not measured. The measuring modules import
+nothing that re-enables the GIL (no `lowlat_measure`); `lowlat-report from-samples` converts what
+they write.
+"""
+
+import sys
+import sysconfig
+
+EXAMPLE = "11-stackful-stackless"
 
 
-async def _one(index: int) -> int:
-    await asyncio.sleep(0)
-    return index
+def python_build() -> str:
+    """`free-threaded` for the free-threaded build, else `gil` (runtime.python_build).
+
+    The build comes from the interpreter's configuration, not from the live GIL state: an extension
+    that does not declare free-threading support re-enables the GIL at import time in a
+    free-threaded interpreter, which `gil_enabled` reports separately.
+    """
+    return "free-threaded" if sysconfig.get_config_var("Py_GIL_DISABLED") else "gil"
 
 
-async def run_tasks(n: int) -> int:
-    """Start n tasks, wait for all of them, return how many finished."""
-    async with asyncio.TaskGroup() as group:
-        tasks = [group.create_task(_one(i)) for i in range(n)]
-    return len(tasks)
+def gil_enabled() -> bool:
+    """Whether the GIL is on right now (False only for a free-threaded build that kept it off)."""
+    return sys._is_gil_enabled()
