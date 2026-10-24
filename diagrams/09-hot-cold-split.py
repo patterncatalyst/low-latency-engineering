@@ -45,13 +45,13 @@ bands = [
 s0 = box(40, 90, 80, 56, "sub", "slot 0", "80 B")
 s1 = box(130, 90, 80, 56, "sub", "slot 1", "80 B")
 s2 = box(220, 90, 80, 56, "sub", "slot 2", "80 B")
-sweep_a = box(340, 80, 220, 76, "ink", "Sweep p50", "C++ 4.21-4.26 ms", "Java 9.30-9.40 ms")
+sweep_a = box(340, 80, 220, 76, "ink", "Sweep p50", "C++ 4.18-4.21 ms", "Java 9.25-9.27 ms")
 miss_a = box(600, 80, 240, 76, "ink", "D1 read misses per slot", "1.2500", "cachegrind, exact")
 
 hot1 = box(40, 240, 210, 50, "accent", "due_tick column", "8 B per slot")
 hot2 = box(40, 300, 210, 50, "accent", "state column", "1 B per slot")
 cold = box(40, 358, 210, 40, "ghost", "Cold fields", "71 B per slot, aside")
-sweep_b = box(340, 262, 220, 76, "ink", "Sweep p50", "C++ 0.57-0.58 ms", "Java 0.44-0.45 ms")
+sweep_b = box(340, 262, 220, 76, "ink", "Sweep p50", "C++ 0.57 ms", "Java 0.44 ms")
 miss_b = box(600, 262, 240, 76, "ink", "D1 read misses per slot", "0.1406", "cachegrind, exact")
 
 nodes = [s0, s1, s2, sweep_a, miss_a, hot1, hot2, cold, sweep_b, miss_b]
@@ -79,7 +79,7 @@ notes = [
         "x": 440,
         "y": 424,
         "text": (
-            "Fat record over hot-cold sweep p50: 7.30-7.43x in C++, 20.91-20.99x in "
+            "Fat record over hot-cold sweep p50: 7.31-7.38x in C++, 21.07-21.10x in "
             "Java; D1 read misses per slot 8.89x (exact)."
         ),
         "anchor": "middle",

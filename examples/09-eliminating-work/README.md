@@ -263,31 +263,31 @@ aren't linked. CPython is PSF-2.0. Versions are pinned in `versions.env` and `_p
 
 Behavioural. `verify.sh` asserts the six criteria above, and all of them held on the host runs `r03-run1..3`
 (bare-metal host, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin
-25.0.5+8, GCC 16.2, Python 3.14.8; lab VM down; commit 20664bd; load average 0.46 to 1.72 at each start). Threads sat
+25.0.5+8, GCC 16.2, Python 3.14.8; lab VM down; commit 9802788; load average 1.15 to 1.25 at each start). Threads sat
 on distinct physical cores other than CPU 0, placed with `sched_setaffinity` and asserted per thread. Ranges over the
 three runs; a ratio is the range of each run's median over its 3 alternations.
 
 | Quantity | Range |
 |---|---|
 | C++ allocations per insert, `node-map` / `flat-map` (exact) | 2 / 0 after `reserve` |
-| JMH allocation per insert, `node-map` / `flat-map` (exact) | 128 B / 0.017 to 0.018 B |
+| JMH allocation per insert, `node-map` / `flat-map` (exact) | 128 B / 0.014 to 0.016 B |
 | Python record object, `dict` / slotted (exact) | 3.41x (bound 2x) |
 | Python bytes per tracked parcel, `dict` / `slots-int` (exact) | 2.05x (bound 2x, margin 1.02x) |
 | Cachegrind LL read misses per lookup, `node-map` / `flat-map` (exact) | 5.94 / 0.70, 8.54x (bound 2x) |
-| `perf` `LLC-load-misses:u` per lookup, ratio (C++) | 23.65x to 26.11x (bound 2x) |
-| Hub sweep p50, `fat-record` / `hot-cold`, ratio | C++ 7.30x to 7.43x, Java 20.91x to 20.99x (bound 2x) |
+| `perf` `LLC-load-misses:u` per lookup, ratio (C++) | 25.86x to 26.77x (bound 2x) |
+| Hub sweep p50, `fat-record` / `hot-cold`, ratio | C++ 7.31x to 7.38x, Java 21.07x to 21.10x (bound 2x) |
 | Cachegrind D1 read misses per slot, `fat-record` / `hot-cold` (exact) | 1.2500 / 0.1406, 8.89x (bound 4x) |
-| L1 misses per increment, `adjacent-counters` / `pair-padded`, store increment | C++ 609x to 617x, Java 270x to 287x (bound 10x) |
-| C++ `fetch_add` per-batch p50, `adjacent-counters` / `pair-padded` | 10.50x to 11.44x (bound 3x) |
+| L1 misses per increment, `adjacent-counters` / `pair-padded`, store increment | C++ 590x to 622x, Java 106x to 167x (bound 10x) |
+| C++ `fetch_add` per-batch p50, `adjacent-counters` / `pair-padded` | 9.89x to 11.96x (bound 3x) |
 | Line, C++ receive-thread allocations | `node-map` 400,000 (27.8 MB), `flat-map` 0 (exact) |
 | Line runs | 200,000 parcels counted, none dropped; 82 reports pass `lowlat-report check`; every Java report carries `build.flags` and every pinned report `runtime.placement.cpus` |
-| Observed: C++ hub lookup p50, `node-map` / `flat-map` | 388 to 394 ns / 113 to 115 ns, ratio 3.41x to 3.48x |
-| Observed: Java hub lookup p50, `node-map` / `flat-map` | 321 to 323 ns / 56 to 61 ns, ratio 5.33x to 5.73x |
-| Observed: line tracker (4,800 parcels) lookup p50, `node-map` / `flat-map` | 47 to 48 ns / 19 to 20 ns |
-| Observed: store-increment batch p50 (1,000 increments), `adjacent-counters` / `pair-padded` | C++ 5,119 to 5,163 ns / 1,606 to 1,616 ns (3.15x to 3.19x); Java ratio 3.02x to 3.08x |
-| Observed: Python sweep p50, list of records / array columns | 41.1 to 41.6 ms / 42.9 to 43.3 ms |
+| Observed: C++ hub lookup p50, `node-map` / `flat-map` | 389 to 393 ns / 113 ns, ratio 3.43x to 3.48x |
+| Observed: Java hub lookup p50, `node-map` / `flat-map` | 321 to 322 ns / 57 to 58 ns, ratio 5.53x to 5.67x |
+| Observed: line tracker (4,800 parcels) lookup p50, `node-map` / `flat-map` | 46 to 48 ns / 20 ns |
+| Observed: store-increment batch p50 (1,000 increments), `adjacent-counters` / `pair-padded` | C++ 5,115 to 5,279 ns / 1,597 to 1,624 ns (3.18x to 3.29x); Java ratio 2.89x to 3.06x |
+| Observed: Python sweep p50, list of records / array columns | 40.9 to 41.0 ms / 43.1 to 43.7 ms |
 
-The store-increment batch ratios sit 1 % to 6 % above 3x and are not asserted: a store buffer hides part of the
+The store-increment batch ratios sit within 10 % of 3x (C++ 6 % to 10 % above, Java 4 % below to 2 % above) and are not asserted: a store buffer hides part of the
 coherence traffic from a loop of plain stores, so the L1 miss counts carry the claim and the read-modify-write batch
 time shows the effect in time. Exact counters carry no timing margin: the node map's 2 allocations per insert meet
 their bound of 2, and the Python `dict` against `slots-int` clears 2x by 1.02x, because both are deterministic. Every

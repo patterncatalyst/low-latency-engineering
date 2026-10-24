@@ -19,10 +19,10 @@
 <text x="235.0" y="194.0" font-size="11.5" fill="#555555" text-anchor="middle">counters 0-4, 8 B apart</text>
 <rect x="470" y="76" width="380" height="46" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="660.0" y="97.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">L1 misses per increment</text>
-<text x="660.0" y="114.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ store 0.093-0.095, rmw 0.43-0.44</text>
+<text x="660.0" y="114.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ store 0.093-0.094, rmw 0.42-0.44</text>
 <rect x="470" y="134" width="380" height="46" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="660.0" y="155.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Batch p50, 1,000 increments</text>
-<text x="660.0" y="172.0" font-size="11.5" fill="#555555" text-anchor="middle">store 5,119-5,163 ns, rmw 51.9-55.9 us</text>
+<text x="660.0" y="172.0" font-size="11.5" fill="#555555" text-anchor="middle">store 5,115-5,279 ns, rmw 48.3-57.3 us</text>
 <rect x="40" y="266" width="76" height="40" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
 <text x="78.0" y="291.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">camera 0</text>
 <rect x="120" y="266" width="76" height="40" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
@@ -45,13 +45,13 @@
 <text x="398.0" y="371.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">128 B</text>
 <rect x="470" y="262" width="380" height="46" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="660.0" y="283.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">L1 misses per increment</text>
-<text x="660.0" y="300.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ store 0.00015-0.00016, rmw 0.0002</text>
+<text x="660.0" y="300.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ store 0.00016, rmw 0.0002-0.0004</text>
 <rect x="470" y="318" width="380" height="46" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="660.0" y="339.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Batch p50, 1,000 increments</text>
-<text x="660.0" y="356.0" font-size="11.5" fill="#555555" text-anchor="middle">store 1,606-1,616 ns, rmw 4.89-4.90 us</text>
+<text x="660.0" y="356.0" font-size="11.5" fill="#555555" text-anchor="middle">store 1,597-1,624 ns, rmw 4.89-5.01 us</text>
 <rect x="470" y="374" width="380" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
 <text x="660.0" y="392.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">64 B padding, store batch p50</text>
-<text x="660.0" y="409.0" font-size="11.5" fill="#555555" text-anchor="middle">1,656-1,676 ns (observed)</text>
+<text x="660.0" y="409.0" font-size="11.5" fill="#555555" text-anchor="middle">1,653-1,692 ns (observed)</text>
 <path d="M78,116 L78,154" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
 <path d="M158,116 L158,154" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
 <path d="M238,116 L238,154" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
@@ -68,5 +68,5 @@
 <path d="M436,366 L470,355" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <path d="M436,380 L470,394" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
 <text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Neighbouring counters share one line, so the writers take it from each other</text>
-<text x="440" y="444" font-size="12" fill="#1d1d1d" text-anchor="middle">Misses per increment fall 609-617x (C++) and 270-287x (Java) with padding; store batches move about 3x, rmw about 10x.</text>
+<text x="440" y="444" font-size="12" fill="#1d1d1d" text-anchor="middle">Misses per increment fall 590-622x (C++) and 106-167x (Java) with padding; store batches move about 3x, rmw about 10x.</text>
 </svg>

@@ -5,8 +5,8 @@ order: 9
 permalink: /examples/09-eliminating-work/
 card_eyebrow: "Example 09 · Chapter 9"
 card_title: "A tracker with less to do"
-card_blurb: "At 1,000,000 parcels an open-addressing flat map looks a parcel up in a p50 of 113-115 ns against 388-394 ns for a node map in C++, and padding five camera counters cuts L1 misses per increment 609-617x (bare-metal, untuned host)."
-description: "At 1,000,000 parcels an open-addressing flat map looks a parcel up in a p50 of 113-115 ns against 388-394 ns for a node map in C++, and padding five camera counters cuts L1 misses per increment 609-617x (bare-metal, untuned host)."
+card_blurb: "At 1,000,000 parcels an open-addressing flat map looks a parcel up in a p50 of 113 ns against 389-393 ns for a node map in C++, and padding five camera counters cuts L1 misses per increment 590-622x (bare-metal, untuned host)."
+description: "At 1,000,000 parcels an open-addressing flat map looks a parcel up in a p50 of 113 ns against 389-393 ns for a node map in C++, and padding five camera counters cuts L1 misses per increment 590-622x (bare-metal, untuned host)."
 languages: "C++ · Java · Python"
 ---
 
@@ -29,7 +29,7 @@ examples/09-eliminating-work/verify.sh
 - Line, C++: the node map allocates on the receive thread (at least 1 per parcel) and the flat map does not (exact).
 - Every report passes `lowlat-report check`, the line runs count 200,000 parcels with none dropped, and every pinned report carries its thread placement.
 
-All of it held on the host runs `r03-run1..3` (bare-metal host, untuned, commit 20664bd). The lookup p50 ratios, the store-increment batch times and the Python lane are observed and not asserted.
+All of it held on the host runs `r03-run1..3` (bare-metal host, untuned, commit 9802788). The lookup p50 ratios, the store-increment batch times and the Python lane are observed and not asserted.
 
 ## Chapter and source
 

@@ -281,6 +281,8 @@ Asserted non-exact criteria, final full `verify.sh` run of each example (median 
 | 10 | 4 stalled consumer wait, C++ / Java | 1.07 / 1.14 ms | ≥0.5 ms | 2.1x / 2.3x (by construction) |
 | 10 | 6 writer p99 seqlock vs lock, C++ / Java | 216x / 29.9x | ≥3x | 72x / 10x |
 
+Note (S15): this table is the calibration history. Example 09's committed values are the S15 runs `r03-run1..3` at commit 9802788 (e.g. 2d 25.9x to 26.8x, 3a 7.31x to 7.38x, 3b 21.07x to 21.10x, 4a 9.89x to 11.96x, 4b 590x to 622x, 4c 106x to 167x; every margin at least 3.3x non-exact); see the reconciliation 09.x rows.
+
 ### S8 record (2026-10-23)
 
 `r03-run1..3` for 09 and 10 at commit 20664bd, host bare metal (`virt` none, powersave, balanced, kernel 7.2), lab VM down, serial under a host lock, each start at load1 ≤ 2 (`run-start.json` per run: 0.46 to 1.99). Every `verify.sh` exited 0 with every criterion holding and no margin under 2x; 510 reports pass `lowlat-report check`; results 15 MB; `scrub-host-ids --check` clean. The first attempt of 10's runs lost its `verify.log` (verify.sh clears stale `*.log` in its results dir at start), so those runs were deleted and re-run at the same commit with the log written outside and moved in. 00–08 need no re-measure: `examples/common/line-simulator` and the shared consumers are unchanged since main; `examples/common` changed only additively (15 files changed, 831 insertions(+), 6 deletions(-): S2/S3 report fields, placement and counter writers, the promoted harness converter).

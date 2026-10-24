@@ -39,51 +39,51 @@ Measured values come only from the committed host runs `examples/09-eliminating-
 | 9.1 JOL ParcelState instance (B) | `09-eliminating-work/results/r03-run{1,2,3}/java/footprint.json `parcel_state_instance_bytes`` | 96 B | 96, 96, 96 |
 | 9.1 JOL node-map tracker per parcel (100,000 parcels) (B) | `09-eliminating-work/results/r03-run{1,2,3}/java/footprint.json `node_map_bytes_per_parcel`` | 202 B | 202, 202, 202 |
 | 9.1 JOL flat-map tracker per parcel (100,000 parcels) (B) | `09-eliminating-work/results/r03-run{1,2,3}/java/footprint.json `flat_map_bytes_per_parcel`` | 87 B | 87, 87, 87 |
-| 9.1 line-scale lookup p50 node-map (4,800 parcels, fits L2) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `line-scale lookups`` | 47-48 ns | 47, 48, 47 |
-| 9.1 line-scale lookup p50 flat-map | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `line-scale lookups`` | 19-20 ns | 20, 20, 19 |
+| 9.1 line-scale lookup p50 node-map (4,800 parcels, fits L2) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `line-scale lookups`` | 46-48 ns | 46, 46, 48 |
+| 9.1 line-scale lookup p50 flat-map | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `line-scale lookups`` | 20 ns | 20, 20, 20 |
 | 9.2 C++ node-map allocations per insert (exact) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 1a` | 2 | 2, 2, 2 |
 | 9.2 C++ flat-map allocations after reserve (exact) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 1b` | 0 | 0, 0, 0 |
 | 9.2 JMH node-map B/op | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `insert-node-map ... B/op`` | 128 B/op | 128, 128, 128 |
-| 9.2 JMH flat-map B/op | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `insert-flat-map ... B/op`` | 0.017-0.018 B/op | 0.018, 0.017, 0.018 |
-| 9.2 C++ hub lookup p50 node-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup p50 (ns) by alternation`` | 388-394 ns | 394, 393, 388 |
-| 9.2 C++ hub lookup p50 flat-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 113-115 ns | 115, 113, 113 |
-| 9.2 C++ hub lookup p50 ratio node-map / flat-map (median of 3, observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 2a`` | 3.41-3.48x | 3.41, 3.48, 3.45 |
-| 9.2 C++ LL misses per lookup, node-map (perf :u, alternation 1) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup node-map`` | 5.04-5.15 | 5.15, 5.04, 5.04 |
-| 9.2 C++ LL misses per lookup, flat-map (perf :u, alternation 1) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup flat-map`` | 0.19-0.23 | 0.22, 0.23, 0.19 |
+| 9.2 JMH flat-map B/op | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `insert-flat-map ... B/op`` | 0.014-0.016 B/op | 0.016, 0.015, 0.014 |
+| 9.2 C++ hub lookup p50 node-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup p50 (ns) by alternation`` | 389-393 ns | 393, 389, 390 |
+| 9.2 C++ hub lookup p50 flat-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 113 ns | 113, 113, 113 |
+| 9.2 C++ hub lookup p50 ratio node-map / flat-map (median of 3, observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 2a`` | 3.43-3.48x | 3.48, 3.44, 3.43 |
+| 9.2 C++ LL misses per lookup, node-map (perf :u, alternation 1) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup node-map`` | 5.00-5.13 | 5.13, 5.00, 5.03 |
+| 9.2 C++ LL misses per lookup, flat-map (perf :u, alternation 1) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup flat-map`` | 0.19-0.20 | 0.19, 0.19, 0.20 |
 | 9.2 cachegrind LL read-miss ratio per lookup, node-map / flat-map (exact) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 2c` | 8.54x | 8.54, 8.54, 8.54 |
 | 9.2 cachegrind LL read misses per lookup, node-map (exact) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `cachegrind per lookup`` | 5.94 | 5.94, 5.94, 5.94 |
 | 9.2 cachegrind LL read misses per lookup, flat-map (exact) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.70 | 0.70, 0.70, 0.70 |
-| 9.2 Java hub lookup p50 ratio node-map / flat-map (median of 3, observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 2b`` | 5.33-5.73x | 5.33, 5.73, 5.65 |
-| 9.2 Java hub lookup p50 node-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup p50 (ns) by alternation` (Java)` | 321-323 ns | 323, 321, 321 |
-| 9.2 Java hub lookup p50 flat-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 56-61 ns | 61, 56, 57 |
+| 9.2 Java hub lookup p50 ratio node-map / flat-map (median of 3, observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 2b`` | 5.53-5.67x | 5.63, 5.53, 5.67 |
+| 9.2 Java hub lookup p50 node-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub lookup p50 (ns) by alternation` (Java)` | 321-322 ns | 322, 321, 322 |
+| 9.2 Java hub lookup p50 flat-map (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 57-58 ns | 57, 58, 57 |
 | 9.3 cachegrind D1 read misses per slot, fat-record (exact) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `cachegrind per slot`` | 1.2500 | 1.2500, 1.2500, 1.2500 |
 | 9.3 cachegrind D1 read misses per slot, hot-cold (exact) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.1406 | 0.1406, 0.1406, 0.1406 |
 | 9.3 cachegrind D1 ratio per slot (exact) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 3c` | 8.89x | 8.89, 8.89, 8.89 |
-| 9.3 C++ hub sweep p50 fat-record (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub sweep p50 (ns) by alternation` (C++)` | 4.21-4.26 ms | 4.26, 4.21, 4.26 |
-| 9.3 C++ hub sweep p50 hot-cold (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.57-0.58 ms | 0.57, 0.57, 0.58 |
-| 9.3 C++ hub sweep p50 ratio fat-record / hot-cold | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 3a` | 7.30-7.43x | 7.43, 7.43, 7.30 |
-| 9.3 Java hub sweep p50 fat-record (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log (Java)` | 9.30-9.40 ms | 9.40, 9.30, 9.30 |
-| 9.3 Java hub sweep p50 hot-cold (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.44-0.45 ms | 0.45, 0.44, 0.44 |
-| 9.3 Java hub sweep p50 ratio fat-record / hot-cold | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 3b` | 20.91-20.99x | 20.91, 20.92, 20.99 |
-| 9.4 C++ store batch p50 adjacent-counters (1,000 increments, median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[store increment] per-batch`` | 5,119-5,163 ns | 5,163, 5,119, 5,139 |
-| 9.4 C++ store batch p50 pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 1,606-1,616 ns | 1,606, 1,608, 1,616 |
-| 9.4 C++ store batch p50 ratio (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 4a'`` | 3.15-3.19x | 3.19, 3.18, 3.15 |
-| 9.4 C++ rmw batch p50 adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[rmw increment] per-batch`` | 51.9-55.9 us | 51.9, 51.9, 55.9 |
-| 9.4 C++ rmw batch p50 pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 4.89-4.90 us | 4.90, 4.89, 4.89 |
-| 9.4 C++ rmw batch p50 ratio (asserted >= 3x) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 4a` | 10.50-11.44x | 10.50, 10.62, 11.44 |
-| 9.4 C++ L1 misses per increment, store, adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[store increment] L1-dcache-load-misses:u`` | 0.093-0.095 | 0.095, 0.093, 0.095 |
-| 9.4 C++ L1 misses per increment, store, pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.00015-0.00016 | 0.00016, 0.00015, 0.00015 |
-| 9.4 C++ L1 misses per increment, rmw, adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[rmw increment] L1-dcache-load-misses:u`` | 0.43-0.44 | 0.44, 0.43, 0.43 |
-| 9.4 C++ L1 misses per increment, rmw, pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.0002 | 0.0002, 0.0002, 0.0002 |
-| 9.4 C++ L1-miss ratio per increment, store (asserted >= 10x) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 4b` | 609-617x | 609, 617, 613 |
-| 9.4 Java L1-miss ratio per increment, store (asserted >= 10x) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 4c` | 270-287x | 280, 270, 287 |
-| 9.4 Java store batch p50 adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log (Java) `[store increment] per-batch p50`` | 6,415-6,551 ns | 6,551, 6,415, 6,483 |
-| 9.4 Java store batch p50 pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 2,117-2,127 ns | 2,127, 2,119, 2,117 |
-| 9.4 Java store batch p50 ratio (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 4c'`` | 3.02-3.08x | 3.08, 3.02, 3.05 |
-| 9.4 Java getAndAdd batch p50 ratio (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 4c''`` | 10.97-12.34x | 10.97, 12.11, 12.34 |
-| 9.4 C++ 64-byte padding (line-padded) store batch p50 (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed: line-padded (64 B)`` | 1,656-1,676 ns | 1,658, 1,656, 1,676 |
-| 9.4 C++ two cameras on SMT siblings, store batch p50 (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `two cameras on SMT siblings`` | 4,299-4,331 ns | 4,331, 4,299, 4,307 |
-| 9.4 C++ two cameras on distinct cores, store batch p50 (observed) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 2,111-2,193 ns | 2,193, 2,111, 2,133 |
+| 9.3 C++ hub sweep p50 fat-record (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `hub sweep p50 (ns) by alternation` (C++)` | 4.18-4.21 ms | 4.21, 4.19, 4.18 |
+| 9.3 C++ hub sweep p50 hot-cold (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.57 ms | 0.57, 0.57, 0.57 |
+| 9.3 C++ hub sweep p50 ratio fat-record / hot-cold | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 3a` | 7.31-7.38x | 7.31, 7.38, 7.37 |
+| 9.3 Java hub sweep p50 fat-record (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log (Java)` | 9.25-9.27 ms | 9.27, 9.25, 9.25 |
+| 9.3 Java hub sweep p50 hot-cold (median of 3 alternations) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.44 ms | 0.44, 0.44, 0.44 |
+| 9.3 Java hub sweep p50 ratio fat-record / hot-cold | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 3b` | 21.07-21.10x | 21.08, 21.10, 21.07 |
+| 9.4 C++ store batch p50 adjacent-counters (1,000 increments, median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[store increment] per-batch`` | 5,115-5,279 ns | 5,115, 5,131, 5,279 |
+| 9.4 C++ store batch p50 pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 1,597-1,624 ns | 1,624, 1,597, 1,604 |
+| 9.4 C++ store batch p50 ratio (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 4a'`` | 3.18-3.29x | 3.18, 3.21, 3.29 |
+| 9.4 C++ rmw batch p50 adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[rmw increment] per-batch`` | 48.3-57.3 us | 48.3, 57.3, 54.8 |
+| 9.4 C++ rmw batch p50 pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 4.89-5.01 us | 4.89, 4.89, 5.01 |
+| 9.4 C++ rmw batch p50 ratio (asserted >= 3x) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 4a` | 9.89-11.96x | 9.89, 11.96, 10.92 |
+| 9.4 C++ L1 misses per increment, store, adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[store increment] L1-dcache-load-misses:u`` | 0.093-0.094 | 0.093, 0.094, 0.094 |
+| 9.4 C++ L1 misses per increment, store, pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.00016 | 0.00016, 0.00016, 0.00016 |
+| 9.4 C++ L1 misses per increment, rmw, adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `[rmw increment] L1-dcache-load-misses:u`` | 0.42-0.44 | 0.42, 0.43, 0.44 |
+| 9.4 C++ L1 misses per increment, rmw, pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 0.0002-0.0004 | 0.0002, 0.0002, 0.0004 |
+| 9.4 C++ L1-miss ratio per increment, store (asserted >= 10x) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 4b` | 590-622x | 590, 596, 622 |
+| 9.4 Java L1-miss ratio per increment, store (asserted >= 10x) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log criterion 4c` | 106-167x | 122, 106, 167 |
+| 9.4 Java store batch p50 adjacent-counters (median of 3) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log (Java) `[store increment] per-batch p50`` | 6,123-6,379 ns | 6,123, 6,139, 6,379 |
+| 9.4 Java store batch p50 pair-padded | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 2,083-2,127 ns | 2,121, 2,127, 2,083 |
+| 9.4 Java store batch p50 ratio (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 4c'`` | 2.89-3.06x | 2.89, 2.95, 3.06 |
+| 9.4 Java getAndAdd batch p50 ratio (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed 4c''`` | 11.02-12.29x | 12.29, 12.02, 11.02 |
+| 9.4 C++ 64-byte padding (line-padded) store batch p50 (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `observed: line-padded (64 B)`` | 1,653-1,692 ns | 1,665, 1,653, 1,692 |
+| 9.4 C++ two cameras on SMT siblings, store batch p50 (observed) | `09-eliminating-work/results/r03-run{1,2,3}/verify.log `two cameras on SMT siblings`` | 4,311-4,383 ns | 4,311, 4,323, 4,383 |
+| 9.4 C++ two cameras on distinct cores, store batch p50 (observed) | `09-eliminating-work/results/r03-run{1,2,3}/same line` | 1,948-2,197 ns | 2,065, 2,197, 1,948 |
 | 10.1 C++ mutex claim p99 (alternation 1) | `10-lockfree-waitfree/results/r03-run{1,2,3}/verify.log `cpp mutex claim p50 / p99 / p99.9`` | 2,633-2,985 ns | 2,633, 2,985, 2,641 |
 | 10.1 C++ cas-loop claim p99 (alternation 1) | `10-lockfree-waitfree/results/r03-run{1,2,3}/verify.log `cpp cas-loop claim p50 / p99 / p99.9`` | 478-502 ns | 489, 502, 478 |
 | 10.1 C++ fetch-add claim p99 (alternation 1) | `10-lockfree-waitfree/results/r03-run{1,2,3}/verify.log `cpp fetch-add claim p50 / p99 / p99.9`` | 400-468 ns | 400, 411, 468 |
@@ -134,7 +134,7 @@ Measured values come only from the committed host runs `examples/09-eliminating-
 Deviations from the figure list above, recorded here so the chapters (S10, S11) state them:
 
 - 9.1: the hub flat map is not "near L3's size". The committed footprints are 148.1 MB built for the node-map and 126.0 MB for the flat map, both far beyond the 24 MiB L3. The abseil index alone (about 34 MB at capacity 2^21, from the S5 validation) is not recorded in any committed file, so it is not drawn.
-- 9.4: the SMT-sibling ghost is not drawn. The committed observation (two cameras on SMT siblings, store batch p50 4,299-4,331 ns, against 2,111-2,193 ns on distinct cores, adjacent layout) shows no "siblings share L1, no penalty" result, and the prose in S10 has to explain it before a figure shows it. Batch time is shown as measured: C++ store 3.15-3.19x, C++ rmw 10.50-11.44x (asserted at least 3x), Java store 3.02-3.08x (observed). The asserted claim is the miss count.
+- 9.4: the SMT-sibling ghost is not drawn. The committed observation (two cameras on SMT siblings, store batch p50 4,311-4,383 ns, against 1,948-2,197 ns on distinct cores, adjacent layout) shows no "siblings share L1, no penalty" result, and the prose in S10 has to explain it before a figure shows it. Batch time is shown as measured: C++ store 3.18-3.29x, C++ rmw 9.89-11.96x (asserted at least 3x), Java store 2.89-3.06x (observed). The asserted claim is the miss count.
 - 10.1 and 10.3 quote p99; p99.9 is in the table as observed (it sits at the host's interrupt floor, about 3-5 us).
 - 10.2: the C++ release/acquire both-zero count varies by run (2,306,475-9,888,040 of 10,000,000); the figure quotes the range, the assertion is "at least 1".
 

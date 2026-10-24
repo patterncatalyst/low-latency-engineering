@@ -51,7 +51,7 @@ bands = [
 cams_a = [box(40 + 80 * i, 76, 76, 40, "user", f"camera {i}") for i in range(5)]
 line = box(40, 154, 390, 50, "accent", "One 64 B cache line", "counters 0-4, 8 B apart")
 res_a1 = box(
-    470, 76, 380, 46, "ink", "L1 misses per increment", "C++ store 0.093-0.095, rmw 0.43-0.44"
+    470, 76, 380, 46, "ink", "L1 misses per increment", "C++ store 0.093-0.094, rmw 0.42-0.44"
 )
 res_a2 = box(
     470,
@@ -60,13 +60,13 @@ res_a2 = box(
     46,
     "ink",
     "Batch p50, 1,000 increments",
-    "store 5,119-5,163 ns, rmw 51.9-55.9 us",
+    "store 5,115-5,279 ns, rmw 48.3-57.3 us",
 )
 
 cams_b = [box(40 + 80 * i, 266, 76, 40, "user", f"camera {i}") for i in range(5)]
 ranges = [box(40 + 80 * i, 346, 76, 40, "sub", "128 B") for i in range(5)]
 res_b1 = box(
-    470, 262, 380, 46, "ink", "L1 misses per increment", "C++ store 0.00015-0.00016, rmw 0.0002"
+    470, 262, 380, 46, "ink", "L1 misses per increment", "C++ store 0.00016, rmw 0.0002-0.0004"
 )
 res_b2 = box(
     470,
@@ -75,9 +75,9 @@ res_b2 = box(
     46,
     "ink",
     "Batch p50, 1,000 increments",
-    "store 1,606-1,616 ns, rmw 4.89-4.90 us",
+    "store 1,597-1,624 ns, rmw 4.89-5.01 us",
 )
-res_b3 = box(470, 374, 380, 40, "sub", "64 B padding, store batch p50", "1,656-1,676 ns (observed)")
+res_b3 = box(470, 374, 380, 40, "sub", "64 B padding, store batch p50", "1,653-1,692 ns (observed)")
 
 nodes = cams_a + [line, res_a1, res_a2] + cams_b + ranges + [res_b1, res_b2, res_b3]
 
@@ -104,7 +104,7 @@ notes = [
         "x": 440,
         "y": 444,
         "text": (
-            "Misses per increment fall 609-617x (C++) and 270-287x (Java) with padding; "
+            "Misses per increment fall 590-622x (C++) and 106-167x (Java) with padding; "
             "store batches move about 3x, rmw about 10x."
         ),
         "anchor": "middle",

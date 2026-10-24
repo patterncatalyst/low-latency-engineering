@@ -45,13 +45,13 @@ bands = [
 ]
 
 line = box(60, 116, 390, 56, "accent", "Line tracker: 4,800 parcels", "node-map and flat-map")
-line_node = box(60, 214, 185, 56, "ink", "47-48 ns", "node-map lookup p50")
-line_flat = box(265, 214, 185, 56, "ink", "19-20 ns", "flat-map lookup p50")
+line_node = box(60, 214, 185, 56, "ink", "46-48 ns", "node-map lookup p50")
+line_flat = box(265, 214, 185, 56, "ink", "20 ns", "flat-map lookup p50")
 
 hub_node = box(520, 116, 160, 70, "sub", "Hub node-map", "148.1 MB built", "node and string")
 hub_flat = box(700, 116, 150, 70, "accent", "Hub flat-map", "126.0 MB built", "index + columns")
-res_node = box(520, 226, 160, 70, "ink", "388-394 ns", "lookup p50", "5.04-5.15 LL misses")
-res_flat = box(700, 226, 150, 70, "ink", "113-115 ns", "lookup p50", "0.19-0.23 LL misses")
+res_node = box(520, 226, 160, 70, "ink", "389-393 ns", "lookup p50", "5.00-5.13 LL misses")
+res_flat = box(700, 226, 150, 70, "ink", "113 ns", "lookup p50", "0.19-0.20 LL misses")
 beyond = box(
     520, 326, 330, 56, "ghost", "Both hub maps exceed L3", "148.1 and 126.0 MB against 24 MiB"
 )
