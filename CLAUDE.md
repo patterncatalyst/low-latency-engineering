@@ -2,7 +2,7 @@
 
 ## What this is
 A chapter-based Jekyll tutorial and Leanpub book teaching latency ENGINEERING
-through original C++20/23, Python 3.14 and Java 25 (JVM) examples on Fedora 44,
+through original C++23, Python 3.14 and Java 25 (JVM) examples on Fedora 44,
 in the lgtm house style. Repo: low-latency-engineering. It spans code-level
 technique, the low-latency JVM, the real-time kernel + CPU partitioning +
 kernel bypass, transport choice by latency budget (gRPC/DDS/Aeron+SBE/FIX/
@@ -129,6 +129,10 @@ talks. Pull and re-point; cross-link; don't rewrite.
   chapters - never on the host. Use lgtm-systems-programming scripts by name
   (LAB_PREFIX=lowlat); revert to snapshot between measurement runs.
 - A VM number and a bare-metal number are NOT comparable; label every number.
+  Exception (r04 D9): Ch13 compares host, VM and container lanes only within one
+  interleaved run on this machine, every number lane-labelled; host vs VM is
+  observed, never asserted, and the chapter says what the VM can't show.
+- Language floor: C++23, JDK 25, Python 3.14 in every build, module and image.
 - Kernel-bypass examples needing real NIC hardware: mark conceptual vs measured.
   Ch17 depth (decided): what the VM can measure (AF_XDP on virtio, DPDK in the
   VM, labelled illustrative); RDMA conceptual only.
