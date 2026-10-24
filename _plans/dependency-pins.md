@@ -159,7 +159,7 @@ Probe: `std::start_lifetime_as<P>(buf)` on an `alignas(P) std::byte[8]`, `#inclu
 
 ### CPython 3.14 cycle GC
 
-Python 3.14.0 to 3.14.4 shipped an incremental cycle GC; 3.14.5 and later (including the pinned 3.14.8) use the generational collector again ("Forward-port the generational cycle garbage collector", gh-142516). Sources: https://docs.python.org/3.14/whatsnew/3.14.html (Incremental garbage collection: "Python 3.14.0-3.14.4 shipped with a new incremental garbage collector"), the 3.14 changelog, and `gc` docs. Checked on the host's 3.14.8: `gc.get_threshold()` is `(2000, 10, 10)`, three generations. Ch6 Python lane describes generations and `gc.freeze()`.
+Python 3.14.0 to 3.14.4 shipped an incremental cycle GC; 3.14.5 and later (including the pinned 3.14.9; the r03 pin was 3.14.8) use the generational collector again ("Forward-port the generational cycle garbage collector", gh-142516). Sources: https://docs.python.org/3.14/whatsnew/3.14.html (Incremental garbage collection: "Python 3.14.0-3.14.4 shipped with a new incremental garbage collector"), the 3.14 changelog, and `gc` docs. Checked on 3.14.9 (r04 S4; first checked on 3.14.8 in r03): `gc.get_threshold()` is `(2000, 10, 10)`, three generations. Ch6 Python lane describes generations and `gc.freeze()`.
 
 ### Findings that change r02-plan §0
 
@@ -207,7 +207,7 @@ GCC 16.2.1 and Clang 22.1.8 (both using the host libstdc++, the standard library
 ### Free-threaded CPython (Q3)
 
 - Installed `cpython-3.14.8+freethreaded` with `uv python install` (user-local, interpreter `python3.14t`). Not a system package. Build: 3.14.8, python-build-standalone 20261009. (r03 record; promoted to 3.14.9+freethreaded, python-build-standalone 20261021, in r04 S4.)
-- `sys._is_gil_enabled()`: `False` on the free-threaded build (`Py_GIL_DISABLED` 1); `True` on the host 3.14.8 (`Py_GIL_DISABLED` 0).
+- `sys._is_gil_enabled()`: `False` on the free-threaded build (`Py_GIL_DISABLED` 1); `True` on the GIL build (`Py_GIL_DISABLED` 0). Re-checked in r04 S4 on uv-managed 3.14.9 and 3.14.9+freethreaded. (r03 history: the same values were first recorded on the host 3.14.8 and 3.14.8+freethreaded.)
 - Documentation: the CPython 3.14 free-threading howto (docs.python.org/3.14/howto/free-threading-python.html, "Iterators") says "It is generally not thread-safe to access the same iterator object from multiple threads concurrently, and threads may see duplicate or missing elements." The 3.14 `itertools` page makes no thread-safety statement for `count` or its `__next__`. Result: **`itertools.count.__next__` is not documented thread-safe in either build.**
 - Observation (not a documentation claim): 4 threads x 1,000,000 `next(count)` calls, 3 repetitions per build: every repetition yielded exactly 4,000,000 unique values 0..3,999,999 on both the GIL and the free-threaded build.
 - Observation: racy `counter += 1` on a shared list cell, 4 threads x 1,000,000, 3 repetitions. GIL build: 0 lost increments in all three runs (the 5 ms switch interval did not interleave a read-modify-write here). Free-threaded build: 2,172,123, 2,124,129 and 2,011,474 lost of 4,000,000. `threading.Lock` around the increment gave exactly 4,000,000 in both builds (one run each).

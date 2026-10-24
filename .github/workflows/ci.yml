@@ -186,13 +186,15 @@ jobs:
     if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     container: fedora:44
-    env:
-      UV_PYTHON: python3.14
-      UV_PYTHON_DOWNLOADS: never
+    # uv downloads the CPython that examples/.python-version pins (3.14.9+gil), not Fedora's python3.14.
     steps:
       - name: Install packages (container only)
         run: dnf -y --setopt=install_weak_deps=False install ${{ env.FEDORA_PACKAGES }}
       - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.5"
+          enable-cache: false
       - uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/lowlat/prefix
