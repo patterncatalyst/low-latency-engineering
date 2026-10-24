@@ -54,7 +54,6 @@ trap 'exit 130' INT
 # shellcheck source-path=SCRIPTDIR
 . "$(dirname "${BASH_SOURCE[0]}")/../_lib/lib.sh"
 
-EXAMPLE=11-stackful-stackless
 HERE=$(example_dir)
 JAR=$HERE/java/target/stackful-stackless-java.jar
 

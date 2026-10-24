@@ -203,6 +203,11 @@ jobs:
         run: scripts/deps/build-protobuf.sh
       - name: Generate the Python protobuf modules
         run: scripts/gen-python-proto.sh
+      - name: Install the pinned CPython (examples/.python-version)
+        working-directory: examples
+        run: |
+          uv python install
+          "$(uv python find)" -c 'import sys; print(sys.version); assert sys.version_info[:3] == (3, 14, 9), sys.version'
       - name: Sync, test, lint
         working-directory: examples
         run: |

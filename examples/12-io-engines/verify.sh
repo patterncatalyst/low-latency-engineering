@@ -62,7 +62,6 @@ trap 'exit 130' INT
 # shellcheck source-path=SCRIPTDIR
 . "$(dirname "${BASH_SOURCE[0]}")/../_lib/lib.sh"
 
-EXAMPLE=12-io-engines
 HERE=$(example_dir)
 JAR=$HERE/java/target/io-engines-java.jar
 QUARKUS_JAR=$HERE/quarkus/target/quarkus-app/quarkus-run.jar
@@ -118,7 +117,6 @@ CTL_P99_RATIO_MIN_PERMILLE=2000              # 5: defect p99 >= 2x the event-loo
 CRIT5_CTL_ASSERTED=${CRIT5_CTL_ASSERTED:-0}  # 1 only when the ratio clears the bound twice over (>= 4x) in every calibration run
 WORKER_POOL_P99_RATIO_MIN_PERMILLE=3000      # 4: worker-pool p99 >= 3x virtual-thread p99
 DEFECT_WARNINGS_MIN=1                        # 5: blocked-thread warnings
-DEFECT_P99_MIN_NS=2000000                    # 5: p99 >= 2 ms (observed: the 2 ms sleep alone meets it)
 START_SKEW_MAX_NS=1000000                    # 8: start gate skew < 1 ms
 
 ENGINE_VARIANTS=(epoll recvmmsg io-uring)
@@ -747,7 +745,7 @@ if ok_lane quarkus; then
   done
 
   step "criterion 5: defect blocking-on-event-loop at $DEFECT_RATE Hz, against the event-loop control at the same rate"
-  ratios=() shares=()
+  ratios=()
   for n in 1 2 3; do
     f=$OUT/quarkus/blocking-on-event-loop-alt$n.json c=$OUT/quarkus/event-loop-ctl-alt$n.json
     w=$(counter "$f" blocked_thread_warnings_in_run)
