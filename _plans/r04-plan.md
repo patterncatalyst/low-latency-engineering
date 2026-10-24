@@ -100,7 +100,7 @@ Each technique is measured twice, as in r03: at saturation, where the mechanism 
     - `fiber`: Boost.Fiber `round_robin`, `protected_fixedsize_stack(64 KiB)`, `buffered_channel`.
     - `coroutine`: Asio `awaitable` + `steady_timer` for waits; minimal `Task<T>` with symmetric transfer for the ping-pong.
   - Measurement details:
-    - Frame bytes: promise `operator new` counter (exact; HALO probe adapted from the sibling).
+    - Frame bytes: promise `operator new` counter (exact for the frames it sees; HALO probe adapted from the sibling). S0 probe: GCC 16 `-O2` did not elide a non-escaping frame, but HALO is allowed, so frames must escape (stored and parked) in the probe.
     - `std::generator<ParcelEvent>` feeds the parcels.
     - `std::expected` for parse and setup errors; `std::print` output.
     - External-linkage sink or `benchmark::DoNotOptimize` in every bench loop, with objdump of the loop in S9.
@@ -114,7 +114,7 @@ Each technique is measured twice, as in r03: at saturation, where the mechanism 
   - Whole measured loop warmed (r03 lesson).
 - **Python** (both builds):
   - `threads` against `asyncio` tasks.
-  - Bytes per task: `tracemalloc` for tasks (exact on 3.14.8), RSS for threads.
+  - Bytes per task: measured by `tracemalloc` for tasks (it counts blocks from Python's allocators, with no exactness claim), RSS for threads.
   - Hand-off: `asyncio.Future` against `threading.Event`/`queue.SimpleQueue`.
   - Defect `--blocking-sleep-in-coroutine` (`time.sleep` in a coroutine): loop lateness, plus asyncio debug `slow_callback_duration` warning count (exact).
   - No stdlib stackful coroutine: greenlet/gevent named in prose as third-party, not measured.
@@ -161,7 +161,7 @@ Each technique is measured twice, as in r03: at saturation, where the mechanism 
     - `event-loop`: `Uni` with a non-blocking 2 ms delay on the Vert.x event loop.
     - `worker-pool`: `@Blocking`, `Thread.sleep(2)`, pool size fixed.
     - `virtual-thread`: `@RunOnVirtualThread`, `Thread.sleep(2)`.
-    - Defect `blocking-on-event-loop`: `Thread.sleep(2)` on the event loop.
+    - Defect `blocking-on-event-loop`: `Thread.sleep(2)` on the event loop, with `quarkus.vertx.max-event-loop-execute-time=1ms` and a short `quarkus.vertx.warning-exception-time` set for this variant only (the 2 s defaults would log nothing for a 2 ms block).
   - Client: plain-JDK open-loop driver (VTs + `HttpClient`, intended start times, HdrHistogram, `lowlat-report/1`) in the parent reactor (D6).
   - Exact counters: Vert.x blocked-thread warnings (log count), carrier thread count, worker pool active max.
 - **Python:**
@@ -182,7 +182,7 @@ Each technique is measured twice, as in r03: at saturation, where the mechanism 
   2. (exact) Thread-per-core cross-thread hand-offs per parcel = 0; pool = 1.
   3. Saturation receive p99, same run, median of 3: thread-per-core ≤ 1/2 of acceptor-pool (C++). `io-uring` vs `epoll` p99 observed unless S10 shows ≥ 2x margin.
   4. Quarkus at λW > pool: `worker-pool` p99 ≥ 3x `virtual-thread` p99 (same run, median of 3); `event-loop` vs `virtual-thread` observed.
-  5. Defect `blocking-on-event-loop`: blocked-thread warnings ≥ 1 (exact) and p99 ≥ 2 ms (2x by construction over the 1 ms bound).
+  5. Defect `blocking-on-event-loop`: blocked-thread warnings ≥ 1 (exact) and p99 ≥ 2 ms. Vert.x warns only after `quarkus.vertx.max-event-loop-execute-time`, which defaults to 2 s, so at defaults a 2 ms block gives 0 warnings. The defect config therefore sets `quarkus.vertx.max-event-loop-execute-time=1ms` (below the 2 ms block) and a short `quarkus.vertx.warning-exception-time` (for example `1ms`), which `VertxCoreRecorder` also uses as the blocked-thread-checker period, so at least one warning is reachable in the run. Keys and units are cited in `dependency-pins.md` (r04 pins); S7 confirms the count.
   6. Line: 200,000 parcels, `dropped=0` per camera, `check`; percentiles observed (all fit 480 ms).
   7. Every report: `build.flags`, `runtime.placement`, `runtime.counters`.
 - **Observed:** `asio-io-uring`, Python lanes, uvloop, JDK selector vs VT, `strace` cross-check, event-loop vs VT tails.
@@ -206,7 +206,7 @@ Each technique is measured twice, as in r03: at saturation, where the mechanism 
   - The Ch12 receive consumer and the line simulator, built once in a UBI 10 builder image (D10), so the same binary runs on the host, in the guest and in the container.
   - `cgroup_probe` adapted to C++23 from the sibling Ch32: reads `cpu.max`, `cpuset.cpus.effective` and `cpu.stat`, with `std::expected` errors. Reports `std::thread::hardware_concurrency()` and the derived pool size.
   - `io_uring_setup` probe (`errno`).
-- **Java:** the Quarkus container (UBI 10 minimal + pinned Temurin). Records `availableProcessors()`, Vert.x event-loop count, VT scheduler parallelism and GC thread count at startup (exact), and service p99 under quota vs cpuset.
+- **Java:** the Quarkus container (UBI 10 minimal + pinned Temurin). Records `availableProcessors()`, Vert.x event-loop count (`max(2, min(heap MiB / 10, CPUs))`, so it depends on the heap limit as well as the CPU limit), VT scheduler parallelism and GC thread count at startup (exact), and service p99 under quota vs cpuset.
 - **Python:** `os.cpu_count()`, `os.process_cpu_count()` and `len(os.sched_getaffinity(0))` under quota and cpuset (exact); no latency lane.
 - **Measured:**
   - simulator emit lateness p50/p99/p99.9 per environment (jitter floor);
@@ -218,7 +218,7 @@ Each technique is measured twice, as in r03: at saturation, where the mechanism 
   - Quarkus p99.
 - **Asserts (provisional; S10; the comparison wording is D9):**
   1. (exact) `container-cpu-quota` `nr_throttled` ≥ 1 during the run; `container-cpuset` `nr_throttled` = 0.
-  2. (exact) Under `--cpus=2` on the 4-vCPU guest: C++ `hardware_concurrency()` = 4 and Python `os.process_cpu_count()` = 4 (affinity, not quota); Java `availableProcessors()` = 2 (container-aware). Under `--cpuset-cpus=2,3`: all three = 2. S0 verifies each against docs before it becomes an assert.
+  2. (exact) On the 4-vCPU guest, S0 settled the expected values from docs and source (S5 confirms in the guest before they become asserts). C++ `hardware_concurrency()` = online CPUs (glibc `get_nprocs` reads `/sys/devices/system/cpu/online`) = 4 under both `--cpus=2` and `--cpuset-cpus=2,3`; in a container that sysfs file is not namespaced, so it shows the guest's CPUs. Python `os.process_cpu_count()` follows the affinity mask: 4 under the quota, 2 under the cpuset; `os.cpu_count()` = 4 in both. Java `availableProcessors()` = 2 in both (cpuset via affinity, quota via ceil(quota/period)).
   3. (exact) `io_uring_setup` in a container under Docker's default seccomp returns `EPERM` (if S0 confirms with the guest's Docker version; otherwise observed). The same binary in the guest outside a container succeeds.
   4. `container-cpu-quota` consumer p99.9 ≥ 2x `container-cpuset` (same boot, median of 3); S10 decides asserted or observed.
   5. Every lane: count, `dropped=0`, `check`, `runtime.environment.kind` matching its directory, guest profile recorded.
@@ -242,7 +242,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 
 | id | Title | Files touched | Depends on | Model | Status |
 |---|---|---|---|---|---|
-| S0 | Upstream survey, exact pins, read-only probes | `_plans/dependency-pins.md` ("r04 pins"), `versions.env` (only if a tarball or image is pinned there) | – | sonnet (opus validates) | done (pending validation) |
+| S0 | Upstream survey, exact pins, read-only probes | `_plans/dependency-pins.md` ("r04 pins"), `versions.env` (only if a tarball or image is pinned there) | – | sonnet (opus validates) | done |
 | S1 | Record D1–D17 answers; iteration-plan status (r03 complete, #6, `r03.x`; r04 in progress); commit this plan, `r04-chapters.md`, `r04-figures.md` | `_plans/iteration-plan.md`, `_plans/r04-*.md`, `CLAUDE.md` only if D9 changes a rule | user answers | opus (MAIN) | done |
 | S2 | Report and profile contract, additive in `lowlat-report/1` | `contracts/measurement/latency-report.schema.json`, `contracts/measurement/examples/`, `examples/common/measure-{py,cpp,java}/**`, `examples/common/measure-fixtures/`, `scripts/profile.sh`, `scripts/scrub-host-ids.py` | S0 | sonnet | todo |
 | S3 | `lib.sh` helpers: lanes, containers, raw-sample conversion | `examples/_lib/lib.sh`, `examples/_lib/tests/`, `examples/common/measure-py/**` | S2 | sonnet | todo |
