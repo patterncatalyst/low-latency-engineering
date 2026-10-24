@@ -1,0 +1,409 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+━━ building C++ (release preset) tracker-bench counters-bench eliminating-line line-simulator eliminating-work-test
+[1/34] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[2/31] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[3/28] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[4/24] Generating CXX dyndep file 09-eliminating-work/cpp/CMakeFiles/tracker-bench.dir/CXX.dd
+[5/23] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[6/21] Generating CXX dyndep file 09-eliminating-work/cpp/CMakeFiles/counters-bench.dir/CXX.dd
+[7/19] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
+[8/17] Generating CXX dyndep file 09-eliminating-work/cpp/CMakeFiles/lowlat_alloc_counter.dir/CXX.dd
+[9/14] Generating CXX dyndep file 09-eliminating-work/cpp/CMakeFiles/eliminating-line.dir/CXX.dd
+[10/12] Generating CXX dyndep file 09-eliminating-work/cpp/CMakeFiles/eliminating-work-test.dir/CXX.dd
+━━ building Java module 09-eliminating-work/java
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+# WARNING: Unable to get Instrumentation. Dynamic Attach failed. You may add this JAR as -javaagent manually, or supply -Djdk.attach.allowAttachSelf
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:~/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+# WARNING: Unable to get Instrumentation. Dynamic Attach failed. You may add this JAR as -javaagent manually, or supply -Djdk.attach.allowAttachSelf
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:~/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+━━ syncing the Python workspace
+━━ unit tests: C++ (GoogleTest) and Python (pytest); Java ran during the package step
+Running main() from <repo>/examples/build/release/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] 28 tests from 8 test suites ran. (3 ms total)
+[  PASSED  ] 28 tests.
+................................                                         [100%]
+32 passed in 0.40s
+✓ C++, Java and Python unit tests pass (tracker logic, SSCC packing against the parcel-v1 golden barcodes, layout)
+✓ pinned threads use physical cores 1 2 3 4 5 6 (one logical CPU per core); not isolation
+━━ C++: insert allocations (line-scale tracker, 4800 in flight), 3 alternations
+✓ placement: thread 3906027 of process 3906027 on CPU 1
+✓ placement: thread 3906067 of process 3906067 on CPU 1
+✓ placement: thread 3906101 of process 3906101 on CPU 1
+✓ placement: thread 3906136 of process 3906136 on CPU 1
+✓ placement: thread 3906170 of process 3906170 on CPU 1
+✓ placement: thread 3906211 of process 3906211 on CPU 1
+  per insert-and-erase pair: node-map 400000 allocations (27800000 B), flat-map 0
+✓ 1a C++ node-map allocations per insert: 2.000, bound >= 2, margin 1.00x [exact]
+✓ 1b C++ flat-map allocations after reserve (total over 200000 inserts): 0, bound <= 0 [exact]
+━━ C++: hub lookups of 1000000 parcels, node-map against flat-map, 3 alternations, perf counts the lookup loop only
+✓ placement: thread 3906252 of process 3906252 on CPU 1
+✓ placement: thread 3906447 of process 3906447 on CPU 1
+✓ placement: thread 3906531 of process 3906531 on CPU 1
+✓ placement: thread 3906735 of process 3906735 on CPU 1
+✓ placement: thread 3906820 of process 3906820 on CPU 1
+✓ placement: thread 3907017 of process 3907017 on CPU 1
+✓ placement: thread 3907101 of process 3907101 on CPU 1
+✓ placement: thread 3907153 of process 3907153 on CPU 1
+  hub lookup p50 (ns) by alternation: node-map 389 388 391 | flat-map 113 114 113
+  observed 2a C++ hub lookup p50, node-map / flat-map (median of 3): 3.44x (3.44x 3.40x 3.46x), 2x would be margin 1.72x
+✓ 2d C++ LLC-load-misses:u per lookup, node-map / flat-map (median of 3): 26.52x (26.52x 25.38x 26.62x), bound >= 2x, margin 13.26x
+  observed 2d' C++ L1-dcache-load-misses:u per lookup, node-map / flat-map (median of 3): 1.90x (1.91x 1.90x 1.90x), 2x would be margin 0.95x
+  hub lookup node-map  p50 389 ns, p99 1117 ns, p99.9 2481 ns; L1 misses/lookup 10.042, LL misses/lookup 5.0004 (perf, :u)
+  hub lookup flat-map  p50 113 ns, p99 490 ns, p99.9 509 ns; L1 misses/lookup 5.265, LL misses/lookup 0.1886 (perf, :u)
+  line-scale lookups (4800 parcels, observed; fits L2): node-map p50 46 ns, flat-map p50 20 ns
+  build footprint (bytes allocated by the hub build, exact): node-map 148142568, flat-map 125964092
+━━ C++: hub sweep over 1000000 slots, fat-record against hot-cold, 3 alternations
+✓ placement: thread 3907283 of process 3907283 on CPU 1
+✓ placement: thread 3907363 of process 3907363 on CPU 1
+✓ placement: thread 3907412 of process 3907412 on CPU 1
+✓ placement: thread 3907498 of process 3907498 on CPU 1
+✓ placement: thread 3907548 of process 3907548 on CPU 1
+✓ placement: thread 3907640 of process 3907640 on CPU 1
+  hub sweep p50 (ns) by alternation: fat-record 4231167 4194303 4165631 | hot-cold 572927 565759 570879
+✓ 3a C++ hub sweep p50, fat-record / hot-cold (median of 3): 7.38x (7.38x 7.41x 7.30x), bound >= 2x, margin 3.69x
+  hub sweep fat-record p50 4231167 ns, p99 4378623 ns; L1 misses/slot 1.2525, LL misses/slot 0.87934 (perf, :u)
+  hub sweep hot-cold   p50 572927 ns, p99 613887 ns; L1 misses/slot 0.1410, LL misses/slot 0.00000 (perf, :u)
+━━ C++: cachegrind (simulated D1 and LL caches; deterministic): lookups and sweeps
+  cachegrind per lookup (difference method): node-map D1 read misses 6.868, LL read misses 5.9432 | flat-map D1 3.357, LL 0.6957
+✓ 2c cachegrind LL read misses per lookup, node-map / flat-map: 8.54x (8.54x), bound >= 2x, margin 4.27x [exact]
+  cachegrind per slot (function-level): fat-record D1 read misses 1.2500 | hot-cold 0.1406
+✓ 3c cachegrind D1 read misses per slot, fat-record / hot-cold: 8.89x (8.89x), bound >= 4x, margin 2.22x [exact]
+━━ C++: five camera counters on distinct cores: adjacent-counters against pair-padded, 3 alternations (placement checked)
+✓ placement: thread 3907964 of process 3907960 on CPU 1
+✓ placement: thread 3907965 of process 3907960 on CPU 2
+✓ placement: thread 3907966 of process 3907960 on CPU 3
+✓ placement: thread 3907967 of process 3907960 on CPU 4
+✓ placement: thread 3907968 of process 3907960 on CPU 5
+✓ placement: thread 3907969 of process 3907960 on CPU 6
+✓ placement: thread 3908026 of process 3908025 on CPU 1
+✓ placement: thread 3908027 of process 3908025 on CPU 2
+✓ placement: thread 3908028 of process 3908025 on CPU 3
+✓ placement: thread 3908029 of process 3908025 on CPU 4
+✓ placement: thread 3908030 of process 3908025 on CPU 5
+✓ placement: thread 3908031 of process 3908025 on CPU 6
+✓ placement: thread 3908077 of process 3908076 on CPU 1
+✓ placement: thread 3908078 of process 3908076 on CPU 2
+✓ placement: thread 3908079 of process 3908076 on CPU 3
+✓ placement: thread 3908080 of process 3908076 on CPU 4
+✓ placement: thread 3908081 of process 3908076 on CPU 5
+✓ placement: thread 3908082 of process 3908076 on CPU 6
+✓ placement: thread 3908138 of process 3908137 on CPU 1
+✓ placement: thread 3908139 of process 3908137 on CPU 2
+✓ placement: thread 3908140 of process 3908137 on CPU 3
+✓ placement: thread 3908141 of process 3908137 on CPU 4
+✓ placement: thread 3908142 of process 3908137 on CPU 5
+✓ placement: thread 3908143 of process 3908137 on CPU 6
+✓ placement: thread 3908189 of process 3908188 on CPU 1
+✓ placement: thread 3908190 of process 3908188 on CPU 2
+✓ placement: thread 3908191 of process 3908188 on CPU 3
+✓ placement: thread 3908192 of process 3908188 on CPU 4
+✓ placement: thread 3908193 of process 3908188 on CPU 5
+✓ placement: thread 3908194 of process 3908188 on CPU 6
+✓ placement: thread 3908250 of process 3908249 on CPU 1
+✓ placement: thread 3908251 of process 3908249 on CPU 2
+✓ placement: thread 3908252 of process 3908249 on CPU 3
+✓ placement: thread 3908253 of process 3908249 on CPU 4
+✓ placement: thread 3908254 of process 3908249 on CPU 5
+✓ placement: thread 3908255 of process 3908249 on CPU 6
+✓ placement: thread 3908304 of process 3908303 on CPU 1
+✓ placement: thread 3908305 of process 3908303 on CPU 2
+✓ placement: thread 3908306 of process 3908303 on CPU 3
+✓ placement: thread 3908307 of process 3908303 on CPU 4
+✓ placement: thread 3908308 of process 3908303 on CPU 5
+✓ placement: thread 3908309 of process 3908303 on CPU 6
+✓ placement: thread 3908522 of process 3908521 on CPU 1
+✓ placement: thread 3908523 of process 3908521 on CPU 2
+✓ placement: thread 3908524 of process 3908521 on CPU 3
+✓ placement: thread 3908525 of process 3908521 on CPU 4
+✓ placement: thread 3908526 of process 3908521 on CPU 5
+✓ placement: thread 3908527 of process 3908521 on CPU 6
+✓ placement: thread 3908582 of process 3908581 on CPU 1
+✓ placement: thread 3908583 of process 3908581 on CPU 2
+✓ placement: thread 3908584 of process 3908581 on CPU 3
+✓ placement: thread 3908585 of process 3908581 on CPU 4
+✓ placement: thread 3908586 of process 3908581 on CPU 5
+✓ placement: thread 3908587 of process 3908581 on CPU 6
+✓ placement: thread 3908771 of process 3908770 on CPU 1
+✓ placement: thread 3908772 of process 3908770 on CPU 2
+✓ placement: thread 3908773 of process 3908770 on CPU 3
+✓ placement: thread 3908774 of process 3908770 on CPU 4
+✓ placement: thread 3908775 of process 3908770 on CPU 5
+✓ placement: thread 3908776 of process 3908770 on CPU 6
+✓ placement: thread 3908833 of process 3908832 on CPU 1
+✓ placement: thread 3908834 of process 3908832 on CPU 2
+✓ placement: thread 3908835 of process 3908832 on CPU 3
+✓ placement: thread 3908836 of process 3908832 on CPU 4
+✓ placement: thread 3908837 of process 3908832 on CPU 5
+✓ placement: thread 3908838 of process 3908832 on CPU 6
+✓ placement: thread 3909037 of process 3909036 on CPU 1
+✓ placement: thread 3909038 of process 3909036 on CPU 2
+✓ placement: thread 3909039 of process 3909036 on CPU 3
+✓ placement: thread 3909040 of process 3909036 on CPU 4
+✓ placement: thread 3909041 of process 3909036 on CPU 5
+✓ placement: thread 3909042 of process 3909036 on CPU 6
+✓ placement: thread 3909098 of process 3909097 on CPU 1
+✓ placement: thread 3909099 of process 3909097 on CPU 2
+✓ placement: thread 3909100 of process 3909097 on CPU 3
+✓ placement: thread 3909101 of process 3909097 on CPU 4
+✓ placement: thread 3909102 of process 3909097 on CPU 5
+✓ placement: thread 3909103 of process 3909097 on CPU 6
+✓ placement: thread 3909156 of process 3909155 on CPU 1
+✓ placement: thread 3909157 of process 3909155 on CPU 2
+✓ placement: thread 3909158 of process 3909155 on CPU 3
+✓ placement: thread 3909200 of process 3909199 on CPU 4
+✓ placement: thread 3909201 of process 3909199 on CPU 12
+✓ placement: thread 3909202 of process 3909199 on CPU 1
+  [store increment] per-batch (1,000 increments) p50 (ns) by alternation: adjacent-counters 5099 5131 5187 | pair-padded 1625 1597 1587
+  [store increment] L1-dcache-load-misses:u per increment: adjacent-counters 0.09501676 0.09374547 0.09342015 | pair-padded 0.00015526 0.0001614 0.00015668
+  observed 4a' C++ counters per-batch p50, adjacent-counters / pair-padded, store increment (median of 3): 3.21x (3.14x 3.21x 3.27x), 3x would be margin 1.07x
+✓ 4b C++ L1-dcache-load-misses:u per increment, adjacent-counters / pair-padded, store increment (median of 3): 596.25x (611.98x 580.83x 596.25x), bound >= 10x, margin 59.62x
+  [rmw increment] per-batch (1,000 increments) p50 (ns) by alternation: adjacent-counters 59711 44447 57311 | pair-padded 4891 4887 4791
+  [rmw increment] L1-dcache-load-misses:u per increment: adjacent-counters 0.43330936 0.41761938 0.42926832 | pair-padded 0.00020791 0.00019517 0.00018986
+✓ 4a C++ counters per-batch p50, adjacent-counters / pair-padded, fetch_add increment (median of 3): 11.96x (12.21x 9.09x 11.96x), bound >= 3x, margin 3.99x
+  observed 4b' C++ L1-dcache-load-misses:u per increment, fetch_add increment: 2139.77x (2084.12x 2139.77x 2260.97x), 10x would be margin 213.98x
+  observed: p99 adjacent-counters (store) 11263 ns, pair-padded 1863 ns
+  observed: line-padded (64 B) p50 1653 ns against pair-padded (128 B) p50 1625 ns (store increment)
+  observed: two cameras on SMT siblings p50 4323 ns, on distinct cores 2197 ns (adjacent layout, store increment)
+━━ line (C++): node-map, hub of 1000000, 10000 Hz x 20 s, UDP 47290
+✓ placement: thread 3909346 of process 3909346 on CPU 1
+✓ placement: thread 3909378 of process 3909378 on CPU 2
+━━ line (C++): flat-map, hub of 1000000, 10000 Hz x 20 s, UDP 47291
+✓ placement: thread 3909398 of process 3909398 on CPU 1
+✓ placement: thread 3909424 of process 3909424 on CPU 2
+━━ 5. line (C++): allocations per parcel from the tracker on the receive thread
+  line-node-map p50 57535 ns, p99 78783 ns, p99.9 101311 ns, max 978943 ns; tracker allocations 400000 over 200000 parcels (27800000 B)
+  line-flat-map p50 56831 ns, p99 79487 ns, p99.9 99967 ns, max 975871 ns; tracker allocations 0 over 200000 parcels (0 B)
+✓ 5a C++ node-map allocations per parcel on the receive thread: 2.000, bound >= 1, margin 2.00x [exact]
+✓ 5b C++ flat-map allocations on the receive thread (total over 200000 parcels): 0, bound <= 0 [exact]
+  line end-to-end fits the 480 ms scan-to-divert budget: the worst parcel took 978943 ns (node-map), 975871 ns (flat-map)
+━━ Java: JMH insert (line-scale), hub lookups and hub sweeps; 3 alternations each (about 6 minutes)
+━━   JMH insertNodeMap (alternation 1 of 3)
+✓ placement: thread 3909651 of process 3909585 on CPU 1
+━━   JMH insertFlatMap (alternation 1 of 3)
+✓ placement: thread 3909888 of process 3909822 on CPU 1
+━━   JMH insertNodeMap (alternation 2 of 3)
+✓ placement: thread 3910134 of process 3910068 on CPU 1
+━━   JMH insertFlatMap (alternation 2 of 3)
+✓ placement: thread 3910363 of process 3910297 on CPU 1
+━━   JMH insertNodeMap (alternation 3 of 3)
+✓ placement: thread 3910595 of process 3910529 on CPU 1
+━━   JMH insertFlatMap (alternation 3 of 3)
+✓ placement: thread 3910821 of process 3910755 on CPU 1
+━━   JMH hubLookupNodeMap (alternation 1 of 3)
+✓ placement: thread 3911062 of process 3910996 on CPU 1
+━━   JMH hubLookupFlatMap (alternation 1 of 3)
+✓ placement: thread 3911332 of process 3911264 on CPU 1
+━━   JMH hubLookupNodeMap (alternation 2 of 3)
+✓ placement: thread 3911601 of process 3911535 on CPU 1
+━━   JMH hubLookupFlatMap (alternation 2 of 3)
+✓ placement: thread 3911834 of process 3911768 on CPU 1
+━━   JMH hubLookupNodeMap (alternation 3 of 3)
+✓ placement: thread 3912087 of process 3912019 on CPU 1
+━━   JMH hubLookupFlatMap (alternation 3 of 3)
+✓ placement: thread 3912345 of process 3912279 on CPU 1
+━━   JMH hubSweepFatRecord (alternation 1 of 3)
+✓ placement: thread 3912587 of process 3912520 on CPU 1
+━━   JMH hubSweepHotCold (alternation 1 of 3)
+✓ placement: thread 3912831 of process 3912765 on CPU 1
+━━   JMH hubSweepFatRecord (alternation 2 of 3)
+✓ placement: thread 3913062 of process 3912996 on CPU 1
+━━   JMH hubSweepHotCold (alternation 2 of 3)
+✓ placement: thread 3913342 of process 3913268 on CPU 1
+━━   JMH hubSweepFatRecord (alternation 3 of 3)
+✓ placement: thread 3913564 of process 3913497 on CPU 1
+━━   JMH hubSweepHotCold (alternation 3 of 3)
+✓ placement: thread 3913793 of process 3913727 on CPU 1
+✓ placement: thread 3914204 of process 3914081 on CPU 1
+✓ placement: thread 3914648 of process 3914523 on CPU 1
+━━ Java: 1. allocation per insert (JMH gc profiler, B/op for one insert-and-erase pair)
+  insert-node-map 128.0091675865038 B/op, p50 61 ns; insert-flat-map 0.015317528662360882 B/op, p50 99 ns
+✓ 1c JMH node-map allocated bytes per insert: 128.0091675865038, bound >= 64, margin 2.00x [exact]
+✓ 1d JMH flat-map allocated bytes per insert: 0.015317528662360882, bound <= 1 [exact]
+━━ Java: 2. hub lookups, node-map against flat-map (JMH SampleTime, pinned)
+  hub lookup p50 (ns) by alternation: node-map 321 321 322 | flat-map 58 58 58
+  observed 2b Java hub lookup p50, node-map / flat-map (median of 3): 5.53x (5.53x 5.53x 5.55x), 2x would be margin 2.77x
+  hub-lookup-node-map  p99 883 ns, p99.9 3909 ns
+  hub-lookup-flat-map  p99 480 ns, p99.9 1786 ns
+━━ Java: 3. hub sweep, fat-record (ParcelState[]) against hot-cold (primitive arrays)
+  hub sweep p50 (ns) by alternation: fat-record 9265151 9248767 9248767 | hot-cold 439039 440063 438015
+✓ 3b Java hub sweep p50, fat-record / hot-cold (median of 3): 21.10x (21.10x 21.02x 21.11x), bound >= 2x, margin 10.55x
+✓ 3 hubSweepFatRecord (alternation 1) ran without a garbage collection (gc.count 0.0)
+✓ 3 hubSweepHotCold (alternation 1) ran without a garbage collection (gc.count 0.0)
+✓ 3 hubSweepFatRecord (alternation 2) ran without a garbage collection (gc.count 0.0)
+✓ 3 hubSweepHotCold (alternation 2) ran without a garbage collection (gc.count 0.0)
+✓ 3 hubSweepFatRecord (alternation 3) ran without a garbage collection (gc.count 0.0)
+✓ 3 hubSweepHotCold (alternation 3) ran without a garbage collection (gc.count 0.0)
+  perfnorm hubLookupNodeMap   per lookup: L1-dcache-load-misses:u 8.676575633399832; LLC-load-misses:u 3.1489596564545685; cycles:u 533.1624714106306; instructions:u 202.78152634220157;
+  perfnorm hubLookupFlatMap   per lookup: L1-dcache-load-misses:u 3.993592803289854; LLC-load-misses:u 0.39002049054073296; cycles:u 156.18699925375003; instructions:u 132.57668948093925;
+━━ Java: five camera counters on distinct cores: adjacent-counters against pair-padded, 3 alternations (placement checked)
+✓ placement: thread 3914878 of process 3914830 on CPU 1
+✓ placement: thread 3914879 of process 3914830 on CPU 2
+✓ placement: thread 3914880 of process 3914830 on CPU 3
+✓ placement: thread 3914881 of process 3914830 on CPU 4
+✓ placement: thread 3914882 of process 3914830 on CPU 5
+✓ placement: thread 3914885 of process 3914830 on CPU 6
+✓ placement: thread 3915101 of process 3915050 on CPU 1
+✓ placement: thread 3915102 of process 3915050 on CPU 2
+✓ placement: thread 3915103 of process 3915050 on CPU 3
+✓ placement: thread 3915104 of process 3915050 on CPU 4
+✓ placement: thread 3915105 of process 3915050 on CPU 5
+✓ placement: thread 3915106 of process 3915050 on CPU 6
+✓ placement: thread 3915318 of process 3915267 on CPU 1
+✓ placement: thread 3915319 of process 3915267 on CPU 2
+✓ placement: thread 3915320 of process 3915267 on CPU 3
+✓ placement: thread 3915321 of process 3915267 on CPU 4
+✓ placement: thread 3915322 of process 3915267 on CPU 5
+✓ placement: thread 3915323 of process 3915267 on CPU 6
+✓ placement: thread 3915551 of process 3915500 on CPU 1
+✓ placement: thread 3915552 of process 3915500 on CPU 2
+✓ placement: thread 3915553 of process 3915500 on CPU 3
+✓ placement: thread 3915554 of process 3915500 on CPU 4
+✓ placement: thread 3915555 of process 3915500 on CPU 5
+✓ placement: thread 3915556 of process 3915500 on CPU 6
+✓ placement: thread 3915759 of process 3915708 on CPU 1
+✓ placement: thread 3915760 of process 3915708 on CPU 2
+✓ placement: thread 3915761 of process 3915708 on CPU 3
+✓ placement: thread 3915762 of process 3915708 on CPU 4
+✓ placement: thread 3915763 of process 3915708 on CPU 5
+✓ placement: thread 3915764 of process 3915708 on CPU 6
+✓ placement: thread 3915979 of process 3915928 on CPU 1
+✓ placement: thread 3915980 of process 3915928 on CPU 2
+✓ placement: thread 3915981 of process 3915928 on CPU 3
+✓ placement: thread 3915982 of process 3915928 on CPU 4
+✓ placement: thread 3915983 of process 3915928 on CPU 5
+✓ placement: thread 3915984 of process 3915928 on CPU 6
+✓ placement: thread 3916189 of process 3916139 on CPU 1
+✓ placement: thread 3916190 of process 3916139 on CPU 2
+✓ placement: thread 3916191 of process 3916139 on CPU 3
+✓ placement: thread 3916192 of process 3916139 on CPU 4
+✓ placement: thread 3916193 of process 3916139 on CPU 5
+✓ placement: thread 3916194 of process 3916139 on CPU 6
+✓ placement: thread 3916562 of process 3916511 on CPU 1
+✓ placement: thread 3916563 of process 3916511 on CPU 2
+✓ placement: thread 3916564 of process 3916511 on CPU 3
+✓ placement: thread 3916565 of process 3916511 on CPU 4
+✓ placement: thread 3916566 of process 3916511 on CPU 5
+✓ placement: thread 3916567 of process 3916511 on CPU 6
+✓ placement: thread 3916781 of process 3916730 on CPU 1
+✓ placement: thread 3916782 of process 3916730 on CPU 2
+✓ placement: thread 3916783 of process 3916730 on CPU 3
+✓ placement: thread 3916784 of process 3916730 on CPU 4
+✓ placement: thread 3916785 of process 3916730 on CPU 5
+✓ placement: thread 3916786 of process 3916730 on CPU 6
+✓ placement: thread 3917152 of process 3917101 on CPU 1
+✓ placement: thread 3917153 of process 3917101 on CPU 2
+✓ placement: thread 3917154 of process 3917101 on CPU 3
+✓ placement: thread 3917155 of process 3917101 on CPU 4
+✓ placement: thread 3917156 of process 3917101 on CPU 5
+✓ placement: thread 3917157 of process 3917101 on CPU 6
+✓ placement: thread 3917370 of process 3917319 on CPU 1
+✓ placement: thread 3917371 of process 3917319 on CPU 2
+✓ placement: thread 3917372 of process 3917319 on CPU 3
+✓ placement: thread 3917373 of process 3917319 on CPU 4
+✓ placement: thread 3917374 of process 3917319 on CPU 5
+✓ placement: thread 3917375 of process 3917319 on CPU 6
+✓ placement: thread 3917742 of process 3917691 on CPU 1
+✓ placement: thread 3917743 of process 3917691 on CPU 2
+✓ placement: thread 3917744 of process 3917691 on CPU 3
+✓ placement: thread 3917745 of process 3917691 on CPU 4
+✓ placement: thread 3917746 of process 3917691 on CPU 5
+✓ placement: thread 3917747 of process 3917691 on CPU 6
+✓ placement: thread 3917964 of process 3917916 on CPU 1
+✓ placement: thread 3917965 of process 3917916 on CPU 2
+✓ placement: thread 3917966 of process 3917916 on CPU 3
+✓ placement: thread 3917967 of process 3917916 on CPU 4
+✓ placement: thread 3917968 of process 3917916 on CPU 5
+✓ placement: thread 3917969 of process 3917916 on CPU 6
+✓ placement: thread 3918177 of process 3918126 on CPU 1
+✓ placement: thread 3918178 of process 3918126 on CPU 2
+✓ placement: thread 3918179 of process 3918126 on CPU 3
+✓ placement: thread 3918180 of process 3918126 on CPU 4
+✓ placement: thread 3918181 of process 3918126 on CPU 5
+✓ placement: thread 3918182 of process 3918126 on CPU 6
+✓ placement: thread 3918410 of process 3918359 on CPU 4
+✓ placement: thread 3918411 of process 3918359 on CPU 12
+✓ placement: thread 3918412 of process 3918359 on CPU 1
+  [store increment] per-batch p50 (ns) by alternation: adjacent-counters 6139 6315 5987 | pair-padded 2083 2127 2135
+  [store increment] L1-dcache-load-misses:u per increment: adjacent-counters 0.08255775 0.0801463 0.0985105 | pair-padded 0.00034692 0.00129865 0.00093315
+  observed 4c' Java counters per-batch p50, adjacent-counters / pair-padded, store increment (median of 3): 2.95x (2.95x 2.97x 2.80x), 3x would be margin 0.98x
+✓ 4c Java L1-dcache-load-misses:u per increment, adjacent-counters / pair-padded, store increment (median of 3): 105.57x (237.97x 61.72x 105.57x), bound >= 10x, margin 10.56x
+  [rmw increment] per-batch p50 (ns) by alternation: adjacent-counters 60831 60799 60831 | pair-padded 5059 5059 5047
+  [rmw increment] L1-dcache-load-misses:u per increment: adjacent-counters 0.52738824 0.52666596 0.52641493 | pair-padded 0.00042704 0.00048825 0.00045418
+  observed 4c'' Java counters per-batch p50, adjacent-counters / pair-padded, getAndAdd increment (median of 3): 12.02x (12.02x 12.02x 12.05x), 3x would be margin 4.01x
+  observed: line-padded p50 2103 ns; long-adder (one shared sum) p50 8903 ns
+  observed: two cameras on SMT siblings p50 5887 ns
+━━ line (Java): node-map, hub of 1000000, 10000 Hz x 20 s, UDP 47290
+✓ placement: thread 3918656 of process 3918650 on CPU 1
+━━ line (Java): flat-map, hub of 1000000, 10000 Hz x 20 s, UDP 47291
+✓ placement: thread 3918794 of process 3918788 on CPU 1
+━━ line (Java, observed): end-to-end percentiles and receive-thread allocation per parcel
+  line-node-map p50 57503 ns, p99 78527 ns, p99.9 220159 ns, max 12689407 ns; receive thread allocated 710.151 B/parcel (decode dominates)
+  line-flat-map p50 57503 ns, p99 78591 ns, p99.9 279039 ns, max 12476415 ns; receive thread allocated 582.45532 B/parcel (decode dominates)
+━━ Java: JOL footprint (observed)
+  ParcelState 96 B per object; 100000 parcels: node-map tracker 202 B per parcel, flat-map tracker 87 B per parcel
+━━ Python: bytes per tracked parcel, dict-per-parcel against slots (tracemalloc)
+dict-per-parcel     790.8 bytes per tracked parcel
+slots-str           462.8 bytes per tracked parcel
+slots-int           385.8 bytes per tracked parcel
+footprint: <repo>/examples/09-eliminating-work/results/r03-run2/python/footprint.json
+✓ 1e Python record object bytes (sys.getsizeof), dict / slotted record: 3.41x (3.41x), bound >= 2x, margin 1.71x [exact]
+✓ 1f Python dict-per-parcel / slots-int bytes per tracked parcel: 2.05x (2.05x), bound >= 2x, margin 1.02x [exact]
+  observed 1f' Python dict-per-parcel / slots-str bytes per tracked parcel (the str key is a cost both share): 1.71x (1.71x), 2x would be margin 0.85x
+  record only (observed): dict-per-parcel 66938104 B, slots 34138272 B for 100000 parcels
+━━ Python (observed): due sweep, list of objects against array columns; counters in processes and threads
+✓ placement: thread 3919177 of process 3919177 on CPU 1
+✓ placement: thread 3919727 of process 3919727 on CPU 1
+✓ placement: thread 3919906 of process 3919906 on CPU 1
+✓ placement: thread 3919907 of process 3919907 on CPU 2
+✓ placement: thread 3919908 of process 3919908 on CPU 3
+✓ placement: thread 3919909 of process 3919909 on CPU 4
+✓ placement: thread 3919910 of process 3919910 on CPU 5
+✓ placement: thread 3920030 of process 3920023 on CPU 1
+✓ placement: thread 3920031 of process 3920023 on CPU 2
+✓ placement: thread 3920032 of process 3920023 on CPU 3
+✓ placement: thread 3920033 of process 3920023 on CPU 4
+✓ placement: thread 3920034 of process 3920023 on CPU 5
+✓ placement: thread 3920207 of process 3920200 on CPU 1
+✓ placement: thread 3920208 of process 3920200 on CPU 2
+✓ placement: thread 3920209 of process 3920200 on CPU 3
+✓ placement: thread 3920210 of process 3920200 on CPU 4
+✓ placement: thread 3920211 of process 3920200 on CPU 5
+✓ placement: thread 3920340 of process 3920340 on CPU 1
+✓ placement: thread 3920341 of process 3920341 on CPU 2
+✓ placement: thread 3920342 of process 3920342 on CPU 3
+✓ placement: thread 3920343 of process 3920343 on CPU 4
+✓ placement: thread 3920344 of process 3920344 on CPU 5
+✓ placement: thread 3920423 of process 3920416 on CPU 1
+✓ placement: thread 3920424 of process 3920416 on CPU 2
+✓ placement: thread 3920425 of process 3920416 on CPU 3
+✓ placement: thread 3920426 of process 3920416 on CPU 4
+✓ placement: thread 3920427 of process 3920416 on CPU 5
+✓ placement: thread 3920602 of process 3920595 on CPU 1
+✓ placement: thread 3920603 of process 3920595 on CPU 2
+✓ placement: thread 3920604 of process 3920595 on CPU 3
+✓ placement: thread 3920605 of process 3920595 on CPU 4
+✓ placement: thread 3920606 of process 3920595 on CPU 5
+  hub-sweep-fat-record                     p50 40894463 ns, p99 42205183 ns
+  hub-sweep-hot-cold                       p50 43384831 ns, p99 43876351 ns
+  counters-processes-adjacent-counters     p50 151551 ns, p99 191743 ns
+  counters-processes-pair-padded           p50 56767 ns, p99 69631 ns
+  counters-threads-free-threaded-adjacent-counters p50 216063 ns, p99 250879 ns
+  counters-threads-free-threaded-pair-padded p50 61215 ns, p99 104895 ns
+  counters-threads-gil-adjacent-counters   p50 62463 ns, p99 5214207 ns
+  counters-threads-gil-pair-padded         p50 69695 ns, p99 5230591 ns
+━━ 6. reports: schema, histogram decode, percentile recompute; counts, drops, JVM flags, placement
+✓ 6 82 reports validate (profile embedded: bare-metal-host)
+✓ 6 line runs: count = 200000 and dropped = 0 in all four (C++ and Java, both variants)
+✓ 6 every Java report carries build.flags
+✓ 6 every pinned report carries runtime.placement.cpus
+✓ 09-eliminating-work: every criterion holds; results in <repo>/examples/09-eliminating-work/results/r03-run2
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2 load1=1.15

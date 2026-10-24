@@ -1,4 +1,4 @@
-"""Figure 6.3 — who reclaims memory in C++, Python and Java.
+"""Figure 6.3: who reclaims memory in C++, Python and Java.
 
 Regenerate from the repo root:  python3 diagrams/06-refcount-vs-tracing.py
 """

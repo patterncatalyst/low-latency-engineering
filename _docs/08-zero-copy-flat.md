@@ -13,26 +13,26 @@ By the end of this chapter you can:
 - Read a fixed-layout record in place with a `MemorySegment`, a `StructLayout` and `VarHandle`s, and explain the unaligned little-endian layouts.
 - State what a flat wire contract must fix to be safe to read without parsing.
 - Choose between an array of objects and a flat off-heap table.
-- Name the C++ spellings of the same idea and the one that is undefined behaviour.
+- Name the C++ spellings of the same idea and the one that's undefined behaviour.
 - Say what Java value classes aim at, and why this book measures JDK 25 only.
 
 ## Why this matters
 
-The belt never waits for a slow consumer. The scan-to-divert budget is 480 ms: 1.2 m at 2.5 m/s. At 10 kHz the line holds 4,800 parcels in flight at that budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*), and each datagram is decoded first. A protobuf parse builds a message, a `Dimensions` and a `String` per datagram: garbage at the rate of the belt.
+Every datagram on the line is decoded before anything else happens to it. A protobuf parse builds a message, a `Dimensions` and a `String` per datagram: garbage at the rate of the belt. The belt never waits for a slow consumer, and the scan-to-divert budget is 480 ms (1.2 m at 2.5 m/s). At 10 kHz the line holds 4,800 parcels in flight at that budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*).
 
 This chapter removes that allocation: a fixed 80-byte record is read where the kernel wrote it, and the in-flight table is a run of memory instead of a pointer per parcel. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, counted 654 to 733 B allocated per parcel on its receive thread, protobuf parse included.
 
-The code is in `examples/08-zero-copy-flat/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
+Build and run it from `examples/08-zero-copy-flat/`; its `README.md` covers the options.
 
 ## Diagram
 
-{% include excalidraw.html file="08-zero-copy-decode" alt="One receive buffer, a user-space direct ByteBuffer holding one datagram at a time, feeds two decoders. protobuf-decode calls parseFrom and builds a ParcelEvent, a Dimensions and a String barcode: 576 B/op with a p50 of 157-162 ns in JMH and 591 B per parcel on the line. flat-ffm (amber) puts a reused FlatView on the same bytes, a MemorySegment with VarHandles over the 80-byte parcel-v1 record that checks schema, version and size first: less than 1 B/op, p50 16 ns, and 8.76 B per parcel on the line." caption="Figure 8.1 — A flat 80-byte record read in place allocates under 1 B per decode, against 576 B for a protobuf parse." %}
+{% include excalidraw.html file="08-zero-copy-decode" alt="One receive buffer, a user-space direct ByteBuffer holding one datagram at a time, feeds two decoders. protobuf-decode calls parseFrom and builds a ParcelEvent, a Dimensions and a String barcode: 576 B/op with a p50 of 157-162 ns in JMH and 591 B per parcel on the line. flat-ffm (amber) puts a reused FlatView on the same bytes, a MemorySegment with VarHandles over the 80-byte parcel-v1 record that checks schema, version and size first: less than 1 B/op, p50 16 ns, and 8.76 B per parcel on the line." caption="Figure 8.1: A flat 80-byte record read in place allocates under 1 B per decode, against 576 B for a protobuf parse." %}
 
 ## Reading bytes in place
 
 ### What zero-copy covers
 
-Zero-copy means the datagram is not copied into another structure before it is read. It does not mean nothing is allocated: in CPython every numeric field outside the small-int cache (−5 to 256) becomes a new `int`.
+Zero-copy means the datagram isn't copied into another structure before it's read. It doesn't mean nothing is allocated: in CPython every numeric field outside the small-int cache (−5 to 256) becomes a new `int`.
 
 ### The contract
 
@@ -48,7 +48,7 @@ Chapter 22, *Aeron and SBE* (Part 6), covers a production flat wire.
 
 ### The Java reader
 
-`ParcelLayout.java` describes the record as a `StructLayout`. The value layouts are unaligned because a UDP payload is not guaranteed to start on an 8-byte boundary, and they name little-endian because the wire is little-endian on any host.
+`ParcelLayout.java` describes the record as a `StructLayout`. The value layouts are unaligned because a UDP payload isn't guaranteed to start on an 8-byte boundary, and they name little-endian because the wire is little-endian on any host.
 
 ```java
     private static final ByteOrder LE = ByteOrder.LITTLE_ENDIAN;
@@ -73,7 +73,7 @@ Chapter 22, *Aeron and SBE* (Part 6), covers a production flat wire.
             MemoryLayout.paddingLayout(6).withName("reserved"));
 ```
 
-Offsets are derived from the layout, and each field gets a `VarHandle` from `LAYOUT.varHandle(...)`, so a mismatch cannot hide in a hand-typed constant. `ParcelLayoutTest` checks them against the header.
+Offsets are derived from the layout, and each field gets a `VarHandle` from `LAYOUT.varHandle(...)`, so a mismatch can't hide in a hand-typed constant. `ParcelLayoutTest` checks them against the header.
 
 `FlatDecoder.decode` is the Java tab. C++ shows `decode_memcpy` and `view_start_lifetime_as` (`cpp/include/lowlat/flat/decode.hpp`). The Python tab shows `RECORD` (the consumer's `flat.py`) with `unpack_decoder` (`flat-py/src/lowlat_flat/decode.py`).
 
@@ -144,15 +144,15 @@ def unpack_decoder(wire: bytes) -> Decode:
 
 `MemorySegment.ofBuffer` wraps the receive loop's one direct buffer, and the `datagram != wrapped` test makes that happen once, not per parcel. `view.wrap(segment, base)` re-points the single `FlatView` at the datagram the kernel just wrote. The three checks follow the contract's order: schema, version, then size. The returned view is valid only until the next `decode`, and one decoder serves one receive thread.
 
-In C++ `decode_memcpy` copies 80 bytes into a trivially copyable `Parcel`; it is correct at any alignment. `view_start_lifetime_as` copies nothing: `std::start_lifetime_as` (C++23, compiled with the pinned Clang 22 and GCC 16) begins the lifetime of a `Parcel` in the bytes already there and returns a pointer. It checks the header with `p1::check_header` (errors mapped by `to_view_error`) and refuses a misaligned buffer. A `reinterpret_cast<const Parcel*>(buffer)` read is not measured: no `Parcel` object exists in that storage, so the read is undefined behaviour.
+In C++ `decode_memcpy` copies 80 bytes into a trivially copyable `Parcel`; it's correct at any alignment. `view_start_lifetime_as` copies nothing: `std::start_lifetime_as` (C++23, compiled with the pinned Clang 22 and GCC 16) begins the lifetime of a `Parcel` in the bytes already there and returns a pointer. It checks the header with `p1::check_header` (errors mapped by `to_view_error`) and refuses a misaligned buffer. A `reinterpret_cast<const Parcel*>(buffer)` read isn't measured: no `Parcel` object exists in that storage, so the read is undefined behaviour.
 
-In Python `Struct.unpack_from` over a `memoryview` does not copy the datagram but returns a tuple of new objects: the measured lane makes 6.7 new `int` objects per parcel, and the barcode is copied into a new `bytes`. There is no view type to re-point.
+In Python `Struct.unpack_from` over a `memoryview` doesn't copy the datagram but returns a tuple of new objects: the measured lane makes 6.7 new `int` objects per parcel, and the barcode is copied into a new `bytes`. There's no view type to re-point.
 
 ## The in-flight table
 
 The tracker sweeps its table at every encoder tick, summing the weight of the in-flight parcels whose `encoder_tick` has reached the diverter's, about 2 % of 1,000,000 slots, stored in shuffled order.
 
-{% include excalidraw.html file="08-flat-vs-pointer-layout" alt="An object-table of 1,000,000 references points at ParcelState objects scattered on the heap, each with a header and fields, and a sweep of the table takes a p50 of 4.97-5.03 ms. A flat-table keeps 24-byte slots side by side in one MemorySegment in an Arena, and the same sweep takes 0.95-0.97 ms. A dashed ghost box, ParcelState as a value class (JEP 401, JDK 28 early access only), points at the object-table to show the flat layout it aims at on the heap; on common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte ParcelState needs later enhancements. It is not measured, and the book pins JDK 25 LTS." caption="Figure 8.2 — Sweeping one run of memory takes 0.95-0.97 ms, against 4.97-5.03 ms for a pointer per parcel. Value classes aim at that layout but are early access only, so the book measures the flat table." %}
+{% include excalidraw.html file="08-flat-vs-pointer-layout" alt="An object-table of 1,000,000 references points at ParcelState objects scattered on the heap, each with a header and fields, and a sweep of the table takes a p50 of 4.97-5.03 ms. A flat-table keeps 24-byte slots side by side in one MemorySegment in an Arena, and the same sweep takes 0.95-0.97 ms. A dashed ghost box, ParcelState as a value class (JEP 401, JDK 28 early access only), points at the object-table to show the flat layout it aims at on the heap; on common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte ParcelState needs later enhancements. It is not measured, and the book pins JDK 25 LTS." caption="Figure 8.2: Sweeping one run of memory takes 0.95-0.97 ms, against 4.97-5.03 ms for a pointer per parcel. Value classes aim at that layout but are early access only, so the book measures the flat table." %}
 
 The object table is a `ParcelState[]`, a heap object behind each reference; the flat table is a `MemorySegment` of 24-byte structs from an `Arena`. The Java tab joins `FlatTable.java` and `ObjectTable.sweepDue`; the C++ tab shows both `sweep_due` overloads from `cpp/include/lowlat/flat/table.hpp`. Python has no table lane; the decode lane already shows its object model.
 
@@ -213,19 +213,19 @@ The object table is a `ParcelState[]`, a heap object behind each reference; the 
 
 `Arena.ofConfined()` gives the table an explicit lifetime: `close()` releases the memory when the code chooses, with no collector involved, and only the creating thread may touch the segment. The `VarHandle`s are `static final` so the JIT treats them as constants.
 
-The sweep reads `encoder_tick` of every slot, and `state` and `weight_g` only for the about 2 % that are due; in the object layout each read first follows a reference. Why adjacent slots are cheaper than pointers is the subject of Chapter 9, *Eliminating work: allocation, cache locality, false sharing* (Part 3); this chapter only measures the difference.
+The sweep reads `encoder_tick` of every slot, and `state` and `weight_g` only for the about 2 % that are due; in the object layout each read first follows a reference. Why adjacent slots are cheaper than pointers is the subject of [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3); this chapter only measures the difference.
 
 C++ gets the flat layout by default: a `std::vector<ParcelState>` is contiguous, and the pointer layout is the one the code has to ask for with `std::vector<std::unique_ptr<ParcelState>>`. The two are a contrast of layouts, not of languages.
 
 ### Where the bytes go
 
-`ParcelState` holds 8 + 8 + 4 + 1 + 1 bytes of fields behind a 12-byte header, padded to 40 B; JOL confirms it. With an 8-byte header it is 32 B. JOL measures 100,000 parcels (`Footprint.PARCELS`); the sweep uses 1,000,000 (`TableBenchmark.PARCELS`). The object table's 4,400,016 B is 100,000 × 40 B plus a 400,016 B reference array (3,600,016 B is 100,000 × 32 B plus the same). JEP 519 makes `-XX:+UseCompactObjectHeaders` a product flag in JDK 25; JEP 534 makes it the default in JDK 27. The flat slot has no header and is 24 B either way: compact headers shrink the object, not the flat table.
+`ParcelState` holds 8 + 8 + 4 + 1 + 1 bytes of fields behind a 12-byte header, padded to 40 B; JOL confirms it. With an 8-byte header it's 32 B. JOL measures 100,000 parcels (`Footprint.PARCELS`); the sweep uses 1,000,000 (`TableBenchmark.PARCELS`). The object table's 4,400,016 B is 100,000 × 40 B plus a 400,016 B reference array (3,600,016 B is 100,000 × 32 B plus the same). JEP 519 makes `-XX:+UseCompactObjectHeaders` a product flag in JDK 25; JEP 534 makes it the default in JDK 27. The flat slot has no header and is 24 B either way: compact headers shrink the object, not the flat table.
 
 ### Value classes: status at 2026-10-22
 
 > Project Valhalla would give Java value classes: objects without identity that the JVM may flatten into arrays and fields. JEP 401, *Value Objects (Preview)*, is integrated into the JDK 28 mainline and is a preview feature, so it needs `--enable-preview` even in a GA release. JDK 28 is early access only, with no GA date; the six-month cadence points near March 2027. The Valhalla early-access build is `27-jep401ea3+1-1`, under Oracle's early-access terms. This book pins Temurin 25.0.5 LTS; JDK 27 is GA but not LTS. No build, script or number uses a prerelease. Revisit at JDK 28 GA.
 
-Value classes aim at a flat layout on the heap without a hand-written one. That is the dashed ghost box in Figure 8.2; it is not measured. On common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte `ParcelState` needs later null-restricted or non-atomic enhancements. A `FlatView` over a receive buffer would stay a view of bytes someone else owns, and the off-heap table would keep its explicit lifetime. `VALHALLA.md` carries the same status.
+Value classes aim at a flat layout on the heap without a hand-written one. That's the dashed ghost box in Figure 8.2; it isn't measured. On common hardware JEP 401 flattens a mutable field or array element only up to 64 bits, null flag included, so a 22-byte `ParcelState` needs later null-restricted or non-atomic enhancements. A `FlatView` over a receive buffer would stay a view of bytes someone else owns, and the off-heap table would keep its explicit lifetime. `VALHALLA.md` carries the same status.
 
 ## Calling C: the clock downcall
 
@@ -275,7 +275,7 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 **Decode, JMH (criterion 2).** In one JMH run, `flat-ffm` allocates under 1 B/op (0.0012 to 0.0014) with a p50 of 16 ns. `protobuf-decode` allocates 576 B/op with a p50 of 157 to 162 ns. The criterion asks for a p50 ratio of at least 3x; the measured ratio is 9.8x to 10.1x. The allocation counter `gc.alloc.rate.norm` is bytes per operation, not a latency.
 
-**Line allocation (criterion 3).** The receive thread's allocation per parcel, which covers the channel, the decode and the handler, is 8.76 B for `flat-ffm` against 591 B for `protobuf-decode`. The bound is 5 %; the measured share is 1.5 %. The floor is not zero: the first decode loads classes and links the `VarHandle`s.
+**Line allocation (criterion 3).** The receive thread's allocation per parcel, which covers the channel, the decode and the handler, is 8.76 B for `flat-ffm` against 591 B for `protobuf-decode`. The bound is 5 %; the measured share is 1.5 %. The floor isn't zero: the first decode loads classes and links the `VarHandle`s.
 
 **Table sweep (criterion 4).** In one JMH run, the `flat-table` sweep of 1,000,000 parcels has a p50 of 0.95 to 0.97 ms and the `object-table` sweep 4.97 to 5.03 ms, about 5x. The bound is one half.
 
@@ -285,24 +285,24 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 **Observed only.** The object table of 100,000 parcels is 4,400,016 B, or 3,600,016 B with compact headers; the flat table is 2,400,000 B either way; the protobuf `ParcelEvent` is 80 B either way. In C++, the p50 over the Google Benchmark repetitions per 1,024 records is 9,055 to 9,247 ns for `decode-memcpy`, 8,535 to 8,663 ns for `decode-bit-cast` and 7,423 to 7,543 ns for `decode-start-lifetime-as`. The C++ sweep is 0.91 to 0.92 ms for `flat-table` and 4.78 to 4.84 ms for `pointer-table`, also about 5x. Each ratio is within its own language. In Python, `unpack_from` and `ParseFromString` both allocate 8.7 blocks and 6.7 new `int` objects per parcel; the per-call p50 is 336 to 349 ns against 997 to 1,050 ns, each sample including two `perf_counter_ns` reads.
 
-### What the line does not show
+### What the line doesn't show
 
-The line runs' end-to-end latency is not a criterion, and it does not show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, measured on unwarmed JVMs on the default heap (Chapter 5 measures that cost). It is lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load does not. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the budget.
+The line runs' end-to-end latency isn't a criterion, and it doesn't show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, measured on unwarmed JVMs on the default heap (Chapter 5 measures that cost). It's lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load doesn't. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the budget.
 
 ## Cross-check
 
-Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf, 0.0012 to 0.0014 B/op for flat) and `ThreadMXBean` on the line's receive thread (591 B and 8.76 B per parcel). The golden bytes cross three readers, JOL matches the record arithmetic, and the downcall is checked against `System.nanoTime()`. Chapter 5's 654 to 733 B per parcel is the cost this chapter removes, but Chapter 5 ran at 1 kHz with its own handler, so the numbers are not subtracted.
+Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf, 0.0012 to 0.0014 B/op for flat) and `ThreadMXBean` on the line's receive thread (591 B and 8.76 B per parcel). The golden bytes cross three readers, JOL matches the record arithmetic, and the downcall is checked against `System.nanoTime()`. Chapter 5's 654 to 733 B per parcel is the cost this chapter removes, but Chapter 5 ran at 1 kHz with its own handler, so the numbers aren't subtracted.
 
 ## What you learned
 
 - A flat record is safe to read in place only when its contract fixes size, offsets, header, endianness and evolution, and golden bytes pin it across readers.
 - A reused view over the receive buffer allocates under 1 B/op in JMH and 8.76 B per parcel on the line, against 576 B/op and 591 B for a protobuf parse.
-- End-to-end percentiles on the line do not show a saving of 141 to 146 ns per parcel. Counters and JMH do.
+- End-to-end percentiles on the line don't show a saving of 141 to 146 ns per parcel. Counters and JMH do.
 - A flat off-heap table in an `Arena` swept in 0.95 to 0.97 ms against 4.97 to 5.03 ms for an array of objects, at the cost of an explicit lifetime.
 - C++ spells the idea `std::start_lifetime_as`; a `reinterpret_cast` read is undefined behaviour. CPython copies no bytes but allocates per field.
 - Value classes (JEP 401) are a JDK 28 early-access preview. The book measures JDK 25 and revisits at JDK 28 GA.
 
-The next chapter, *Eliminating work: allocation, cache locality, false sharing* (Part 3), takes data-structure-level work elimination across all three languages.
+The next chapter, [*Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3), takes data-structure-level work elimination across all three languages.
 
 ## For deeper coverage
 

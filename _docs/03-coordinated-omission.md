@@ -18,25 +18,25 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-The belt never waits. The simulator in this book emits a parcel every millisecond at 1 kHz, on a schedule fixed before the run starts, and a consumer that stops for 200 ms does not slow the belt: 200 parcels pile up behind it, and each one reaches the diverter late. Each of those parcels spent part of the scan-to-divert budget waiting in a socket buffer.
+The belt never waits. The simulator in this book emits a parcel every millisecond at 1 kHz, on a schedule fixed before the run starts, and a consumer that stops for 200 ms doesn't slow the belt: 200 parcels pile up behind it, and each one reaches the diverter late. Each of those parcels spent part of the scan-to-divert budget waiting in a socket buffer.
 
-A timer that starts when the consumer picks up a parcel cannot see that wait. Neither can a benchmark that sends its next request only after the previous one returns. Both report a healthy service while the line mis-sorts 200 parcels. This is coordinated omission: the measuring system coordinates with the system under test, so the samples the stall would have produced are never taken.
+A timer that starts when the consumer picks up a parcel can't see that wait. Neither can a benchmark that sends its next request only after the previous one returns. Both report a healthy service while the line mis-sorts 200 parcels. This is coordinated omission: the measuring system coordinates with the system under test, so the samples the stall would have produced are never taken.
 
-Chapter 1 showed that latency is a distribution; this chapter keeps the samples of that distribution intact, starting with the clock and the histogram underneath.
+Chapter 1 showed that latency is a distribution. This chapter keeps that distribution's samples intact, starting with the clock and the histogram underneath.
 
 The code is in `examples/03-coordinated-omission/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
 ## Diagram
 
-{% include excalidraw.html file="03-three-clocks" alt="A timeline of intended emit, actual send, dequeue and done, with three bars below ending at done: intended-time (amber) starts at the belt's schedule, closed-loop at the send of its own request, receipt-time at dequeue." caption="Figure 3.1 — Three clocks on one parcel. Only intended-time starts at the belt's schedule, so only it is charged for the wait." %}
+{% include excalidraw.html file="03-three-clocks" alt="A timeline of intended emit, actual send, dequeue and done, with three bars below ending at done: intended-time (amber) starts at the belt's schedule, closed-loop at the send of its own request, receipt-time at dequeue." caption="Figure 3.1: Three clocks on one parcel. Only intended-time starts at the belt's schedule, so only it is charged for the wait." %}
 
 ## Clocks
 
 Every latency is a difference of two clock reads, so the clock sets the floor.
 
-**Monotonic, not wall.** A wall clock (`CLOCK_REALTIME`) can step backwards when NTP or an operator corrects it, which makes a duration negative. `CLOCK_MONOTONIC` only moves forward and is the right source for durations. The line simulator documents this as a contract: every `*_ns` field on the wire is `CLOCK_MONOTONIC` in integer nanoseconds. The simulator calls `clock_gettime` directly rather than `std::chrono::steady_clock`, because the wire contract promises `CLOCK_MONOTONIC` and the C++ standard does not promise that for `steady_clock`. Python's `time.monotonic_ns()` is `CLOCK_MONOTONIC` on Linux, and so is the JVM's `System.nanoTime()` on this platform.
+**Monotonic, not wall.** A wall clock (`CLOCK_REALTIME`) can step backwards when NTP or an operator corrects it, which makes a duration negative. `CLOCK_MONOTONIC` only moves forward and is the right source for durations. The line simulator documents this as a contract: every `*_ns` field on the wire is `CLOCK_MONOTONIC` in integer nanoseconds. The simulator calls `clock_gettime` directly rather than `std::chrono::steady_clock`, because the wire contract promises `CLOCK_MONOTONIC` and the C++ standard doesn't promise that for `steady_clock`. Python's `time.monotonic_ns()` is `CLOCK_MONOTONIC` on Linux, and so is the JVM's `System.nanoTime()` on this platform.
 
-**One clock domain.** The experiment subtracts a timestamp written by the simulator process (`intended_emit_ns`) from one read in the consumer process. That subtraction is valid only because both read the same kernel clock on the same host. The value is not wall time and means nothing on another machine.
+**One clock domain.** The experiment subtracts a timestamp written by the simulator process (`intended_emit_ns`) from one read in the consumer process. That subtraction is valid only because both read the same kernel clock on the same host. The value isn't wall time and means nothing on another machine.
 
 **The cost of a read.** Two back-to-back reads and the difference between them give the price of one read. That price is the floor under any timing around sub-microsecond work. The probe takes 1,000,000 pairs per clock.
 
@@ -104,10 +104,10 @@ The Python probe binds `rec.record` to a local name before the loop, which remov
 The consumer receives each parcel as a UDP datagram, handles it, and records a latency. The methods differ only in where the clock starts.
 
 - **Intended time** starts at `intended_emit_ns`, the instant the belt's schedule says the parcel is emitted. It is charged for everything after that: the simulator waking late, the loopback hop, the wait in the socket buffer, and the handling.
-- **Receipt time** starts when the consumer dequeues the datagram. It is what a service-side timer reports. It measures handling only.
+- **Receipt time** starts when the consumer dequeues the datagram. It's what a service-side timer reports, and it measures handling only.
 - **Closed loop** is a client that issues the next request only after the previous one completes, one request per millisecond, with the same 200 ms stall. Each request is timed from its own start. Recorded as is, it is the naive variant. Recorded through the histogram's correction call it is the corrected variant.
 
-{% include excalidraw.html file="03-coordinated-omission" alt="Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.4-11.9 us) and intended-time (p99 100.4-100.5 ms C++, 101.4-101.7 ms Java); in the closed-loop run a client feeds naive (p99 1.0-1.1 us C++, 6.9-7.1 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.2-99.3 ms Java)." caption="Figure 3.2 — A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (an 8-core, 16-thread Intel laptop CPU, Fedora 44 kernel 7.2, governor `powersave`), runs r02-run1..3." %}
+{% include excalidraw.html file="03-coordinated-omission" alt="Two bands: in the UDP run a stalled consumer feeds receipt-time (C++ p99 5.4-11.9 us) and intended-time (p99 100.4-100.5 ms C++, 101.4-101.7 ms Java); in the closed-loop run a client feeds naive (p99 1.0-1.1 us C++, 6.9-7.1 us Java) and, through a dashed back-fill edge, corrected (p99 98.2 ms C++, 99.2-99.3 ms Java)." caption="Figure 3.2: A 200 ms stall is invisible to receipt-time and to the naive closed loop, and visible to the schedule clock and to the back-filled correction. Numbers: bare-metal, untuned host (an 8-core, 16-thread Intel laptop CPU, Fedora 44 kernel 7.2, governor `powersave`), runs r02-run1..3." %}
 
 The first two variants come from the same datagrams in the same run. Parcel 5000 triggers the stall. During those 200 ms the simulator keeps emitting, so about 200 parcels wait in the socket. The consumer then drains them back to back, so receipt time records 200 fast samples. Intended time records the same 200 parcels with waits that fall from about 200 ms to near zero. The third and fourth variants come from a separate closed-loop phase in the same process.
 
@@ -127,7 +127,7 @@ Each language has one program with two subcommands, `run` and `probe`: `experime
 
 ### Timestamping against the intended time
 
-The receive loop does one thing the line consumer does not: it starts a latency clock the instant `recv` returns, before parsing. Parsing a protobuf message takes time that is not queueing.
+The receive loop does one thing the line consumer doesn't: it starts a latency clock the instant `recv` returns, before parsing. Parsing a protobuf message takes time that isn't queueing.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -188,7 +188,7 @@ The receive loop does one thing the line consumer does not: it starts a latency 
             rec.intendedTime().record(doneNs - event.getIntendedEmitNs());
 ```
 
-The handling step is the line's lane lookup from the barcode. The C++ and Java versions store its result in a sink (an atomic and a `volatile` field) so the compiler or JIT cannot delete a call whose result is unused. Python needs no sink. Chapter 4 returns to dead-code elimination.
+The handling step is the line's lane lookup from the barcode. The C++ and Java versions store its result in a sink (an atomic and a `volatile` field) so the compiler or JIT can't delete a call whose result is unused. Python needs no sink. Chapter 4 returns to dead-code elimination.
 
 ### The stall
 
@@ -219,7 +219,7 @@ def stall(ms: int) -> None:
     }
 ```
 
-A sleep is the correct tool here: it models a thread that is not running, whether from a collection pause, a page fault or a lock convoy. Java restores the interrupt flag rather than swallowing it, which is the idiom for `InterruptedException`. The stall fires once, at parcel `seq` 5000.
+A sleep is the right tool here: it models a thread that isn't running, whether from a collection pause, a page fault or a lock convoy. Java restores the interrupt flag rather than swallowing it, which is the idiom for `InterruptedException`. The stall fires once, at parcel `seq` 5000.
 
 ### The closed-loop client
 
@@ -286,7 +286,7 @@ The closed loop is the standard benchmark shape: start, work, finish, then issue
         }
 ```
 
-Both recorders receive the same `latency_ns`. The corrected one back-fills with an expected interval of 1 ms, the loop's pacing. The pacing differs by language. C++ sleeps to an absolute deadline with `clock_nanosleep(TIMER_ABSTIME)`, which hands the kernel the deadline and needs no remaining-time bookkeeping after a signal. Python and Java compute the remaining time and sleep for that long, because neither exposes an absolute-deadline sleep in its standard library. The clock starts at the request's own `start_ns`, so no request can be charged for time it spent queued. That is the defect.
+Both recorders receive the same `latency_ns`. The corrected one back-fills with an expected interval of 1 ms, the loop's pacing. The pacing differs by language. C++ sleeps to an absolute deadline with `clock_nanosleep(TIMER_ABSTIME)`, which hands the kernel the deadline and needs no remaining-time bookkeeping after a signal. Python and Java compute the remaining time and sleep for that long, because neither exposes an absolute-deadline sleep in its standard library. The clock starts at the request's own `start_ns`, so no request can be charged for time it spent queued. That's the defect.
 
 ## Measure
 
@@ -300,7 +300,7 @@ It builds the three programs, runs each for 10 s at 1,000 parcels/s with the sta
 
 Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`. Ranges span the three committed runs, `results/r02-run1` to `r02-run3`. Java and Python run unwarmed.
 
-**Clock read.** `monotonic_ns` through `clock_gettime` costs a p50 of 12 ns in C++ in all three runs, and `std::chrono::steady_clock` costs 13 ns. `System.nanoTime` costs 12 to 13 ns. Python is about 3.6 to 3.8 times higher: `time.monotonic_ns` 43 to 46 ns and `time.perf_counter_ns` 42 to 44 ns. The `tsc` clocksource is read in user space through the vDSO, which is why a read costs tens of nanoseconds and not a syscall. `acpi_pm`, which this host also lists, is not readable through the vDSO, so each read would be a system call. Timing work shorter than a few clock reads measures the clock.
+**Clock read.** `monotonic_ns` through `clock_gettime` costs a p50 of 12 ns in C++ in all three runs, and `std::chrono::steady_clock` costs 13 ns. `System.nanoTime` costs 12 to 13 ns. Python is about 3.6 to 3.8 times higher: `time.monotonic_ns` 43 to 46 ns and `time.perf_counter_ns` 42 to 44 ns. The `tsc` clocksource is read in user space through the vDSO, which is why a read costs tens of nanoseconds and not a syscall. `acpi_pm`, which this host also lists, isn't readable through the vDSO, so each read would be a system call. Timing work shorter than a few clock reads measures the clock.
 
 **The stall, four ways (p99).**
 
@@ -313,9 +313,9 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 The receipt-time and closed-loop naive variants stay in microseconds, while intended-time and closed-loop corrected land near 100 ms. The arithmetic explains that. The 200 stalled parcels are 2 percent of 10,000 samples, and their waits fall linearly from about 200 ms to zero. The p99 sits 1 percent from the top, which is the midpoint of that ramp, about 100 ms. The corrected loop has the same shape: 199 back-filled values from 199 ms down to 1 ms plus the 200 ms sample, so its p99 is also near 100 ms.
 
-The maximum cannot separate the methods. Every variant records the stalled sample, so the max is about 200 ms everywhere, including receipt time (C++ 200.1 ms) and the naive closed loop (C++ 200.3 ms). The naive methods hold the stall as one sample. The p99 shows that it hurt 200 parcels.
+The maximum can't separate the methods. Every variant records the stalled sample, so the max is about 200 ms everywhere, including receipt time (C++ 200.1 ms) and the naive closed loop (C++ 200.3 ms). The naive methods hold the stall as one sample. The p99 shows that it hurt 200 parcels.
 
-**The control (no stall).** The correction must add nothing when nothing is late. In the control, closed-loop naive and corrected have the same count, 10,000, and the same p99 in every run: C++ 1.0 us, Python 19.1 to 19.8 us, Java 6.0 to 6.2 us. Control intended-time p99 is 185 to 400 us in C++, 209 to 213 us in Python and 267 to 425 us in Java, while receipt time is 5.2 to 8.0 us in C++. That gap is real latency, not a stall. Intended time includes the simulator waking late to send, the loopback hop and the socket queue; receipt time and the closed loop start after all of that. It is also why the control criterion is a p99 under 1 ms rather than a comparison with the other clocks. Java's control also shows an intended-time p99.9 of 10.1 to 25.7 ms, consistent with the unwarmed start.
+**The control (no stall).** The correction must add nothing when nothing is late. In the control, closed-loop naive and corrected have the same count, 10,000, and the same p99 in every run: C++ 1.0 us, Python 19.1 to 19.8 us, Java 6.0 to 6.2 us. Control intended-time p99 is 185 to 400 us in C++, 209 to 213 us in Python and 267 to 425 us in Java, while receipt time is 5.2 to 8.0 us in C++. That gap is latency on the path (late send, loopback, socket queue), not a stall. Intended time starts at the belt's schedule; receipt time and the closed loop start after all of that. That's also why the control criterion is a p99 under 1 ms rather than a comparison with the other clocks. Java's control also shows an intended-time p99.9 of 10.1 to 25.7 ms, consistent with the unwarmed start.
 
 **Criteria, per language.** Intended-time p99 is at least 50 ms. Receipt-time p99 is under 1 ms. Corrected p99 is within 2x of intended-time p99. Naive p99 is under 1 ms. In the control, intended-time p99 is under 1 ms and corrected p99 is within 2x of naive p99.
 
@@ -325,13 +325,13 @@ The maximum cannot separate the methods. Every variant records the stalled sampl
 
 ## What you learned
 
-- A latency is the difference of two clock reads, and where the first one is taken decides what you can see. Receipt time and the naive closed loop start after the wait and cannot see a stall; intended time starts at the schedule and charges for it.
+- A latency is the difference of two clock reads, and where the first one is taken decides what you can see. Receipt time and the naive closed loop start after the wait and can't see a stall; intended time starts at the schedule and charges for it.
 - Use a monotonic clock for durations, confirm that both timestamps share a clock domain, and measure the cost of the read before timing anything near it.
 - Configure the histogram once with a fixed range and precision (1 ns to one hour, 3 significant digits) and use the library's correction call, `record_corrected` or `recordValueWithExpectedInterval`, instead of hand-written percentile or back-fill code.
 - Expect post-hoc and inline correction to agree on count and possibly differ by one bucket, and the ports to differ by one bucket in a sparse tail.
 - A control run with the stall removed shows what the method itself adds. Here the correction adds nothing.
 
-The next chapter, Benchmark harnesses: Google Benchmark, pyperf and JMH, takes the same discipline into the tools that automate warm-up, repetition and dead-code defence.
+The next chapter, Benchmark harnesses: Google Benchmark, pyperf and JMH, takes the same discipline into the tools that automate warm-up and repetition and guard against dead code.
 
 ## For deeper coverage
 

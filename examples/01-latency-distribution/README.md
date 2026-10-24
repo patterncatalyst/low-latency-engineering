@@ -10,7 +10,7 @@ stream (1 kHz x 10 s, UDP port 47210) in C++, Python and Java.
 they process the same number of parcels per second. The batch variant holds
 parcels until 32 have arrived and then handles them together, the
 "throughput-friendly" design. Each parcel's latency is `done - intended_emit`,
-so a parcel that arrives first waits for 31 more (31 ms at 1 kHz) before it is
+so the first parcel to arrive waits for 31 more (31 ms at 1 kHz) before it's
 handled. Throughput is equal; p50 is 15.2 to 15.4 ms instead of 0.085 to 0.188 ms (r02-run1..3).
 
 **B. Bimodal.** Per-parcel handling, but one parcel in 100 (`seq % 100 == 0`,
@@ -23,9 +23,9 @@ describes neither group.
 The slow path is a busy CPU loop (a dependent multiply-add chain), calibrated at
 startup to about 2 ms, and not a sleep. A sleep yields the core: the OS runs
 something else, the timer wakes the thread later, and the cost shows up as
-scheduler noise rather than as the work the parcel does. A real re-lookup
-holds the core, so the parcels behind it queue. The busy loop reproduces that
-queueing.
+scheduler noise rather than as the work the parcel does. A re-lookup that
+holds the core makes the parcels behind it queue, and the busy loop reproduces
+that.
 
 The calibration doubles the iteration count until a run lasts 20 ms, then keeps
 the fastest of several further runs (a preempted run measures the scheduler).
@@ -151,7 +151,7 @@ The per-parcel median itself moves between runs on this untuned host (C++ 164,47
 1 kHz consumers spread from 85 to 188 us in per-parcel p50 on this host, and an interleaved
 before-and-after A/B on the Chapter 0 and Chapter 5 consumers
 (`examples/05-jvm-costs/results/r02-ab/`) found the p50 varying alike in both trees; the
-cause is not identified. No criterion compares medians across runs.
+cause isn't identified. No criterion compares medians across runs.
 
 Every number carries the machine profile (`profile` block of each report): CPU
 governor, tuned profile, virtualisation, load.

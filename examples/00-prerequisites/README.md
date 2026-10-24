@@ -1,7 +1,7 @@
 # 00-prerequisites - lab smoke test
 
-Chapter 0 proves the toolchain end to end before any latency claim is made. It
-does not measure a technique. It shows that the C++ line simulator, the three
+Before any latency claim, Chapter 0 checks the toolchain end to end. It
+doesn't measure a technique. It shows that the C++ line simulator, the three
 language consumers, the measurement kits and the machine profile all work
 together, and that nothing is lost on the way.
 
@@ -36,7 +36,7 @@ Readiness is detected by polling `ss` for the bound socket.
 | Variable | Meaning |
 |---|---|
 | `RESULTS_DIR` | report directory (default `results/latest`) |
-| `ALLOW_BUSY=1` | do not refuse when a `lowlat-*` VM is running; numbers are noisy |
+| `ALLOW_BUSY=1` | don't refuse when a `lowlat-*` VM is running; numbers are noisy |
 | `SKIP_BUILD=1` | reuse existing builds |
 | `LOWLAT_BUILD` | private C++ build directory |
 | `PORT_BASE` | first UDP port (default 47200) |
@@ -59,9 +59,9 @@ It has run once: `ALLOW_BUSY=1 VM=1 ./verify.sh` on 2026-10-21 against the
 PREEMPT_RT guest (snapshot `lab-ready-rt`). The output is committed in
 `results/r01-vm-smoke/`, with the guest results in `vm/` labelled `vm`.
 `check-prereqs.sh --vm` reported 8 PASS, 0 WARN, 0 FAIL, and `cyclictest` ran one
-unpinned, untuned 60 s thread. This is a smoke test of the lab path, not a
+unpinned, untuned 60 s thread. It's a smoke test of the lab path, not a
 measurement. The host reports in that directory were taken with the guest running
-and are never quoted (see `NOTES.md` there). That smoke test predates the
+and aren't quoted (see `NOTES.md` there). That smoke test predates the
 `/dev/ptp0` check; after the guest was rebuilt from the scripts on 2026-10-22,
 `check-prereqs.sh --vm` passes 9 of 9 and `phc2sys` locks to `/dev/ptp0`
 (`results/r01-lab/`, VM).
@@ -73,7 +73,7 @@ kernel, cyclictest jitter), not what the host does.
 ## Expected effect
 
 Three valid reports, each `count = 5000`, `dropped = 0`. Percentiles vary with host
-load and are not asserted.
+load and aren't asserted.
 
 ## Verification status
 
@@ -84,10 +84,10 @@ machine profile and matches `lowlat-report check`. Exit 0 requires all of it.
 
 It held on all three quiet-host runs, `r02-run1..3` (bare-metal host, governor
 `powersave`, tuned `balanced`, kernel 7.2, `virt: none`): every report
-had `count = 5000` and `dropped = 0`. The p99 smoke values were not asserted; across
+had `count = 5000` and `dropped = 0`. The p99 smoke values weren't asserted; across
 the runs they were 183,551 to 243,839 ns (C++), 218,111 to 223,359 ns (Python) and
 319,487 to 403,455 ns (Java, which includes JIT warm-up).
 
 The `VM=1` path ran once (`results/r01-vm-smoke/`, labelled VM): 8 of 8 guest
 checks passed and `cyclictest` produced its output. Those values are VM numbers and
-are not compared with the host runs.
+aren't compared with the host runs.

@@ -54,8 +54,8 @@ None of them leads with a percentile.
   stddev, cv. The mean comes first and is the wrong number to quote. The benchmark adds a
   custom `p99` statistic with `ComputeStatistics`. It is computed across the 30 repetitions
   (nearest rank), so with 30 samples it is the worst repetition: a view of run-to-run
-  spread, not of per-call tail latency. Google Benchmark times a loop of iterations and does
-  not keep per-iteration times, so the lowlat report holds one sample per repetition.
+  spread, not of per-call tail latency. Google Benchmark times a loop of iterations and doesn't
+  keep per-iteration times, so the lowlat report holds one sample per repetition.
 - **JMH SampleTime** times individual invocations and prints p0.00, p0.50, p0.90, p0.95,
   p0.99, p0.999, p0.9999 and p1.00 beside a mean score. The percentiles are the result.
   Each invocation checks 1,024 prefixes (`@OperationsPerInvocation`), because SampleTime
@@ -70,14 +70,14 @@ None of them leads with a percentile.
 
 `BM_CheckDigit_Eliminated` and the Java `eliminated` benchmark time an empty loop: the
 check digit is a pure function, nothing reads the result, so the compiler (clang) and the
-JIT (C2) remove it. A harness cannot stop that; the benchmark has to give the result a
+JIT (C2) remove it. A harness can't stop that; the benchmark has to give the result a
 use. `benchmark::DoNotOptimize`, `ClobberMemory` and `Blackhole` exist for that, and the
 `Guarded` and `guarded` variants use them. The inputs matter as much: the guarded variants
-read prefixes from a container the compiler cannot see through.
+read prefixes from a container the compiler can't see through.
 
 ## Python: warm-up, not elimination
 
-CPython does not remove the call. What it does is specialize hot bytecode after a few
+CPython doesn't remove the call. It specializes hot bytecode after a few
 executions, which is why pyperf runs warm-up values first, discards them from the result and
 records them. For this function the effect is small: pyperf's own output reports
 `2^16 (64 outer-loops x 1024 inner-loops)` loop iterations per value, so each measured value covers 64
@@ -93,7 +93,7 @@ Numbers here are host bare metal, untuned: governor `powersave`, tuned profile `
 turbo on (recorded in `profile.json` and in every report). In all three runs pyperf printed "the
 benchmark result may be unstable" and advised `pyperf system tune`. The warning stays.
 Tuning the system (governor, turbo, CPU isolation) changes the host, which this repository
-does not do; it is taught in Part 5, inside the lab VM. `pyperf system show` is read-only and
+doesn't do; it is taught in Part 5, inside the lab VM. `pyperf system show` is read-only and
 its output is saved as `pyperf.system-show.txt`.
 
 ## Report conversion

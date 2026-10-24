@@ -1,0 +1,215 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "10-lockfree-waitfree",
+  "language" : "java",
+  "variant" : "mutex",
+  "unit" : "ns",
+  "count" : 4000000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 90,
+    "p90" : 219,
+    "p99" : 8279,
+    "p99_9" : 12095,
+    "max" : 517631
+  },
+  "hdr_histogram" : "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",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-23T20:46:21Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "vendor" : "Intel",
+      "model" : "Intel 8-core/16-thread CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15",
+      "caches" : {
+        "l1d" : {
+          "size_bytes" : 49152,
+          "line_bytes" : 64
+        },
+        "l1i" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l2" : {
+          "size_bytes" : 1310720,
+          "line_bytes" : 64
+        },
+        "l3" : {
+          "size_bytes" : 25165824,
+          "line_bytes" : 64
+        }
+      },
+      "topology" : [ {
+        "cpu" : 0,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 1,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 2,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 3,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 4,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 5,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 6,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 7,
+        "core_id" : 7,
+        "package_id" : 0
+      }, {
+        "cpu" : 8,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 9,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 10,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 11,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 12,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 13,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 14,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 15,
+        "core_id" : 7,
+        "package_id" : 0
+      } ]
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3666680,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none"
+    },
+    "load" : {
+      "load1" : 0.64,
+      "load5" : 1.3,
+      "load15" : 1.32,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf" : "7.2",
+      "valgrind" : "3.27.1",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "claim; producers=4; claims_per_thread=1000000; log_slots=1048576; stalled_producer=false; claim time is System.nanoTime around the claim only",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch", "-XX:+UseG1GC" ]
+    },
+    "placement" : {
+      "cpus" : [ 1, 2, 3, 4, 5 ],
+      "distinct_cores" : true,
+      "smt_siblings" : false
+    },
+    "ctx_switches" : {
+      "involuntary" : 0,
+      "voluntary" : 247413
+    },
+    "counters" : {
+      "cas_failures" : 0,
+      "cas_max_retries" : 0,
+      "claim_steps" : 4000000,
+      "claims" : 4000000,
+      "consumer_max_wait_ns" : 630606,
+      "lost_or_duplicated_claims" : 0,
+      "payload_mismatches" : 0,
+      "producer_voluntary_ctx_max" : 62625,
+      "producer_voluntary_ctx_min" : 60721
+    }
+  }
+}

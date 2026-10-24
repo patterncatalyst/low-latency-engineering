@@ -1,0 +1,253 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "09-eliminating-work",
+  "language": "java",
+  "variant": "counters-long-adder",
+  "unit": "ns",
+  "count": 100000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 8695,
+    "p90": 8927,
+    "p99": 10439,
+    "p99_9": 24751,
+    "max": 2390015
+  },
+  "hdr_histogram": "HISTFAAAAyF4nC1ST4hVVRg/53e+e9737rtzvd25vO6Mr8s0Mz7t+RwmezyKRKN0KJgeg4rIMAsXQuQqXEhQCwf/LGqo0CkiQkKGWejgRhc2SIsWCi0MKkosopW4EosoA5G+c85c7p9zzvf9/nw/buv0+WGlaEaFy2x8tSxnpq9/pfY8DAcfvoKIOS45tikPf4YbfDa+N/JtdfOZc93lF671n/TP7byz5VJ+NznLF6IVfKMv6tnpF6ts8lHjp/TOyLXtvz233v19z0dvPJ5devOTfT/s+GJ0LfuusWzvmyd6XR9bmDo6t3tFP649rN3M/m7ez/95+svq84nVyaWt1ydOjv781F9DV/iPaM18gJNY1yt6SZ84sjA/t6qX9Zq+rVf1Jf1A39MXcANXsCIt757Ws6/3+nvnDh3cP5jb1Rnrb2vvbE2NTVbtVp43k7LMSk5yzrIizaoij0eTvCirolWNlUVWjmZZs2iWVVIleZaXRT7WarfbnfF2v9vp9Tq7e73u9LZOZ2rXzKt7BzP7B/MLgxNHD73/zvzh40eOHTw+O+h2u9NTnfFO0cyKOM3LXIiqpDmecN5MRY6bcZ6k4iBlTpgpTTixEq+YssyWUk4TCyIbu4dBbBlgYiIoIlIWCiCQJTJQbC1BbhhS5GBKOtyepAsClzd5mOCFwMrW+qrUPZGQeAJXJ4Y1G2AmE0tZiQ+vCws2srBexK0EWHcfRyiioiwYMixVG3idhBSNNwy2bmdIBnKUMEELQc91u0vYnJ6AogATALl1IHNDMmpypJyNMLJxNUURG88VuZ1LBC4iP5ln9v0iUHcVRcGgaxFHjsKFS+EEGymIFcUBapV3EeZ1zuVlHIMlEwgNfEzWdUWBGjWfspxvEsQwwpx1iyGgIfVN3qzcDckyCqHVfVMDQ9Tw7JGMT3X/yFTYigM4pXFG408N4XkNz+J7LaW38KvFeY3/tuNWjEXCpxq3NN7DyyI84SbDiKOOnALC+O7lRQ2LX9nGPhP/17g8SG30WOVDdTYUNouFq8CPwL8Gv2hcrmERWNR4CW+LhsE+fK3xPE4RPjb4H65ifGg=",
+  "build": {
+    "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags": "-Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true",
+    "gil_enabled": null
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-23T23:27:37Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 8-core/16-thread CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15",
+      "caches": {
+        "l1d": {
+          "size_bytes": 49152,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 1310720,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 25165824,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 6,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 7,
+          "core_id": 7,
+          "package_id": 0
+        },
+        {
+          "cpu": 8,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 9,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 10,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 11,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 12,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 13,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 14,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 15,
+          "core_id": 7,
+          "package_id": 0
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3888550,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none"
+    },
+    "load": {
+      "load1": 1.24,
+      "load5": 1.85,
+      "load15": 1.26,
+      "running": 2
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": "3.27.1",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "op=counters; one sample = one batch of 1000 increments by one camera thread (5 cameras, each thread pinned; increment=LongAdder.increment); a telemetry thread samples every camera about once per millisecond; one shared LongAdder instead of per-camera counters",
+  "runtime": {
+    "gc": {
+      "collectors": [
+        "PS MarkSweep",
+        "PS Scavenge"
+      ],
+      "heap_bytes": 2058354688,
+      "flags": [
+        "-Xms2g",
+        "-Xmx2g",
+        "-XX:+AlwaysPreTouch",
+        "-XX:+UseParallelGC"
+      ]
+    },
+    "counters": {
+      "batch_size": 1000,
+      "batches_per_camera": 20000,
+      "cameras": 5,
+      "increments": 100000000,
+      "stride_bytes": 0,
+      "telemetry_samples": 745
+    },
+    "placement": {
+      "cpus": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    },
+    "hw_counters": {
+      "source": "perf",
+      "ops": 100000000,
+      "per_op": {
+        "cycles": 41.02936213,
+        "instructions": 27.52548455,
+        "L1-dcache-load-misses": 0.06341628,
+        "LLC-load-misses": 0.00009534
+      }
+    }
+  }
+}

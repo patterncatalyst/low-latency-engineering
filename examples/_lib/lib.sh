@@ -327,6 +327,277 @@ task_cpu() {
   awk '{print $37}' <<<"${stat##*) }"
 }
 
+# ---------------------------------------------------------------------------------------------
+# Placement and hardware counters (Part 3): distinct cores, SMT pairs, a counted region,
+# simulated cache misses, A/B ordering. Everything here is unprivileged: it reads sysfs and
+# /proc, pins only our own processes (taskset, sched_setaffinity) and never touches sysctl,
+# perf_event_paranoid or the governor. perf counts user space only (events end in :u), which is
+# what perf_event_paranoid=2 allows for our own processes.
+# ---------------------------------------------------------------------------------------------
+
+_SYS_CPU=/sys/devices/system/cpu
+
+# _cpu_expand LIST: expand a kernel CPU list ("0-3,8,10-11") to one CPU number per line.
+_cpu_expand() {
+  local part lo hi
+  local -a parts
+  IFS=, read -ra parts <<<"$1"
+  for part in "${parts[@]}"; do
+    [[ -n $part ]] || continue
+    lo=${part%-*}
+    hi=${part#*-}
+    seq "$lo" "$hi"
+  done
+}
+
+# _allowed_cpus: the logical CPUs this process may run on (Cpus_allowed_list), one per line.
+_allowed_cpus() {
+  _cpu_expand "$(awk '/^Cpus_allowed_list:/ {print $2}' /proc/self/status)"
+}
+
+# distinct_cores N: print N logical CPUs, one per line, each on a different physical core, so no two
+# are SMT siblings (same package and core_id in sysfs topology). The lowest-numbered CPU of each core
+# is taken, in ascending order, from the CPUs this process may use. Returns 1 with a message on
+# stderr when fewer than N cores are available. A caller joins them for taskset:
+#   cpus=$(distinct_cores 4 | paste -sd,); taskset -c "$cpus" cmd
+distinct_cores() {
+  local n=${1:?distinct_cores N} cpu core pkg key
+  local -a picked=()
+  local -A seen_core=()
+  [[ $n =~ ^[1-9][0-9]*$ ]] || die "distinct_cores: N must be a positive integer, got '$n'"
+  while read -r cpu; do
+    core=$(<"$_SYS_CPU/cpu$cpu/topology/core_id") || continue
+    pkg=$(<"$_SYS_CPU/cpu$cpu/topology/physical_package_id") || pkg=0
+    key="$pkg:$core"
+    [[ -z ${seen_core[$key]:-} ]] || continue
+    seen_core[$key]=1
+    picked+=("$cpu")
+    ((${#picked[@]} < n)) || break
+  done < <(_allowed_cpus)
+  if ((${#picked[@]} < n)); then
+    echo "distinct_cores: wanted $n physical cores, only ${#picked[@]} available to this process" >&2
+    return 1
+  fi
+  printf '%s\n' "${picked[@]}"
+}
+
+# smt_pair: print two logical CPUs that are SMT siblings of one core (thread_siblings_list), one per
+# line, both usable by this process. Returns 1 with a message when SMT is off or no pair is allowed.
+smt_pair() {
+  local cpu sib
+  local -a pair
+  local -A allowed=()
+  while read -r cpu; do allowed[$cpu]=1; done < <(_allowed_cpus)
+  while read -r cpu; do
+    [[ -r $_SYS_CPU/cpu$cpu/topology/thread_siblings_list ]] || continue
+    pair=()
+    while read -r sib; do
+      [[ -z ${allowed[$sib]:-} ]] || pair+=("$sib")
+    done < <(_cpu_expand "$(<"$_SYS_CPU/cpu$cpu/topology/thread_siblings_list")")
+    if ((${#pair[@]} >= 2)); then
+      printf '%s\n%s\n' "${pair[0]}" "${pair[1]}"
+      return 0
+    fi
+  done < <(printf '%s\n' "${!allowed[@]}" | sort -n)
+  echo "smt_pair: no two SMT sibling CPUs are available (SMT off, or the affinity mask excludes them)" >&2
+  return 1
+}
+
+# assert_placement PID TID CPU: die unless thread TID of PID last ran on CPU (field 39 of
+# /proc/PID/task/TID/stat, via task_cpu). It is a snapshot of the last CPU, so call it after the
+# thread has run; a thread pinned with taskset or sched_setaffinity can only report its pinned CPU.
+assert_placement() {
+  local pid=${1:?assert_placement PID TID CPU} tid=${2:?assert_placement PID TID CPU} want=${3:?assert_placement PID TID CPU} got
+  got=$(task_cpu "$pid" "$tid")
+  [[ $got == "$want" ]] || die "placement: thread $tid of process $pid last ran on CPU $got, expected CPU $want"
+  ok "placement: thread $tid of process $pid on CPU $want"
+}
+
+# perf_region OUT -- CMD...: run CMD under `perf stat` and count only the region CMD marks, then
+# write OUT, a runtime.hw_counters object: {"source":"perf","ops":N,"per_op":{event: count / N}}.
+#
+# perf starts with its counters disabled (`-D -1`) and is driven through two FIFOs
+# (`--control fifo:ctl,ack`). CMD finds them in the environment and brackets the measured loop, so
+# setup and teardown outside the region are not counted:
+#   LOWLAT_PERF_CTL   FIFO to write "enable\n" and "disable\n" to
+#   LOWLAT_PERF_ACK   FIFO to read the "ack\n" reply from (read it before going on, or the region
+#                     starts late)
+# From bash, perf_region_enable and perf_region_disable do that. From C, C++, Java or Python, open
+# LOWLAT_PERF_CTL for writing and LOWLAT_PERF_ACK for reading once, write the word, read one line.
+# Threads and children of CMD are counted (perf inherits the events).
+#
+# ops (the operations the counts are divided by) is the caller's to supply, because only the
+# workload knows how many operations ran inside the region: set LOWLAT_OPS in the environment
+# before the call, or have CMD write the integer to the file named by LOWLAT_OPS_FILE. A run with
+# neither dies. Counts are per operation, never a time-average.
+#
+# LOWLAT_PERF_EVENTS overrides the event list (default: cycles, instructions, L1-dcache-load-misses,
+# LLC-load-misses). Give every event the :u modifier. The key in per_op is the event name without
+# the modifier. An event perf cannot count ("<not supported>") is left out; the run dies if none
+# of them counted. perf scales a multiplexed event; a warning names any that ran under 100 % of
+# the region. Exit status is non-zero when perf fails or CMD does.
+PERF_REGION_DEFAULT_EVENTS=cycles:u,instructions:u,L1-dcache-load-misses:u,LLC-load-misses:u
+
+# Stopping a run: press Ctrl-C, or `kill -- -PGID` (the whole process group). A TERM sent to the
+# calling script alone leaves the helper running in the background to finish: bash defers a trap
+# while a foreground command runs. The helper's traps kill the workload and remove the temp dir.
+perf_region() (
+  # A subshell body, like time_to_ready: the EXIT/INT/TERM traps remove the temp dir on every path,
+  # an interrupted run included, and OUT is written only after perf succeeded and parsed.
+  out=${1:?perf_region OUT -- CMD...}
+  shift
+  [[ ${1:-} == -- ]] || die "perf_region: usage: perf_region OUT -- CMD..."
+  shift
+  (($#)) || die "perf_region: no command"
+  command -v perf >/dev/null || die "perf_region: perf is not installed"
+  events=${LOWLAT_PERF_EVENTS:-$PERF_REGION_DEFAULT_EVENTS}
+  status=0
+  dir=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-perf.XXXXXX")
+  pid=''
+  # perf runs in the background and is waited for: bash runs a trap only after a foreground
+  # command ends, but `wait` returns at once when a trapped signal arrives.
+  trap '[[ -z $pid ]] || { pkill -TERM -P "$pid" 2>/dev/null; kill "$pid" 2>/dev/null; } || true; rm -rf "$dir"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  mkfifo "$dir/ctl" "$dir/ack"
+  LOWLAT_PERF_CTL=$dir/ctl LOWLAT_PERF_ACK=$dir/ack LOWLAT_OPS_FILE=$dir/ops \
+    perf stat --control "fifo:$dir/ctl,$dir/ack" -D -1 -x, -e "$events" -o "$dir/stat.csv" -- "$@" \
+    <&0 >"$dir/perf.stdout" 2>"$dir/perf.stderr" &
+  pid=$!
+  wait "$pid" || status=$?
+  # perf prints "Events enabled/disabled" notices; drop those and pass CMD's own output through.
+  grep -v '^Events \(enabled\|disabled\)$' "$dir/perf.stdout" || true
+  grep -v '^Events \(enabled\|disabled\)$' "$dir/perf.stderr" >&2 || true
+  ((status == 0)) || die "perf_region: perf or the command failed (status $status)"
+  ops=${LOWLAT_OPS:-}
+  [[ -n $ops || ! -s $dir/ops ]] || ops=$(<"$dir/ops")
+  [[ $ops =~ ^[1-9][0-9]*$ ]] ||
+    die "perf_region: ops unknown: set LOWLAT_OPS, or have the command write it to \$LOWLAT_OPS_FILE"
+  # CSV rows: value,unit,event,run-time,percent-of-time-measured,...  Comment lines start with '#'.
+  jq -Rn --argjson ops "$ops" '
+    [inputs | select(length > 0 and (startswith("#") | not)) | split(",")
+     | select(.[0] | test("^[0-9]+$"))
+     | {event: (.[2] | sub(":[a-zA-Z]+$"; "")), count: (.[0] | tonumber), pct: (.[4] | try tonumber catch 100)}]
+    | {source: "perf", ops: $ops, per_op: (map({key: .event, value: (.count / $ops)}) | from_entries),
+       partial: (map(select(.pct < 100) | .event))}' <"$dir/stat.csv" >"$dir/region.json" ||
+    die "perf_region: cannot parse perf output"
+  [[ $(jq '.per_op | length' "$dir/region.json") -gt 0 ]] || die "perf_region: perf counted none of: $events"
+  jq -r 'select(.partial | length > 0) | "perf_region: warning: scaled (multiplexed) events: \(.partial | join(", "))"' \
+    "$dir/region.json" >&2
+  jq '{source, ops, per_op}' "$dir/region.json" >"$dir/out.json"
+  mv "$dir/out.json" "$out"
+)
+
+# perf_region_enable / perf_region_disable: for a bash CMD run by perf_region, start and stop the
+# counted region. Each returns after perf acknowledges.
+perf_region_enable() { _perf_region_ctl enable; }
+perf_region_disable() { _perf_region_ctl disable; }
+_perf_region_ctl() {
+  : "${LOWLAT_PERF_CTL:?not running under perf_region}" "${LOWLAT_PERF_ACK:?not running under perf_region}"
+  local reply
+  printf '%s\n' "$1" >"$LOWLAT_PERF_CTL"
+  read -r reply <"$LOWLAT_PERF_ACK"
+  [[ $reply == ack ]] || die "perf_region: perf answered '$reply' to '$1'"
+}
+
+# cachegrind_run OUT -- CMD...: run CMD under `valgrind --tool=cachegrind` (cache simulation of the
+# machine's real L1d and LL) and write OUT, a small JSON summary of the simulated data-cache
+# misses; the raw cachegrind.out.* files live in a temporary directory that is deleted, so none
+# reaches the tree (.gitignore also lists cachegrind.out.*). The counts are deterministic for a
+# deterministic program, which makes them an exact counter for an assertion and an independent
+# cross-check on the hardware counters. They model the cache; they are not the hardware.
+#   {"source":"cachegrind","totals":{"instructions","D-reads","D-writes","D1-read-misses",
+#    "D1-write-misses","LL-read-misses","LL-write-misses"}, "ops":N, "per_op":{...same keys...}}
+# "ops" and "per_op" appear when ops is supplied as for perf_region (LOWLAT_OPS or the file named
+# by LOWLAT_OPS_FILE). To count only one function, set CACHEGRIND_FUNCTION to its name as the
+# `fn=` lines of cachegrind.out name it (a C++ name without its parameter list matches too): the
+# summary then adds up the costs attributed to that function alone (cachegrind's costs are
+# exclusive of callees), so setup outside it is not counted. cachegrind has no --toggle-collect
+# (that is callgrind's). Since valgrind 3.22 it offers --instr-at-start=no with the
+# CACHEGRIND_START_INSTRUMENTATION and CACHEGRIND_STOP_INSTRUMENTATION client requests, but those
+# come from a header in valgrind-devel, a package this repository does not require (and the host
+# gets no installs); CACHEGRIND_FUNCTION needs no header. The simulator still sees the whole run,
+# so the cache state the function starts from includes the setup. CACHEGRIND_ARGS (a
+# space-separated string) is passed through to valgrind, e.g. a different --D1=size,assoc,line.
+# `jq '{source, ops, per_op}' OUT` gives a runtime.hw_counters object. OUT is passed through
+# scripts/scrub-host-ids.py. Valgrind is 20-50x slower than native: size the workload for that.
+# Stopping a run: press Ctrl-C, or `kill -- -PGID` (the whole process group). A TERM sent to the
+# calling script alone leaves the helper running in the background to finish: bash defers a trap
+# while a foreground command runs. The helper's traps kill the workload and remove the temp dir.
+cachegrind_run() (
+  # A subshell body with traps, as perf_region: no temp dir survives an interrupt and OUT appears
+  # only once the summary parsed.
+  out=${1:?cachegrind_run OUT -- CMD...}
+  shift
+  [[ ${1:-} == -- ]] || die "cachegrind_run: usage: cachegrind_run OUT -- CMD..."
+  shift
+  (($#)) || die "cachegrind_run: no command"
+  command -v valgrind >/dev/null || die "cachegrind_run: valgrind is not installed"
+  status=0
+  dir=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-cg.XXXXXX")
+  pid=''
+  trap '[[ -z $pid ]] || { pkill -TERM -P "$pid" 2>/dev/null; kill "$pid" 2>/dev/null; } || true; rm -rf "$dir"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  read -ra extra <<<"${CACHEGRIND_ARGS:-}"
+  LOWLAT_OPS_FILE=$dir/ops valgrind --tool=cachegrind --cache-sim=yes "${extra[@]}" \
+    --cachegrind-out-file="$dir/cachegrind.out.%p" --log-file="$dir/valgrind.log" -q -- "$@" <&0 &
+  pid=$!
+  wait "$pid" || status=$?
+  if ((status)); then
+    [[ -s $dir/valgrind.log ]] &&
+      python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter <"$dir/valgrind.log" >&2 || true
+    die "cachegrind_run: command or valgrind failed (status $status)"
+  fi
+  ops=${LOWLAT_OPS:-}
+  [[ -n $ops || ! -s $dir/ops ]] || ops=$(<"$dir/ops")
+  # Each file ends "events: Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw" and "summary: v v v ...".
+  # Sum the summaries of every process the command started under valgrind.
+  files=("$dir"/cachegrind.out.*)
+  [[ -e ${files[0]} ]] || die "cachegrind_run: valgrind wrote no cachegrind.out.*"
+  jq -Rn --arg ops "$ops" --arg fn "${CACHEGRIND_FUNCTION:-}" '
+    [inputs] as $l
+    | ($l | map(select(startswith("events:")))[0] | ltrimstr("events: ") | split(" ")) as $names
+    | (if $fn == "" then
+         [$l[] | select(startswith("summary:")) | ltrimstr("summary: ") | split(" ") | map(tonumber)]
+       else
+         (reduce $l[] as $x ({cur: null, rows: []};
+            if ($x | startswith("fn=")) then .cur = ($x | ltrimstr("fn="))
+            elif (.cur != null) and ($x | test("^[0-9]"))
+                 and (.cur == $fn or (.cur | startswith($fn + "(")))
+              then .rows += [$x | split(" ") | .[1:] | map(tonumber)]
+            else . end) | .rows)
+       end) as $rows
+    | if ($rows | length) == 0 then error("no cost lines for function \"\($fn)\"") else . end
+    | ($rows | transpose | map(add)) as $sums
+    | ([$names, $sums] | transpose | map({key: .[0], value: .[1]}) | from_entries) as $c
+    | {"instructions": $c.Ir, "D-reads": $c.Dr, "D-writes": $c.Dw, "D1-read-misses": $c.D1mr,
+       "D1-write-misses": $c.D1mw, "LL-read-misses": $c.DLmr, "LL-write-misses": $c.DLmw} as $t
+    | {source: "cachegrind", totals: $t}
+    | if ($ops | test("^[1-9][0-9]*$")) then
+        (($ops | tonumber) as $n | . + {ops: $n, per_op: (.totals | map_values(. / $n))})
+      else . end' < <(cat "${files[@]}") >"$dir/summary.json" || die "cachegrind_run: cannot parse cachegrind output"
+  python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" "$dir/summary.json" >/dev/null 2>&1 || true
+  mv "$dir/summary.json" "$out"
+)
+
+# interleave N VARIANT...: print the order to run variants so they alternate, one name per line:
+# N rounds of every variant in the order given (A B A B ... for two variants). Alternating runs
+# share the machine's drift (thermal state, frequency, background load) instead of giving one
+# variant the quiet start and the other the warm tail.
+#   for v in $(interleave 3 old new); do run "$v"; done      # old new old new old new
+interleave() {
+  local n=${1:?interleave N VARIANT...} round v
+  shift
+  (($#)) || die "interleave: no variants"
+  [[ $n =~ ^[1-9][0-9]*$ ]] || die "interleave: N must be a positive integer, got '$n'"
+  for ((round = 0; round < n; round++)); do
+    for v in "$@"; do
+      printf '%s\n' "$v"
+    done
+  done
+}
+
 # jmh_lock_wait MINUTES CONSOLE CMD...: run a JMH command (java ... -jar benchmarks.jar ...) with
 # its output in CONSOLE, retrying every 20 s for up to MINUTES while another JMH instance holds
 # the lock. JMH 1.37 takes ${java.io.tmpdir}/jmh.lock so that two benchmark runs never share the

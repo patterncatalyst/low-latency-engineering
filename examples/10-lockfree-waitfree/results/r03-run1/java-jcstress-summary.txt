@@ -1,0 +1,32 @@
+RUN RESULTS:
+  Interesting tests: 1 matching test results.
+
+.......... [OK] io.patterncatalyst.lowlat.lockfree.StoreBufferAcquireRelease
+
+  Results across all configurations:
+
+  RESULT      SAMPLES     FREQ       EXPECT  DESCRIPTION
+    0, 0   91,812,800   18.15%  Interesting  Both stations missed the other's claim: allowed for relea...
+    0, 1  206,230,265   40.78%   Acceptable  At least one station saw the other.
+    1, 0  198,815,099   39.31%   Acceptable  At least one station saw the other.
+    1, 1    8,879,584    1.76%   Acceptable  At least one station saw the other.
+
+
+  Failed tests: No matches.
+
+  Error tests: No matches.
+
+  All remaining tests: 1 matching test results.
+
+.......... [OK] io.patterncatalyst.lowlat.lockfree.StoreBufferVolatile
+
+  Results across all configurations:
+
+  RESULT      SAMPLES     FREQ      EXPECT  DESCRIPTION
+    0, 0            0    0.00%   Forbidden  Both stations missed the other's claim: forbidden for vol...
+    0, 1  312,067,173   53.09%  Acceptable  At least one station saw the other.
+    1, 0  268,284,814   45.64%  Acceptable  At least one station saw the other.
+    1, 1    7,438,881    1.27%  Acceptable  At least one station saw the other.
+
+
+

@@ -10,6 +10,7 @@ target/
 __pycache__/
 *.pyc
 .venv/
+.venv-ft/
 *.local.md
 dist/
 .idea/
@@ -35,3 +36,9 @@ examples/*/results/**/queue/
 
 # agent worktrees
 .claude/worktrees/
+
+# valgrind --tool=cachegrind raw output (cachegrind_run keeps only a JSON summary) and
+# jcstress result files and the Ch10 results tree (verify.sh summarises them to text)
+cachegrind.out.*
+jcstress-results-*.bin.gz
+examples/10-lockfree-waitfree/java/results/

@@ -1,0 +1,11 @@
+pinned pid=3704960 tid=3704964 cpu=1 role=producer-0
+pinned pid=3704960 tid=3704967 cpu=4 role=producer-3
+pinned pid=3704960 tid=3704966 cpu=3 role=producer-2
+pinned pid=3704960 tid=3704965 cpu=2 role=producer-1
+pinned pid=3704960 tid=3704968 cpu=5 role=consumer
+placement-ready
+released
+10-lockfree-waitfree     cpp  cas-loop         count=  4000000 dropped=     0 p50=      0.2us p90=      0.2us p99=      0.5us p99.9=      1.2us max=      48.4us
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run2/cpp-cas-loop-alt2.json
+10-lockfree-waitfree     cpp  cas-loop         count=  1377027 dropped=     0 p50=      0.1us p90=      0.1us p99=      0.2us p99.9=      0.5us max=     129.6us
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run2/cpp-cas-loop-alt2-consumer-wait.json

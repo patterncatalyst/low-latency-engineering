@@ -1,4 +1,4 @@
-"""Figure 7.1 — the hand-off between the receive and decide threads.
+"""Figure 7.1: the hand-off between the receive and decide threads.
 
 Regenerate from the repo root:  python3 diagrams/07-handoff-topology.py
 """

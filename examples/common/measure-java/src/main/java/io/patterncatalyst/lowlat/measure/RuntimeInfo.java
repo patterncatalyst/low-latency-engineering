@@ -5,6 +5,7 @@ import java.lang.management.ManagementFactory;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Builds the optional {@code runtime} block of a report from the running JVM. The caller
@@ -26,6 +27,61 @@ public final class RuntimeInfo {
             "-XX:+AlwaysPreTouch", "-XX:+UseTransparentHugePages", "-XX:+UseLargePages", "-Xlog:gc");
 
     private RuntimeInfo() {}
+
+    /** Where {@code runtime.hw_counters} came from; {@link #json()} is the schema's enum value. */
+    public enum HwSource {
+        PERF("perf"),
+        CACHEGRIND("cachegrind"),
+        PERFNORM("perfnorm");
+
+        private final String json;
+
+        HwSource(String json) {
+            this.json = json;
+        }
+
+        public String json() {
+            return json;
+        }
+    }
+
+    /**
+     * {@code runtime.placement}: the logical CPUs the measured threads were pinned to, whether they
+     * sit on distinct physical cores, and whether any two are SMT siblings. Put the result under
+     * {@code "placement"} in the runtime map.
+     */
+    public static Map<String, Object> placement(List<Integer> cpus, boolean distinctCores, boolean smtSiblings) {
+        Map<String, Object> placement = new LinkedHashMap<>();
+        placement.put("cpus", List.copyOf(cpus));
+        placement.put("distinct_cores", distinctCores);
+        placement.put("smt_siblings", smtSiblings);
+        return placement;
+    }
+
+    /**
+     * {@code runtime.hw_counters}: event name to count per operation, for a region of {@code ops}
+     * operations. Put the result under {@code "hw_counters"} in the runtime map.
+     *
+     * @throws IllegalArgumentException when {@code ops} is not positive
+     */
+    public static Map<String, Object> hwCounters(HwSource source, long ops, Map<String, Double> perOp) {
+        if (ops < 1) {
+            throw new IllegalArgumentException("ops must be positive: " + ops);
+        }
+        Map<String, Object> hw = new LinkedHashMap<>();
+        hw.put("source", source.json());
+        hw.put("ops", ops);
+        hw.put("per_op", new TreeMap<>(perOp));
+        return hw;
+    }
+
+    /**
+     * {@code runtime.counters}: exact event counts (CAS failures, max retries, torn reads, ...), sorted by name so the report is stable. Put
+     * the result under {@code "counters"} in the runtime map.
+     */
+    public static Map<String, Object> counters(Map<String, Long> counts) {
+        return new TreeMap<>(counts);
+    }
 
     /** True for a JVM argument that selects or tunes the collector or the heap. */
     static boolean isGcFlag(String argument) {

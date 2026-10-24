@@ -31,8 +31,18 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
   means          "mean latency"/"average latency" fail (unless the sentence negates it);
                  every other use of mean/average in _docs is printed for review
   no-jfr         no *.jfr file is tracked by git (the JFR evidence is the text summaries)
-  java-flags     every Java run report of chapters 5-8 under results/r02-* has a non-empty
+  java-flags     every Java run report of chapters 5-10 under results/r0[2-9]-* has a non-empty
                  build.flags (the -gc-pause reports derived from a JFR are exempt)
+  hw-source      every report with runtime.hw_counters names a non-empty `source`
+  placement      every report with runtime.placement has a non-empty `cpus` list; every
+                 report of chapters 9-10 under results/r03-* or later carries runtime.placement
+                 (pinned threads), except the unpinned single-thread store-cost benchmarks
+                 named in UNPINNED_BENCHMARKS
+  no-raw-tool-output
+                 no cachegrind.out.* file, jcstress HTML report or *.bin.gz is tracked
+                 (the JSON summary and the jcstress text summary are the evidence)
+  tool-versions  tools.perf is major.minor (never a kernel build) and tools.valgrind is
+                 major.minor[.patch], in every profile.json and every report's profile
   vm-runs        every results/*vm-run*/ has vm/LABEL = vm, and every report and profile in
                  it records profile.virt.type = kvm
   prerelease     no EA/prerelease version in a pom.xml (dependency, plugin, parent, *.version
@@ -536,15 +546,19 @@ def check_no_jfr(root: Path) -> None:
 
 
 FLAGS_FROM_CHAPTER = 5  # chapters 1-4 predate build.flags
+FLAGS_TO_CHAPTER = 10
+RUN_DIR = re.compile(r"r0[2-9]-")
 
 
 def check_java_flags(root: Path) -> None:
     n = 0
     for path in walk(root / "examples", "*.json"):
         parts = path.relative_to(root / "examples").parts
-        if len(parts) < 4 or parts[1] != "results" or not parts[2].startswith("r02-"):
+        if len(parts) < 4 or parts[1] != "results" or not RUN_DIR.match(parts[2]):
             continue
-        if not (parts[0][:2].isdigit() and int(parts[0][:2]) >= FLAGS_FROM_CHAPTER):
+        if not (
+            parts[0][:2].isdigit() and FLAGS_FROM_CHAPTER <= int(parts[0][:2]) <= FLAGS_TO_CHAPTER
+        ):
             continue
         report = load_report(path)
         if report is None or report.get("language") != "java":
@@ -554,7 +568,116 @@ def check_java_flags(root: Path) -> None:
         n += 1
         if not str((report.get("build") or {}).get("flags") or "").strip():
             fail("java-flags", f"{relto(root, path)}: Java report has no build.flags")
-    print(f"java-flags: {n} Java report(s) in chapters {FLAGS_FROM_CHAPTER}-8")
+    print(f"java-flags: {n} Java report(s) in chapters {FLAGS_FROM_CHAPTER}-{FLAGS_TO_CHAPTER}")
+
+
+def example_reports(root: Path) -> Iterator[tuple[Path, list[str], dict]]:
+    """Every lowlat-report under examples/*/results/, with its path parts below examples/."""
+    for path in walk(root / "examples", "*.json"):
+        parts = list(path.relative_to(root / "examples").parts)
+        if len(parts) < 4 or parts[1] != "results":
+            continue
+        report = load_report(path)
+        if report is not None:
+            yield path, parts, report
+
+
+def check_hw_source(root: Path) -> None:
+    n = 0
+    for path, _, report in example_reports(root):
+        hw = (report.get("runtime") or {}).get("hw_counters")
+        if hw is None:
+            continue
+        n += 1
+        if not isinstance(hw, dict) or not str(hw.get("source") or "").strip():
+            fail("hw-source", f"{relto(root, path)}: runtime.hw_counters names no source")
+    print(f"hw-source: {n} report(s) with hw_counters")
+
+
+# Chapters whose r03-and-later reports come from pinned threads, and the two kinds of report in
+# them that are deliberately unpinned: the single-thread store-cost benchmarks (Google Benchmark
+# and JMH measure one thread, so there is nothing to place).
+PINNED_FROM_CHAPTER = 9
+PINNED_FROM_RUN = 3
+UNPINNED_BENCHMARKS = {
+    "10-lockfree-waitfree": {
+        "cpp-seq-cst.json",
+        "cpp-release-acquire.json",
+        "java-seq-cst.json",
+        "java-release-acquire.json",
+    }
+}
+
+
+def check_placement(root: Path) -> None:
+    n = pinned = 0
+    for path, parts, report in example_reports(root):
+        place = (report.get("runtime") or {}).get("placement")
+        if place is not None:
+            n += 1
+            cpus = place.get("cpus") if isinstance(place, dict) else None
+            if not (isinstance(cpus, list) and cpus):
+                fail("placement", f"{relto(root, path)}: runtime.placement has no cpus")
+            continue
+        m = re.match(r"r0*(\d+)-", parts[2])
+        chapter = parts[0][:2]
+        if not (m and int(m.group(1)) >= PINNED_FROM_RUN and chapter.isdigit()):
+            continue
+        if int(chapter) < PINNED_FROM_CHAPTER or path.name in UNPINNED_BENCHMARKS.get(parts[0], ()):
+            continue
+        pinned += 1
+        fail("placement", f"{relto(root, path)}: pinned-example report has no runtime.placement")
+    print(f"placement: {n} report(s) with placement, {pinned} pinned report(s) without")
+
+
+def check_raw_tool_output(root: Path) -> None:
+    bad = []
+    for f in tracked_files(root):
+        name = Path(f).name
+        parts = set(Path(f).parts)
+        if name.startswith("cachegrind.out."):
+            bad.append((f, "raw cachegrind output; commit the JSON summary"))
+        elif name.endswith(".bin.gz"):
+            bad.append((f, "a *.bin.gz result store (jcstress); commit the text summary"))
+        elif name.endswith(".html") and ("results" in parts or any("jcstress" in x for x in parts)):
+            if f.startswith("examples/"):
+                bad.append((f, "an HTML report under results/ (jcstress); commit the text summary"))
+    for f, why in bad:
+        fail("no-raw-tool-output", f"{f}: {why}")
+    print(f"no-raw-tool-output: {len(bad)} tracked raw tool output file(s)")
+
+
+TOOL_VERSION = {
+    "perf": re.compile(r"\d+\.\d+"),  # a kernel build number must never appear
+    "valgrind": re.compile(r"\d+\.\d+(\.\d+)?"),
+}
+
+
+def check_tool_versions(root: Path) -> None:
+    n = 0
+
+    def check(where: str, profile: object) -> None:
+        nonlocal n
+        tools = profile.get("tools") if isinstance(profile, dict) else None
+        if not isinstance(tools, dict):
+            return
+        n += 1
+        for tool, rx in TOOL_VERSION.items():
+            if tool in tools and not (isinstance(tools[tool], str) and rx.fullmatch(tools[tool])):
+                fail("tool-versions", f"{where}: tools.{tool} is {tools[tool]!r}, not {rx.pattern}")
+
+    for path in walk(root / "examples", "*.json"):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except ValueError, OSError:
+            continue
+        if not isinstance(data, dict):
+            continue
+        if str(data.get("schema", "")).startswith("lowlat-report/"):
+            check(relto(root, path), data.get("profile"))
+        elif str(data.get("schema", "")).startswith("lowlat-profile/"):
+            check(relto(root, path), data)
+    print(f"tool-versions: {n} profile(s)")
 
 
 def check_vm_runs(root: Path) -> None:
@@ -898,6 +1021,13 @@ HOST_KERNEL_BUILD = "9.9.9-100.fc99.x86_64"
 
 def self_test() -> int:
     r = "examples/05-jvm-costs/results/r02-run1/java-naive.json"
+    r10 = "examples/10-lockfree-waitfree/results/r03-run1/java/java-x.json"
+    h = "examples/09-eliminating-work/results/r03-run1/cpp/x.json"
+    u = "examples/10-lockfree-waitfree/results/r03-run1/cpp/cpp-seq-cst.json"
+
+    def prof(perf: str, valgrind: str) -> dict:
+        return {"schema": "lowlat-profile/1", "tools": {"perf": perf, "valgrind": valgrind}}
+
     vm = "examples/07-offheap-lockfree/results/r02-vm-run1"
     vm_report = {**GOOD_REPORT, "profile": {"schema": "lowlat-profile/1", "virt": {"type": "kvm"}}}
     pom = (
@@ -929,6 +1059,116 @@ def self_test() -> int:
             "no build.flags",
         ),
         ("java-flags good", {r: GOOD_REPORT}, check_java_flags, False, ""),
+        (
+            "java-flags r03 chapter 10 bad",
+            {r10: {**GOOD_REPORT, "build": {"compiler": "c", "flags": ""}}},
+            check_java_flags,
+            False,
+            "no build.flags",
+        ),
+        ("java-flags r03 chapter 10 good", {r10: GOOD_REPORT}, check_java_flags, False, ""),
+        (
+            "hw-source bad",
+            {h: {**GOOD_REPORT, "runtime": {"hw_counters": {"per_op": {"cycles": 1}}}}},
+            check_hw_source,
+            False,
+            "names no source",
+        ),
+        (
+            "hw-source good",
+            {h: {**GOOD_REPORT, "runtime": {"hw_counters": {"source": "perf"}}}},
+            check_hw_source,
+            False,
+            "",
+        ),
+        (
+            "placement empty cpus",
+            {h: {**GOOD_REPORT, "runtime": {"placement": {"cpus": []}}}},
+            check_placement,
+            False,
+            "has no cpus",
+        ),
+        (
+            "placement missing in a pinned example",
+            {h: GOOD_REPORT},
+            check_placement,
+            False,
+            "no runtime.placement",
+        ),
+        (
+            "placement unpinned store-cost benchmark",
+            {u: GOOD_REPORT},
+            check_placement,
+            False,
+            "",
+        ),
+        (
+            "placement good",
+            {h: {**GOOD_REPORT, "runtime": {"placement": {"cpus": [1, 2]}}}},
+            check_placement,
+            False,
+            "",
+        ),
+        (
+            "no-raw-tool-output cachegrind",
+            {"examples/09-x/results/r03-run1/cachegrind.out.123": "x"},
+            check_raw_tool_output,
+            True,
+            "raw cachegrind output",
+        ),
+        (
+            "no-raw-tool-output jcstress html",
+            {"examples/10-x/results/r03-run1/jcstress/index.html": "x"},
+            check_raw_tool_output,
+            True,
+            "jcstress",
+        ),
+        (
+            "no-raw-tool-output bin.gz",
+            {"examples/10-x/results/r03-run1/x.bin.gz": "x"},
+            check_raw_tool_output,
+            True,
+            "bin.gz",
+        ),
+        (
+            "no-raw-tool-output good",
+            {
+                "examples/10-x/results/r03-run1/cachegrind/a.json": "{}",
+                "examples/10-x/results/r03-run1/jcstress-summary.txt": "x",
+                "_site/index.html": "x",
+            },
+            check_raw_tool_output,
+            True,
+            "",
+        ),
+        (
+            "tool-versions perf kernel build",
+            {"examples/09-x/results/r03-run1/profile.json": prof("7.2.11-200.fc44", "3.27.1")},
+            check_tool_versions,
+            False,
+            "tools.perf",
+        ),
+        (
+            "tool-versions valgrind garbage",
+            {"examples/09-x/results/r03-run1/profile.json": prof("7.2", "valgrind-3.27.1")},
+            check_tool_versions,
+            False,
+            "tools.valgrind",
+        ),
+        (
+            "tool-versions report profile",
+            {h: {**GOOD_REPORT, "profile": prof("7.2.11", "3.27")}},
+            check_tool_versions,
+            False,
+            "tools.perf",
+        ),
+        (
+            "tool-versions good",
+            {"examples/09-x/results/r03-run1/profile.json": prof("7.2", "3.27.1")},
+            check_tool_versions,
+            False,
+            "",
+        ),
         (
             "vm-runs no LABEL",
             {f"{vm}/vm/profile.json": vm_report["profile"]},
@@ -1349,6 +1589,10 @@ def main() -> int:
     check_means(pages)
     check_no_jfr(ROOT)
     check_java_flags(ROOT)
+    check_hw_source(ROOT)
+    check_placement(ROOT)
+    check_raw_tool_output(ROOT)
+    check_tool_versions(ROOT)
     check_vm_runs(ROOT)
     check_prerelease(ROOT)
     check_variant_names(ROOT)

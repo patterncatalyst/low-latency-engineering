@@ -1,4 +1,4 @@
-"""Figure 7.3 — pinning the decide thread to an isolated vCPU (VM).
+"""Figure 7.3: pinning the decide thread to an isolated vCPU (VM).
 
 Regenerate from the repo root:  python3 diagrams/07-affinity-vm.py
 """

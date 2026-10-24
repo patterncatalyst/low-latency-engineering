@@ -1,4 +1,4 @@
-"""Figure 8.2 — an array of objects against a flat table.
+"""Figure 8.2: an array of objects against a flat table.
 
 Regenerate from the repo root:  python3 diagrams/08-flat-vs-pointer-layout.py
 """

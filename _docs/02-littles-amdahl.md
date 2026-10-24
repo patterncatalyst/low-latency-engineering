@@ -14,13 +14,11 @@ By the end of this chapter you can:
 - Sample `L` from a running consumer and compare it with `lambda x W-bar`, where `W-bar` is a labelled modelling input.
 - Measure a serial fraction `s`, predict the speedup `1 / (s + (1 - s) / N)` and compare it with the speedup measured at N = 1, 2 and 4.
 - Build a barrier-phased workload so the serial part is strictly serial.
-- Explain why CPU-bound Python threads under the GIL do not speed up and processes do.
+- Explain why CPU-bound Python threads under the GIL don't speed up and processes do.
 
 ## Why this matters
 
-Two questions come before any measurement. How much work is in the system at once? How many workers does a deadline need?
-
-The belt carries a parcel from scanner to diverter in 480 ms: 1.2 m at 2.5 m/s. At 1,000 parcels per second, the parcels in flight number `1000/s x 0.48 s = 480`, predicted from two parameters with no run. The second law answers the capacity question: a batch with a share of it behind one lock, and N workers, give a speedup you can compute before buying cores.
+The belt carries a parcel from scanner to diverter in 480 ms: 1.2 m at 2.5 m/s. At 1,000 parcels per second, the parcels in flight number `1000/s x 0.48 s = 480`, predicted from two parameters with no run. That's the first of two questions that come before any measurement: how much work is in the system at once? The second is how many workers a deadline needs. A batch with a share of it behind one lock, and N workers, give a speedup you can compute before buying cores.
 
 Both laws take a time-average or a time fraction as an input and predict something else. No report here carries a mean as a latency; the laws' inputs sit in a separate `model` block.
 
@@ -30,7 +28,7 @@ Every measured number here carries one profile: bare-metal host, an 8-core, 16-t
 
 ## Diagram
 
-{% include excalidraw.html file="02-littles-law" alt="The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.3 to +0.5 %, Java +1.3 to +4.3 %." caption="Figure 2.1 — The consumer as a queue. Sampled L matches lambda x W-bar within 0.5 % in C++ and 4.3 % in Java; W-bar is a model input, never a reported latency." %}
+{% include excalidraw.html file="02-littles-law" alt="The line simulator feeds a consumer band at 1000 parcels/s; the band holds a queue of L parcels and a handler with a variable service time; a sampler counts L and a W-bar box labelled model input takes each parcel's residence time; a result box compares sampled L with lambda x W-bar: C++ +0.3 to +0.5 %, Java +1.3 to +4.3 %." caption="Figure 2.1: The consumer as a queue. Sampled L matches lambda x W-bar within 0.5 % in C++ and 4.3 % in Java; W-bar is a model input, never a reported latency." %}
 
 ## Concept
 
@@ -40,11 +38,11 @@ For a stable system, the long-run number of items inside equals the arrival rate
 
 Applied to the belt, it gives the 480 parcels in flight. Applied to a handler, `lambda` times the mean service time is the number of busy workers: the model block reports an offered utilisation of 0.60 from a 600 us service-time parameter. One worker suffices on average, with no slack for the tail Chapter 1 measured.
 
-The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and is not a latency result. The C++ consumer shows why: `W-bar` is 1.04 to 1.08 ms, p50 is 0.76 to 0.80 ms and p99 is 4.35 to 4.42 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
+The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and isn't a latency result. The C++ consumer shows why: `W-bar` is 1.04 to 1.08 ms, p50 is 0.76 to 0.80 ms and p99 is 4.35 to 4.42 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
 
 ### Amdahl's Law
 
-If a fraction `s` of a one-worker run cannot be parallelised, N workers give
+If a fraction `s` of a one-worker run can't be parallelised, N workers give
 
 `S(N) = 1 / (s + (1 - s) / N)`
 
@@ -52,9 +50,9 @@ and no number of workers passes `1 / s`. The example measures `s` instead of ass
 
 A fixed batch of parcels is shared among N workers. Each parcel costs parallel CPU work (`scan_work`), then an addition to a shared sort-plan table under one lock (`update_plan`), the serial part, sized near 10 %.
 
-The formula assumes the serial part runs alone, and a lock does not guarantee that: while one worker holds it, the others can still scan. The workload therefore runs in waves. Each worker scans its parcels, all workers meet at a barrier, every worker commits under the lock, and they meet again. Nobody commits while anyone scans, and nobody scans while anyone commits. That is the structure the formula describes, and it fits a wave-picked sortation plan.
+The formula assumes the serial part runs alone, and a lock doesn't guarantee that: while one worker holds it, the others can still scan. The workload therefore runs in waves. Each worker scans its parcels, all workers meet at a barrier, every worker commits under the lock, and they meet again. Nobody commits while anyone scans, and nobody scans while anyone commits. That's the structure the formula describes, and it fits a wave-picked sortation plan.
 
-{% include excalidraw.html file="02-amdahl-phases" alt="Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java." caption="Figure 2.2 — The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.83-2.85x, Java 2.74-2.75x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x." %}
+{% include excalidraw.html file="02-amdahl-phases" alt="Three lanes for N = 1, 2 and 4 workers: parallel scan bars shrink as workers are added, a barrier follows, then an amber serial phase of the same width in every lane and a second barrier; a result box lists predicted and measured speedups at N = 4 for C++, Python threads, Python processes and Java." caption="Figure 2.2: The serial phase does not shrink with N, so the measured speedup at N = 4 (C++ 2.83-2.85x, Java 2.74-2.75x) stays under the Amdahl prediction of about 3.1x; Python threads under the GIL fall below 1x." %}
 
 ## How the code works
 
@@ -118,11 +116,11 @@ Sampled sample_in_system(std::stop_token stop, const std::atomic<std::int64_t>& 
 
 Python has no counterpart here: Little's Law runs on the C++ and Java consumers, and the Python program covers Amdahl's Law.
 
-`done` is an atomic counter the receive loop increments after each parcel's service time. `arrivals_by` converts the clock into the number of parcels the schedule has released, in integer arithmetic. The difference is the instantaneous `L`. The sample is taken when the clock is read, not at the nominal tick, so a late wake-up cannot pair a stale instant with a fresh count.
+`done` is an atomic counter the receive loop increments after each parcel's service time. `arrivals_by` converts the clock into the number of parcels the schedule has released, in integer arithmetic. The difference is the instantaneous `L`. The sample is taken when the clock is read, not at the nominal tick, so a late wake-up can't pair a stale instant with a fresh count.
 
-Arrivals are deterministic, one every 1 ms, so a sampler on a 1 ms tick sees the same phase each time, just after an arrival, and over-counts by about half a parcel. The 997 us interval does not divide the arrival period, so the phase drifts through the whole cycle. The origin `t0` comes from the first parcel seen, since parcel `seq` is due at `t0 + seq / lambda`.
+Arrivals are deterministic, one every 1 ms, so a sampler on a 1 ms tick sees the same phase each time, just after an arrival, and over-counts by about half a parcel. The 997 us interval doesn't divide the arrival period, so the phase drifts through the whole cycle. The origin `t0` comes from the first parcel seen, since parcel `seq` is due at `t0 + seq / lambda`.
 
-The service time is drawn from an exponential distribution whose mean is a configured model parameter, 600 us (`--service-mean-us`), capped at ten times that, from a generator seeded with 7. It is spent busy-waiting on the monotonic clock, because a sleep would add timer slack to every parcel. That departs from the idiomatic blocking wait, confined to `serve`.
+The service time is drawn from an exponential distribution whose mean is a configured model parameter, 600 us (`--service-mean-us`), capped at ten times that, from a generator seeded with 7. It's spent busy-waiting on the monotonic clock, because a sleep would add timer slack to every parcel. That departs from the idiomatic blocking wait, confined to `serve`.
 
 ### The model block
 
@@ -321,7 +319,7 @@ Worker `id` handles parcels `base + id`, `base + id + N`, and so on, so the work
 
 The lock is the idiomatic one in each language. C++ takes a `std::scoped_lock` on a `std::mutex` and waits on `std::barrier`. Java uses a `synchronized` block, the idiomatic critical section for a short non-blocking update, and `CyclicBarrier`; the workers are platform threads because the work is CPU-bound, and virtual threads exist for blocking I/O. Python uses `with lock` and a `threading` or `multiprocessing` barrier.
 
-Two details are specific to this experiment. In C++, `keep(w)` is an empty `asm volatile` that pins the scan result: `scan_work` has no side effects and its result is used only inside the lock, so without `keep` the optimiser may sink the call into the locked region and count parallel work as serial. This is the `DoNotOptimize` idiom of Chapter 4, which application code does not need. And `Timed` (the `timed` flag elsewhere) reads the clock inside the lock only in calibration runs, so timing calls do not enlarge the measured section.
+Two details are specific to this experiment. In C++, `keep(w)` is an empty `asm volatile` that pins the scan result: `scan_work` has no side effects and its result is used only inside the lock, so without `keep` the optimiser may sink the call into the locked region and count parallel work as serial. This is the `DoNotOptimize` idiom of Chapter 4, which application code doesn't need. And `Timed` (the `timed` flag elsewhere) reads the clock inside the lock only in calibration runs, so timing calls don't enlarge the measured section.
 
 ### The serial fraction and the speedup
 
@@ -372,9 +370,9 @@ The driver measures `s` first, then runs the repetitions.
                 + "%d instrumented runs); ideal limit 1/s = %.2fx%n", o.batch(), s, o.calibrationRuns(), 1.0 / s);
 ```
 
-`s` is a ratio of sums across five runs, so one noisy run does not dominate. Repetitions are interleaved across N, 1, 2, 4, 1, 2, 4 and so on, so a change in background load lands on every N alike. The measured speedup is the ratio of p50 wall times read from the histogram. Every repetition compares the table's checksum with the one-worker table; the updates are additions, so the result must not depend on N, and a mismatch would mean a lost update.
+`s` is a ratio of sums across five runs, so one noisy run doesn't dominate. Repetitions are interleaved across N, 1, 2, 4, 1, 2, 4 and so on, so a change in background load lands on every N alike. The measured speedup is the ratio of p50 wall times read from the histogram. Every repetition compares the table's checksum with the one-worker table; the updates are additions, so the result must not depend on N, and a mismatch would mean a lost update.
 
-Python runs the program under two executors. `ThreadPoolExecutor` with `threading.Lock` runs threads of one interpreter. `ProcessPoolExecutor` with `multiprocessing.Lock` and a shared `multiprocessing.Array` runs one interpreter per worker. The prediction covers only the lock; the GIL is not in the model, which is the point of running both.
+Python runs the program under two executors. `ThreadPoolExecutor` with `threading.Lock` runs threads of one interpreter. `ProcessPoolExecutor` with `multiprocessing.Lock` and a shared `multiprocessing.Array` runs one interpreter per worker. The prediction covers only the lock; the GIL isn't in the model, which is the point of running both.
 
 ## Measure
 
@@ -397,7 +395,7 @@ Each consumer received 10,000 parcels at 1,000 per second over 10 s with none dr
 | C++ | 1.046 to 1.087 | 1.042 to 1.083 ms | +0.3 to +0.5 % | 11 |
 | Java | 1.114 to 1.235 | 1.100 to 1.188 ms | +1.3 to +4.3 % | 22 to 33 |
 
-Both sit inside the 5 % criterion; Java's error was +4.3 % in run 1, +4.0 % in run 2 and +1.3 % in run 3. Offered load is 0.60 of one worker, so the queue is usually short and occasionally holds a burst. Java's error is larger and its tail longer: its p99.9 for `W` is 18.2 to 28.7 ms against 8.4 to 8.5 ms in C++. The Java run does not warm the JIT first; an untested hypothesis is that compilation and collection pauses stretch a burst's residence.
+Both sit inside the 5 % criterion; Java's error was +4.3 % in run 1, +4.0 % in run 2 and +1.3 % in run 3. Offered load is 0.60 of one worker, so the queue is usually short and occasionally holds a burst. Java's error is larger and its tail longer: its p99.9 for `W` is 18.2 to 28.7 ms against 8.4 to 8.5 ms in C++. The Java run doesn't warm the JIT first; an untested hypothesis is that compilation and collection pauses stretch a burst's residence.
 
 The report's warehouse sub-block gives the same 480 parcels in flight on 1.20 m of belt. A slow path that stretches `W` grows that count in proportion.
 
@@ -414,13 +412,13 @@ The N = 1 wall p50 was 78.4 to 78.5 ms for C++ and 78.9 to 79.0 ms for Java; at 
 
 The C++ and Java speedups at N = 4 sit 9 to 11 % under the prediction (C++ -8.6 to -9.0 %, Java -11.0 to -11.3 %), inside the 15 % criterion. For sizing, the formula is optimistic: a worker count from `S(N)` under-provisions by about a tenth.
 
-Two candidates: each wave ends when the slowest worker reaches the barrier, and the contended lock moves the table's cache lines between cores. The formula has no term for either, and these runs did not isolate how much of the gap they explain. A further hypothesis is frequency: the governor is `powersave` on a host that boosts to 4.6 GHz, and the effective clock (user cycles over task-clock from `perf stat`) was 4.34 to 4.35 GHz for C++, 4.35 to 4.36 for Java and 3.69 to 3.86 for Python. Those figures cover each whole process: they show the cores ran above the 2.30 GHz base clock, not whether the clock fell as more cores woke at N = 4. The workers were not pinned, so scheduler placement is a third unmeasured candidate.
+Two candidates: each wave ends when the slowest worker reaches the barrier, and the contended lock moves the table's cache lines between cores. The formula has no term for either, and these runs didn't isolate how much of the gap they explain. A further hypothesis is frequency: the governor is `powersave` on a host that boosts to 4.6 GHz, and the effective clock (user cycles over task-clock from `perf stat`) was 4.34 to 4.35 GHz for C++, 4.35 to 4.36 for Java and 3.69 to 3.86 for Python. Those figures cover each whole process: they show the cores ran above the 2.30 GHz base clock, not whether the clock fell as more cores woke at N = 4. The workers weren't pinned, so scheduler placement is a third unmeasured candidate.
 
-Python threads stay near 1x at N = 2 and fall to 0.47 to 0.50x at N = 4. The CPU-bound loop holds the GIL (`build.gil_enabled` is `true` in the reports, CPython 3.14.8), so the interpreter runs one thread at a time. The fall below 1x fits each barrier and lock hand-off also paying a GIL hand-off; the run does not isolate it. Processes track the prediction, 2.92 to 2.97x against a predicted 3.03 to 3.05x. The gap between the predicted 3.07 to 3.09x for threads and the measured 0.47 to 0.50x is the GIL, which Amdahl's Law does not know about.
+Python threads stay near 1x at N = 2 and fall to 0.47 to 0.50x at N = 4. The CPU-bound loop holds the GIL (`build.gil_enabled` is `true` in the reports, CPython 3.14.8), so the interpreter runs one thread at a time. The fall below 1x fits each barrier and lock hand-off also paying a GIL hand-off; the run doesn't isolate it. Processes track the prediction, 2.92 to 2.97x against a predicted 3.03 to 3.05x. The gap between the predicted 3.07 to 3.09x for threads and the measured 0.47 to 0.50x is the GIL, which Amdahl's Law doesn't know about.
 
 ### An observation: the free-running lock
 
-`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.51 to 3.59x at N = 4 in C++ and 3.53 to 3.57x in Java, over the predicted 3.09 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and do not test it. The bound for a free-running lock is not Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, and cannot pass `1/s`.
+`--sync free` removes the barriers in C++ and Java and changes nothing else. The same work ran at 3.51 to 3.59x at N = 4 in C++ and 3.53 to 3.57x in Java, over the predicted 3.09 to 3.11x, with 10 repetitions per N. Lock sections can then overlap other workers' scanning; the runs are consistent with that account and don't test it. The bound for a free-running lock isn't Amdahl's curve but `min(N, 1/s)`: fine-grained locking buys back part of what Amdahl charges, but it can't pass `1/s`.
 
 ## Cross-check
 

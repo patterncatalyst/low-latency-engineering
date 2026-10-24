@@ -1,0 +1,11 @@
+pinned pid=3741796 tid=3741800 cpu=1 role=producer-0
+pinned pid=3741796 tid=3741801 cpu=2 role=producer-1
+pinned pid=3741796 tid=3741803 cpu=4 role=producer-3
+pinned pid=3741796 tid=3741802 cpu=3 role=producer-2
+pinned pid=3741796 tid=3741804 cpu=5 role=consumer
+placement-ready
+released
+10-lockfree-waitfree     cpp  fetch-add        count=  4000000 dropped=     0 p50=      0.1us p90=      0.2us p99=      0.5us p99.9=      0.9us max=      53.9us
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run3/cpp-fetch-add-alt2.json
+10-lockfree-waitfree     cpp  fetch-add        count=   682701 dropped=     0 p50=      0.1us p90=      0.1us p99=      0.2us p99.9=      0.5us max=     150.7us
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run3/cpp-fetch-add-alt2-consumer-wait.json

@@ -3,8 +3,8 @@
 * ``dump FILE``        decode a file of parcel-v1 records and print them as JSON
 * ``decode``           ``unpack_from`` over a ``memoryview`` against ``ParseFromString``:
                        per-call percentiles (reports) and allocations per parcel
-* ``jmh-to-report``, ``gbench-to-report``
-                       convert the JMH and Google Benchmark JSON into lowlat reports
+
+JMH and Google Benchmark JSON are converted by ``lowlat-report from-jmh`` and ``from-gbench``.
 """
 
 import argparse
@@ -18,13 +18,13 @@ from lowlat_consumer.cli import positive_int
 from lowlat_measure.recorder import require_profile
 from lowlat_measure.table import format_rows
 
-from lowlat_flat import decode, golden, harness_report
+from lowlat_flat import decode, golden
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flat-py",
-        description="Ch8 flat-record tools: golden dump, decode lane, report conversion",
+        description="Ch8 flat-record tools: golden dump, decode lane",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -39,11 +39,6 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument(
         "--rounds", type=positive_int, default=200, help="passes over the parcels (default 200)"
     )
-
-    for name, what in (("jmh-to-report", "JMH"), ("gbench-to-report", "Google Benchmark")):
-        convert = sub.add_parser(name, help=f"{what} JSON to lowlat reports")
-        convert.add_argument("source", type=Path)
-        convert.add_argument("out", type=Path, help="directory for the reports")
     return parser
 
 
@@ -89,13 +84,4 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         case "decode":
             return run_decode(args.out, args.parcels, args.rounds)
-        case "jmh-to-report" | "gbench-to-report":
-            convert = (
-                harness_report.from_jmh
-                if args.command == "jmh-to-report"
-                else harness_report.from_gbench
-            )
-            for path in convert(args.source, args.out):
-                print(path)
-            return 0
     return 2

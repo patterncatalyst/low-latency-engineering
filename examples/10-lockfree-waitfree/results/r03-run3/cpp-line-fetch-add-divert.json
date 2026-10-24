@@ -1,0 +1,221 @@
+{
+  "build": {
+    "compiler": "clang 22.1.8 (Fedora 22.1.8-4.fc44) (C++ __cplusplus=202302)",
+    "flags": "Release: -O2 -g -fno-omit-frame-pointer -DNDEBUG",
+    "gil_enabled": null
+  },
+  "count": 200000,
+  "dropped": 0,
+  "example": "10-lockfree-waitfree",
+  "hdr_histogram": "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",
+  "language": "cpp",
+  "notes": "line; cameras=4; expect_per_camera=50000; published=200000; handled=200000; exception_lane=3040; divert_received=200000; log_slots=16384; claim=fetch-add; divert latency is the tracker's decision to the command's arrival",
+  "percentiles": {
+    "max": 516095,
+    "p50": 4747,
+    "p90": 11391,
+    "p99": 15503,
+    "p99_9": 88447
+  },
+  "profile": {
+    "captured_at": "2026-10-23T20:54:01Z",
+    "clock": {
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ],
+      "current_clocksource": "tsc"
+    },
+    "cpu": {
+      "caches": {
+        "l1d": {
+          "line_bytes": 64,
+          "size_bytes": 49152
+        },
+        "l1i": {
+          "line_bytes": 64,
+          "size_bytes": 32768
+        },
+        "l2": {
+          "line_bytes": 64,
+          "size_bytes": 1310720
+        },
+        "l3": {
+          "line_bytes": 64,
+          "size_bytes": 25165824
+        }
+      },
+      "cores_per_socket": 8,
+      "logical_cpus": 16,
+      "model": "Intel 8-core/16-thread CPU",
+      "online": "0-15",
+      "smt_active": true,
+      "sockets": 1,
+      "threads_per_core": 2,
+      "topology": [
+        {
+          "core_id": 0,
+          "cpu": 0,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 1,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 2,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 3,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 4,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 5,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 6,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 7,
+          "package_id": 0
+        },
+        {
+          "core_id": 0,
+          "cpu": 8,
+          "package_id": 0
+        },
+        {
+          "core_id": 1,
+          "cpu": 9,
+          "package_id": 0
+        },
+        {
+          "core_id": 2,
+          "cpu": 10,
+          "package_id": 0
+        },
+        {
+          "core_id": 3,
+          "cpu": 11,
+          "package_id": 0
+        },
+        {
+          "core_id": 4,
+          "cpu": 12,
+          "package_id": 0
+        },
+        {
+          "core_id": 5,
+          "cpu": 13,
+          "package_id": 0
+        },
+        {
+          "core_id": 6,
+          "cpu": 14,
+          "package_id": 0
+        },
+        {
+          "core_id": 7,
+          "cpu": 15,
+          "package_id": 0
+        }
+      ],
+      "vendor": "Intel"
+    },
+    "host_label": "bare-metal-host",
+    "kernel": {
+      "cmdline": null,
+      "irqaffinity": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "rcu_nocbs": null,
+      "realtime": false,
+      "release": "7.2",
+      "sys_isolated": null,
+      "sys_kernel_realtime": null,
+      "sys_nohz_full": null,
+      "version": "PREEMPT_DYNAMIC"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "load": {
+      "load1": 1.75,
+      "load15": 1.8,
+      "load5": 2.13,
+      "running": 1
+    },
+    "memory": {
+      "hugepages_free": 0,
+      "hugepages_total": 0,
+      "hugepagesize_kb": 2048,
+      "mem_total_kb": 65545544,
+      "thp_defrag": "madvise",
+      "thp_enabled": "madvise",
+      "thp_shmem_enabled": "never",
+      "transparent_hugepage": "madvise"
+    },
+    "power": {
+      "cpu0_max_khz": 4600000,
+      "cpu0_min_khz": 800000,
+      "cpufreq_boost": null,
+      "energy_performance_preference": "balance_performance",
+      "governor": "powersave",
+      "intel_pstate_no_turbo": false,
+      "scaling_driver": "intel_pstate"
+    },
+    "process": {
+      "cpu_affinity": "0-15",
+      "pid": 3740505,
+      "sched_policy": "SCHED_OTHER"
+    },
+    "schema": "lowlat-profile/1",
+    "tools": {
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "cmake": "cmake version 4.3.0",
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "memlock_kb": "8192",
+      "perf": "7.2",
+      "perf_event_paranoid": 2,
+      "python3": "Python 3.14.8",
+      "valgrind": "3.27.1"
+    },
+    "tuned": "balanced",
+    "virt": {
+      "type": "none"
+    }
+  },
+  "runtime": {
+    "placement": {
+      "cpus": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    }
+  },
+  "schema": "lowlat-report/1",
+  "unit": "ns",
+  "variant": "fetch-add"
+}

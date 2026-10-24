@@ -1,4 +1,4 @@
-"""Figure 0.2 — the lab: an unprivileged host and the lowlat-target guest.
+"""Figure 0.2, the lab: an unprivileged host and the lowlat-target guest.
 
 Regenerate from the repo root:  python3 diagrams/00-lab-topology.py
 """

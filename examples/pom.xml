@@ -24,6 +24,8 @@
     <module>06-gc-tails/java</module>
     <module>07-offheap-lockfree/java</module>
     <module>08-zero-copy-flat/java</module>
+    <module>09-eliminating-work/java</module>
+    <module>10-lockfree-waitfree/java</module>
   </modules>
 
   <properties>
@@ -42,6 +44,24 @@
     <jol.version>0.17</jol.version>
     <!-- chronicle-bom 2026.26 manages queue 2026.7, map 2026.1, bytes 2026.4, affinity 2026.2 -->
     <chronicle-bom.version>2026.26</chronicle-bom.version>
+    <!-- r03 pin (_plans/dependency-pins.md "r03 pins"): OpenJDK jcstress, Ch10 litmus tests -->
+    <jcstress.version>0.16</jcstress.version>
+    <!-- JVM arguments Chronicle needs on Java 17 and later. Verbatim from the `java17` profile
+         (activation jdk [17,)) of net.openhft:root-parent-pom:2026.0, the parent POM of
+         every Chronicle 2026.x module and the source of the ${jvm.requiredArgs} that
+         Chronicle's own builds hand to surefire. The Queue, Map and Core
+         docs at the pinned tags name the requirement but give no list; this profile is the
+         list Chronicle builds and tests with.
+         https://repo1.maven.org/maven2/net/openhft/root-parent-pom/2026.0/root-parent-pom-2026.0.pom
+         The shaded jar's manifest cannot carry them (the Add-Opens manifest entry is honoured only
+         for `java -jar`), so run scripts pass the same list.
+         The last line is not Chronicle's: JNA (used by Affinity; managed at ${jna.version} below) calls
+         System::load, which JDK 25 reports as a restricted-method warning unless native
+         access is enabled.
+         Chronicle Core also posts usage analytics unless -Dchronicle.analytics.disable=true; the
+         surefire and exec arguments below, and verify.sh, add it after this list. -->
+    <chronicle.jvmArgs>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --enable-native-access=ALL-UNNAMED</chronicle.jvmArgs>
+    <jna.version>5.19.1</jna.version>
     <junit.version>6.1.3</junit.version>
 
     <!-- Main class of a module's shaded jar; empty for jars with several entry points. -->
@@ -113,6 +133,24 @@
         <groupId>org.openjdk.jol</groupId>
         <artifactId>jol-core</artifactId>
         <version>${jol.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openjdk.jcstress</groupId>
+        <artifactId>jcstress-core</artifactId>
+        <version>${jcstress.version}</version>
+      </dependency>
+      <!-- JNA for every module: Affinity (via the BOM below) pins 5.5.0 and jcstress-core 5.8.0;
+           managed here at the newest stable so 07, 09 and 10 resolve one version. Declared before
+           the BOM import, so it wins. -->
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna</artifactId>
+        <version>${jna.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna-platform</artifactId>
+        <version>${jna.version}</version>
       </dependency>
       <!-- OpenHFT: queue, map, bytes and affinity versions come from this BOM. -->
       <dependency>

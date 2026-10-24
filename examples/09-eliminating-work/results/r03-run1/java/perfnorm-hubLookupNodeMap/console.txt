@@ -1,0 +1,160 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/09-eliminating-work/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms2g -Xmx2g -XX:+AlwaysPreTouch -XX:+UseParallelGC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true -Dlowlat.cpu=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap
+
+# Run progress: 0.00% complete, ETA 00:00:16
+# Fork: 1 of 1
+# Preparing profilers: LinuxPerfNormProfiler 
+# Profilers consume stderr from target VM, use -v EXTRA to copy to console
+# Warmup Iteration   1: SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+placement pid=3897938 tid=3898064 cpu=1 role=bench
+314.929 ±(99.9%) 4.591 ns/op
+# Warmup Iteration   2: 327.708 ±(99.9%) 7.052 ns/op
+# Warmup Iteration   3: 315.202 ±(99.9%) 4.633 ns/op
+Iteration   1: 316.546 ±(99.9%) 5.138 ns/op
+                 p0.00:   22.000 ns/op
+                 p0.50:   292.000 ns/op
+                 p0.90:   419.000 ns/op
+                 p0.95:   596.000 ns/op
+                 p0.99:   782.000 ns/op
+                 p0.999:  3045.676 ns/op
+                 p0.9999: 17517.622 ns/op
+                 p1.00:   26848.000 ns/op
+
+Iteration   2: 312.037 ±(99.9%) 4.067 ns/op
+                 p0.00:   22.000 ns/op
+                 p0.50:   291.000 ns/op
+                 p0.90:   419.000 ns/op
+                 p0.95:   594.000 ns/op
+                 p0.99:   779.000 ns/op
+                 p0.999:  2604.640 ns/op
+                 p0.9999: 17159.936 ns/op
+                 p1.00:   17632.000 ns/op
+
+Iteration   3: 310.989 ±(99.9%) 3.781 ns/op
+                 p0.00:   22.000 ns/op
+                 p0.50:   292.000 ns/op
+                 p0.90:   420.000 ns/op
+                 p0.95:   592.000 ns/op
+                 p0.99:   766.980 ns/op
+                 p0.999:  2505.192 ns/op
+                 p0.9999: 17272.922 ns/op
+                 p1.00:   22112.000 ns/op
+
+Iteration   4: 306.774 ±(99.9%) 2.766 ns/op
+                 p0.00:   22.000 ns/op
+                 p0.50:   291.000 ns/op
+                 p0.90:   418.000 ns/op
+                 p0.95:   592.000 ns/op
+                 p0.99:   775.000 ns/op
+                 p0.999:  2225.076 ns/op
+                 p0.9999: 7168.713 ns/op
+                 p1.00:   25600.000 ns/op
+
+Iteration   5: 308.478 ±(99.9%) 3.051 ns/op
+                 p0.00:   22.000 ns/op
+                 p0.50:   291.000 ns/op
+                 p0.90:   418.000 ns/op
+                 p0.95:   595.000 ns/op
+                 p0.99:   779.000 ns/op
+                 p0.999:  2469.480 ns/op
+                 p0.9999: 10793.536 ns/op
+                 p1.00:   21408.000 ns/op
+
+# Processing profiler results: LinuxPerfNormProfiler 
+
+
+Result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap":
+  N = 343584
+  mean =    310.962 ±(99.9%) 1.722 ns/op
+
+  Histogram, ns/op:
+    [    0.000,  2500.000) = 343225 
+    [ 2500.000,  5000.000) = 210 
+    [ 5000.000,  7500.000) = 30 
+    [ 7500.000, 10000.000) = 29 
+    [10000.000, 12500.000) = 17 
+    [12500.000, 15000.000) = 20 
+    [15000.000, 17500.000) = 35 
+    [17500.000, 20000.000) = 12 
+    [20000.000, 22500.000) = 4 
+    [22500.000, 25000.000) = 0 
+    [25000.000, 27500.000) = 2 
+
+  Percentiles, ns/op:
+      p(0.0000) =     22.000 ns/op
+     p(50.0000) =    291.000 ns/op
+     p(90.0000) =    419.000 ns/op
+     p(95.0000) =    594.000 ns/op
+     p(99.0000) =    777.000 ns/op
+     p(99.9000) =   2528.000 ns/op
+     p(99.9900) =  15690.264 ns/op
+     p(99.9990) =  21805.162 ns/op
+     p(99.9999) =  26848.000 ns/op
+    p(100.0000) =  26848.000 ns/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap:CPI":
+  2.586 clks/insn
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap:IPC":
+  0.387 insns/clk
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap:L1-dcache-load-misses:u":
+  8.664 #/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap:LLC-load-misses:u":
+  3.153 #/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap:cycles:u":
+  520.380 #/op
+
+Secondary result "io.patterncatalyst.lowlat.eliminating.HubLookupBenchmark.hubLookupNodeMap:instructions:u":
+  201.205 #/op
+
+
+# Run complete. Total time: 00:00:17
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                                      Mode     Cnt      Score   Error      Units
+HubLookupBenchmark.hubLookupNodeMap                          sample  343584    310.962 ± 1.722      ns/op
+HubLookupBenchmark.hubLookupNodeMap:CPI                      sample              2.586          clks/insn
+HubLookupBenchmark.hubLookupNodeMap:IPC                      sample              0.387          insns/clk
+HubLookupBenchmark.hubLookupNodeMap:L1-dcache-load-misses:u  sample              8.664               #/op
+HubLookupBenchmark.hubLookupNodeMap:LLC-load-misses:u        sample              3.153               #/op
+HubLookupBenchmark.hubLookupNodeMap:cycles:u                 sample            520.380               #/op
+HubLookupBenchmark.hubLookupNodeMap:instructions:u           sample            201.205               #/op
+HubLookupBenchmark.hubLookupNodeMap:p0.00                    sample             22.000              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p0.50                    sample            291.000              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p0.90                    sample            419.000              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p0.95                    sample            594.000              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p0.99                    sample            777.000              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p0.999                   sample           2528.000              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p0.9999                  sample          15690.264              ns/op
+HubLookupBenchmark.hubLookupNodeMap:p1.00                    sample          26848.000              ns/op
+
+Benchmark result is saved to <repo>/examples/09-eliminating-work/results/r03-run1/java/perfnorm-hubLookupNodeMap/jmh.json

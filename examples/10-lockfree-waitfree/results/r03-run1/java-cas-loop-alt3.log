@@ -1,0 +1,14 @@
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+pinned pid=3668974 tid=3669071 cpu=1 role=producer-0
+pinned pid=3668974 tid=3669072 cpu=2 role=producer-1
+pinned pid=3668974 tid=3669074 cpu=4 role=producer-3
+pinned pid=3668974 tid=3669073 cpu=3 role=producer-2
+pinned pid=3668974 tid=3669075 cpu=5 role=consumer
+placement-ready
+released
+10-lockfree-waitfree       java   cas-loop              4000000        0        0.3        1.0        2.3        4.5      286.0
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run1/java-cas-loop-alt3.json
+10-lockfree-waitfree       java   cas-loop               862442        0        0.2        0.3        0.5        1.5     1132.5
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run1/java-cas-loop-alt3-consumer-wait.json

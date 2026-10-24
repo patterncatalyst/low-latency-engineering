@@ -1,0 +1,11 @@
+pinned pid=3704937 tid=3704942 cpu=2 role=producer-1
+pinned pid=3704937 tid=3704941 cpu=1 role=producer-0
+pinned pid=3704937 tid=3704945 cpu=5 role=consumer
+pinned pid=3704937 tid=3704944 cpu=4 role=producer-3
+pinned pid=3704937 tid=3704943 cpu=3 role=producer-2
+placement-ready
+released
+10-lockfree-waitfree     cpp  mutex            count=  4000000 dropped=     0 p50=      0.2us p90=      0.8us p99=      2.7us p99.9=      4.6us max=     104.3us
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run2/cpp-mutex-alt2.json
+10-lockfree-waitfree     cpp  mutex            count=  1263273 dropped=     0 p50=      0.2us p90=      0.6us p99=      1.3us p99.9=      2.2us max=      67.8us
+report: <repo>/examples/10-lockfree-waitfree/results/r03-run2/cpp-mutex-alt2-consumer-wait.json

@@ -1,4 +1,4 @@
-"""Figure 0.1 — the sortation line and the scan-to-divert budget.
+"""Figure 0.1: the sortation line and the scan-to-divert budget.
 
 Regenerate from the repo root:  python3 diagrams/00-sortation-line.py
 """

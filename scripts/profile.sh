@@ -79,7 +79,8 @@ g_cpu() {
   have lscpu && lscpu_json=$(try lscpu -J || echo '{}')
   [[ -n $lscpu_json ]] || lscpu_json="{}"
   local smt; smt=$(read_file "$SYS/smt/active")
-  jq -nc --argjson l "$lscpu_json" --argjson vendor "$(jstr "$vendor")" \
+  jq -nc --argjson caches "$(g_caches)" --argjson topo "$(g_topology)" \
+     --argjson l "$lscpu_json" --argjson vendor "$(jstr "$vendor")" \
      --arg smt "$smt" --argjson online "$(jstr "$(read_file "$SYS/online")")" '
     def f($k): [$l.lscpu[]? | select(.field == $k) | .data][0] | try tonumber catch null;
     (f("Socket(s):")) as $s | (f("Core(s) per socket:")) as $c | (f("CPU(s):")) as $n |
@@ -91,7 +92,46 @@ g_cpu() {
       threads_per_core: f("Thread(s) per core:"),
       logical_cpus: $n,
       smt_active: (if $smt == "1" then true elif $smt == "0" then false else null end),
-      online: $online }'
+      online: $online, caches: $caches, topology: $topo }'
+}
+
+# Cache levels of cpu0 from sysfs: size and line size, one entry per level (l1d, l1i, l2, l3).
+# Hybrid parts differ per core type; cpu0 is the reference. Null when sysfs lacks the files.
+g_caches() {
+  local d lvl type size line key rows=""
+  for d in "$SYS"/cpu0/cache/index[0-9]*; do
+    [[ -r $d/level ]] || continue
+    lvl=$(read_file "$d/level"); type=$(read_file "$d/type")
+    size=$(read_file "$d/size"); line=$(read_file "$d/coherency_line_size")
+    case $type in
+      Data) key=l${lvl}d ;;
+      Instruction) key=l${lvl}i ;;
+      Unified) key=l${lvl} ;;
+      *) continue ;;
+    esac
+    rows+="$key $size $line"$'\n'
+  done
+  jq -Rn '
+    def bytes: capture("^(?<n>[0-9]+)(?<u>[KMG]?)$") as $m
+      | ($m.n | tonumber) * ({"": 1, "K": 1024, "M": 1048576, "G": 1073741824}[$m.u]);
+    [inputs | select(length > 0) | split(" ")
+     | {key: .[0], value: {size_bytes: (.[1] | try bytes catch null),
+                           line_bytes: (.[2] | try tonumber catch null)}}]
+    | if length == 0 then null else from_entries end' <<<"$rows"
+}
+
+# Logical CPU -> core id and package id from sysfs topology: which CPUs are SMT siblings
+# (same core_id and package_id) and which are on distinct physical cores.
+g_topology() {
+  local d n rows=""
+  for d in "$SYS"/cpu[0-9]*; do
+    [[ -r $d/topology/core_id ]] || continue
+    n=${d##*cpu}
+    rows+="$n $(read_file "$d/topology/core_id") $(read_file "$d/topology/physical_package_id")"$'\n'
+  done
+  jq -Rn '[inputs | select(length > 0) | split(" ")
+           | {cpu: (.[0] | tonumber), core_id: (.[1] | tonumber), package_id: (.[2] | try tonumber catch null)}]
+          | sort_by(.cpu) | if length == 0 then null else . end' <<<"$rows"
 }
 
 g_power() {
@@ -228,7 +268,7 @@ g_lab() {
 }
 
 g_tools() {
-  local gcc clang java javafull py cmake paranoid memlock
+  local gcc clang java javafull py cmake paranoid memlock perf valgrind
   gcc=$(have gcc && try gcc --version | head -n1 || true)
   clang=$(have clang && try clang --version | head -n1 || true)
   java=$(have java && { java -version 2>&1 | head -n1; } || true)
@@ -236,13 +276,19 @@ g_tools() {
   javafull=$(have java && { java -version 2>&1 | sed -n '2,3p' | paste -sd'|' | sed 's/|/ | /'; } || true)
   py=$(have python3 && try python3 --version || true)
   cmake=$(have cmake && try cmake --version | head -n1 || true)
+  # `perf --version` prints the full host kernel build (major.minor.patch plus the distro build string), which
+  # must never be recorded: keep major.minor only. valgrind prints "valgrind-3.27.1".
+  perf=$(have perf && try perf --version | sed -nE 's/^perf version ([0-9]+\.[0-9]+).*/\1/p' || true)
+  valgrind=$(have valgrind && try valgrind --version | sed -nE 's/^valgrind-([0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/p' || true)
   paranoid=$(read_file /proc/sys/kernel/perf_event_paranoid)
   memlock=$(ulimit -l 2>/dev/null || true) # KiB, or "unlimited"
   jq -nc --argjson gcc "$(jstr "$gcc")" --argjson clang "$(jstr "$clang")" \
      --argjson java "$(jstr "$java")" --argjson jfull "$(jstr "$javafull")" \
      --argjson py "$(jstr "$py")" --argjson cmake "$(jstr "$cmake")" \
+     --argjson perf "$(jstr "$perf")" --argjson valgrind "$(jstr "$valgrind")" \
      --argjson para "$(jnum "$paranoid")" --argjson ml "$(jstr "$memlock")" \
      '{gcc: $gcc, clang: $clang, java: $java, java_full: $jfull, python3: $py, cmake: $cmake,
+       perf: $perf, valgrind: $valgrind,
        perf_event_paranoid: $para, memlock_kb: $ml}'
 }
 

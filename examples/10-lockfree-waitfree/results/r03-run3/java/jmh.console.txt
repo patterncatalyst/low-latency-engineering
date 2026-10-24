@@ -1,0 +1,367 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/10-lockfree-waitfree/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED -XX:LoopUnrollLimit=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.lockfree.StoreBenchmark.releaseAcquire
+
+# Run progress: 0.00% complete, ETA 00:00:32
+# Fork: 1 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/10-lockfree-waitfree/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 1.233 ±(99.9%) 2.419 ns/op
+# Warmup Iteration   2: 1.067 ±(99.9%) 1.502 ns/op
+# Warmup Iteration   3: 0.548 ±(99.9%) 1.079 ns/op
+Iteration   1: 0.093 ±(99.9%) 0.300 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 7.721 ns/op
+                 p1.00:   2252.000 ns/op
+
+Iteration   2: 0.002 ±(99.9%) 0.003 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  ≈ 0 ns/op
+                 p0.9999: 4.535 ns/op
+                 p1.00:   20.000 ns/op
+
+Iteration   3: 0.004 ±(99.9%) 0.010 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 3.530 ns/op
+                 p1.00:   75.000 ns/op
+
+Iteration   4: 0.002 ±(99.9%) 0.003 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 7.748 ns/op
+                 p1.00:   19.000 ns/op
+
+Iteration   5: 0.002 ±(99.9%) 0.003 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 7.173 ns/op
+                 p1.00:   18.000 ns/op
+
+
+# Run progress: 25.00% complete, ETA 00:00:25
+# Fork: 2 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/10-lockfree-waitfree/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 0.552 ±(99.9%) 0.752 ns/op
+# Warmup Iteration   2: 0.119 ±(99.9%) 0.264 ns/op
+# Warmup Iteration   3: 0.046 ±(99.9%) 0.144 ns/op
+Iteration   1: 0.277 ±(99.9%) 0.670 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 1104.480 ns/op
+                 p1.00:   4656.000 ns/op
+
+Iteration   2: 0.004 ±(99.9%) 0.004 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 14.057 ns/op
+                 p1.00:   18.000 ns/op
+
+Iteration   3: 0.005 ±(99.9%) 0.011 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 7.051 ns/op
+                 p1.00:   80.000 ns/op
+
+Iteration   4: 0.052 ±(99.9%) 0.164 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  1.000 ns/op
+                 p0.9999: 16.939 ns/op
+                 p1.00:   1236.000 ns/op
+
+Iteration   5: 0.002 ±(99.9%) 0.002 ns/op
+                 p0.00:   ≈ 0 ns/op
+                 p0.50:   ≈ 0 ns/op
+                 p0.90:   ≈ 0 ns/op
+                 p0.95:   ≈ 0 ns/op
+                 p0.99:   ≈ 0 ns/op
+                 p0.999:  0.238 ns/op
+                 p0.9999: 3.524 ns/op
+                 p1.00:   16.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.lockfree.StoreBenchmark.releaseAcquire":
+  N = 246993
+  mean =      0.044 ±(99.9%) 0.075 ns/op
+
+  Histogram, ns/op:
+    [   0.000,  500.000) = 246989 
+    [ 500.000, 1000.000) = 0 
+    [1000.000, 1500.000) = 1 
+    [1500.000, 2000.000) = 1 
+    [2000.000, 2500.000) = 1 
+    [2500.000, 3000.000) = 0 
+    [3000.000, 3500.000) = 0 
+    [3500.000, 4000.000) = 0 
+    [4000.000, 4500.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) =        ≈ 0 ns/op
+     p(50.0000) =        ≈ 0 ns/op
+     p(90.0000) =        ≈ 0 ns/op
+     p(95.0000) =        ≈ 0 ns/op
+     p(99.0000) =        ≈ 0 ns/op
+     p(99.9000) =      1.000 ns/op
+     p(99.9900) =      7.301 ns/op
+     p(99.9990) =   2060.264 ns/op
+     p(99.9999) =   4656.000 ns/op
+    p(100.0000) =   4656.000 ns/op
+
+
+# JMH version: 1.37
+# VM version: JDK 25.0.5, OpenJDK 64-Bit Server VM, 25.0.5+8-LTS
+# VM invoker: ~/.sdkman/candidates/java/25.0.5-tem/bin/java
+# VM options: -Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED -XX:LoopUnrollLimit=1
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Sampling time
+# Benchmark: io.patterncatalyst.lowlat.lockfree.StoreBenchmark.seqCst
+
+# Run progress: 50.00% complete, ETA 00:00:17
+# Fork: 1 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/10-lockfree-waitfree/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 4.563 ±(99.9%) 0.656 ns/op
+# Warmup Iteration   2: 4.714 ±(99.9%) 1.000 ns/op
+# Warmup Iteration   3: 4.370 ±(99.9%) 0.854 ns/op
+Iteration   1: 4.010 ±(99.9%) 0.006 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 15.696 ns/op
+                 p1.00:   44.000 ns/op
+
+Iteration   2: 4.012 ±(99.9%) 0.006 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 15.152 ns/op
+                 p1.00:   44.000 ns/op
+
+Iteration   3: 4.091 ±(99.9%) 0.245 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  6.000 ns/op
+                 p0.9999: 37.850 ns/op
+                 p1.00:   2112.000 ns/op
+
+Iteration   4: 4.054 ±(99.9%) 0.134 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 28.150 ns/op
+                 p1.00:   1166.000 ns/op
+
+Iteration   5: 4.012 ±(99.9%) 0.005 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 17.565 ns/op
+                 p1.00:   30.000 ns/op
+
+
+# Run progress: 75.00% complete, ETA 00:00:08
+# Fork: 2 of 2
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:<repo>/examples/10-lockfree-waitfree/java/target/benchmarks.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# Warmup Iteration   1: 4.664 ±(99.9%) 0.807 ns/op
+# Warmup Iteration   2: 4.417 ±(99.9%) 0.647 ns/op
+# Warmup Iteration   3: 4.328 ±(99.9%) 0.684 ns/op
+Iteration   1: 4.013 ±(99.9%) 0.007 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  6.000 ns/op
+                 p0.9999: 14.451 ns/op
+                 p1.00:   52.000 ns/op
+
+Iteration   2: 4.010 ±(99.9%) 0.004 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 14.287 ns/op
+                 p1.00:   23.000 ns/op
+
+Iteration   3: 4.062 ±(99.9%) 0.169 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 11.588 ns/op
+                 p1.00:   1470.000 ns/op
+
+Iteration   4: 4.016 ±(99.9%) 0.009 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   4.000 ns/op
+                 p0.999:  5.000 ns/op
+                 p0.9999: 28.221 ns/op
+                 p1.00:   56.000 ns/op
+
+Iteration   5: 4.136 ±(99.9%) 0.389 ns/op
+                 p0.00:   4.000 ns/op
+                 p0.50:   4.000 ns/op
+                 p0.90:   4.000 ns/op
+                 p0.95:   4.000 ns/op
+                 p0.99:   5.000 ns/op
+                 p0.999:  6.000 ns/op
+                 p0.9999: 22.796 ns/op
+                 p1.00:   3364.000 ns/op
+
+
+
+Result "io.patterncatalyst.lowlat.lockfree.StoreBenchmark.seqCst":
+  N = 285162
+  mean =      4.042 ±(99.9%) 0.051 ns/op
+
+  Histogram, ns/op:
+    [   0.000,  250.000) = 285158 
+    [ 250.000,  500.000) = 0 
+    [ 500.000,  750.000) = 0 
+    [ 750.000, 1000.000) = 0 
+    [1000.000, 1250.000) = 1 
+    [1250.000, 1500.000) = 1 
+    [1500.000, 1750.000) = 0 
+    [1750.000, 2000.000) = 0 
+    [2000.000, 2250.000) = 1 
+    [2250.000, 2500.000) = 0 
+    [2500.000, 2750.000) = 0 
+    [2750.000, 3000.000) = 0 
+    [3000.000, 3250.000) = 0 
+    [3250.000, 3500.000) = 1 
+    [3500.000, 3750.000) = 0 
+
+  Percentiles, ns/op:
+      p(0.0000) =      4.000 ns/op
+     p(50.0000) =      4.000 ns/op
+     p(90.0000) =      4.000 ns/op
+     p(95.0000) =      4.000 ns/op
+     p(99.0000) =      4.000 ns/op
+     p(99.9000) =      5.000 ns/op
+     p(99.9900) =     17.000 ns/op
+     p(99.9990) =   1565.254 ns/op
+     p(99.9999) =   3364.000 ns/op
+    p(100.0000) =   3364.000 ns/op
+
+
+# Run complete. Total time: 00:00:34
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                Mode     Cnt     Score   Error  Units
+StoreBenchmark.releaseAcquire          sample  246993     0.044 ± 0.075  ns/op
+StoreBenchmark.releaseAcquire:p0.00    sample               ≈ 0          ns/op
+StoreBenchmark.releaseAcquire:p0.50    sample               ≈ 0          ns/op
+StoreBenchmark.releaseAcquire:p0.90    sample               ≈ 0          ns/op
+StoreBenchmark.releaseAcquire:p0.95    sample               ≈ 0          ns/op
+StoreBenchmark.releaseAcquire:p0.99    sample               ≈ 0          ns/op
+StoreBenchmark.releaseAcquire:p0.999   sample             1.000          ns/op
+StoreBenchmark.releaseAcquire:p0.9999  sample             7.301          ns/op
+StoreBenchmark.releaseAcquire:p1.00    sample          4656.000          ns/op
+StoreBenchmark.seqCst                  sample  285162     4.042 ± 0.051  ns/op
+StoreBenchmark.seqCst:p0.00            sample             4.000          ns/op
+StoreBenchmark.seqCst:p0.50            sample             4.000          ns/op
+StoreBenchmark.seqCst:p0.90            sample             4.000          ns/op
+StoreBenchmark.seqCst:p0.95            sample             4.000          ns/op
+StoreBenchmark.seqCst:p0.99            sample             4.000          ns/op
+StoreBenchmark.seqCst:p0.999           sample             5.000          ns/op
+StoreBenchmark.seqCst:p0.9999          sample            17.000          ns/op
+StoreBenchmark.seqCst:p1.00            sample          3364.000          ns/op
+
+Benchmark result is saved to <repo>/examples/10-lockfree-waitfree/results/r03-run3/java/jmh.json

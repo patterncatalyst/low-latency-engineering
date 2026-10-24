@@ -12,8 +12,10 @@ members = [
     "lowlat-gc-tails",
     "lowlat-latdist",
     "lowlat-line-consumer",
+    "lowlat-locality",
     "lowlat-measure",
     "lowlat-proto",
+    "lowlat-sync",
 ]
 
 [[package]]
@@ -228,6 +230,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "lowlat-locality"
+version = "1.0.0"
+source = { editable = "09-eliminating-work/locality-py" }
+dependencies = [
+    { name = "lowlat-measure" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lowlat-measure", editable = "common/measure-py" }]
+
+[[package]]
 name = "lowlat-measure"
 version = "1.0.0"
 source = { editable = "common/measure-py" }
@@ -252,6 +265,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "protobuf", specifier = "==7.36.2" }]
+
+[[package]]
+name = "lowlat-sync"
+version = "1.0.0"
+source = { editable = "10-lockfree-waitfree/sync-py" }
 
 [[package]]
 name = "packaging"

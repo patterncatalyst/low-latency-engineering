@@ -11,22 +11,22 @@ duration: 50 minutes
 By the end of this chapter you can:
 
 - Say what each JDK 25 collector stops and read each one's maximum pause from a flight recording.
-- Explain why a concurrent collector with too little headroom stalls the allocating thread, and why that stall is not a GC pause.
-- Record GC pauses from inside the process, so setup collections are not counted with the run.
+- Explain why a concurrent collector with too little headroom stalls the allocating thread, and why that stall isn't a GC pause.
+- Record GC pauses from inside the process, so setup collections aren't counted with the run.
 - Explain how CPython cycles and `gc.freeze()` change what the collector walks, and how inline and deferred destruction differ in C++.
 - Check a pause claim against the flight recording and the unified GC log.
 
 ## Why this matters
 
-A parcel is scanned and must be diverted 480 ms later, 1.2 m down the belt at 2.5 m/s. The belt does not wait for the tracker. When the tracker stops, parcels keep arriving at 10 kHz, so every millisecond of pause puts 10 more parcels behind it, each charged for the wait, as Chapter 3 showed. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covered the pause a cold JVM adds; the pauses a warm JVM adds at any time are the subject here.
+A parcel is scanned and must be diverted 480 ms later, 1.2 m down the belt at 2.5 m/s. The belt doesn't wait for the tracker. When the tracker stops, parcels keep arriving at 10 kHz, so every millisecond of pause puts 10 more parcels behind it, each charged for the wait, as Chapter 3 showed. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covered the pause a cold JVM adds. A warm JVM adds pauses at any time, and this chapter measures those.
 
 The tracker keeps a 1.8 GB live set and allocates scan history at about 400 MB/s. The same bytecode runs under four collectors; Python and C++ lanes reclaim memory without a tracing collector.
 
-The code is in `examples/06-gc-tails/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
+Build and run it from `examples/06-gc-tails/`; its `README.md` covers the script and its options.
 
 ## Diagram
 
-{% include excalidraw.html file="06-collector-pauses" alt="A tracker at 10 kHz for 30 s with a 4 GB pre-touched heap feeds four collectors, each with the maximum GC pause read from JFR: stop-the-world Parallel, where all threads stop and the heap is walked, 158-162 ms; G1 with stop-the-world evacuation, 21.4-22.0 ms; Generational ZGC (amber) with concurrent mark and relocate, 0.020-0.039 ms; and generational Shenandoah with concurrent evacuation, 0.61-0.81 ms." caption="Figure 6.1 — Same bytecode and allocation, different collector: the maximum pause runs from 158-162 ms under Parallel to 0.020-0.039 ms under ZGC." %}
+{% include excalidraw.html file="06-collector-pauses" alt="A tracker at 10 kHz for 30 s with a 4 GB pre-touched heap feeds four collectors, each with the maximum GC pause read from JFR: stop-the-world Parallel, where all threads stop and the heap is walked, 158-162 ms; G1 with stop-the-world evacuation, 21.4-22.0 ms; Generational ZGC (amber) with concurrent mark and relocate, 0.020-0.039 ms; and generational Shenandoah with concurrent evacuation, 0.61-0.81 ms." caption="Figure 6.1: Same bytecode and allocation, different collector: the maximum pause runs from 158-162 ms under Parallel to 0.020-0.039 ms under ZGC." %}
 
 ## Concept
 
@@ -43,11 +43,11 @@ The shift manifest is a ring: each new parcel overwrites the oldest entry, so th
 
 ### Headroom
 
-A concurrent collector runs beside the application, and both draw on the same free heap. If the application allocates faster than a cycle frees memory, free heap reaches zero and the allocating thread waits. That is an allocation stall: a pause that does not appear as a GC pause. ZGC reports it as the `jdk.ZAllocationStall` event, which the example counts apart from `jdk.GCPhasePause`. The undersized variant runs ZGC with the heap at 1.05 times the measured live set.
+A concurrent collector runs beside the application, and both draw on the same free heap. If the application allocates faster than a cycle frees memory, free heap reaches zero and the allocating thread waits. That's an allocation stall: a pause that doesn't appear as a GC pause. ZGC reports it as the `jdk.ZAllocationStall` event, which the example counts apart from `jdk.GCPhasePause`. The undersized variant runs ZGC with the heap at 1.05 times the measured live set.
 
-{% include excalidraw.html file="06-headroom-stall" alt="Two lanes with the same handler allocating about 400 MB/s of garbage. With a 4 GB heap and a live set well under it, ZGC cycles stay ahead of the rate: 0 allocation stalls and p99.9 of 0.147-0.149 ms. With the heap at 1.05 times the live set, free memory runs out and an amber path leads to an allocation stall where the thread waits; the run records 530-977 stalls with p99.9 of 50.4-113.0 ms." caption="Figure 6.2 — A concurrent collector needs headroom. At 1.05 times the live set, ZGC stalls the allocating thread 530-977 times and p99.9 rises from 0.147-0.149 ms to 50.4-113.0 ms." %}
+{% include excalidraw.html file="06-headroom-stall" alt="Two lanes with the same handler allocating about 400 MB/s of garbage. With a 4 GB heap and a live set well under it, ZGC cycles stay ahead of the rate: 0 allocation stalls and p99.9 of 0.147-0.149 ms. With the heap at 1.05 times the live set, free memory runs out and an amber path leads to an allocation stall where the thread waits; the run records 530-977 stalls with p99.9 of 50.4-113.0 ms." caption="Figure 6.2: A concurrent collector needs headroom. At 1.05 times the live set, ZGC stalls the allocating thread 530-977 times and p99.9 rises from 0.147-0.149 ms to 50.4-113.0 ms." %}
 
-The shape came from a sweep: calibration runs on 2026-10-22, one run per row, not committed measurement runs, reproducible with `SWEEP=1 examples/06-gc-tails/verify.sh`. ZGC with a fixed heap gave 0 allocation stalls at 4 GB and down to 1.10 times the live set, 14 stalls (longest 50.5 ms) at 1.075 times, and 884 stalls (longest 98.2 ms) at 1.05 times. At 1.30 times and a doubled allocation rate, ZGC gave 0 stalls and ran more minor collections instead (270 against 162). Headroom, not allocation rate, is the lever, and the transition is sharp.
+The shape came from a sweep of calibration runs on 2026-10-22, one run per row, not committed measurement runs, reproducible with `SWEEP=1 examples/06-gc-tails/verify.sh`. ZGC with a fixed heap gave 0 allocation stalls at 4 GB and down to 1.10 times the live set, 14 stalls (longest 50.5 ms) at 1.075 times, and 884 stalls (longest 98.2 ms) at 1.05 times. At 1.30 times and a doubled allocation rate, ZGC gave 0 stalls and ran more minor collections instead (270 against 162). Headroom, not allocation rate, is the lever, and the transition is sharp.
 
 ### Pre-touch and huge pages
 
@@ -57,9 +57,9 @@ Every Java variant pre-touches a fixed heap (`-Xms` = `-Xmx`, with `-XX:+AlwaysP
 
 The other two runtimes decide where the frees run.
 
-{% include excalidraw.html file="06-refcount-vs-tracing" alt="Three lanes in the order C++, Python, Java, each with its end-to-end p99.9 latency. C++: the owner frees, so bulk-free destroys a wave on the hot thread (2.13-2.31 ms) while deferred-free hands it to a reclaimer thread (0.139-0.145 ms). Python: refcounts free at once and a generational cycle collector finds cycles; cyclic-garbage runs 9 gen-2 collections (138-141 ms) and frozen, with no cycles and gc.freeze(), runs 0 (0.166-0.170 ms). Java: tracing collectors mark what is live; stop-the-world Parallel is 153-154 ms and ZGC 0.147-0.149 ms." caption="Figure 6.3 — C++ frees where the owner says, CPython frees by reference count and sweeps cycles in generations, and the JVM traces from roots; each has a variant that keeps the reclaim cost off the latency-critical path." %}
+{% include excalidraw.html file="06-refcount-vs-tracing" alt="Three lanes in the order C++, Python, Java, each with its end-to-end p99.9 latency. C++: the owner frees, so bulk-free destroys a wave on the hot thread (2.13-2.31 ms) while deferred-free hands it to a reclaimer thread (0.139-0.145 ms). Python: refcounts free at once and a generational cycle collector finds cycles; cyclic-garbage runs 9 gen-2 collections (138-141 ms) and frozen, with no cycles and gc.freeze(), runs 0 (0.166-0.170 ms). Java: tracing collectors mark what is live; stop-the-world Parallel is 153-154 ms and ZGC 0.147-0.149 ms." caption="Figure 6.3: C++ frees where the owner says, CPython frees by reference count and sweeps cycles in generations, and the JVM traces from roots; each has a variant that keeps the reclaim cost off the latency-critical path." %}
 
-CPython frees an object the moment its reference count reaches zero. A reference cycle never does, so a generational cycle collector finds it (CPython 3.14.8 here; 3.14.0 to 3.14.4 shipped an incremental collector that 3.14.5 reverted). In `cyclic-garbage` every parcel's scan history is a cycle: the parcel lists its samples and each sample points back at it. By the time the parcel leaves the belt the cycle is in the oldest generation, so only a generation-2 collection, which walks every tracked object that is not frozen, frees it. The `frozen` variant removes the cycles and calls `gc.freeze()` after setup. It ran 0 collections in every generation: refcounting frees each parcel at once, so generation 0 never reaches its threshold, and the frozen setup objects would be skipped if it did.
+CPython frees an object the moment its reference count reaches zero. A reference cycle never does, so a generational cycle collector finds it (CPython 3.14.8 here; 3.14.0 to 3.14.4 shipped an incremental collector that 3.14.5 reverted). In `cyclic-garbage` every parcel's scan history is a cycle: the parcel lists its samples and each sample points back at it. By the time the parcel leaves the belt the cycle is in the oldest generation, so only a generation-2 collection, which walks every tracked object that isn't frozen, frees it. The `frozen` variant removes the cycles and calls `gc.freeze()` after setup. It ran 0 collections in every generation: refcounting frees each parcel at once, so generation 0 never reaches its threshold, and the frozen setup objects would be skipped if it did.
 
 C++ has no collector; the cost is `free()`. Destroying a wave of 10,000 manifest entries on the hot thread delays every parcel that arrives meanwhile. `bulk-free` destroys the wave inline, `deferred-free` hands it to a reclaimer thread, and `no-free` keeps dead waves until the run ends, as a control.
 
@@ -67,7 +67,7 @@ C++ has no collector; the cost is `free()`. Destroying a wave of 10,000 manifest
 
 ### The handler's memory in each runtime
 
-The Java and Python handlers look up the lane, build the scan history, overwrite a manifest entry and update the in-flight table; the C++ handler builds manifest entries in waves. In Java that is `Tracker.track` in `java/src/main/java/io/patterncatalyst/lowlat/gctails/Tracker.java`, shown with the `scan` method that creates the garbage. In C++ the choice is in `Tracker::close_wave` in `cpp/src/tracker.cpp`. In Python it is `Tracker.track` in `gctails-py/src/lowlat_gctails/tracker.py`.
+The Java and Python handlers look up the lane, build the scan history, overwrite a manifest entry and update the in-flight table; the C++ handler builds manifest entries in waves. In Java that's `Tracker.track` in `java/src/main/java/io/patterncatalyst/lowlat/gctails/Tracker.java`, shown with the `scan` method that creates the garbage. In C++ the choice is in `Tracker::close_wave` in `cpp/src/tracker.cpp`. In Python it's `Tracker.track` in `gctails-py/src/lowlat_gctails/tracker.py`.
 
 {% include codetabs.html langs="Java|C++|Python" %}
 
@@ -142,7 +142,7 @@ The Java handler never frees anything. `scan` allocates samples, each with a fre
 
 In Python, `self.cyclic` is the one branch that matters: each sample gets `parent = state`, closing the cycle. Without it, the parcel dies when the table drops it.
 
-In C++, `close_wave` makes the ownership decision. `Wave dead` owns the oldest wave. In `bulk_free` it is destroyed when the function returns, on the receive thread; in `deferred_free` it is moved into the reclaimer's queue and `Reclaimer::run` destroys it on its own thread. There is no collector to configure: ownership is explicit, and so is the place the frees run.
+In C++, `close_wave` makes the ownership decision. `Wave dead` owns the oldest wave. In `bulk_free` it's destroyed when the function returns, on the receive thread; in `deferred_free` it's moved into the reclaimer's queue and `Reclaimer::run` destroys it on its own thread. There's no collector to configure. Ownership is explicit, and so is the place the frees run.
 
 ### Measuring pauses without touching the parcel path
 
@@ -241,7 +241,7 @@ Run the example from the repository root:
 examples/06-gc-tails/verify.sh
 ```
 
-It needs 4 GB for a heap and refuses to start while a `lowlat-*` VM is running; `ALLOW_BUSY=1` measures anyway, with noisier numbers. `RECHECK=results/<run-id>` evaluates the criteria on a committed run without running anything. It runs 13 consumers one at a time, each at 10 kHz for 30 s (300,000 parcels), and asserts the criteria below.
+It needs 4 GB for a heap and refuses to start while a `lowlat-*` VM is running; `ALLOW_BUSY=1` measures anyway, with noisier numbers. `RECHECK=results/<run-id>` evaluates the criteria on a committed run without running anything. The script runs 13 consumers one at a time, each at 10 kHz for 30 s (300,000 parcels), and asserts the criteria below.
 
 Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, THP `madvise`, Temurin 25.0.5+8. Ranges span the three committed runs `r02-run1` to `r02-run3`.
 
@@ -260,11 +260,11 @@ Criterion 1 asserts Parallel's maximum is at least 10 ms and 20x ZGC's, ZGC's is
 
 Under Parallel the p99 is already 130.9 to 131.8 ms, while the p50 is 0.06 ms in every Java variant. Parallel's worst pause spends 158 to 162 ms of the 480 ms budget before the parcel's own work begins.
 
-ZGC's end-to-end maximum is 2.61 to 6.10 ms while its longest GC pause is under 0.04 ms. The maximum is therefore not a GC pause, and the book does not attribute it.
+ZGC's end-to-end maximum is 2.61 to 6.10 ms while its longest GC pause is under 0.04 ms. The maximum is therefore not a GC pause, and the book doesn't attribute it.
 
 **Headroom.** With the heap at 1.05 times the live set (1,893 to 1,895 MB), `undersized-heap` recorded 530 to 977 allocation stalls, the longest 61.1 to 139.9 ms, and a p99.9 of 50.4 to 113.0 ms against 0.147 to 0.149 ms for right-sized ZGC. Criterion 3 asserts at least one stall and a p99.9 at least 3x right-sized ZGC's. Its GC pauses were 0.053 ms at most, so stalls, not pauses, make the tail.
 
-**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.152 to 0.167 ms and a maximum pause of 0.68 to 0.75 ms. `thp`, which got no huge pages, gave a p99.9 of 0.149 to 0.204 ms and a maximum pause of 0.028 to 0.045 ms. With the recording off, `jfr-off` gave a p99.9 of 0.149 to 0.154 ms, 0.001 to 0.007 ms above ZGC's in the same run. ZGC's spread is 0.002 ms, but `thp`, the same collector on 4 KB pages, spans 0.055 ms, so this set cannot tell that difference from noise.
+**Observed only.** Non-generational Shenandoah gave a p99.9 of 0.152 to 0.167 ms and a maximum pause of 0.68 to 0.75 ms. `thp`, which got no huge pages, gave a p99.9 of 0.149 to 0.204 ms and a maximum pause of 0.028 to 0.045 ms. With the recording off, `jfr-off` gave a p99.9 of 0.149 to 0.154 ms, 0.001 to 0.007 ms above ZGC's in the same run. ZGC's spread is 0.002 ms, but `thp`, the same collector on 4 KB pages, spans 0.055 ms, so this set can't tell that difference from noise.
 
 **Python.** `cyclic-garbage` ran 9 generation-2 collections in the window (99 of generation 1, 1,092 of generation 0), the longest collection 145.8 to 153.7 ms, with a p99.9 of 138.1 to 141.0 ms. `frozen` ran 0 collections with 119,780 objects frozen and a p99.9 of 0.166 to 0.170 ms. Criterion 4 asserts 0 generation-2 collections for `frozen` and at least 1 for `cyclic-garbage`.
 
@@ -283,10 +283,10 @@ Python's cross-check is the callback count: `collections=1200` is 1,092 + 99 + 9
 ## What you learned
 
 - On a 1.8 GB live set the maximum pause runs from 158 to 162 ms under Parallel to 0.020 to 0.039 ms under Generational ZGC.
-- Headroom decides whether a concurrent collector works: at 1.05 times the live set, ZGC stalled the allocating thread 530 to 977 times, and a GC pause histogram does not show it.
+- Headroom decides whether a concurrent collector works: at 1.05 times the live set, ZGC stalled the allocating thread 530 to 977 times, and a GC pause histogram doesn't show it.
 - Record pauses where they happen and exclude setup: a recording started inside the JVM, and a `gc.callbacks` hook that stores into preallocated buffers.
 - In CPython, reference cycles cost generation-2 collections that walk the live set; without cycles, refcounting frees each parcel and no collection runs. In C++, the choice is which thread pays for the frees.
-- The `thp` variant got no huge pages from the OS, so it shows nothing about them; turning the recording off did not lower ZGC's p99.9.
+- The `thp` variant got no huge pages from the OS, so it shows nothing about them; turning the recording off didn't lower ZGC's p99.9.
 
 The next chapter, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity*, moves data out of the collector's reach.
 
@@ -295,7 +295,7 @@ The next chapter, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor
 - Enberg, *Latency* (Manning), for the broader treatment of tail latency.
 - Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, in Part 2, for allocation cost and warm-up.
 - Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1, for why a pause charges every parcel behind it.
-- Chapter 9, *Eliminating work: allocation, cache locality, false sharing*, in Part 3, for removing allocation in the data structure instead of tuning the collector.
+- [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), in Part 3, for removing allocation in the data structure instead of tuning the collector.
 - JEP 490 (ZGC: remove the non-generational mode, JDK 24) and JEP 521 (Generational Shenandoah, product in JDK 25).
 - `examples/common/MEASUREMENT.md` for the report format and the checks every report passes.
 

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="44" width="840" height="180" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="64" font-size="12" font-weight="700" fill="#1d1d1d">seqlock: the writer never waits for readers</text>
+<rect x="20" y="236" width="840" height="172" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="256" font-size="12" font-weight="700" fill="#1d1d1d">shared-mutex: the writer waits for readers</text>
+<rect x="40" y="76" width="150" height="50" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="115.0" y="99.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Bump sequence</text>
+<text x="115.0" y="116.0" font-size="11.5" fill="#555555" text-anchor="middle">odd</text>
+<rect x="230" y="76" width="150" height="50" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="305.0" y="99.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Write fields</text>
+<text x="305.0" y="116.0" font-size="11.5" fill="#555555" text-anchor="middle">snapshot and checksum</text>
+<rect x="420" y="76" width="150" height="50" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="495.0" y="99.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Bump sequence</text>
+<text x="495.0" y="116.0" font-size="11.5" fill="#555555" text-anchor="middle">even</text>
+<rect x="40" y="150" width="130" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="105.0" y="173.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Read sequence</text>
+<text x="105.0" y="190.0" font-size="11.5" fill="#555555" text-anchor="middle">s1</text>
+<rect x="200" y="150" width="130" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="265.0" y="173.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Read data</text>
+<text x="265.0" y="190.0" font-size="11.5" fill="#555555" text-anchor="middle">copy the fields</text>
+<rect x="360" y="150" width="130" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="425.0" y="173.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Read sequence</text>
+<text x="425.0" y="190.0" font-size="11.5" fill="#555555" text-anchor="middle">s2</text>
+<rect x="520" y="150" width="130" height="50" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="585.0" y="173.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Retry</text>
+<text x="585.0" y="190.0" font-size="11.5" fill="#555555" text-anchor="middle">s1 odd or s1 != s2</text>
+<rect x="640" y="76" width="200" height="72" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="740.0" y="102.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Writer p99</text>
+<text x="740.0" y="119.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ 25-32 ns, Java 206-234 ns</text>
+<text x="740.0" y="134.5" font-size="11.5" fill="#555555" text-anchor="middle">torn snapshots 0</text>
+<rect x="40" y="262" width="210" height="50" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="145.0" y="285.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Exclusive lock</text>
+<text x="145.0" y="302.0" font-size="11.5" fill="#555555" text-anchor="middle">waits for the readers</text>
+<rect x="290" y="262" width="150" height="50" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="365.0" y="285.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Write fields</text>
+<text x="365.0" y="302.0" font-size="11.5" fill="#555555" text-anchor="middle">snapshot and checksum</text>
+<rect x="480" y="262" width="120" height="50" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="540.0" y="292.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Unlock</text>
+<rect x="40" y="340" width="210" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="145.0" y="363.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Shared lock</text>
+<text x="145.0" y="380.0" font-size="11.5" fill="#555555" text-anchor="middle">three readers hold it</text>
+<rect x="640" y="262" width="200" height="72" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="740.0" y="288.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Writer p99</text>
+<text x="740.0" y="305.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ 5,979-6,603 ns</text>
+<text x="740.0" y="320.5" font-size="11.5" fill="#555555" text-anchor="middle">Java 8,083-8,287 ns</text>
+<path d="M190,101 L230,101" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M380,101 L420,101" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M570,101 L640,98" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M170,175 L200,175" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M330,175 L360,175" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M490,175 L520,175" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M250,287 L290,287" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M440,287 L480,287" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M600,287 L640,284" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M145,340 L145,312" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="171.0" y="326.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">blocks</text>
+<text x="171.0" y="326.0" font-size="11" fill="#555" text-anchor="middle">blocks</text>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Readers retry instead of blocking, so the writer&#x27;s tail stays short</text>
+<text x="440" y="424" font-size="12" fill="#1d1d1d" text-anchor="middle">Writer p99, lock over seqlock: 205.5-231.0x in C++ and 34.5-37.1x in Java (StampedLock), with 0 torn snapshots.</text>
+</svg>

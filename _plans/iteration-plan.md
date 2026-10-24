@@ -16,10 +16,12 @@ GitHub release; no tarball is built.
 - **r01: complete** (merged in #3, tag `r01.x`). Steps S0 to S27 done (simulator, kits, lab, Ch0 to Ch4,
   examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
   Claim log: `_plans/reconciliation-plan.md`.
-- **r02 (`release/r02`): in progress.** Part 2 (Ch5–8). Chapters written and validated, example pages, READMEs and
-  reconciliation wired (S20); CI and review steps remain, and the iteration stays in progress until the PR merges.
-  Step status: `_plans/r02-plan.md`. Claim log: `_plans/reconciliation-plan.md`.
-- Everything after r02 is planned, not started.
+- **r02: complete** (merged in #4, tag `r02.x`). Part 2 (Ch5–8). Step status: `_plans/r02-plan.md`.
+- **r03 (`release/r03`): in progress.** Part 3 (Ch9–10). Steps S0 to S16 done (examples 09 and 10, measured on
+  `r03-run1..3`, Ch9 and Ch10 written and validated, figures, site wiring, CI and `validate.py` checks, idiom and
+  voice review including S14b, the S15 re-measure of 09, Opus validation); S17 (PR, tag, release) remains. Step status: `_plans/r03-plan.md`. Claim log:
+  `_plans/reconciliation-plan.md`.
+- Everything after r03 is planned, not started.
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
@@ -70,7 +72,7 @@ infrastructure plus the chapters that explain it:
 |---|---|---|
 | r00 | Scaffold, outline, plan, Figure 0.1 | `release/r00` |
 | r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete: merged in #3, tag `r01.x`** |
-| r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline |
+| r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline. **Complete: merged in #4, tag `r02.x`** |
 | r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language |
 | r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers |
 | r05 | Part 5 (Ch14–18): PREEMPT_RT, partitioning, jitter, kernel bypass, latency config as code | VM only; before/after `cyclictest` every chapter |

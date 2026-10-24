@@ -1,4 +1,4 @@
-"""Figure 3.1 — three clocks on one parcel.
+"""Figure 3.1: three clocks on one parcel.
 
 Regenerate from the repo root:  python3 diagrams/03-three-clocks.py
 """

@@ -109,7 +109,8 @@ fi
 step "JMH SampleTime with the gc profiler: DecodeBenchmark, TableBenchmark, ClockBenchmark (about 3 minutes)"
 if ((RUN)); then
   jmh_lock_wait 30 "$OUT/jmh.console.txt" java -jar "$JAR" -rf json -rff "$OUT/jmh.json" -prof gc || die "JMH failed"
-  uvrun --package lowlat-flat flat-py jmh-to-report "$OUT/jmh.json" "$OUT/jmh" >/dev/null
+  uvrun lowlat-report from-jmh "$OUT/jmh.json" "$OUT/jmh" --example "$EXAMPLE" \
+    --per-parcel protobuf-decode --per-parcel flat-ffm >/dev/null
 fi
 jmh_p50() { jget "$OUT/jmh/java-$1.json" .percentiles.p50; }
 jmh_alloc() { jget "$OUT/jmh/java-$1.json" '.runtime.alloc_bytes_per_parcel'; }
@@ -208,7 +209,7 @@ if ((RUN)); then
   "$(cpp_bin flat-bench)" --benchmark_out="$OUT/cpp/gbench.json" --benchmark_out_format=json \
     >"$OUT/cpp/gbench.console.txt" 2>&1
   redact_host "$OUT/cpp/gbench.json"
-  uvrun --package lowlat-flat flat-py gbench-to-report "$OUT/cpp/gbench.json" "$OUT/cpp" >/dev/null
+  uvrun lowlat-report from-gbench "$OUT/cpp/gbench.json" "$OUT/cpp" --example "$EXAMPLE" >/dev/null
 fi
 for variant in decode-memcpy decode-bit-cast decode-start-lifetime-as; do
   printf '  %-26s p50 %s ns per 1024 records\n' "$variant" "$(jget "$OUT/cpp/cpp-$variant.json" .percentiles.p50)"

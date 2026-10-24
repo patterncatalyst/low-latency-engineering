@@ -9,7 +9,7 @@ benchmark, and obvious to a clock that starts at the belt's schedule.
 The line simulator emits 1,000 parcels/s for 10 s (`seq`, `intended_emit_ns`).
 A consumer in each language receives them and, at parcel `seq` 5000, stalls for
 200 ms with a blocking sleep. `sleep` is the right tool here: it models a GC
-pause, a page fault or a lock convoy, a thread that is not running. From
+pause, a page fault or a lock convoy, a thread that isn't running. From
 that one run it records:
 
 | Variant | Latency is | What it shows |
@@ -33,7 +33,7 @@ ALLOW_BUSY=1 examples/03-coordinated-omission/verify.sh
 Builds, runs 3 languages x (stall, control) x 10 s plus 3 probes, writes
 `lowlat-report/1` files and `profile.json` to `results/latest/`, runs
 `lowlat-report check`, and asserts the criteria below. Exit non-zero means the
-effect was not observed. UDP ports 47230-47235 on 127.0.0.1.
+effect wasn't observed. UDP ports 47230-47235 on 127.0.0.1.
 
 Each language is also a plain program (`run` and `probe` subcommands):
 
@@ -53,14 +53,14 @@ Each language is also a plain program (`run` and `probe` subcommands):
   `closed-loop-corrected-control` p99 within 2x of `closed-loop-naive-control` p99
   (the correction adds nothing when nothing is late)
 
-### Why `intended-time` has a floor the others cannot see
+### Why `intended-time` has a floor the others can't see
 
 With no stall, `intended-time` p99 is still 0.19 to 0.42 ms while `receipt-time` is 5 to 75
 us (C++ 5.2 to 8.0, Python 25.7 to 27.8, Java 53.8 to 74.9). `intended-time` starts at the belt's schedule, so it includes the
 simulator waking late to send, the loopback hop and the socket queue. `receipt-time`
 starts after the datagram is dequeued and the closed loop starts at its own request,
-so neither can see that part. The floor is real latency of the line, not a stall,
-and it is why the control is judged against 1 ms rather than against the other clocks.
+so neither can see that part. That gap is latency on the path (late send, loopback, socket queue), not a stall,
+and it's why the control is judged against 1 ms rather than against the other clocks.
 
 ## Clock probe
 
@@ -92,13 +92,13 @@ read and show up in these numbers).
 
 ## Percentile rank differs between the HdrHistogram ports
 
-The three kits use the HdrHistogram port of their language, and the ports do not
+The three kits use the HdrHistogram port of their language, and the ports don't
 define the percentile rank the same way: the C and Python ports round `p x N / 100`
 half up, the Java port rounds it up (`ceil`). On dense data the answers fall in the
 same bucket; in a sparse tail, such as the 200 parcels behind the stall in 10,000,
 the languages can land one bucket apart. Each kit keeps its library's convention, and
 `lowlat-report check` recomputes a report with the convention of the language that
-wrote it. Do not compare a C++ and a Java p99 as if one rule produced both. The full
+wrote it. Don't compare a C++ and a Java p99 as if one rule produced both. The full
 statement is in [`examples/common/MEASUREMENT.md`](../common/MEASUREMENT.md).
 
 ## Verification status

@@ -1,10 +1,14 @@
 """The Python lane: golden bytes, the two decode paths and what each allocates."""
 
+import base64
 import json
+import sys
+import zlib
 from pathlib import Path
 
 import pytest
 from lowlat_flat import cli, decode, golden, harness_report
+from lowlat_measure import decode as decode_histogram
 from lowlat_measure.cli import main as lowlat_report
 
 CONTRACT = Path(__file__).resolve().parents[4] / "contracts" / "flat" / "parcel-v1"
@@ -123,3 +127,93 @@ def test_gbench_conversion_has_one_sample_per_repetition(tmp_path: Path) -> None
     assert report["language"] == "cpp"
     assert "mean real time per iteration, taken over 50000 iterations" in report["notes"]
     assert lowlat_report(["check", str(path)]) == 0
+
+
+def _differs_only_in_compression(a: dict, b: dict) -> bool:
+    """True when two reports are equal apart from the compressed histogram bytes, and the decoded
+    histograms are equal (zlib output varies with the zlib version; the data does not)."""
+    if {**a, "hdr_histogram": None} != {**b, "hdr_histogram": None}:
+        return False
+    ha, hb = decode_histogram(a["hdr_histogram"]), decode_histogram(b["hdr_histogram"])
+    return ha.get_total_count() == hb.get_total_count() and list(ha.counts) == list(hb.counts)
+
+
+def _recompress(encoded: str, level: int) -> str:
+    """Re-encode an HdrHistogram V2 compressed string with zlib at another level."""
+    raw = base64.b64decode(encoded)
+    cookie, payload = raw[:4], zlib.decompress(raw[8:])
+    body = zlib.compress(payload, level)
+    return base64.b64encode(cookie + len(body).to_bytes(4, "big") + body).decode("ascii")
+
+
+def test_compression_only_differences_are_recognised() -> None:
+    old = json.loads((RESULTS / "r02-run1" / "jmh").glob("*.json").__next__().read_text("utf-8"))
+    new = None
+    for level in (1, 9, 6):
+        candidate = {**old, "hdr_histogram": _recompress(old["hdr_histogram"], level)}
+        if candidate["hdr_histogram"] != old["hdr_histogram"]:
+            new = candidate
+            break
+    assert new is not None, "no zlib level changed the bytes"
+    assert _differs_only_in_compression(new, old)
+    assert not _differs_only_in_compression({**new, "count": old["count"] + 1}, old)
+
+
+RESULTS = Path(__file__).resolve().parents[2] / "results"
+
+
+@pytest.mark.parametrize("run", ["r02-run1", "r02-run2", "r02-run3"])
+def test_lowlat_report_converters_regenerate_the_committed_reports_byte_for_byte(
+    run: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``lowlat-report from-jmh`` and ``from-gbench`` reproduce Ch8's committed reports exactly."""
+    committed = RESULTS / run
+    monkeypatch.setenv("LOWLAT_PROFILE", str(committed / "profile.json"))
+    jmh_out, cpp_out = tmp_path / "jmh", tmp_path / "cpp"
+    assert (
+        lowlat_report(
+            [
+                *("from-jmh", str(committed / "jmh.json"), str(jmh_out)),
+                *("--example", harness_report.EXAMPLE),
+                *(a for v in sorted(harness_report.PER_PARCEL) for a in ("--per-parcel", v)),
+            ]
+        )
+        == 0
+    )
+    assert (
+        lowlat_report(
+            [
+                *("from-gbench", str(committed / "cpp" / "gbench.json"), str(cpp_out)),
+                *("--example", harness_report.EXAMPLE),
+            ]
+        )
+        == 0
+    )
+    pairs = [(jmh_out, committed / "jmh"), (cpp_out, committed / "cpp")]
+    for regenerated, original in pairs:
+        names = sorted(p.name for p in regenerated.glob("*.json"))
+        assert names == sorted(p.name for p in original.glob("*-*.json") if p.name != "gbench.json")
+        assert names, original
+        for name in names:
+            new, old = (regenerated / name).read_bytes(), (original / name).read_bytes()
+            if new != old and _differs_only_in_compression(json.loads(new), json.loads(old)):
+                pytest.fail(
+                    f"{name}: bytes differ but the decoded histograms are equal "
+                    f"(Python {sys.version.split()[0]}, zlib {zlib.ZLIB_RUNTIME_VERSION}). "
+                    "Check the "
+                    "interpreter (examples/.python-version is 3.14+gil, the system build) and its "
+                    "zlib: HdrHistogram compresses the histogram with zlib, whose output differs "
+                    "between zlib versions and between the GIL and free-threaded builds."
+                )
+            assert new == old, name
+
+
+def test_harness_report_wrapper_keeps_the_old_import_working(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    committed = RESULTS / "r02-run1"
+    monkeypatch.setenv("LOWLAT_PROFILE", str(committed / "profile.json"))
+    for path in harness_report.from_jmh(committed / "jmh.json", tmp_path):
+        assert path.read_bytes() == (committed / "jmh" / path.name).read_bytes()
+    for path in harness_report.from_gbench(committed / "cpp" / "gbench.json", tmp_path):
+        assert path.read_bytes() == (committed / "cpp" / path.name).read_bytes()

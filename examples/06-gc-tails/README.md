@@ -33,7 +33,7 @@ that no GC log shows.
 
 Every Java variant pre-touches the whole heap (`-XX:+AlwaysPreTouch`), so no variant pays first-touch
 page faults inside the window, and logs through `-Xlog:async`, so the log write is off the application
-threads. `-XX:+UseTransparentHugePages` requests huge pages for the heap; the host is not touched
+threads. `-XX:+UseTransparentHugePages` requests huge pages for the heap; the host isn't touched
 (THP mode `madvise` is what the profile records; ZGC's heap is shared memory, governed by `shmem_enabled`, which this host sets to `never`, so `thp` gets no huge pages. Changing it is a host change; huge pages for ZGC belong to the Part 5 lab VM).
 
 ## Workload
@@ -41,7 +41,7 @@ threads. `-XX:+UseTransparentHugePages` requests huge pages for the heap; the ho
 The line simulator sends 300,000 parcels at 10 kHz (30 s). The tracker (`Tracker.java`) keeps three
 kinds of data with three lifetimes.
 
-- **The shift manifest** is a ring of entries, one per parcel scanned this shift. It is full before the
+- **The shift manifest** is a ring of entries, one per parcel scanned this shift. It's full before the
   first parcel arrives, and each new parcel overwrites the oldest entry. The live set stays constant
   while the overwritten entries die in the old generation, which is what a rolling manifest does to a
   generational collector.
@@ -54,7 +54,7 @@ kinds of data with three lifetimes.
 Before the socket is bound the tracker builds the manifest, runs 30,000 synthetic parcels through the
 protobuf decoder and the tracker (so the JIT has compiled the per-parcel path) and forces a collection to
 measure the live set. The flight recording starts after all of that, in the JVM (`Flight.java`), so the
-pauses of the build and the forced collection are not counted. The measured live set and the allocation
+pauses of the build and the forced collection aren't counted. The measured live set and the allocation
 per parcel are in each report.
 
 | Flag | Default | Meaning |
@@ -118,7 +118,7 @@ Ports: Java 47260, Python 47261, C++ 47262.
 | `profile.json`, `live-set-bytes.txt`, `*.log` | machine profile, the probe's live set, program output |
 
 The recordings (`*.jfr`) are written to a scratch directory outside the tree and deleted when the script
-ends: they are binary and megabytes each, and everything the chapter quotes is in the derived reports.
+ends: they're binary and megabytes each, and everything the chapter quotes is in the derived reports.
 The GC logs are compressed because the unified log is repetitive text that compresses well; a full run's results directory
 is about 0.5 MB.
 
@@ -147,11 +147,11 @@ against the `bulk-free` maximum in criterion 5.
 
 ### Why 1.05x: the headroom cliff
 
-ZGC needs a few percent of heap beyond the live set to keep up; it does not need 30 %. With the heap fixed
-(`-Xms` = `-Xmx`) it cannot grow, so as the headroom shrinks it collects more often, and only when the
+ZGC needs a few percent of heap beyond the live set to keep up; it doesn't need 30 %. With the heap fixed
+(`-Xms` = `-Xmx`) it can't grow, so as the headroom shrinks it collects more often, and only when the
 free space is gone does an allocating thread wait. At 1.3x the live set (2,348 MB for the 1,806 MB live
 set) ZGC rode out a doubled allocation rate by running more minor collections (162 at 400 MB/s, 270 at
-800 MB/s) and never stalled. Allocation rate is not the lever; headroom is, and the transition is sharp:
+800 MB/s) and never stalled. Allocation rate isn't the lever; headroom is, and the transition is sharp:
 about 90 to 180 MB of free heap (5 to 10 % of the live set) separates no stalls from hundreds. The
 criterion therefore uses 1.05x, where the heap sits 87 MB above the live set. That heap survived every run
 without an out-of-memory error and without a dropped parcel (the socket buffer absorbed stalls of up to
@@ -175,10 +175,10 @@ Observed during calibration, 2026-10-22, one run per row, 10 kHz x 30 s, ZGC wit
 At 800 MB/s: 1.30x gave 0 stalls and 270 minor collections, 1.15x gave 0 and 702, 1.10x gave 1 stall of
 2.8 ms, 1.05x gave 2,115 stalls with a 209 ms maximum. Three further runs at 1.05x gave 618, 643 and 865
 stalls (p99.9 97 to 157 ms); three at 1.075x gave 12, 5 and 14 stalls with p99.9 of 24, 1.5 and 14 ms,
-which is why 1.075x is not used: one of the three clears the 3x bound by only 3.6x.
+which is why 1.075x isn't used: one of the three clears the 3x bound by only 3.6x.
 
 How the Python lane counts: CPython 3.14.8 has the generational cycle collector (3.14.0 to 3.14.4 shipped
-an incremental one that 3.14.5 reverted), so a generation-2 collection walks every tracked object that is
+an incremental one that 3.14.5 reverted), so a generation-2 collection walks every tracked object that's
 not frozen. `gc.callbacks` runs on the thread that triggers a collection; the callback here stores two
 timestamps into buffers allocated before the run and does nothing else. The pauses become samples after
 the run. The count in the report's `notes` (`gen2_collections=`) is counted from those callbacks over the
@@ -192,7 +192,7 @@ cost without the destruction cost.
 ## Observation surfaces
 
 None by design. The numbers are the reports, `verify.sh`'s printed table and the compressed GC logs;
-there is no dashboard for this chapter. A collector's pauses are better read from a JFR file (`jfr
+there's no dashboard for this chapter. A collector's pauses are better read from a JFR file (`jfr
 print --events jdk.GCPhasePause`) or `-Xlog` than from a panel, and Part 7 owns low-overhead
 observability.
 
@@ -226,11 +226,11 @@ runs `r02-run1..3` (bare-metal host, governor `powersave`, tuned `balanced`, THP
 | Every report | 300,000 parcels counted, none dropped, `lowlat-report check` passes |
 
 The `thp` variant got no huge pages in any run: every `thp.gc.log.gz` logs
-`Large Page Support: Disabled (OS enforced)` and `java-thp.log` warns that shared-memory THP is not
-enabled; `verify.sh` prints it as `thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never`. It is a second ZGC run on 4 KB pages, and its numbers say nothing about huge pages. With the
+`Large Page Support: Disabled (OS enforced)` and `java-thp.log` warns that shared-memory THP isn't
+enabled; `verify.sh` prints it as `thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never`. It's a second ZGC run on 4 KB pages, and its numbers say nothing about huge pages. With the
 recording off, the `jfr-off` p99.9 was 1 to 7 microseconds above `zgc`'s in the same run. `zgc` itself spans
 2 microseconds over the three runs but `thp`, the same collector on the same pages, spans 55, so the
-set cannot separate the difference from noise and draws no recording cost from it. The C++ maxima of
+set can't separate the difference from noise and draws no recording cost from it. The C++ maxima of
 `deferred-free` and `no-free` are single operating-system events; the reclaimer claim rests on
 criterion 5.
 

@@ -1,4 +1,4 @@
-"""Figure 0.3 — the measurement pipeline from simulator to checked report.
+"""Figure 0.3: the measurement pipeline from simulator to checked report.
 
 Regenerate from the repo root:  python3 diagrams/00-measurement-pipeline.py
 """

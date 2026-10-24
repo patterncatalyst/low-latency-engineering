@@ -2,10 +2,11 @@
 
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from lowlat_measure import Recorder, decode
+from lowlat_measure import Recorder, decode, hw_counters, placement, python_build, runtime_block
 from lowlat_measure.cli import main
 
 COMMON = Path(__file__).resolve().parents[2]
@@ -229,3 +230,164 @@ def test_runtime_accepts_legitimate_keys(lowlat_profile: Path, tmp_path: Path, k
     out = tmp_path / "ok.json"
     rec.write_report(out, runtime={"jit": {"steady": {key: 1}}})
     assert main(["check", str(out)]) == 0
+
+
+def test_runtime_placement_counters_round_trip(lowlat_profile: Path, tmp_path: Path) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    runtime = runtime_block(
+        pinned=placement([2, 4], distinct_cores=True, smt_siblings=False),
+        hw=hw_counters("perfnorm", 1_000_000, {"L1-dcache-load-misses": 0.42}),
+        event_counts={"cas_failures": 18, "max_retries": 7, "torn_reads": 0},
+        build=python_build(),
+        ctx_switches={"voluntary": 1, "involuntary": 0},
+    )
+    out = tmp_path / "r.json"
+    report = rec.write_report(out, runtime=runtime)
+    written = json.loads(out.read_text(encoding="utf-8"))["runtime"]
+    assert written == report["runtime"] == runtime
+    assert written["placement"]["cpus"] == [2, 4]
+    assert written["python_build"] in {"gil", "free-threaded"}
+    assert main(["check", str(out)]) == 0
+    assert runtime_block() == {}
+
+
+def test_runtime_block_valid_fixture() -> None:
+    assert main(["check", str(EXAMPLES / "valid-runtime-placement.json")]) == 0
+
+
+@pytest.mark.parametrize(
+    ("name", "needle"),
+    [
+        ("invalid-runtime-counters-mean.json", "mean_retries"),
+        ("invalid-runtime-hw-per-op-mean.json", "avg_misses"),
+        ("invalid-runtime-hw-source.json", "vtune"),
+        ("invalid-runtime-hw-ops-zero.json", "ops"),
+        ("invalid-runtime-counter-float.json", "torn_reads"),
+    ],
+)
+def test_runtime_new_fields_planted_failures(
+    name: str, needle: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["check", str(EXAMPLES / name)]) == 1
+    assert needle in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda r: r["placement"].pop("cpus"),
+        lambda r: r["placement"].update(cpus=[-1]),
+        lambda r: r["placement"].update(distinct_cores="yes"),
+        lambda r: r.update(python_build="nogil"),
+        lambda r: r["hw_counters"]["per_op"].update(x="many"),
+    ],
+)
+def test_runtime_new_fields_reject_malformed(
+    lowlat_profile: Path, tmp_path: Path, mutate: Callable[[dict], object]
+) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    runtime = runtime_block(
+        pinned=placement([0], distinct_cores=True, smt_siblings=False),
+        hw=hw_counters("perf", 1, {"cycles": 1.0}),
+    )
+    mutate(runtime)
+    out = tmp_path / "bad.json"
+    rec.write_report(out, runtime=runtime)
+    assert main(["check", str(out)]) == 1
+
+
+@pytest.mark.parametrize("language", ["cpp", "java"])
+def test_writer_placement_fixtures_check(language: str) -> None:
+    """The C++ and Java writers' reports with placement, hw_counters and counters pass check."""
+    report = FIXTURES / f"{language}-placement.json"
+    runtime = json.loads(report.read_text(encoding="utf-8"))["runtime"]
+    assert runtime["placement"]["cpus"] == [2, 4]
+    assert runtime["hw_counters"]["ops"] == 1_000_000
+    assert runtime["counters"]["cas_failures"] == 18
+    assert main(["check", str(report)]) == 0
+
+
+def test_hw_counters_rejects_non_positive_ops() -> None:
+    for ops in (0, -1):
+        with pytest.raises(ValueError, match="ops"):
+            hw_counters("perf", ops, {"cycles": 1.0})
+
+
+@pytest.mark.parametrize("path", sorted(EXAMPLES.glob("invalid-*.json")), ids=lambda p: p.name)
+def test_every_invalid_example_fails(path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["check", str(path)]) == 1
+    assert capsys.readouterr().err
+
+
+@pytest.mark.parametrize("path", sorted(EXAMPLES.glob("valid*.json")), ids=lambda p: p.name)
+def test_every_valid_example_passes(path: Path) -> None:
+    assert main(["check", str(path)]) == 0
+
+
+JMH_RUN = [
+    {
+        "benchmark": "io.x.DecodeBenchmark.flatFfm",
+        "forks": 1,
+        "measurementIterations": 1,
+        "measurementTime": "1 s",
+        "jdkVersion": "25.0.5",
+        "vmName": "OpenJDK 64-Bit Server VM",
+        "vmVersion": "25.0.5+8-LTS",
+        "jmhVersion": "1.37",
+        "primaryMetric": {
+            "scoreUnit": "us/op",
+            "rawDataHistogram": [[[[0.5, 90], [0.7, 10]]]],
+        },
+        "secondaryMetrics": {"gc.alloc.rate.norm": {"score": 0.002}},
+    }
+]
+
+
+def test_from_jmh_command(lowlat_profile: Path, tmp_path: Path, capsys) -> None:
+    source = tmp_path / "jmh.json"
+    source.write_text(json.dumps(JMH_RUN), encoding="utf-8")
+    out = tmp_path / "out"
+    args = ["from-jmh", str(source), str(out), "--example", "ex"]
+    assert main([*args, "--per-parcel", "flat-ffm"]) == 0
+    assert capsys.readouterr().out.strip() == str(out / "java-flat-ffm.json")
+    report = json.loads((out / "java-flat-ffm.json").read_text(encoding="utf-8"))
+    assert (report["example"], report["count"], report["percentiles"]["p50"]) == ("ex", 100, 500)
+    assert report["runtime"]["alloc_bytes_per_parcel"] == 0.002
+    assert main(["check", str(out / "java-flat-ffm.json")]) == 0
+    # Not a per-parcel variant: the rate is a note, not a runtime field.
+    assert main(args) == 0
+    report = json.loads((out / "java-flat-ffm.json").read_text(encoding="utf-8"))
+    assert "runtime" not in report
+    assert "gc.alloc.rate.norm 0.002 B/op" in report["notes"]
+
+
+def test_from_gbench_command_takes_the_toolchain(lowlat_profile: Path, tmp_path: Path) -> None:
+    runs = [
+        {
+            "run_name": "BM_Sweep/repeats:3",
+            "run_type": "iteration",
+            "real_time": 100.0 + i,
+            "time_unit": "ns",
+            "iterations": 10,
+        }
+        for i in range(3)
+    ]
+    source = tmp_path / "g.json"
+    source.write_text(json.dumps({"context": {}, "benchmarks": runs}), encoding="utf-8")
+    out = tmp_path / "out"
+    assert (
+        main(["from-gbench", str(source), str(out), "--example", "ex", "--toolchain", "gcc"]) == 0
+    )
+    report = json.loads((out / "cpp-sweep.json").read_text(encoding="utf-8"))
+    assert report["build"]["compiler"] == "Google Benchmark unknown; gcc"
+    assert main(["check", str(out / "cpp-sweep.json")]) == 0
+
+
+def test_converters_need_a_profile(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("LOWLAT_PROFILE", raising=False)
+    assert main(["from-jmh", str(tmp_path / "x"), str(tmp_path / "o"), "--example", "ex"]) == 2
+    assert "LOWLAT_PROFILE" in capsys.readouterr().err

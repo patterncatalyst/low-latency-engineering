@@ -10,7 +10,7 @@ AOT cache.
 
 ## Technique
 
-- **Allocation.** Every `new` is a bump of the thread's TLAB pointer, so the cost is not
+- **Allocation.** Every `new` is a bump of the thread's TLAB pointer, so the cost isn't
   the allocation but the bytes it adds to the next young collection. C2's escape analysis
   removes an allocation that never leaves the compiled method (scalar replacement: the
   object's fields live in registers). JMH's `-prof gc` reads the exact count
@@ -24,7 +24,7 @@ AOT cache.
   one-step creation, JEP 515 method profiles) records a training run and reuses it at
   start. Under G1 the archive also holds heap objects; on JDK 25 other collectors lose
   that part until JEP 516 (JDK 26), which is why this chapter measures the cache under G1.
-  `-XX:AOTMode=on` makes a cache the JVM cannot use a startup failure, never a silent
+  `-XX:AOTMode=on` makes a cache the JVM can't use a startup failure, never a silent
   fallback.
 - **C++ contrast.** No JIT, no warm-up: a value on the stack costs nothing, `new` per
   parcel costs a call into the allocator, and a `std::pmr::monotonic_buffer_resource`
@@ -180,7 +180,7 @@ flags) and once without them, for the time-to-ready launches, which start a plai
 JMH `-prof gc` (and `-prof async` when async-profiler is present; `scripts/deps/install-async-profiler.sh`), JFR events
 `jdk.Compilation` and `jdk.Deoptimization`, the unified GC log (`-Xlog:gc*,safepoint`),
 `-Xlog:aot`, and the `runtime` block of each report. No dashboard panel: Part 7 wires the
-off-path telemetry, and there is none by design until then.
+off-path telemetry, and there's none by design until then.
 
 ## Licences
 
@@ -227,16 +227,16 @@ d419992): 1.7x against a bound of 5x, because the window's p99 fell outside the 
 that run (see above). The criterion is asserted on p99.9, and all three runs here pass it, at 91.2x,
 41.5x and 98.5x. Run 2 shows the same edge again in the observed p99 ratio, 1.8x.
 
-The p50 of the 1 kHz consumers is not constant on this untuned host. The whole-run p50 is 103.6 to
+The p50 of the 1 kHz consumers isn't constant on this untuned host. The whole-run p50 is 103.6 to
 211.3 us across the nine Java line runs and 116.9 to 158.8 us for the C++ tracker (158.8, 116.9 and
 154.6 us), and the three steady p99 values of 461 to 468 us come from runs whose p50 is near 200 us.
 An interleaved A/B of the trees before and after the last change to the measured code found the
 p50 varying alike in both (Java steady p50 77 to 176 us in each tree, below the near-200 us
-state of the committed runs; `results/r02-ab/`); the cause is not identified. The criteria are ratios inside
+state of the committed runs; `results/r02-ab/`); the cause isn't identified. The criteria are ratios inside
 one run, and no p50 or steady p99 is compared across runs.
 
 Not asserted: compilations and deoptimizations per window, bytes per parcel, the C++ split, the
 timings and the pmr counter, the `aot-cache` first window (its 0.75 to 1.6 ms has no
 attributed cause) and the async-profiler share (100.0 % of the sampled bytes on the
 `DivertDecision` leaf frame in all three runs). A number without its machine profile (the `profile`
-block of every report) is not quoted.
+block of every report) isn't quoted.
