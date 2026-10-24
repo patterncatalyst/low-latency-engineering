@@ -99,7 +99,23 @@ def _bad_build(**build: object) -> dict:
         ([1000], {**SIDE, "count": 1, "variant": ""}, "variant must be"),
         # the schema is the last gate and nothing is written when it fails
         ([1000], {**SIDE, "count": 1, "language": "cobol"}, "schema"),
-        ([1000], {**SIDE, "count": 1, "runtime": {"environment": {"kind": "vm"}}}, "schema"),
+        (
+            [1000],
+            {
+                **SIDE,
+                "count": 1,
+                "runtime": {"python_build": "free-threaded", "environment": {"kind": "vm"}},
+            },
+            "schema",
+        ),
+        ([], {**SIDE, "count": 0}, "at least 1"),
+        ([1000], {**SIDE, "count": 1, "runtime": {}}, "python_build"),
+        ([1000], {**SIDE, "count": 1, "runtime": {"python_build": "nogil"}}, "python_build"),
+        (
+            [1000],
+            _bad_build(compiler="CPython 3.14.8 (GIL build)"),
+            "not a free-threading build",
+        ),
     ],
 )
 def test_from_samples_rejects_bad_input(

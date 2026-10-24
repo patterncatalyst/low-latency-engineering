@@ -21,7 +21,11 @@
 #   GUEST_REPO    repo path in the guest, relative to the guest user's home
 #                 (default low-latency-engineering)
 #   LAB_SSH       the vsock ssh wrapper (default scripts/lab/lab-ssh.sh); tests point it at a shim
-#   CONTAINER_OUT_DIR  the one guest directory container_run may bind-mount from (-v/--mount)
+#   CONTAINER_OUT_DIR  the one guest directory container_run may bind-mount from (-v/--mount):
+#                 absolute, canonical, strictly under LOWLAT_GUEST_ROOT
+#   LOWLAT_GUEST_ROOT  the guest's checkout, as an absolute path (default /home/$GUEST_USER/$GUEST_REPO,
+#                 GUEST_USER from scripts/lab/lab.env, default fedora); the only tree mounts and
+#                 seccomp profiles may come from
 #   GUEST_PROFILE guest snapshot/profile name (like lab-ready-r04/stock-unpinned) that
 #                 container_run records in runtime.environment
 #   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
@@ -145,7 +149,8 @@ redact_host() {
 example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 
 # require_quiet_host [--lab-idle]: refuse to take host measurements while a lab VM competes for
-# the CPUs. Without the flag any running lowlat-* VM refuses the run.
+# the CPUs. Without the flag any running lowlat-* VM refuses the run, and so does a libvirt that
+# cannot be read (no virsh installed counts as no lab).
 #   --lab-idle   the lowlat-target VM may be running, but only idle: its load1 (read
 #                through `lab_ssh`) must be <= LAB_IDLE_LOAD1 (default 0.5). Any other running
 #                domain (an ebpf-* or systems-* VM, a lowlat peer) refuses the run: this check
@@ -163,7 +168,12 @@ require_quiet_host() {
     return 0
   fi
   if ((!lab_idle)); then
-    running=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null | grep '^lowlat-' || true)
+    # No virsh at all means no libvirt and so no lab VM (a CI container). A virsh that fails or
+    # times out is an error: "quiet" must be known, not assumed.
+    command -v virsh >/dev/null 2>&1 || return 0
+    domains=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null) ||
+      die "cannot read the libvirt domain list (virsh failed or timed out), so the host cannot be called quiet: fix libvirt access or set ALLOW_BUSY=1"
+    running=$(grep '^lowlat-' <<<"$domains" || true)
     [[ -z $running ]] || die "lab VM running ($running): stop it (scripts/lab/lab-down.sh) or set ALLOW_BUSY=1"
     return 0
   fi
@@ -741,7 +751,8 @@ lab_ssh() {
 }
 
 # guest CMD...: run CMD in the guest from the repo root (GUEST_REPO under the guest user's home),
-# each word quoted for the guest shell. Returns CMD's status.
+# each word quoted for the guest shell (printf %q output is bash syntax: it relies on the guest
+# user's login shell being bash, the Fedora default). Returns CMD's status.
 #   guest examples/build/release/line-simulator --help
 guest() { lab_ssh "cd ${GUEST_REPO:-low-latency-engineering} && $(printf '%q ' "$@")"; }
 
@@ -821,13 +832,14 @@ cgroup_stat() {
 # very last output, its own cgroup files between sentinels. With Docker's default private cgroup
 # namespace on cgroup v2 (https://docs.docker.com/engine/containers/runmetrics/) the container's
 # /sys/fs/cgroup is its own cgroup, so these are the container's own cpu.stat, cpu.max and
-# cpuset.cpus.effective, read while the cgroup still exists. container_run passes
+# cpuset.cpus.effective, read while the cgroup still exists. The leading newline ends a workload
+# line that has no newline of its own; the parser drops exactly one empty line before BEGIN. container_run passes
 # --cgroupns=private explicitly so the daemon default cannot drift. The image needs sh and cat
 # (ubi10/ubi-minimal ships bash and coreutils-single; S5 confirms it in the guest).
 _CGROUP_WRAP=$(
   cat <<'SCRIPT'
 "$@"; rc=$?
-echo @@LOWLAT_CGROUP_BEGIN
+printf '\n@@LOWLAT_CGROUP_BEGIN\n'
 cat /sys/fs/cgroup/cpu.stat 2>/dev/null
 echo "cpu.max $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)"
 echo "cpuset.cpus.effective $(cat /sys/fs/cgroup/cpuset.cpus.effective 2>/dev/null)"
@@ -839,18 +851,45 @@ SCRIPT
 # _container_deny OPT WHY: refuse a docker option that is not on container_run's allowlist.
 _container_deny() { die "container_run: $1 is refused: $2"; }
 
-# _container_mount_ok SRC DST: die unless a bind mount's source is under $CONTAINER_OUT_DIR and
-# its target is not /, /proc, /sys, /dev (or beneath them) or the docker socket.
-_container_mount_ok() {
-  local src=$1 dst=$2 out=${CONTAINER_OUT_DIR:-}
+# _path_canonical P: succeed if P is absolute with no //, no . or .. component (so no spelling
+# can reach a protected path lexically that the checks below do not see).
+_path_canonical() {
+  [[ $1 == /* && $1 != *//* && $1/ != */./* && $1/ != */../* ]]
+}
+
+# _container_out_dir: print the validated, guest-resolved CONTAINER_OUT_DIR, or die. It must be
+# absolute, canonical, not /, strictly under LOWLAT_GUEST_ROOT (default /home/$GUEST_USER/$GUEST_REPO),
+# and (resolved in the guest, symlinks followed) still under the resolved root.
+_container_out_dir() {
+  local out=${CONTAINER_OUT_DIR:-} root res_out res_root
+  root=${LOWLAT_GUEST_ROOT:-/home/${GUEST_USER:-fedora}/${GUEST_REPO:-low-latency-engineering}}
   [[ -n $out ]] || _container_deny "a mount" "set CONTAINER_OUT_DIR to the declared output directory"
+  _path_canonical "$out" && [[ $out != / ]] || _container_deny "CONTAINER_OUT_DIR '${CONTAINER_OUT_DIR}'" "must be an absolute canonical path (no //, ., .. or relative)"
   out=${out%/}
-  [[ $src == /* && $src != *..* ]] || _container_deny "mount source '$src'" "must be an absolute path without .."
-  [[ $src == "$out" || $src == "$out"/* ]] || _container_deny "mount source '$src'" "is not under CONTAINER_OUT_DIR ($out)"
+  _path_canonical "$root" || die "container_run: LOWLAT_GUEST_ROOT '$root' is not an absolute canonical path"
+  [[ $out == "${root%/}"/* ]] || _container_deny "CONTAINER_OUT_DIR '$out'" "is not under the guest checkout $root"
+  res_out=$(guest realpath -e -- "$out") || _container_deny "CONTAINER_OUT_DIR '$out'" "does not exist in the guest"
+  res_root=$(guest realpath -e -- "$root") || _container_deny "LOWLAT_GUEST_ROOT '$root'" "does not exist in the guest"
+  [[ $res_out == "$res_root"/* ]] || _container_deny "CONTAINER_OUT_DIR '$out'" "resolves to $res_out, outside $res_root"
+  printf '%s' "$res_out"
+}
+
+# _container_mount_ok SRC DST: die unless a bind mount's source is under the validated
+# CONTAINER_OUT_DIR (canonical, and still under it once symlinks are resolved in the guest) and its
+# target is canonical and not /, /proc, /sys, /dev, /run, /var/run, /etc (or beneath them) or a
+# socket for docker or containerd.
+_container_mount_ok() {
+  local src=$1 dst=$2 res_out res_src
+  res_out=$(_container_out_dir)
+  _path_canonical "$src" || _container_deny "mount source '$src'" "must be an absolute canonical path (no //, ., ..)"
+  _path_canonical "$dst" || _container_deny "mount target '$dst'" "must be an absolute canonical path (no //, ., ..)"
+  case $src in *docker.sock* | *containerd*.sock | */run/*) _container_deny "mount source '$src'" "is a protected path" ;; esac
+  res_src=$(guest realpath -e -- "$src") || _container_deny "mount source '$src'" "does not exist in the guest"
+  [[ $res_src == "$res_out" || $res_src == "$res_out"/* ]] || _container_deny "mount source '$src'" "is not under CONTAINER_OUT_DIR ($res_out)"
+  case $res_src in *docker.sock* | *containerd*.sock | */run/*) _container_deny "mount source '$src'" "resolves to a protected path" ;; esac
   dst=${dst%/}
-  [[ $dst == /* && $dst != *..* ]] || _container_deny "mount target '$dst'" "must be an absolute path without .."
   case $dst in
-    "" | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | *docker.sock*)
+    "" | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | /run | /run/* | /var/run | /var/run/* | /etc | /etc/* | *docker.sock* | *containerd*.sock)
       _container_deny "mount target '${dst:-/}'" "is a protected path" ;;
   esac
 }
@@ -870,10 +909,12 @@ _container_mount_ok() {
 # short flags (-dit) are expanded and refused. Allowed:
 #   --cpus N, --cpuset-cpus LIST, --memory SIZE
 #   --network|--net host|bridge|none
-#   --security-opt seccomp=FILE.json   (nothing else: no unconfined, apparmor, label, systempaths)
-#   -e|--env KEY[=VALUE], --hostname NAME, --init, -u|--user USER, -w|--workdir /ABS
+#   --security-opt seccomp=NAME.json | no-new-privileges[=true]   (case-sensitive; NAME.json is read
+#       from examples/13-where-code-runs/containers/seccomp/ in the guest checkout, recorded by name)
+#   -e|--env KEY=VALUE, --hostname NAME, --init, -u|--user USER, -w|--workdir /ABS
 #   -v|--volume SRC:DST[:ro|rw|z|Z], --mount type=bind,src=SRC,dst=DST[,readonly]
-#       SRC must be under $CONTAINER_OUT_DIR; DST must not be /, /proc, /sys, /dev or the docker socket
+#       SRC must be under $CONTAINER_OUT_DIR (symlinks resolved in the guest); DST must be canonical
+#       and not /, /proc, /sys, /dev, /run, /var/run, /etc or a docker/containerd socket
 # --name is internal; --hostname defaults to NAME (so the container ID cannot show up as the
 # hostname); --cgroupns=private and --entrypoint sh are added (any image ENTRYPOINT is bypassed:
 # CMD is the whole command). The image needs sh and cat (see _CGROUP_WRAP).
@@ -936,13 +977,13 @@ container_run() (
     case $opt in
       --env-out) env_out=$val ;;
       --cpus)
-        [[ $val =~ ^[0-9]+([.][0-9]+)?$ ]] || _container_deny "--cpus $val" "not a number of CPUs"
+        [[ $val =~ ^[0-9]+([.][0-9]+)?$ && $val =~ [1-9] ]] || _container_deny "--cpus $val" "not a positive number of CPUs"
         has_limit=1; run_args+=(--cpus "$val") ;;
       --cpuset-cpus)
         [[ $val =~ ^[0-9]+([-,][0-9]+)*$ ]] || _container_deny "--cpuset-cpus $val" "not a CPU list"
         has_limit=1; run_args+=(--cpuset-cpus "$val") ;;
       --memory)
-        [[ $val =~ ^[0-9]+[bBkKmMgG]?$ ]] || _container_deny "--memory $val" "not a size"
+        [[ $val =~ ^[0-9]+[bBkKmMgG]?$ && $val =~ [1-9] ]] || _container_deny "--memory $val" "not a positive size"
         run_args+=(--memory "$val") ;;
       --network | --net)
         case ${val,,} in
@@ -951,12 +992,18 @@ container_run() (
         esac
         run_args+=(--network "$network") ;;
       --security-opt)
-        [[ ${val,,} == seccomp=* && ${val,,} != seccomp=unconfined && $val == *.json && $val != *[,[:space:]]* ]] ||
-          _container_deny "--security-opt $val" "only seccomp=FILE.json is allowed"
-        seccomp=$(basename "${val#*=}")
-        run_args+=(--security-opt "$val") ;;
+        # Compared case-sensitively, the way docker reads it. Seccomp profiles come only from the
+        # repo's containers/seccomp/ directory in the guest, by base name.
+        if [[ $val =~ ^seccomp=([A-Za-z0-9._-]+\.json)$ ]]; then
+          seccomp=${BASH_REMATCH[1]}
+          run_args+=(--security-opt "seccomp=${LOWLAT_GUEST_ROOT:-/home/${GUEST_USER:-fedora}/${GUEST_REPO:-low-latency-engineering}}/examples/13-where-code-runs/containers/seccomp/$seccomp")
+        elif [[ $val == no-new-privileges || $val == no-new-privileges=true ]]; then
+          run_args+=(--security-opt no-new-privileges)
+        else
+          _container_deny "--security-opt $val" "only seccomp=NAME.json (from containers/seccomp/) and no-new-privileges"
+        fi ;;
       --env)
-        [[ $val =~ ^[A-Za-z_][A-Za-z0-9_]*(=.*)?$ ]] || _container_deny "--env $val" "not KEY[=VALUE]"
+        [[ $val =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]] || _container_deny "--env $val" "must be KEY=VALUE (the guest's environment is not passed through)"
         run_args+=(--env "$val") ;;
       --hostname)
         [[ $val =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || _container_deny "--hostname $val" "not a host name"
@@ -995,6 +1042,7 @@ container_run() (
   (($# >= 1)) || die "container_run: no IMAGE after --"
   image=$1
   shift
+  [[ $image != -* ]] || die "container_run: image '$image' starts with '-'"
   ((host_set)) || run_args+=(--hostname "$name")
   [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "container_run: bad container name '$name'"
   [[ -n $env_out ]] || die "container_run: --env-out FILE is required"
@@ -1014,10 +1062,13 @@ container_run() (
     die "container_run: image '$ref' is not a name:tag the report schema accepts"
   local lock=${LOWLAT_IMAGES_LOCK:-$LOWLAT_EXAMPLES/13-where-code-runs/containers/IMAGES.lock} lock_digest=''
   if [[ -f $lock ]]; then
+    # Only field 1 (the image as container_run takes it) is matched.
     lock_digest=$(awk -v ref="$ref" -v dg="$digest_arg" '
       /^[[:space:]]*(#|$)/ { next }
-      { for (i = 1; i <= NF; i++) { n = split($i, a, "@"); if (a[1] == ref && (dg == "" || a[2] == dg)) { found = 1; print a[2]; exit } } }
+      { n = split($1, a, "@"); if (a[1] == ref && (dg == "" || a[2] == dg)) { found = 1; print a[2]; exit } }
       END { exit !found }' "$lock") || die "container_run: $ref is not listed in $lock"
+    [[ $lock_digest != *PENDING* ]] || die "container_run: $ref has a PENDING digest in $lock; build the images first (containers/build-images.sh in the guest)"
+    [[ -z $lock_digest || $lock_digest =~ ^sha256:[0-9a-f]{64}$ ]] || die "container_run: $ref has a malformed digest '$lock_digest' in $lock"
   else
     echo "container_run: warning: no IMAGES.lock at $lock; the image is not checked against a lock" >&2
   fi
@@ -1050,24 +1101,43 @@ container_run() (
   # Output: stdout minus the fenced cgroup block (which must be last), then stderr.
   : >"$tmp/stdout.txt"; : >"$tmp/block.txt"
   guest docker logs "$name" >"$tmp/out.txt" 2>"$tmp/err.txt" || true
+  # Only the LAST BEGIN counts and the END must be the last line, with no other sentinel between
+  # them. One empty line before BEGIN is the wrapper's own newline and is dropped; a partial last
+  # workload line stays. Everything before BEGIN is the workload's stdout.
   local block_ok=1
   awk -v blk="$tmp/block.txt" -v rest="$tmp/stdout.txt" '
-    /^@@LOWLAT_CGROUP_BEGIN$/ && !inb && !seen { inb = 1; seen = 1; next }
-    /^@@LOWLAT_CGROUP_END$/ && inb { inb = 0; ended = 1; next }
-    inb { print > blk; next }
-    ended { trailing = 1 }
-    { print > rest }
-    END { exit !(seen && ended && !trailing) }' "$tmp/out.txt" || block_ok=0
+    { L[NR] = $0 }
+    $0 == "@@LOWLAT_CGROUP_BEGIN" { b = NR }
+    END {
+      for (i = 1; i <= NR; i++) if (i != b - 1 || L[i] != "" || !b) if (!b || i < b) print L[i] > rest
+      if (!b) exit 1
+      if (L[NR] != "@@LOWLAT_CGROUP_END" || NR == b) exit 1
+      for (i = b + 1; i < NR; i++) { if (L[i] ~ /^@@LOWLAT_CGROUP_/) exit 1; print L[i] > blk }
+    }' "$tmp/out.txt" || block_ok=0
   _scrub_ids <"$tmp/stdout.txt" || true
   _scrub_ids <"$tmp/err.txt" >&2 || true
 
   local nr='' us='' cm='' cs=''
   if ((block_ok)); then
-    nr=$(awk '$1 == "nr_throttled" { print $2 }' "$tmp/block.txt")
-    us=$(awk '$1 == "throttled_usec" { print $2 }' "$tmp/block.txt")
-    cm=$(sed -n 's/^cpu\.max //p' "$tmp/block.txt")
-    cs=$(sed -n 's/^cpuset\.cpus\.effective //p' "$tmp/block.txt")
-    [[ $nr =~ ^[0-9]+$ && $us =~ ^[0-9]+$ && -n $cm ]] || block_ok=0
+    # Every line is "key value" with a plain value; a key may appear once; the four we use must
+    # have the exact shapes below.
+    local key rest_of seen=' ' line
+    while IFS= read -r line; do
+      key=${line%% *}
+      rest_of=${line#"$key"}
+      rest_of=${rest_of# }
+      if [[ $seen == *" $key "* ]]; then block_ok=0; break; fi
+      seen+="$key "
+      case $key in
+        nr_throttled) [[ $rest_of =~ ^[0-9]+$ ]] && nr=$rest_of || block_ok=0 ;;
+        throttled_usec) [[ $rest_of =~ ^[0-9]+$ ]] && us=$rest_of || block_ok=0 ;;
+        cpu.max) [[ $rest_of =~ ^(max|[0-9]+)\ [0-9]+$ ]] && cm=$rest_of || block_ok=0 ;;
+        cpuset.cpus.effective) [[ -z $rest_of || $rest_of =~ ^[0-9]+([-,][0-9]+)*$ ]] && cs=$rest_of || block_ok=0 ;;
+        *) [[ $line =~ ^[a-z_]+\ [0-9]+$ ]] || block_ok=0 ;;
+      esac
+      ((block_ok)) || break
+    done <"$tmp/block.txt"
+    [[ $seen == *" nr_throttled "* && $seen == *" throttled_usec "* && $seen == *" cpu.max "* ]] || block_ok=0
   fi
   if ((!block_ok)); then
     nr='' us='' cm='' cs=''

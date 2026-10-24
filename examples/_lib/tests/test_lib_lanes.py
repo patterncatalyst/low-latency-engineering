@@ -44,17 +44,38 @@ case $cmd in
     echo "${FAKE_EXIT:-0}"
     ;;
   logs)
-    echo "container says hi from $FAKE_HOME_PATH"
+    if [[ -n ${FAKE_PARTIAL:-} ]]; then
+      printf 'partial\n' # the workload's last line had no newline; the wrapper's own \n ended it
+    else
+      echo "container says hi from $FAKE_HOME_PATH"
+      echo # the wrapper's leading newline
+    fi
     case ${FAKE_BLOCK:-ok} in
-      ok | trailing | no-end | garbage)
-        echo "@@LOWLAT_CGROUP_BEGIN"
-        if [[ $FAKE_BLOCK == garbage ]]; then
-          echo "nr_throttled many"
-        else
-          printf 'usage_usec 99\nnr_periods 100\nnr_throttled 7\nthrottled_usec 12345\n'
-          echo "cpu.max 150000 100000"
-          echo "cpuset.cpus.effective 2-3"
+      none) ;;
+      *)
+        if [[ $FAKE_BLOCK == fake-begin ]]; then
+          # a workload's unterminated fake block
+          printf '@@LOWLAT_CGROUP_BEGIN\nnr_throttled 999\n\n'
         fi
+        echo "@@LOWLAT_CGROUP_BEGIN"
+        case $FAKE_BLOCK in
+          garbage) echo "nr_throttled many" ;;
+          *)
+            printf 'usage_usec 99\nnr_periods 100\n'
+            nr=7
+            [[ $FAKE_BLOCK != negative ]] || nr=-1
+            echo "nr_throttled $nr"
+            [[ $FAKE_BLOCK != dup ]] || echo "nr_throttled 8"
+            [[ $FAKE_BLOCK != inner-end ]] || echo "@@LOWLAT_CGROUP_END"
+            echo "throttled_usec 12345"
+            cm="150000 100000"
+            [[ $FAKE_BLOCK != badcpu ]] || cm=lots
+            echo "cpu.max $cm"
+            cs=2-3
+            [[ $FAKE_BLOCK != badcpuset ]] || cs="2;3"
+            echo "cpuset.cpus.effective $cs"
+            ;;
+        esac
         [[ $FAKE_BLOCK == no-end ]] || echo "@@LOWLAT_CGROUP_END"
         [[ $FAKE_BLOCK != trailing ]] || echo "late output"
         ;;
@@ -111,6 +132,12 @@ def env(tmp_path: Path) -> dict[str, str]:
         "usage_usec 99\nnr_periods 100\nnr_throttled 7\nthrottled_usec 12345\n"
     )
     (tmp_path / "c_lowlat-x").touch()  # a running container for cgroup_stat
+    groot = tmp_path / "groot"
+    for d in ("out/run1", "out/r", "other"):
+        (groot / d).mkdir(parents=True)
+    (groot / "out" / "link").symlink_to("/etc")
+    (groot / "out" / "docker.sock").touch()
+    (groot / "outlink").symlink_to("/etc")
     home = tmp_path / "home"
     (home / "low-latency-engineering").mkdir(parents=True)
     return {
@@ -123,6 +150,8 @@ def env(tmp_path: Path) -> dict[str, str]:
         "FAKE_SCOPE": str(scope),
         "FAKE_HOME_PATH": f"/home/{os.environ.get('USER', 'nobody')}/work",
         "CGROUP_ROOT": str(tmp_path / "cg"),
+        "LOWLAT_GUEST_ROOT": str(groot),
+        "CONTAINER_OUT_DIR": str(groot / "out"),
         "GUEST_PROFILE": "lab-ready-r04/stock-unpinned",
         "LOWLAT_IMAGES_LOCK": str(tmp_path / "absent.lock"),
         "LAB_SSH": str(bin_dir / "lab-ssh"),
@@ -149,7 +178,6 @@ def calls(tmp_path: Path, name: str = "docker.log") -> list[str]:
 
 # ---- container_run ---------------------------------------------------------------------------
 
-OUT_DIR = "/srv/lowlat-out"
 
 REFUSED = [
     # capabilities, every spelling
@@ -174,16 +202,35 @@ REFUSED = [
     "--mount type=bind,src=/,dst=/host",
     "--mount=type=bind,source=/,target=/host",
     "-v /var/run/docker.sock:/var/run/docker.sock",
-    f"-v {OUT_DIR}/../etc:/data",
-    f"-v {OUT_DIR}:/",
-    f"-v {OUT_DIR}:/proc",
-    f"-v {OUT_DIR}:/sys/fs",
-    f"-v {OUT_DIR}:/dev/x",
-    f"-v {OUT_DIR}:/var/run/docker.sock",
-    f"-v {OUT_DIR}:/data:suid",
+    "-v {OUT}/../etc:/data",
+    "-v {OUT}:/",
+    "-v {OUT}:/proc",
+    "-v {OUT}:/sys/fs",
+    "-v {OUT}:/dev/x",
+    "-v {OUT}:/var/run/docker.sock",
+    "-v {OUT}:/data:suid",
     "-v namedvolume:/data",
-    f"--mount type=volume,src={OUT_DIR},dst=/data",
-    f"--mount type=bind,src={OUT_DIR},dst=/data,bind-propagation=shared",
+    "--mount type=volume,src={OUT},dst=/data",
+    "--mount type=bind,src={OUT},dst=/data,bind-propagation=shared",
+    # canonical-path bypasses (a // or . component, run/etc/sys targets, symlinks, sockets)
+    "-v {OUT}://",
+    "-v {OUT}://proc",
+    "-v {OUT}:/./proc",
+    "-v {OUT}://sys/fs/cgroup",
+    "-v {OUT}:/sys/fs/cgroup",
+    "-v {OUT}:/run",
+    "-v {OUT}:/run/x",
+    "-v {OUT}:/var/run",
+    "-v {OUT}:/etc",
+    "-v {OUT}:/etc/x",
+    "-v {OUT}//run1:/out",
+    "-v {OUT}/./run1:/out",
+    "-v {OUT}/link:/out",
+    "-v {OUT}/docker.sock:/out",
+    "--mount type=bind,src={OUT},dst=//sys/fs/cgroup",
+    "--mount type=bind,src={OUT},dst=/./proc",
+    "--mount type=bind,src={OUT},dst=/sys/fs/cgroup",
+    "--mount type=bind,src={OUT}/link,dst=/out",
     # namespaces
     "--userns=host",
     "--userns host",
@@ -203,6 +250,12 @@ REFUSED = [
     "--security-opt=SECCOMP=Unconfined",
     "--security-opt 'seccomp=unconfined '",
     "--security-opt seccomp=default",
+    "--security-opt seccomp=/x/profile.json",
+    "--security-opt seccomp=../a.json",
+    "--security-opt seccomp=a.json.txt",
+    "--security-opt no-new-privileges=false",
+    "--security-opt NO-NEW-PRIVILEGES",
+    "--security-opt Seccomp=a.json",
     "--security-opt apparmor=unconfined",
     "--security-opt=label=disable",
     "--security-opt systempaths=unconfined",
@@ -212,6 +265,14 @@ REFUSED = [
     "--sysctl=kernel.shmmax=1",
     "--cgroup-parent=/",
     "--oom-kill-disable",
+    "--cpus 0",
+    "--cpus 0.0",
+    "--cpus=0",
+    "--memory 0",
+    "--memory=0m",
+    "-e FOO",
+    "--env FOO",
+    "--env=FOO",
     "--network=container:other",
     "--network mynet",
     "--net=HOST2",
@@ -239,6 +300,7 @@ REFUSED = [
 ALLOWED = [
     "--cpus 1.5",
     "--cpus=2",
+    "--cpus 0.5",
     "--cpuset-cpus 2,3",
     "--cpuset-cpus=2-3",
     "--memory 512m",
@@ -246,10 +308,11 @@ ALLOWED = [
     "--network host",
     "--net=none",
     "--network=BRIDGE",
-    "--security-opt seccomp=/x/profile.json",
+    "--security-opt seccomp=profile.json",
     "--security-opt=seccomp=profile.json",
+    "--security-opt no-new-privileges",
+    "--security-opt=no-new-privileges=true",
     "-e FOO=bar",
-    "--env FOO",
     "--env=FOO=bar",
     "-eFOO=bar",
     "--hostname lane-a",
@@ -258,17 +321,31 @@ ALLOWED = [
     "-u root",
     "--workdir /work",
     "-w /work",
-    f"-v {OUT_DIR}/run1:/out",
-    f"--volume={OUT_DIR}:/out:ro",
-    f"--mount type=bind,src={OUT_DIR}/r,dst=/out",
-    f"--mount type=bind,source={OUT_DIR},target=/out,readonly",
+    "-v {OUT}/run1:/out",
+    "--volume={OUT}:/out:ro",
+    "--mount type=bind,src={OUT}/r,dst=/out",
+    "--mount type=bind,source={OUT},target=/out,readonly",
+]
+
+
+BAD_BLOCKS = [
+    "none",
+    "garbage",
+    "trailing",
+    "no-end",
+    "dup",
+    "inner-end",
+    "badcpu",
+    "badcpuset",
+    "negative",
 ]
 
 
 def run_container(env: dict[str, str], tmp_path: Path, opts: str, name: str = "tx"):
+    opts = opts.replace("{OUT}", env["CONTAINER_OUT_DIR"])
     return sh(
         f"container_run {name} --env-out {tmp_path}/e.json {opts} -- {IMAGE}@{DIGEST} true",
-        {"CONTAINER_OUT_DIR": OUT_DIR, **env},
+        env,
     )
 
 
@@ -295,7 +372,11 @@ def test_container_run_passes_the_allowed_options(
 def test_container_run_refuses_a_mount_without_an_output_dir(
     env: dict[str, str], tmp_path: Path
 ) -> None:
-    run = sh(f"container_run t --env-out {tmp_path}/e.json -v {OUT_DIR}:/out -- {IMAGE} true", env)
+    run = sh(
+        f"container_run t --env-out {tmp_path}/e.json -v {env['LOWLAT_GUEST_ROOT']}/out/r:/out"
+        f" -- {IMAGE} true",
+        {**env, "CONTAINER_OUT_DIR": ""},
+    )
     assert run.returncode != 0
     assert "CONTAINER_OUT_DIR" in run.stderr
     assert calls(tmp_path) == []
@@ -334,7 +415,7 @@ def test_container_run_records_the_merged_environment_and_hides_the_id(
     out = tmp_path / "env.json"
     run = sh(
         f"container_run lowlat-t1 --env-out {out} --cpus 1.5 --cpuset-cpus 2,3 --network host"
-        f" --security-opt seccomp=/x/y/profile.json -- {IMAGE}@{DIGEST} app --flag 'a b'",
+        f" --security-opt seccomp=profile.json -- {IMAGE}@{DIGEST} app --flag 'a b'",
         run_env,
     )
     assert run.returncode == 0, run.stderr
@@ -369,7 +450,9 @@ def test_container_run_records_the_merged_environment_and_hides_the_id(
     # the wrapper, entrypoint, private cgroupns and default hostname are added; the command follows
     assert create.startswith(
         "create --name lowlat-t1 --cgroupns=private --entrypoint sh --cpus 1.5 --cpuset-cpus 2,3"
-        " --network host --security-opt seccomp=/x/y/profile.json"
+        " --network host --security-opt seccomp="
+        + env["LOWLAT_GUEST_ROOT"]
+        + "/examples/13-where-code-runs/containers/seccomp/profile.json"
     )
     assert "--hostname lowlat-t1" in create
     assert f"{IMAGE}@{DIGEST} -c " in create
@@ -418,7 +501,7 @@ def test_container_run_defaults_are_null_bridge_default_seccomp_and_own_hostname
     assert "--hostname t2b" not in create_b
 
 
-@pytest.mark.parametrize("block", ["none", "garbage", "trailing", "no-end"])
+@pytest.mark.parametrize("block", BAD_BLOCKS)
 @pytest.mark.parametrize("limit", ["--cpus 1", "--cpuset-cpus 2"])
 def test_container_run_fails_a_limited_lane_without_a_usable_cgroup_block(
     env: dict[str, str], tmp_path: Path, block: str, limit: str
@@ -431,7 +514,7 @@ def test_container_run_fails_a_limited_lane_without_a_usable_cgroup_block(
     assert "@@LOWLAT" not in run.stdout
 
 
-@pytest.mark.parametrize("block", ["none", "garbage", "trailing", "no-end"])
+@pytest.mark.parametrize("block", BAD_BLOCKS)
 def test_container_run_records_null_cgroup_for_an_unlimited_lane(
     env: dict[str, str], tmp_path: Path, block: str
 ) -> None:
@@ -531,6 +614,119 @@ def test_container_run_checks_images_lock_when_present(env: dict[str, str], tmp_
     assert good.returncode == 0, good.stderr
     env_block = json.loads((tmp_path / "e.json").read_text())["runtime"]["environment"]
     assert env_block["container"]["image_digest"] == DIGEST
+
+
+def test_container_run_takes_the_last_begin_and_never_merges_a_fake_block(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = run_container({**env, "FAKE_BLOCK": "fake-begin"}, tmp_path, "--cpus 1")
+    assert run.returncode == 0, run.stderr
+    cg = json.loads((tmp_path / "e.json").read_text())["runtime"]["environment"]["cgroup"]
+    assert cg["nr_throttled"] == 7  # the real block, not the workload's 999
+    assert cg["throttled_usec"] == 12345
+    assert "nr_throttled 999" in run.stdout  # the fake lines stay workload output
+
+
+def test_container_run_keeps_a_partial_last_stdout_line_and_still_finds_the_block(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = run_container({**env, "FAKE_PARTIAL": "1"}, tmp_path, "--cpus 1")
+    assert run.returncode == 0, run.stderr
+    assert run.stdout.splitlines() == ["partial"]
+    cg = json.loads((tmp_path / "e.json").read_text())["runtime"]["environment"]["cgroup"]
+    assert cg["nr_throttled"] == 7
+
+
+def test_container_run_drops_exactly_one_blank_line_before_the_block(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = run_container(env, tmp_path, "--cpus 1")
+    assert len(run.stdout.splitlines()) == 1
+    assert run.stdout.endswith("\n")
+    assert not run.stdout.endswith("\n\n")
+
+
+def test_container_run_wrapper_starts_its_block_on_a_fresh_line(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run_container(env, tmp_path, "--cpus 1")
+    assert "printf '\\n@@LOWLAT_CGROUP_BEGIN\\n'" in (tmp_path / "docker.log").read_text()
+
+
+@pytest.mark.parametrize(
+    "out",
+    [
+        "/",
+        "//",
+        "/var/run",
+        "/etc",
+        "relative/dir",
+        "{ROOT}",
+        "{ROOT}//out",
+        "{ROOT}/./out",
+        "{ROOT}/../out",
+        "{ROOT}/outlink",
+        "{ROOT}/missing",
+        "/var/run/{ROOT}",
+    ],
+)
+def test_container_run_validates_the_output_directory_itself(
+    env: dict[str, str], tmp_path: Path, out: str
+) -> None:
+    out_dir = out.replace("{ROOT}", env["LOWLAT_GUEST_ROOT"])
+    run = sh(
+        f"container_run t --env-out {tmp_path}/e.json -v {out_dir}:/out -- {IMAGE} true",
+        {**env, "CONTAINER_OUT_DIR": out_dir},
+    )
+    assert run.returncode != 0, out
+    assert "refused" in run.stderr
+    assert calls(tmp_path) == []
+
+
+def test_container_run_resolves_a_planted_symlink_in_the_guest(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = run_container(env, tmp_path, "-v {OUT}/link:/out")
+    assert run.returncode != 0
+    assert "outside" in run.stderr or "not under" in run.stderr
+    assert calls(tmp_path) == []
+
+
+def test_container_run_refuses_an_image_starting_with_a_dash(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = sh(f"container_run t --env-out {tmp_path}/e.json -- --privileged:1 true", env)
+    assert run.returncode != 0
+    assert "starts with '-'" in run.stderr
+    assert calls(tmp_path) == []
+
+
+def test_container_run_refuses_a_pending_lock_entry_before_docker(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    lock = tmp_path / "IMAGES.lock"
+    lock.write_text(f"# images\n{IMAGE}@sha256:PENDING registry.example/base:1@sha256:{'5' * 64}\n")
+    run = sh(
+        f"container_run t --env-out {tmp_path}/e.json -- {IMAGE} app",
+        {**env, "LOWLAT_IMAGES_LOCK": str(lock)},
+    )
+    assert run.returncode != 0
+    assert "PENDING" in run.stderr
+    assert calls(tmp_path) == []
+
+
+def test_container_run_matches_only_field_1_of_the_lock(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    lock = tmp_path / "IMAGES.lock"
+    lock.write_text(f"other/x:1@sha256:{'3' * 64} {IMAGE}@{DIGEST}\n")
+    run = sh(
+        f"container_run t --env-out {tmp_path}/e.json -- {IMAGE} app",
+        {**env, "LOWLAT_IMAGES_LOCK": str(lock)},
+    )
+    assert run.returncode != 0
+    assert "not listed" in run.stderr
+    assert calls(tmp_path) == []
 
 
 # ---- cgroup_stat -----------------------------------------------------------------------------
@@ -652,6 +848,34 @@ def test_quiet_host_without_the_flag_still_refuses_any_running_lab_vm(
     assert rec == {"example": "13"}
     assert quiet(env, tmp_path, "", "")[0].returncode == 0
     assert quiet(env, tmp_path, "", "ebpf-vm\nsystems-vm")[0].returncode == 0  # unchanged: ignored
+
+
+def test_quiet_host_without_the_flag_dies_when_virsh_fails(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = sh("require_quiet_host", {**env, "FAKE_VIRSH_FAIL": "1"})
+    assert run.returncode != 0
+    assert "cannot read the libvirt domain list" in run.stderr
+    assert (
+        sh("require_quiet_host", {**env, "FAKE_VIRSH_FAIL": "1", "ALLOW_BUSY": "1"}).returncode == 0
+    )
+
+
+def test_quiet_host_without_the_flag_treats_a_missing_virsh_as_no_lab(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    for tool in ("dirname", "cat"):
+        (bare / tool).symlink_to(shutil.which(tool) or "")
+    run = subprocess.run(
+        [shutil.which("bash") or "bash", "-c", f'. "{LIB}"\nrequire_quiet_host'],
+        capture_output=True,
+        text=True,
+        env={**os.environ, **env, "PATH": str(bare)},
+        check=False,
+    )
+    assert run.returncode == 0, run.stderr
 
 
 def test_quiet_host_lab_idle_accepts_an_idle_target_and_records_it(

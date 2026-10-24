@@ -79,8 +79,8 @@ def read_sidecar(path: Path) -> dict[str, Any]:
         _text(side, key)
     if "language" in side:
         _text(side, "language")
-    if not _is_int(side["count"]) or side["count"] < 0:
-        raise ValueError("sidecar count must be a non-negative integer")
+    if not _is_int(side["count"]) or side["count"] < 1:
+        raise ValueError("sidecar count must be an integer of at least 1")
     if "dropped" in side and (not _is_int(side["dropped"]) or side["dropped"] < 0):
         raise ValueError("sidecar dropped must be a non-negative integer")
     if "notes" in side and not isinstance(side["notes"], str):
@@ -101,12 +101,23 @@ def read_sidecar(path: Path) -> dict[str, Any]:
         if side["gil_enabled"] != build["gil_enabled"]:
             raise ValueError("sidecar gil_enabled conflicts with build.gil_enabled")
     pyb = side.get("runtime", {}).get("python_build")
+    if pyb not in ("gil", "free-threaded"):
+        raise ValueError("sidecar runtime.python_build ('gil' or 'free-threaded') is required")
     if pyb == "free-threaded" and build["gil_enabled"]:
         raise ValueError(
             "runtime.python_build is 'free-threaded' but gil_enabled is true: the GIL came back"
         )
     if pyb == "gil" and not build["gil_enabled"]:
         raise ValueError("runtime.python_build is 'gil' but gil_enabled is false")
+    # "free-threaded" needs the interpreter's own version string to say free-threading. (The reverse
+    # is already covered: a free-threading binary with the GIL off must say "free-threaded", or the
+    # gil_enabled check above fails; with the GIL back on it legitimately reports "gil".)
+    ft_string = "free-threading" in build["compiler"].lower()
+    if pyb == "free-threaded" and not ft_string:
+        raise ValueError(
+            "runtime.python_build is 'free-threaded' but build.compiler is not a "
+            "free-threading build"
+        )
     return side
 
 
