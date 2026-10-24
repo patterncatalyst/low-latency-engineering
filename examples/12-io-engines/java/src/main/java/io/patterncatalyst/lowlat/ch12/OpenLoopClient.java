@@ -41,6 +41,10 @@ import java.util.concurrent.locks.LockSupport;
 final class OpenLoopClient {
 
     private static final long LATE_START_NS = 1_000_000;
+    /** Longest a single request may take before the client gives up on it (the service answers in milliseconds). */
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+    /** Errors after which the service is taken for gone and the run stops. */
+    private static final long ERROR_LIMIT = 1_000;
 
     private OpenLoopClient() {
     }
@@ -57,7 +61,7 @@ final class OpenLoopClient {
         long rate = args.number("rate", 10_000);
         long seconds = args.number("seconds", 5);
         long warmupSeconds = args.number("warmup-seconds", 3);
-        long poolThreads = args.number("pool", 16);
+        long poolThreads = args.number("pool", 8);
         double serviceTimeMs = args.number("service-time-ms", 2);
         Path report = args.report();
         if (variant.isEmpty()) {
@@ -70,6 +74,9 @@ final class OpenLoopClient {
         System.out.printf("client: %s at %d Hz for %d s (warm-up %d s); Little's law: %d Hz x %.0f ms = %.1f in flight, worker pool %d%n",
                 variant, rate, seconds, warmupSeconds, rate, serviceTimeMs, littles, poolThreads);
 
+        // The client must end on its own when the server is gone: every request has a timeout, the dispatcher stops
+        // after ERROR_LIMIT errors, and a daemon watchdog halts the JVM (no shutdown hook, which could block) at a hard deadline.
+        startWatchdog((warmupSeconds + seconds) + 60);
         HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(5)).build();
         try {
             if (warmupSeconds > 0) {
@@ -108,8 +115,17 @@ final class OpenLoopClient {
                     null, null);
             System.out.println("report: " + report);
         } finally {
-            client.close();
+            client.shutdownNow();
         }
+    }
+
+    /** A daemon thread that halts the JVM after {@code seconds}: halt runs no shutdown hook, so nothing can hold it up. */
+    private static void startWatchdog(long seconds) {
+        Thread.ofPlatform().daemon().name("deadline").start(() -> {
+            LockSupport.parkNanos(seconds * 1_000_000_000L);
+            System.err.println("client: hard run deadline of " + seconds + " s reached, halting");
+            Runtime.getRuntime().halt(4);
+        });
     }
 
     static Path sibling(Path report, String suffix) {
@@ -132,6 +148,9 @@ final class OpenLoopClient {
         long start = System.nanoTime() + 200_000_000L;
         try (ExecutorService vts = Executors.newVirtualThreadPerTaskExecutor()) {
             for (long i = 0; i < total; i++) {
+                if (errors.get() > ERROR_LIMIT) {
+                    throw new IllegalStateException("the service is not answering: " + errors.get() + " errors after " + i + " requests");
+                }
                 long due = OpenLoopSchedule.intendedSendNanos(start, i, rate);
                 sleepUntil(due);
                 long late = Math.max(0, System.nanoTime() - due);
@@ -143,7 +162,7 @@ final class OpenLoopClient {
                 vts.execute(() -> {
                     maxInFlight.accumulate(inFlight.incrementAndGet());
                     try {
-                        HttpResponse<Void> response = client.send(HttpRequest.newBuilder(URI.create(uri)).GET().build(),
+                        HttpResponse<Void> response = client.send(HttpRequest.newBuilder(URI.create(uri)).timeout(REQUEST_TIMEOUT).GET().build(),
                                 HttpResponse.BodyHandlers.discarding());
                         long ns = System.nanoTime() - due; // from the intended time, not from when the request left
                         if (response.statusCode() == 200) {
@@ -201,11 +220,12 @@ final class OpenLoopClient {
     }
 
     private static String get(HttpClient client, String url) throws IOException, InterruptedException {
-        return client.send(HttpRequest.newBuilder(URI.create(url)).GET().build(), HttpResponse.BodyHandlers.ofString()).body();
+        return client.send(HttpRequest.newBuilder(URI.create(url)).timeout(REQUEST_TIMEOUT).GET().build(),
+                HttpResponse.BodyHandlers.ofString()).body();
     }
 
     private static void post(HttpClient client, String url) throws IOException, InterruptedException {
-        client.send(HttpRequest.newBuilder(URI.create(url)).POST(HttpRequest.BodyPublishers.noBody()).build(),
+        client.send(HttpRequest.newBuilder(URI.create(url)).timeout(REQUEST_TIMEOUT).POST(HttpRequest.BodyPublishers.noBody()).build(),
                 HttpResponse.BodyHandlers.discarding());
     }
 }

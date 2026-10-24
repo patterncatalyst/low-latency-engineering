@@ -1,6 +1,7 @@
 package io.patterncatalyst.lowlat.ch12;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.net.httpserver.HttpServer;
@@ -54,6 +55,20 @@ class OpenLoopClientTest {
             assertEquals(0, r.completed());
         } finally {
             server.stop(0);
+        }
+    }
+
+    @Test
+    void aClientWhoseServerIsGoneStopsOnItsOwn() throws Exception {
+        int closedPort;
+        try (java.net.ServerSocket probe = new java.net.ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+            closedPort = probe.getLocalPort();
+        }
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            long t0 = System.nanoTime();
+            assertThrows(IllegalStateException.class,
+                    () -> OpenLoopClient.run(client, "http://127.0.0.1:" + closedPort + "/plan/gone/", "gone", 5_000, 60));
+            assertTrue(System.nanoTime() - t0 < 20_000_000_000L, "gave up long before the 60 s schedule ended");
         }
     }
 

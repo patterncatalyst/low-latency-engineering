@@ -18,7 +18,7 @@ import jakarta.ws.rs.core.MediaType;
  *
  * <ul>
  *   <li>{@code event-loop}: the wait is a non-blocking Vert.x timer on the event loop; no thread is held.
- *   <li>{@code worker-pool}: the wait is {@code Thread.sleep} on one of the pool's fixed 16 worker threads.
+ *   <li>{@code worker-pool}: the wait is {@code Thread.sleep} on one of the pool's fixed 8 worker threads.
  *   <li>{@code virtual-thread}: the wait is {@code Thread.sleep} on a virtual thread, which parks and frees
  *       its carrier.
  *   <li>{@code blocking-on-event-loop}: the defect. The same {@code Thread.sleep} on the event loop itself,

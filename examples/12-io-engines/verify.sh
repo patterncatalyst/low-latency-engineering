@@ -11,7 +11,7 @@
 #   2  hand-offs per parcel (exact): thread-per-core 0, acceptor-pool 1.
 #   3  saturation receive p99, C++, same run, median of 3: thread-per-core <= 1/2 of acceptor-pool. io-uring against
 #      epoll p99 is observed.
-#   4  Quarkus at lambda x W > pool (10 kHz x 2 ms = 20 in flight against 16 workers): worker-pool p99 >= 3x
+#   4  Quarkus at lambda x W > pool (5 kHz x 2 ms = 10 in flight against 8 workers): worker-pool p99 >= 3x
 #      virtual-thread p99, median of 3. event-loop against virtual-thread is observed.
 #   5  defect blocking-on-event-loop: blocked-thread warnings >= 1 (exact, counted in process and from the log, and
 #      the two must agree) and p99 >= 2 ms.
@@ -32,11 +32,15 @@
 #   RECHECK=results/<run-id>    re-evaluate the committed reports without building or running anything
 #   ALLOW_BUSY=1 ./verify.sh    measure while a lab VM or other load is running (noisy)
 #   SKIP_BUILD=1 ./verify.sh    reuse existing builds
+#   SMOKE=1 RESULTS_DIR=DIR     small workloads, a check of this script (not a measurement, nothing enforced)
 #   RESULTS_DIR=DIR             where reports go (default results/latest)
 #   LOWLAT_BUILD=DIR            private C++ build directory
 #   ONLY=cpp,java,python,quarkus   run only those lanes (a development aid: the criteria of the others are then not met)
 #
-# Run it under the host benchmark lock when another example measures on this host. UDP ports 47320-47323 (line),
+# Run it under the host benchmark lock when another example measures on this host, and give flock -o so the lock
+#   flock -o "$LOCK" ./verify.sh
+# is not inherited by the script or anything it starts (an orphan that outlived a run would otherwise keep the lock).
+# On TERM or INT the script stops its whole process tree before it exits. UDP ports 47320-47323 (line),
 # 47324-47327 (saturation), 47328-47331 (strace) and 47332-47335 (Python) on 127.0.0.1, TCP 47336 for the service.
 # Threads are pinned to distinct physical cores with sched_setaffinity as an experiment control; that is not isolation.
 # The simulators run on the cores left over, and the Quarkus server and the open-loop client get disjoint CPUs.
@@ -45,6 +49,8 @@
 # The free-threaded interpreter is a user-local download: `uv python install 3.14t`.
 # shellcheck disable=SC2016
 set -euo pipefail
+trap 'exit 143' TERM
+trap 'exit 130' INT
 # shellcheck source=../_lib/lib.sh
 # shellcheck source-path=SCRIPTDIR
 . "$(dirname "${BASH_SOURCE[0]}")/../_lib/lib.sh"
@@ -64,17 +70,22 @@ LINE_COUNT=$((LINE_PER_CAMERA * CAMERAS))
 # Saturation: the highest rate (per camera) with dropped = 0 for the slowest variant of the lane. A variable, not a
 # finding: S10 calibrates it. DECIDE_NS is the modelled decide work (the tracker lookup and the divert command's
 # encode, which this example does not build) that gives one receive thread a capacity the simulators can exceed.
-SAT_RATE_CPP=${SAT_RATE_CPP:-60000}
+SAT_RATE_CPP=${SAT_RATE_CPP:-60000}          # the three single-thread engines: 240 kHz offered against 1 / 3 us of modelled decide work
+SAT_RATE_LAYOUT=${SAT_RATE_LAYOUT:-150000}   # thread-per-core against acceptor-pool: 600 kHz offered, past what one acceptor thread carries
 SAT_RATE_JAVA=${SAT_RATE_JAVA:-20000}
 SAT_RATE_PY=${SAT_RATE_PY:-2000}
 SAT_SECONDS=${SAT_SECONDS:-3}
 DECIDE_NS=${DECIDE_NS:-3000}
 JAVA_DECIDE_NS=${JAVA_DECIDE_NS:-3000}
-# The service: lambda x W = Q_RATE x SERVICE_MS must exceed POOL (10 kHz x 2 ms = 20 in flight against 16 workers).
-Q_RATE=${Q_RATE:-10000}
+# The service: lambda x W = Q_RATE x SERVICE_MS must exceed POOL (5 kHz x 2 ms = 10 in flight against 8 workers). The plan's
+# example (12 kHz against 16) is out of reach of a JDK HTTP/1.1 client and a four-core Quarkus service on this host: above about
+# 6 kHz the service falls behind in every variant, the pool or not. The defect variant runs at DEFECT_RATE: four event loops
+# blocked for 2 ms each can serve 2 kHz, so it is driven below that and the queue it shows is the loop's, not the client's.
+Q_RATE=${Q_RATE:-5000}
+DEFECT_RATE=${DEFECT_RATE:-1700}
 Q_SECONDS=${Q_SECONDS:-5}
 Q_WARMUP_SECONDS=${Q_WARMUP_SECONDS:-3}
-POOL=16                                      # quarkus.thread-pool.max-threads in application.properties
+POOL=8                                       # quarkus.thread-pool.max-threads in application.properties
 SERVICE_MS=2
 ROUNDS=3
 HOLD_MS=500
@@ -108,6 +119,13 @@ SERVICE_VARIANTS=(event-loop worker-pool virtual-thread blocking-on-event-loop)
 JAVA_RECV_EXTRA=()
 JVM=(-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED)
 SERVER_JVM=(-Xms512m -Xmx512m -XX:+AlwaysPreTouch)
+if [[ ${SMOKE:-0} == 1 ]]; then
+  # A check of this script, not a measurement: small workloads, every criterion evaluated and printed, none enforced.
+  [[ -n ${RESULTS_DIR:-} ]] || { echo "SMOKE=1 needs RESULTS_DIR (it must not overwrite results/latest)" >&2; exit 2; }
+  LINE_SECONDS=2 SAT_SECONDS=1 Q_SECONDS=2 Q_WARMUP_SECONDS=1 STRACE_SECONDS=2 HOLD_MS=100
+  LINE_PER_CAMERA=$((LINE_RATE * LINE_SECONDS))
+  LINE_COUNT=$((LINE_PER_CAMERA * CAMERAS))
+fi
 
 ONLY=${ONLY:-cpp,java,python,quarkus}
 lane_on() { [[ ,$ONLY, == *,"$1",* ]]; }
@@ -122,13 +140,26 @@ else
   OUT=$(results_dir)
   # Remove only what this script writes, and only under a real results path.
   [[ $OUT == /*/*/* ]] || die "refusing to clear subdirectories of $OUT"
-  rm -rf "${OUT:?}"/{cpp,java,python,quarkus,strace} "${OUT:?}"/*.json "${OUT:?}"/*.log "${OUT:?}"/*.txt
+  rm -rf "${OUT:?}"/{cpp,java,python,quarkus,strace,logs} "${OUT:?}"/*.json "${OUT:?}"/*.log "${OUT:?}"/*.txt
   mkdir -p "$OUT/cpp" "$OUT/java" "$OUT/python" "$OUT/quarkus" "$OUT/strace"
   capture_profile "$OUT"
+  # Driver logs are written outside the results directory (this script clears *.log there) and moved in at the end.
   scratch_dir
+  LOGS=$LOWLAT_SCRATCH/logs
+  mkdir -p "$LOGS"
 fi
+finish_logs() {
+  if [[ -n ${LOGS:-} && -d $LOGS ]]; then
+    mkdir -p "$OUT/logs"
+    find "$LOGS" -maxdepth 1 -name '*.log' -exec mv -t "$OUT/logs" {} + 2>/dev/null || true
+  fi
+}
+trap 'finish_logs; _bg_cleanup' EXIT
 
 # ---- helpers -------------------------------------------------------------------------------------------------------
+scratch_dir # removed with the scratch dir on exit (also when the run stops early)
+RATIO_FAULTS=$LOWLAT_SCRATCH/ratio-faults
+: >"$RATIO_FAULTS"
 
 # margin NUM DEN: NUM / DEN with two decimals.
 margin() { awk -v a="$1" -v b="$2" 'BEGIN { if (b == 0) print "inf"; else printf "%.2f", a / b }'; }
@@ -186,7 +217,18 @@ counter() { jget "$1" ".runtime.counters.$2"; }
 # pct FILE: "p50 / p99 / p99.9 / max" in microseconds.
 pct() { jget "$1" '"\(.percentiles.p50 / 1000 | floor) / \(.percentiles.p99 / 1000 | floor) / \(.percentiles.p99_9 / 1000 | floor) / \(.percentiles.max / 1000 | floor) us"'; }
 # alt_ratio FILE_NUM FILE_DEN: the ratio of two p99 values in thousandths.
-alt_ratio() { echo $((1000 * $(p99 "$1") / $(p99 "$2"))); }
+# A zero denominator is a failure of the measurement: it prints 0 (so a >= bound fails) and is recorded in $RATIO_FAULTS,
+# which the end of the run turns into a failed criterion (a $(...) cannot raise the failure itself).
+alt_ratio() {
+  local den
+  den=$(p99 "$2")
+  if ((den <= 0)); then
+    echo "alt_ratio: p99 denominator $den ($2) for numerator $(p99 "$1") ($1)" >>"$RATIO_FAULTS"
+    echo 0
+  else
+    echo $((1000 * $(p99 "$1") / den))
+  fi
+}
 median_of() { median_ns "$@"; }
 
 # check_pins LOG COUNT: every "pinned pid=P tid=T cpu=C" line of LOG is checked against /proc/P/task/T/stat.
@@ -248,18 +290,17 @@ if ((RUN)); then
   BUILD_JAVA_TESTS=1 build_java "$HERE/java"
   if [[ ${SKIP_BUILD:-0} != 1 ]]; then
     step "building the Quarkus service on the plain JVM (fast-jar), with its @QuarkusTests"
-    mvn -B -q -f "$HERE/quarkus/pom.xml" verify >"$OUT/quarkus-build.log" 2>&1 || { tail -30 "$OUT/quarkus-build.log" >&2; die "Quarkus build or tests failed"; }
-    rm -f "$OUT/quarkus-build.log"
+    mvn -B -q -f "$HERE/quarkus/pom.xml" verify >"$LOGS/quarkus-build.log" 2>&1 || { tail -30 "$LOGS/quarkus-build.log" >&2; die "Quarkus build or tests failed"; }
   fi
   [[ -f $JAR && -f $QUARKUS_JAR ]] || die "missing $JAR or $QUARKUS_JAR (build first)"
   py_sync
 
   step "unit tests: C++ (GoogleTest), Python under the GIL and under the free-threaded build; Java and Quarkus ran during the build"
-  "$(cpp_bin io-test)" --gtest_brief=1 >"$OUT/cpp-unit-tests.log" 2>&1 || { tail -20 "$OUT/cpp-unit-tests.log" >&2; die "C++ unit tests failed"; }
-  uvrun pytest -q "$HERE/io-py/tests" >"$OUT/python-unit-tests-gil.log" 2>&1 || { tail -20 "$OUT/python-unit-tests-gil.log" >&2; die "Python (GIL) tests failed"; }
+  "$(cpp_bin io-test)" --gtest_brief=1 >"$LOGS/cpp-unit-tests.log" 2>&1 || { tail -20 "$LOGS/cpp-unit-tests.log" >&2; die "C++ unit tests failed"; }
+  uvrun pytest -q "$HERE/io-py/tests" >"$LOGS/python-unit-tests-gil.log" 2>&1 || { tail -20 "$LOGS/python-unit-tests-gil.log" >&2; die "Python (GIL) tests failed"; }
   (cd "$LOWLAT_EXAMPLES" && LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$LOWLAT_EXAMPLES/.venv-ft \
-    uv run -q --python 3.14t --all-packages pytest -q "$HERE/io-py/tests") >"$OUT/python-unit-tests-free-threaded.log" 2>&1 ||
-    { tail -20 "$OUT/python-unit-tests-free-threaded.log" >&2; die "Python (free-threaded) tests failed"; }
+    uv run -q --python 3.14t --all-packages pytest -q "$HERE/io-py/tests") >"$LOGS/python-unit-tests-free-threaded.log" 2>&1 ||
+    { tail -20 "$LOGS/python-unit-tests-free-threaded.log" >&2; die "Python (free-threaded) tests failed"; }
   ok "C++, Java, Quarkus and Python (both builds) unit tests pass"
 
   URING_OK=1
@@ -335,7 +376,7 @@ pins_cpp() {
 cpp_run() {
   local variant=$1 rate=$2 seconds=$3 base=$4 report=$5 log
   shift 5
-  log=${report%.json}.log
+  log=$LOGS/cpp-$(basename "$report" .json).log
   local -a cmd=("$RECV" --variant "$variant") wrap=("$@")
   [[ $variant == asio-io-uring ]] && cmd=("$RECV_ASIO")
   cmd+=(--base-port "$base" --expect $((rate * seconds)) --cpus "$CPUS" --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --report "$report")
@@ -347,7 +388,7 @@ cpp_run() {
 java_run() {
   local variant=$1 rate=$2 seconds=$3 base=$4 report=$5 log pins=1
   shift 5
-  log=${report%.json}.log
+  log=$LOGS/java-$(basename "$report" .json).log
   local -a jvm=("${JVM[@]}") wrap=("$@")
   case $variant in
     virtual-thread-blocking) jvm+=(-Djdk.virtualThreadScheduler.parallelism=1 -Djdk.virtualThreadScheduler.maxPoolSize=1); pins=4 ;;
@@ -364,7 +405,7 @@ java_run() {
 py_run() {
   local build=$1 variant=$2 rate=$3 seconds=$4 base=$5 report=$6 log pins=1 raw
   shift 6
-  log=${report%.json}.log
+  log=$LOGS/python-$(basename "$report" .json).log
   raw=$LOWLAT_SCRATCH/py-$build-$variant-$(basename "$report" .json)
   [[ $variant == blocking-thread ]] && pins=4
   local -a wrap=("$@") cmd
@@ -386,7 +427,12 @@ if ((RUN)) && lane_on cpp; then
   else
     sat_variants=(epoll recvmmsg)
   fi
-  alt_run() { step "C++ saturation: $1 at $SAT_RATE_CPP Hz x $CAMERAS cameras (alternation $2)"; cpp_run "$1" "$SAT_RATE_CPP" "$SAT_SECONDS" "$UDP_SAT" "$OUT/cpp/$1-sat-alt$2.json"; }
+  alt_run() {
+    local rate=$SAT_RATE_CPP
+    [[ $1 == thread-per-core || $1 == acceptor-pool ]] && rate=$SAT_RATE_LAYOUT
+    step "C++ saturation: $1 at $rate Hz x $CAMERAS cameras (alternation $2)"
+    cpp_run "$1" "$rate" "$SAT_SECONDS" "$UDP_SAT" "$OUT/cpp/$1-sat-alt$2.json"
+  }
   each_alt "${sat_variants[@]}"
   if ((URING_OK)); then
     step "C++ saturation: asio-io-uring (observed)"
@@ -449,11 +495,11 @@ fi
 # on the spare CPUs, stop it, and count the blocked-thread warnings in its log. The server log stays out of the results
 # directory (a defect run logs thousands of warnings); only the counts and a short sample are kept.
 quarkus_run() {
-  local variant=$1 alt=$2 server_log client_log spid i rc=0
+  local variant=$1 alt=$2 server_log client_log spid cpid i rc=0 rate=$Q_RATE final
   local -a profile=()
   server_log=$LOWLAT_SCRATCH/server-$variant-alt$alt.log
-  client_log=$OUT/quarkus/$variant-alt$alt.log
-  [[ $variant == blocking-on-event-loop ]] && profile=(-Dquarkus.profile=defect)
+  client_log=$LOGS/quarkus-$variant-alt$alt.log
+  [[ $variant == blocking-on-event-loop ]] && { profile=(-Dquarkus.profile=defect); rate=$DEFECT_RATE; }
   "${SERVER_PREFIX[@]}" java "${SERVER_JVM[@]}" "${profile[@]}" -Dquarkus.http.port="$Q_PORT" -jar "$QUARKUS_JAR" >"$server_log" 2>&1 &
   spid=$!
   bg_track "$spid"
@@ -463,16 +509,29 @@ quarkus_run() {
     sleep 0.1
   done
   ((i < 300)) || die "the service did not answer on $Q_PORT within 30 s"
-  "${CLIENT_PREFIX[@]}" java -Xms256m -Xmx256m -cp "$JAR" "$MAIN" client --variant "$variant" --base-url "http://127.0.0.1:$Q_PORT" \
-    --rate "$Q_RATE" --seconds "$Q_SECONDS" --warmup-seconds "$Q_WARMUP_SECONDS" --pool "$POOL" --service-time-ms "$SERVICE_MS" \
-    --report "$OUT/quarkus/$variant-alt$alt.json" >"$client_log" 2>&1 || rc=$?
+  # In the background and waited for, so that a TERM to this script is handled at once (bash runs a trap only after a
+  # foreground command ends). The client also ends on its own: request timeouts, an error limit and a hard deadline.
+  "${CLIENT_PREFIX[@]}" java -Xms256m -Xmx1g -XX:+ExitOnOutOfMemoryError -cp "$JAR" "$MAIN" client --variant "$variant" --base-url "http://127.0.0.1:$Q_PORT" \
+    --rate "$rate" --seconds "$Q_SECONDS" --warmup-seconds "$Q_WARMUP_SECONDS" --pool "$POOL" --service-time-ms "$SERVICE_MS" \
+    --report "$OUT/quarkus/$variant-alt$alt.json" >"$client_log" 2>&1 &
+  cpid=$!
+  bg_track "$cpid"
+  wait "$cpid" || rc=$?
+  bg_forget "$cpid"
+  # The in-process blocked-thread count, read once more now that the client is done, against the warnings in the log since
+  # the application started (Vert.x logs one during start-up, before the counter is installed).
+  sleep 0.3
+  final=$(curl -sf -m 5 "http://127.0.0.1:$Q_PORT/stats" | awk '$1 == "blocked_thread_warnings" {print $2}') || final=-1
+  [[ -n $final ]] || final=-1
   kill "$spid" 2>/dev/null || true
+  for ((i = 0; i < 50; i++)); do _alive "$spid" || break; sleep 0.1; done
+  _alive "$spid" && kill -KILL "$spid" 2>/dev/null || true
   wait "$spid" 2>/dev/null || true
   bg_forget "$spid"
   ((rc == 0)) || { tail -30 "$client_log" >&2; die "the open-loop client failed for $variant"; }
   local in_log
-  in_log=$(grep -c 'has been blocked for' "$server_log" || true)
-  printf '%s alt%s %s\n' "$variant" "$alt" "$in_log" >>"$OUT/quarkus/blocked-thread-warnings-in-log.txt"
+  in_log=$(awk '/ started in / {on = 1; next} on && /has been blocked for/ {n++} END {print n + 0}' "$server_log")
+  printf '%s alt%s %s %s\n' "$variant" "$alt" "$in_log" "$final" >>"$OUT/quarkus/blocked-thread-warnings-in-log.txt"
   if [[ $variant == blocking-on-event-loop && $alt == 1 ]]; then
     grep -m3 'has been blocked for' "$server_log" | python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter >"$OUT/quarkus/blocked-thread-warning-sample.txt" || true
   fi
@@ -570,15 +629,16 @@ if lane_on quarkus && have "$OUT/quarkus/virtual-thread-alt1.json"; then
   for n in 1 2 3; do
     f=$OUT/quarkus/blocking-on-event-loop-alt$n.json
     w=$(counter "$f" blocked_thread_warnings)
-    in_log=$(awk -v a="alt$n" '$1 == "blocking-on-event-loop" && $2 == a {print $3}' "$OUT/quarkus/blocked-thread-warnings-in-log.txt")
+    read -r in_log final < <(awk -v a="alt$n" '$1 == "blocking-on-event-loop" && $2 == a {print $3, $4}' "$OUT/quarkus/blocked-thread-warnings-in-log.txt")
     crit_ge "5" "alt$n blocked-thread warnings (exact, counted in process)" "$w" "$DEFECT_WARNINGS_MIN"
-    crit_exact "5" "alt$n warnings counted in process equal the log's 'has been blocked for' lines" "$w" "$in_log"
+    crit_exact "5" "alt$n warnings counted in process equal the log's 'has been blocked for' lines after start-up" "$final" "$in_log"
+    crit_exact "5" "alt$n the client's report and the final read of the in-process count agree" "$w" "$final"
     crit_ge "5" "alt$n p99 in ns" "$(p99 "$f")" "$DEFECT_P99_MIN_NS"
   done
   for v in event-loop worker-pool virtual-thread; do
     for n in 1 2 3; do
-      in_log=$(awk -v v="$v" -v a="alt$n" '$1 == v && $2 == a {print $3}' "$OUT/quarkus/blocked-thread-warnings-in-log.txt")
-      ((in_log == 0)) || bad "5 $v alt$n: $in_log blocked-thread warnings in the log of a variant that never blocks the loop"
+      read -r in_log final < <(awk -v v="$v" -v a="alt$n" '$1 == v && $2 == a {print $3, $4}' "$OUT/quarkus/blocked-thread-warnings-in-log.txt")
+      ((in_log == 0 && final == 0)) || bad "5 $v alt$n: $in_log blocked-thread warnings in the log, $final counted, for a variant that never blocks the loop"
     done
   done
 
@@ -590,8 +650,8 @@ if lane_on quarkus && have "$OUT/quarkus/virtual-thread-alt1.json"; then
       [[ $(counter "$f" completed) -eq $sent && $(counter "$f" errors) -eq 0 ]] || bad "9 $v alt$n: completed $(counter "$f" completed) of $sent, errors $(counter "$f" errors)"
       late=$(counter "$f" late_starts_over_1ms)
       ((late * 1000 <= CLIENT_LATE_MAX_PERMILLE * sent)) || bad "9 $v alt$n: the client started $late of $sent requests over 1 ms late (bound $CLIENT_LATE_MAX_PERMILLE per thousand): a request may have waited in the client"
-      ((n == 1)) && printf '  %s: client max in flight %s (Little'"'"'s law %s), late starts over 1 ms %s of %s, service in-handler max %s, event-loop threads %s, worker threads %s (active max %s), carrier threads %s\n' \
-        "$v" "$(counter "$f" max_in_flight)" "$((Q_RATE * SERVICE_MS / 1000))" "$late" "$sent" "$(counter "$f" service_in_handler_max)" \
+      ((n == 1)) && printf '  %s: client max in flight %s (Little'"'"'s law %s at %s Hz), late starts over 1 ms %s of %s, service in-handler max %s, event-loop threads %s, worker threads %s (active max %s), carrier threads %s\n' \
+        "$v" "$(counter "$f" max_in_flight)" "$(jget "$f" .model.littles_law_in_flight)" "$(jget "$f" .model.lambda_hz)" "$late" "$sent" "$(counter "$f" service_in_handler_max)" \
         "$(counter "$f" event_loop_threads_seen)" "$(counter "$f" worker_threads_seen)" "$(counter "$f" worker_active_max)" "$(counter "$f" carrier_threads)"
     done
     f=$OUT/quarkus/worker-pool-alt$n.json
@@ -689,8 +749,8 @@ else
     v=${v#python-}
     parcels=$(counter "$OUT/python/$v-strace.json" parcels)
     calls=$(($(strace_calls "$s" recvfrom) + $(strace_calls "$s" recvmsg)))
-    printf '  Python %s (%s parcels): strace epoll_wait %s recvfrom %s (receive calls per parcel %s/1000)\n' "$v" "$parcels" \
-      "$(strace_calls "$s" epoll_wait)" "$(strace_calls "$s" recvfrom)" "$((calls * 1000 / parcels))"
+    printf '  Python %s (%s parcels): strace epoll_wait %s epoll_pwait %s recvfrom %s recvmsg %s (receive calls per parcel %s/1000)\n' "$v" "$parcels" \
+      "$(strace_calls "$s" epoll_wait)" "$(strace_calls "$s" epoll_pwait)" "$(strace_calls "$s" recvfrom)" "$(strace_calls "$s" recvmsg)" "$((calls * 1000 / parcels))"
   done
 fi
 
@@ -700,6 +760,14 @@ for f in "$OUT"/java/*-sat-alt1.json "$OUT"/python/*-sat.json; do
   printf '  %s p50 / p99 / p99.9 / max: %s; dropped %s\n' "${f#"$OUT"/}" "$(pct "$f")" "$(jget "$f" .dropped)"
 done
 
+if [[ -s $RATIO_FAULTS ]]; then
+  bad "a ratio had no usable denominator: $(tr '\n' ';' <"$RATIO_FAULTS")"
+fi
+
+if [[ ${SMOKE:-0} == 1 ]]; then
+  ok "SMOKE: script check finished with $FAILURES criteria not met at these sizes (not enforced, not a result); output in $OUT"
+  exit 0
+fi
 ((FAILURES == 0)) || die "$FAILURES criteria not met; results in $OUT"
 ok "12-io-engines: every criterion holds; results in $OUT"
 jq -r '"profile: \(.host_label) virt=\(.virt.type) governor=\(.power.governor) tuned=\(.tuned) kernel=\(.kernel.release) load1=\(.load.load1)"' "$LOWLAT_PROFILE"
