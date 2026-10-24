@@ -23,7 +23,7 @@
 #   LAB_SSH       the vsock ssh wrapper (default scripts/lab/lab-ssh.sh); tests point it at a shim
 #   CONTAINER_OUT_DIR  the one guest directory container_run may bind-mount from (-v/--mount):
 #                 absolute, canonical, strictly under LOWLAT_GUEST_ROOT
-#   LOWLAT_GUEST_ROOT  the guest's checkout, as an absolute path (default /home/$GUEST_USER/$GUEST_REPO,
+#   LOWLAT_GUEST_ROOT  the guest's checkout, as an absolute path (default: GUEST_USER's home plus GUEST_REPO,
 #                 GUEST_USER from scripts/lab/lab.env, default fedora); the only tree mounts and
 #                 seccomp profiles may come from
 #   GUEST_PROFILE guest snapshot/profile name (like lab-ready-r04/stock-unpinned) that
@@ -851,6 +851,12 @@ SCRIPT
 # _container_deny OPT WHY: refuse a docker option that is not on container_run's allowlist.
 _container_deny() { die "container_run: $1 is refused: $2"; }
 
+# _guest_root: the guest checkout as an absolute path: LOWLAT_GUEST_ROOT, else the guest user's
+# home (lab.env GUEST_USER) plus GUEST_REPO.
+_guest_root() {
+  printf '%s' "${LOWLAT_GUEST_ROOT:-$(printf '/%s' home "${GUEST_USER:-fedora}" "${GUEST_REPO:-low-latency-engineering}")}"
+}
+
 # _path_canonical P: succeed if P is absolute with no //, no . or .. component (so no spelling
 # can reach a protected path lexically that the checks below do not see).
 _path_canonical() {
@@ -858,11 +864,11 @@ _path_canonical() {
 }
 
 # _container_out_dir: print the validated, guest-resolved CONTAINER_OUT_DIR, or die. It must be
-# absolute, canonical, not /, strictly under LOWLAT_GUEST_ROOT (default /home/$GUEST_USER/$GUEST_REPO),
+# absolute, canonical, not /, strictly under LOWLAT_GUEST_ROOT (default: the guest user's home plus GUEST_REPO),
 # and (resolved in the guest, symlinks followed) still under the resolved root.
 _container_out_dir() {
   local out=${CONTAINER_OUT_DIR:-} root res_out res_root
-  root=${LOWLAT_GUEST_ROOT:-/home/${GUEST_USER:-fedora}/${GUEST_REPO:-low-latency-engineering}}
+  root=$(_guest_root)
   [[ -n $out ]] || _container_deny "a mount" "set CONTAINER_OUT_DIR to the declared output directory"
   _path_canonical "$out" && [[ $out != / ]] || _container_deny "CONTAINER_OUT_DIR '${CONTAINER_OUT_DIR}'" "must be an absolute canonical path (no //, ., .. or relative)"
   out=${out%/}
@@ -996,7 +1002,7 @@ container_run() (
         # repo's containers/seccomp/ directory in the guest, by base name.
         if [[ $val =~ ^seccomp=([A-Za-z0-9._-]+\.json)$ ]]; then
           seccomp=${BASH_REMATCH[1]}
-          run_args+=(--security-opt "seccomp=${LOWLAT_GUEST_ROOT:-/home/${GUEST_USER:-fedora}/${GUEST_REPO:-low-latency-engineering}}/examples/13-where-code-runs/containers/seccomp/$seccomp")
+          run_args+=(--security-opt "seccomp=$(_guest_root)/examples/13-where-code-runs/containers/seccomp/$seccomp")
         elif [[ $val == no-new-privileges || $val == no-new-privileges=true ]]; then
           run_args+=(--security-opt no-new-privileges)
         else
