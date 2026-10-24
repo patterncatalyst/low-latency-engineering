@@ -50,7 +50,7 @@ are REFERENCES only.
 - OSS Aeron is UDP-only; DPDK kernel-bypass on Aeron is a PAID feature - say so.
 
 ## Ground rules
-- Fedora 44. Python 3.14 (GIL + free-threaded, Appendix E). C++20/23 (no C++21).
+- Fedora 44. Python 3.14 (GIL + free-threaded, Appendix E). C++23 floor.
   Java 25 on the plain JVM (NOT Quarkus-native on the hot path).
 - Every example emits a latency DISTRIBUTION (p50/p99/p99.9), never a mean.
 - RT chapters show a before/after cyclictest jitter number.

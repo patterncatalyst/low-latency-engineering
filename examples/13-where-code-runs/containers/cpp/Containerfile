@@ -23,7 +23,7 @@ ARG NINJA_VERSION=1.13.2
 ARG NINJA_SHA256=5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6
 # hadolint ignore=DL3041
 RUN dnf -y --setopt=install_weak_deps=False install \
-        gcc-c++ make git python3 unzip tar gzip xz \
+        gcc-c++ make git python3 unzip tar gzip xz zlib-ng-compat-devel \
     && dnf clean all \
     && g++ --version | head -n1
 RUN curl -fsSL --retry 3 -o /tmp/cmake.tgz \
@@ -80,9 +80,10 @@ FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd0
 LABEL org.opencontainers.image.title="lowlat place-cpp" \
       org.opencontainers.image.description="Ch13 C++ lane: line simulator, line consumer, built with the UBI 10 GCC" \
       org.opencontainers.image.licenses="Apache-2.0"
-# libstdc++ is in the UBI 10 BaseOS repository; installing it is a no-op when the base already has it.
+# libstdc++ and zlib-ng-compat (libz, used by the HdrHistogram log writer) are in the UBI 10
+# BaseOS repository; installing them is a no-op when the base already has them.
 # hadolint ignore=DL3041
-RUN microdnf -y --setopt=install_weak_deps=0 install libstdc++ \
+RUN microdnf -y --setopt=install_weak_deps=0 install libstdc++ zlib-ng-compat \
     && microdnf clean all
 COPY --from=build /out/bin/ /usr/local/bin/
 ENV PATH=/usr/local/bin:/usr/bin:/bin
