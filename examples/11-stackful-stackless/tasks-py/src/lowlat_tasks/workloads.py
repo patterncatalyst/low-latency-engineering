@@ -89,7 +89,6 @@ def parked_threads(tasks: int, wait_ms: int, *, hold_ms: int = 0, announce: bool
 async def _parked_asyncio(
     tasks: int, wait_ms: int, woke: array, out: dict[str, Memory | int]
 ) -> None:
-    loop = asyncio.get_running_loop()
     barrier = asyncio.Barrier(tasks + 1)
     deadline = [0]
 
@@ -101,15 +100,16 @@ async def _parked_asyncio(
     gc.collect()
     out["before"] = memory()
     out["traced_before"] = tracemalloc.get_traced_memory()[0] if tracemalloc.is_tracing() else 0
-    created = [loop.create_task(waiter(i)) for i in range(tasks)]
-    when = time.monotonic_ns() + wait_ms * 1_000_000
-    deadline[0] = when
-    out["when"] = when
-    await barrier.wait()  # the gate: all `tasks` tasks and the coordinator are here
-    await asyncio.sleep(wait_ms / 2000)
-    out["parked"] = memory()
-    out["traced_parked"] = tracemalloc.get_traced_memory()[0] if tracemalloc.is_tracing() else 0
-    await asyncio.gather(*created)
+    async with asyncio.TaskGroup() as group:
+        for i in range(tasks):
+            group.create_task(waiter(i))
+        when = time.monotonic_ns() + wait_ms * 1_000_000
+        deadline[0] = when
+        out["when"] = when
+        await barrier.wait()  # the gate: all `tasks` tasks and the coordinator are here
+        await asyncio.sleep(wait_ms / 2000)
+        out["parked"] = memory()
+        out["traced_parked"] = tracemalloc.get_traced_memory()[0] if tracemalloc.is_tracing() else 0
     out["armed"] = barrier.parties - 1  # the barrier opened: all arrived
 
 
@@ -328,9 +328,9 @@ async def _pingpong_asyncio(
         out["acc"] = total
 
     before = ctx_switches()
-    b = loop.create_task(ponger())
-    await pinger()
-    await b
+    async with asyncio.TaskGroup() as group:
+        group.create_task(ponger())
+        await pinger()
     after = ctx_switches()
     out["served"] = served[0]
     out["voluntary"] = after[0] - before[0]
@@ -497,6 +497,8 @@ def neighbours_asyncio(
         "debug_mode": int(debug),
         "slow_callback_ms_x1000": int(slow_callback_ms * 1000) if debug else 0,
         "slow_callback_warnings": counter.count,
+        # Wakes later than 1.5 ms: past asyncio's own 1 ms epoll rounding.
+        "wakes_over_1500us": sum(1 for v in lateness if v > 1_500_000),
     }
     run.notes = (
         f"neighbours; model=asyncio-tasks; tasks={tasks}; iterations={iterations}; "

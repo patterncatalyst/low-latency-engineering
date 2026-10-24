@@ -17,6 +17,7 @@ final class PingPongRun {
 
     private static final Object TURN = new Object();
     private static final Object STOP = new Object();
+    private static final int PAD = 16; // longs: 128 bytes
 
     private PingPongRun() {
     }
@@ -37,10 +38,12 @@ final class PingPongRun {
         Placement.Gate gate = new Placement.Gate(2, holdMs, announce);
         SynchronousQueue<Object> ping = new SynchronousQueue<>();
         SynchronousQueue<Object> pong = new SynchronousQueue<>();
-        long[] slot = new long[16]; // slot[8] is the payload; neighbours on other lines are untouched
+        // Each field the two threads write sits in an array of its own, 128 bytes of padding either side of the cell
+        // (two cache lines: the adjacent-line prefetcher), so a write by one thread never invalidates the other's line.
+        long[] slot = new long[PAD * 2 + 1];
         long[] samples = new long[(int) (rounds / batch)];
-        long[] acc = new long[1];
-        long[] served = new long[1];
+        long[] acc = new long[PAD * 2 + 1]; // written by the ping side only
+        long[] served = new long[PAD * 2 + 1]; // written by the pong side only
         long[][] ctxA = new long[1][];
         long[][] ctxB = new long[1][];
         AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -50,8 +53,8 @@ final class PingPongRun {
             try (Placement.Pin _ = gate.workerReady(pinB, "pong")) {
                 long[] c0 = Placement.ctxSwitches();
                 while (ping.take() != STOP) {
-                    slot[8] += 1;
-                    served[0]++;
+                    slot[PAD] += 1;
+                    served[PAD]++;
                     pong.put(TURN);
                 }
                 ctxB[0] = delta(c0);
@@ -66,14 +69,14 @@ final class PingPongRun {
                 long[] c0 = Placement.ctxSwitches();
                 for (long w = 0; w < warmupBatches; w++) {
                     for (int j = 0; j < batch; j++) {
-                        acc[0] += turn(slot, ping, pong, j);
+                        acc[PAD] += turn(slot, ping, pong, j);
                     }
                 }
                 int at = 0;
                 for (long done = 0; done < rounds; done += batch) {
                     long t0 = System.nanoTime();
                     for (int j = 0; j < batch; j++) {
-                        acc[0] += turn(slot, ping, pong, j);
+                        acc[PAD] += turn(slot, ping, pong, j);
                     }
                     samples[at++] = Math.max(1, (System.nanoTime() - t0) / batch);
                 }
@@ -97,9 +100,9 @@ final class PingPongRun {
         long expected = (warmupBatches + rounds / batch) * ((long) batch * (batch + 1) / 2);
         Map<String, Long> counters = new HashMap<>();
         counters.put("round_trips", rounds);
-        counters.put("round_trips_served", served[0]);
+        counters.put("round_trips_served", served[PAD]);
         counters.put("warmup_round_trips", warmupBatches * batch);
-        counters.put("payload_mismatch", acc[0] == expected ? 0L : 1L);
+        counters.put("payload_mismatch", acc[PAD] == expected ? 0L : 1L);
         counters.put("start_skew_ns", gate.startSkewNs());
         counters.put("ctx_voluntary_a", ctxA[0][0]);
         counters.put("ctx_involuntary_a", ctxA[0][1]);
@@ -123,10 +126,10 @@ final class PingPongRun {
     }
 
     private static long turn(long[] slot, SynchronousQueue<Object> ping, SynchronousQueue<Object> pong, int j) throws InterruptedException {
-        slot[8] = j;
+        slot[PAD] = j;
         ping.put(TURN);
         pong.take();
-        return slot[8];
+        return slot[PAD];
     }
 
     private static long[] delta(long[] start) {

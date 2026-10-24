@@ -56,7 +56,7 @@ CtxSwitches since(const CtxSwitches& start) {
 template <class F>
 std::expected<void, std::string> on_worker(Gate& gate, int cpu, std::string role, F&& body) {
   std::string error;
-  std::thread worker{[&] {
+  std::jthread worker{[&] {
     try {
       gate.worker_ready(cpu, std::move(role));
       body();
@@ -217,7 +217,7 @@ std::expected<Run, std::string> parked_fibers(const ParkedParams& p, Gate& gate)
   Run r;
   std::vector<std::int64_t> woke(n, 0);
   std::int64_t when = 0;
-  std::size_t armed = 0;
+  std::size_t armed = 0, armed_at_snapshot = 0;
   MemorySnapshot before, parked;
   auto ran = on_worker(gate, p.cpu, "fibers", [&] {
     before = memory_snapshot();
@@ -234,13 +234,14 @@ std::expected<Run, std::string> parked_fibers(const ParkedParams& p, Gate& gate)
     }
     boost::this_fiber::sleep_for(p.wait / 2);  // the fibers start now and park
     parked = memory_snapshot();
+    armed_at_snapshot = armed;  // how many fibers had run to their wait when the memory was read
     for (auto& f : fibers) f.join();
   });
   if (!ran) return std::unexpected(ran.error());
   add_lateness(r, woke, when);
   r.cpus = gate.cpus();
   r.counters["tasks"] = static_cast<std::int64_t>(n);
-  r.counters["tasks_armed"] = static_cast<std::int64_t>(armed);
+  r.counters["tasks_armed"] = static_cast<std::int64_t>(armed_at_snapshot);
   r.counters["fiber_stack_bytes"] = static_cast<std::int64_t>(kFiberStackBytes);
   add_memory(r, before, parked, n);
   r.notes = std::format("parked; model=fiber; stack=protected_fixedsize_stack({} KiB); wait_ms={}", kFiberStackBytes / 1024, p.wait.count());
@@ -254,10 +255,12 @@ asio::awaitable<void> parked_waiter(std::int64_t when, std::int64_t* woke, std::
   *woke = now_ns();
 }
 
-asio::awaitable<void> memory_after(std::chrono::milliseconds delay, MemorySnapshot* out) {
+asio::awaitable<void> memory_after(std::chrono::milliseconds delay, MemorySnapshot* out, const std::size_t* armed,
+                                   std::size_t* armed_at_snapshot) {
   asio::steady_timer timer{co_await asio::this_coro::executor, delay};
   co_await timer.async_wait(asio::use_awaitable);
   *out = memory_snapshot();
+  *armed_at_snapshot = *armed;  // how many coroutines had reached their wait when the memory was read
 }
 
 std::expected<Run, std::string> parked_coroutines(const ParkedParams& p, Gate& gate) {
@@ -265,7 +268,7 @@ std::expected<Run, std::string> parked_coroutines(const ParkedParams& p, Gate& g
   Run r;
   std::vector<std::int64_t> woke(n, 0);
   std::int64_t when = 0;
-  std::size_t armed = 0;
+  std::size_t armed = 0, armed_at_snapshot = 0;
   MemorySnapshot before, parked;
   FrameProbe probe;
   auto ran = on_worker(gate, p.cpu, "coroutines", [&] {
@@ -273,7 +276,7 @@ std::expected<Run, std::string> parked_coroutines(const ParkedParams& p, Gate& g
     before = memory_snapshot();
     when = now_ns() + ns_of(p.wait);
     for (std::size_t i = 0; i < n; ++i) asio::co_spawn(ctx, parked_waiter(when, &woke[i], &armed), asio::detached);
-    asio::co_spawn(ctx, memory_after(p.wait / 2, &parked), asio::detached);
+    asio::co_spawn(ctx, memory_after(p.wait / 2, &parked, &armed, &armed_at_snapshot), asio::detached);
     ctx.run();
     probe = probe_frames(n, 1000);
   });
@@ -281,7 +284,7 @@ std::expected<Run, std::string> parked_coroutines(const ParkedParams& p, Gate& g
   add_lateness(r, woke, when);
   r.cpus = gate.cpus();
   r.counters["tasks"] = static_cast<std::int64_t>(n);
-  r.counters["tasks_armed"] = static_cast<std::int64_t>(armed);
+  r.counters["tasks_armed"] = static_cast<std::int64_t>(armed_at_snapshot);
   add_memory(r, before, parked, n);
   r.counters["frames_parked"] = static_cast<std::int64_t>(probe.parked_frames);
   r.counters["frame_allocations"] = static_cast<std::int64_t>(probe.allocations);
@@ -349,6 +352,8 @@ template <class Token>
 struct Shared {
   Token ping, pong;
   PaddedSlot slot;
+  PaddedSlot acc;     // written by the ping side only
+  PaddedSlot served;  // written by the pong side only
 };
 
 /// What A adds up over every turn: the slot after B added 1 to the value A stored, 0..batch-1.
@@ -378,7 +383,6 @@ std::expected<Run, std::string> pingpong_threads(const PingPongParams& p, std::s
   Gate gate{2, p.hold};
   Shared<Token> sh;
   Run r;
-  std::uint64_t acc = 0, served = 0;
   CtxSwitches ca, cb;
   std::string error_a, error_b;
   const int cpu_a = p.cpus.empty() ? -1 : p.cpus[0];
@@ -391,7 +395,7 @@ std::expected<Run, std::string> pingpong_threads(const PingPongParams& p, std::s
         sh.ping.wait();
         if (stop.stop_requested()) break;
         sh.slot.v += 1;
-        ++served;
+        ++sh.served.v;
         sh.pong.post();
       }
       cb = since(c0);
@@ -399,7 +403,7 @@ std::expected<Run, std::string> pingpong_threads(const PingPongParams& p, std::s
       error_b = e.what();
     }
   }};
-  std::thread a{[&] {
+  std::jthread a{[&] {
     try {
       gate.worker_ready(cpu_a, "ping");
       const CtxSwitches c0 = thread_ctx_switches();
@@ -407,7 +411,7 @@ std::expected<Run, std::string> pingpong_threads(const PingPongParams& p, std::s
         sh.slot.v = j;
         sh.ping.post();
         sh.pong.wait();
-        acc += sh.slot.v;
+        sh.acc.v += sh.slot.v;
       };
       for (std::uint64_t w = 0; w < p.warmup_batches; ++w) {
         for (std::uint64_t j = 0; j < p.batch; ++j) turn(j);
@@ -429,7 +433,7 @@ std::expected<Run, std::string> pingpong_threads(const PingPongParams& p, std::s
   b.join();
   if (auto pin = gate.error()) return std::unexpected(*pin);
   if (!error_a.empty() || !error_b.empty()) return std::unexpected(error_a + error_b);
-  finish_pingpong(r, p, acc, served, ca, cb, gate);
+  finish_pingpong(r, p, sh.acc.v, sh.served.v, ca, cb, gate);
   r.notes = std::format("pingpong; model=os-thread (jthread and stop_token, {}); rounds={}; batch={}; sample=batch time / batch", primitive,
                         p.rounds, p.batch);
   return r;

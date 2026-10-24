@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <exception>
 #include <filesystem>
 #include <format>
@@ -113,8 +114,16 @@ class Decider {
   std::atomic<std::uint64_t> exception_lane_{0};
 };
 
-void poll_until_zero(const std::atomic<std::uint64_t>& counter) {
-  while (counter.load(std::memory_order_acquire) != 0) std::this_thread::sleep_for(1ms);
+/// Blocks until `counter` reads 0: std::atomic::wait sleeps on a futex until the writer that brings it to 0 notifies.
+void wait_until_zero(const std::atomic<std::uint64_t>& counter) {
+  for (std::uint64_t now = counter.load(std::memory_order_acquire); now != 0; now = counter.load(std::memory_order_acquire)) {
+    counter.wait(now, std::memory_order_acquire);
+  }
+}
+
+/// One finished lookup: decrement and wake the waiter when it was the last.
+void finish_one(std::atomic<std::uint64_t>& counter) {
+  if (counter.fetch_sub(1, std::memory_order_acq_rel) == 1) counter.notify_all();
 }
 
 // ---- os-thread --------------------------------------------------------------------------------------------------------
@@ -131,21 +140,17 @@ class ThreadHandler {
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
     if (done_ == nullptr) done_ = &done;
     spawned_.fetch_add(1, std::memory_order_relaxed);
-    outstanding_.fetch_add(1, std::memory_order_acq_rel);
+    reap();
     // A thread per lookup. Completion is single-writer, so the threads take turns at it under a mutex.
-    std::thread{[this, scan = Scan::of(ev)] {
-      ::sched_setaffinity(0, sizeof allowed_, &allowed_);
-      std::this_thread::sleep_for(kLookupWait);
-      const std::int64_t done_ns = decider_->decide(scan);
-      {
-        const std::scoped_lock lock{mutex_};
-        done_->complete(scan.seq, scan.intended_ns, done_ns);
-      }
-      outstanding_.fetch_sub(1, std::memory_order_acq_rel);
-    }}.detach();
+    lookups_.emplace_back(this, Scan::of(ev));
   }
 
-  void drain(line::Completion&) { poll_until_zero(outstanding_); }
+  /// Joins every lookup that has finished (the oldest first; they all wait the same 2 ms) so threads don't pile up.
+  void reap() {
+    while (!lookups_.empty() && lookups_.front().done.load(std::memory_order_acquire)) lookups_.pop_front();
+  }
+
+  void drain(line::Completion&) { lookups_.clear(); }  // joins every lookup still in flight
   [[nodiscard]] std::uint64_t spawned() const { return spawned_.load(std::memory_order_relaxed); }
 
  private:
@@ -153,8 +158,24 @@ class ThreadHandler {
   cpu_set_t allowed_{};
   line::Completion* done_ = nullptr;
   std::mutex mutex_;
-  std::atomic<std::uint64_t> outstanding_{0};
   std::atomic<std::uint64_t> spawned_{0};
+
+  struct Lookup {
+    std::atomic<bool> done{false};
+    std::jthread thread;  // declared after `done`: it starts in the constructor and sets it last
+    Lookup(ThreadHandler* owner, Scan scan)
+        : thread{[owner, scan, this] {
+            ::sched_setaffinity(0, sizeof owner->allowed_, &owner->allowed_);
+            std::this_thread::sleep_for(kLookupWait);
+            const std::int64_t done_ns = owner->decider_->decide(scan);
+            {
+              const std::scoped_lock lock{owner->mutex_};
+              owner->done_->complete(scan.seq, scan.intended_ns, done_ns);
+            }
+            done.store(true, std::memory_order_release);
+          }} {}
+  };
+  std::deque<Lookup> lookups_;  // touched by the receive thread only
 };
 
 // ---- fiber ----------------------------------------------------------------------------------------------------------------
@@ -164,7 +185,7 @@ class FiberHandler {
   explicit FiberHandler(Decider& decider) : decider_{&decider} {}
 
   void start(tasks::Gate& gate, int cpu) {
-    executor_ = std::thread{[this, &gate, cpu] {
+    executor_ = std::jthread{[this, &gate, cpu] {
       gate.worker_ready(cpu, "fibers");
       boost::context::protected_fixedsize_stack stack{tasks::kFiberStackBytes};
       std::size_t live = 0;  // touched by this thread only: every fiber runs on it
@@ -198,7 +219,7 @@ class FiberHandler {
   Decider* decider_;
   line::Completion* done_ = nullptr;
   boost::fibers::buffered_channel<Scan> channel_{1U << 14};
-  std::thread executor_;
+  std::jthread executor_;
   std::atomic<std::uint64_t> spawned_{0};
 };
 
@@ -209,7 +230,7 @@ class CoroutineHandler {
   explicit CoroutineHandler(Decider& decider) : decider_{&decider}, guard_{asio::make_work_guard(ctx_)} {}
 
   void start(tasks::Gate& gate, int cpu) {
-    executor_ = std::thread{[this, &gate, cpu] {
+    executor_ = std::jthread{[this, &gate, cpu] {
       gate.worker_ready(cpu, "coroutines");
       ctx_.run();
     }};
@@ -223,7 +244,7 @@ class CoroutineHandler {
   }
 
   void drain(line::Completion&) {
-    poll_until_zero(outstanding_);
+    wait_until_zero(outstanding_);
     guard_.reset();
     executor_.join();
   }
@@ -235,14 +256,14 @@ class CoroutineHandler {
     co_await timer.async_wait(asio::use_awaitable);
     const std::int64_t done_ns = decider_->decide(scan);
     done_->complete(scan.seq, scan.intended_ns, done_ns);
-    outstanding_.fetch_sub(1, std::memory_order_acq_rel);
+    finish_one(outstanding_);
   }
 
   Decider* decider_;
   line::Completion* done_ = nullptr;
   asio::io_context ctx_{1};
   asio::executor_work_guard<asio::io_context::executor_type> guard_;
-  std::thread executor_;
+  std::jthread executor_;
   std::atomic<std::uint64_t> outstanding_{0};
   std::atomic<std::uint64_t> spawned_{0};
 };
@@ -284,7 +305,7 @@ int run(const tasks::Options& o, const std::string& variant, bool has_executor) 
   line::ConsumerResult result;
   std::string failure;
   handler.start(gate, cpus.back());
-  std::thread receive{[&] {
+  std::jthread receive{[&] {
     gate.worker_ready(cpus.front(), "receive");
     try {
       result = line::consume_with(cfg, line::g_stop, end_to_end, handler,
