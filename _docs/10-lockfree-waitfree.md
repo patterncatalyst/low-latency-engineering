@@ -325,7 +325,7 @@ On the line all four variants counted 200,000 parcels, dropped none, and receive
 
 jcstress and the C++ harness run the same store-buffering test independently, under different memory models and tooling, and agree on both orderings in all three runs.
 
-Context-switch counters explain the claim tails: the `mutex` producers sleep thousands of times, the `fetch-add` producers at most four (a median of one across the 18 claim runs, two in Java), and the `mutex` p99 sits 6x to 15x above `fetch-add`'s.
+Context-switch counters explain the claim tails: the `mutex` producers sleep hundreds to thousands of times each, the `fetch-add` producers at most four (a median of one across the 18 claim runs, two in Java), and the `mutex` p99 sits 6x to 15x above `fetch-add`'s.
 
 With C2's default loop unrolling, adjacent volatile stores in the JMH loop share one fence and the benchmark under-reports the cost, so `StoreBenchmark` runs with `-XX:LoopUnrollLimit=1`; the 4 ns above is one fence per store.
 
