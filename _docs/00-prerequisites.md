@@ -42,7 +42,7 @@ Dependencies are pinned to exact upstream releases: protobuf 36.2 (Java 4.36.2, 
 
 ### Checking the host
 
-`scripts/check-prereqs.sh` only checks: it never installs, uses sudo or starts a VM. Each check prints one PASS, WARN or FAIL line, every WARN and FAIL carries an install hint, and the exit status is 0 unless something FAILed. It covers the compilers, zlib headers, CMake, JDK, Maven, Python, `uv`, the pinned `protoc`, Docker Engine and libvirt. With `--vm` it runs inside the guest over ssh and checks the PREEMPT_RT kernel, `cyclictest`, `ptp4l`, `tuned` and Docker.
+`scripts/check-prereqs.sh` only checks: it never installs, uses sudo or starts a VM. Each check prints one PASS, WARN or FAIL line, every WARN and FAIL carries an install hint, and the exit status is 0 unless something FAILed. It covers the compilers, zlib headers, CMake, JDK, Maven, Python, `uv`, the pinned `protoc`, Docker Engine and libvirt. With `--vm` it runs inside the guest over ssh and checks the stock-kernel guest that Chapter 13 uses: the pinned stock kernel, no isolation arguments, Docker, the locked container images and a few recorded facts. With `--vm --rt` it checks the PREEMPT_RT guests instead: the RT kernel, `cyclictest`, `ptp4l`, `tuned` and Docker.
 
 ### The machine profile
 

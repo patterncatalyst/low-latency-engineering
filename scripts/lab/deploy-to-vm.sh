@@ -30,10 +30,14 @@ done
 echo "→ syncing examples/, scripts/, contracts/, versions.env and .dockerignore to ${DEST}:${REMOTE_DIR}"
 # shellcheck disable=SC2029  # REMOTE_DIR is meant to expand on the client
 ssh "${SSH_OPTS[@]}" "$DEST" "mkdir -p '${REMOTE_DIR}'"
+# --delete wipes anything in the guest under examples/ that the host tree lacks, including results
+# the guest produced (examples/*/results/...) and IMAGES.lock digests written by build-images.sh in
+# the guest. Fetch those first (see scripts/lab/README.md), then redeploy.
 printf -v rsh '%q ' ssh "${SSH_OPTS[@]}"
 rsync -az --delete \
   -e "$rsh" \
   --exclude '.git' --exclude 'target/' --exclude 'build/' --exclude '__pycache__' --exclude '.venv' \
+  --exclude 'results/latest/' --exclude '*.local.md' \
   "$REPO_ROOT/examples" "$REPO_ROOT/scripts" "$REPO_ROOT/contracts" \
   "$REPO_ROOT/versions.env" "$REPO_ROOT/.dockerignore" \
   "${DEST}:${REMOTE_DIR}/"

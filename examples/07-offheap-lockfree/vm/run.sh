@@ -69,7 +69,7 @@ SIM=$(cpp_bin line-simulator)
 [[ -f $JAR ]] || die "no $JAR"
 
 step "guest prerequisites"
-"$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm | tee "$VMDIR/check-prereqs.txt"
+"$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm --rt | tee "$VMDIR/check-prereqs.txt"
 lab_ssh 'java -version 2>&1' >"$VMDIR/guest-java.txt"
 java_line=$(head -n2 "$VMDIR/guest-java.txt" | tr '\n' ' ')
 [[ $java_line == *"Temurin-$TEMURIN_VERSION+"* ]] || die "guest java is not Temurin $TEMURIN_VERSION: $java_line"

@@ -80,7 +80,7 @@ if [[ ${VM:-0} == 1 ]]; then
   VMDIR=$RESULTS/vm
   mkdir -p "$VMDIR"
   TARGET=${TARGET_VM:-lowlat-target}
-  "$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm | tee "$VMDIR/check-prereqs.txt"
+  "$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm --rt | tee "$VMDIR/check-prereqs.txt"
   "$LOWLAT_ROOT/scripts/lab/deploy-to-vm.sh" "$TARGET"
   lab_ssh() { "$LOWLAT_ROOT/scripts/lab/lab-ssh.sh" "$TARGET" "$@"; }
   # cyclictest needs root: the guest has passwordless sudo, the host is untouched.

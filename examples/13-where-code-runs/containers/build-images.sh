@@ -27,8 +27,13 @@ for lane in "${lanes[@]}"; do
   line="$(awk -v r="$ref" '!/^[[:space:]]*(#|$)/ && index($1, r "@") == 1 { print; exit }' "$LOCK")"
   [[ -n "$line" ]] || { echo "$ref is not listed in $LOCK" >&2; exit 1; }
   for base in $(awk '{ for (i = 2; i <= NF; i++) { f = $i; sub(/^builder=/, "", f); print f } }' <<<"$line"); do
-    grep -q "^FROM $base" "$cf" || { echo "$cf has no FROM $base (IMAGES.lock and the Containerfile disagree)" >&2; exit 1; }
+    grep -qF "FROM $base" "$cf" || { echo "$cf has no FROM $base (IMAGES.lock and the Containerfile disagree)" >&2; exit 1; }
   done
+  # And the other way: every pinned FROM in the Containerfile must be listed in the lock line.
+  while read -r from_ref; do
+    [[ " $(awk '{ for (i = 2; i <= NF; i++) { f = $i; sub(/^builder=/, "", f); printf "%s ", f } }' <<<"$line") " == *" $from_ref "* ]] ||
+      { echo "$cf has FROM $from_ref, which IMAGES.lock does not list for $ref" >&2; exit 1; }
+  done < <(awk '$1 == "FROM" && $2 ~ /@sha256:/ { print $2 }' "$cf")
   echo "== building $ref"
   docker build -f "$cf" -t "$ref" "$ROOT"
   id="$(docker image inspect --format '{{.Id}}' "$ref")"

@@ -39,7 +39,7 @@ Usage: check-prereqs.sh [--vm [--rt]] [-h|--help]
               Python 3.14, uv, pinned protoc, Docker Engine, KVM/libvirt,
               perf, async-profiler (optional), jq, rsync, SSH key
   --vm        check the lab guest (lowlat-target) over SSH instead, for the r04
-              "ordinary VM" (snapshot lab-ready-r04): stock kernel booted, no
+              "ordinary VM" (snapshot lab-ready-r04): pinned stock kernel booted, no
               isolcpus/nohz_full/rcu_nocbs, pinned Temurin, stress-ng, strace, perf,
               cyclictest, ptp4l, phc2sys, tuned (active profile recorded), Docker active
               with the user in the docker group (version recorded), the images in
@@ -398,10 +398,10 @@ check_vm_stock_kernel() {
   local kr kv
   kr="$(vm uname -r || true)"
   kv="$(vm uname -v || true)"
-  if [[ -n "$kr" && "$kr" != *lowlatrt* && "$kv" != *PREEMPT_RT* ]]; then
-    record PASS "guest stock kernel" "$kr"
+  if [[ -n "$kr" && "$kr" == "$LAB_STOCK_KERNEL".* && "$kr" != *lowlatrt* && "$kv" != *PREEMPT_RT* ]]; then
+    record PASS "guest stock kernel" "$kr (pinned $LAB_STOCK_KERNEL)"
   else
-    record FAIL "guest stock kernel" "running ${kr:-?} (${kv:-?})" "revert to snapshot lab-ready-r04 (or lab-ready) with scripts/lab/revert-vm.sh $LAB_VM, or boot the stock entry"
+    record FAIL "guest stock kernel" "running ${kr:-?} (${kv:-?}), pinned $LAB_STOCK_KERNEL" "install and boot the pinned stock kernel: scripts/lab/apply-guest-profile.sh stock-unpinned (recipe in scripts/lab/README.md); or revert to snapshot lab-ready-r04 (or lab-ready) with scripts/lab/revert-vm.sh $LAB_VM, or boot the stock entry"
   fi
 }
 
@@ -424,12 +424,16 @@ check_vm_cmdline() {
 }
 
 check_vm_unpinned() {
-  local n
-  n="$(virsh -c qemu:///system dumpxml "$LAB_VM" 2>/dev/null | grep -c '<vcpupin ' || true)"
+  local xml n
+  if ! xml="$(virsh -c qemu:///system dumpxml "$LAB_VM" 2>/dev/null)" || [[ -z "$xml" ]]; then
+    record FAIL "guest vcpupin" "virsh dumpxml $LAB_VM failed" "check libvirt access (the libvirt group)"
+    return
+  fi
+  n="$(grep -c '<vcpupin ' <<<"$xml" || true)"
   if [[ "$n" == 0 ]]; then
     record PASS "guest vcpupin" "no <vcpupin> in the domain (unpinned)"
   else
-    record WARN "guest vcpupin" "the domain pins $n vCPU(s)" "scripts/lab/pin-vcpu.sh --remove, or revert to lab-ready-r04"
+    record WARN "guest vcpupin" "the domain pins $n vCPU(s)" "scripts/lab/pin-vcpu.sh --remove, then a full lab-down and lab-up"
   fi
 }
 
@@ -475,7 +479,7 @@ check_vm_images() {
   fi
   while read -r line; do
     [[ -z "$line" || "$line" == \#* ]] && continue
-    line="${line%% *}"
+    read -r line _ <<<"$line"
     ref="${line%@*}"
     want="${line#*@}"
     if [[ ! "$want" =~ ^sha256:[0-9a-f]{64}$ ]]; then
@@ -597,6 +601,9 @@ main() {
     esac
     shift
   done
+  if [[ "$vm_mode" == rt && "$mode" != vm ]]; then
+    echo "--rt only applies with --vm" >&2; usage >&2; exit 2
+  fi
   if [[ "$mode" == vm ]]; then run_vm "$vm_mode"; else run_host; fi
   printf '\nSummary: %d PASS, %d WARN, %d FAIL\n' "$N_PASS" "$N_WARN" "$N_FAIL"
   ((N_FAIL == 0))
