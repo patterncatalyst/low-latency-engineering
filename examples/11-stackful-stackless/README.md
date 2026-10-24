@@ -115,8 +115,9 @@ counts are kept. The JFR file never lands in the tree.
 Pinning of a virtual thread is the carrier's: a call to `Affinity.setAffinity` from a virtual thread lands on the carrier
 thread that's running it. With one carrier, both ping-pong threads print the same tid and CPU, and `verify.sh` checks both lines.
 The virtual-thread run's context-switch count is read by the ping thread from `/proc/thread-self`, which is the carrier that thread is
-on when it reads. With `parallelism=1` there is one carrier unless the scheduler compensates for a pinned virtual thread, and the
-ping-pong never pins, so the count is the carrier's; a second carrier would split it, and nothing in the report would show that.
+on when it reads. With `parallelism=1` there is one carrier, unless the JDK compensates for the blocking `/proc` read itself by adding
+one (a file read from a virtual thread can do that); the ping-pong's queue operations never block a carrier. A second carrier would
+split the count, and nothing in the report would show it.
 
 ### Python
 
@@ -192,10 +193,11 @@ per-alternation ratios; a p50 is never compared across runs. Counters marked exa
 provisional and sit in variables at the top of `verify.sh`; calibration (S10, see `_plans/r04-plan.md`) decides which stay asserted.
 
 1. **Memory per waiting task, on the quantity that shows the gap.** C++ `os-thread` over `fiber` on address space per task
-   (`VmSize` growth over the 10,000 tasks) at least 10x; C++ fiber stack bytes per task over the counted coroutine frame
+   (`VmSize` growth over the 10,000 tasks) at least 10x; C++ fiber address space per task (measured `VmSize` growth, about 68 KiB) over the counted coroutine frame
    bytes at least 10x; the coroutine frame itself at most 1,024 bytes (exact: the promise's counting `operator new`, on frames
    that escape into a vector) with one allocation per frame (exact). Java `platform-thread` address space per task over
-   `virtual-thread` heap per task (`MemoryMXBean` after a forced collection) at least 10x. Python thread RSS over asyncio task
+   `virtual-thread` address space per task (`VmSize` growth) at least 10x, the same measure as the C++ pair. Platform-thread RSS
+   over virtual-thread RSS, and over virtual-thread heap (`MemoryMXBean` after a forced collection), are printed as observed. Python thread RSS over asyncio task
    bytes (measured by `tracemalloc`, not exact) at least 5x, in each build.
 2. **Parked tasks armed, and RSS observed.** For the C++ `fiber` and `coroutine` variants, the number of tasks that had reached
    their wait when the memory was read equals 10,000 (exact). In the other parked runs the start gate opens only when every task
