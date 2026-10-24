@@ -40,8 +40,8 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * </ul>
  *
  * The JDK has no io_uring, so there is no completion variant here: that is the divergence from C++.
- * The whole measured loop is warmed first: the same threads and sockets run a pass fed in-process,
- * and its result is thrown away.
+ * The whole measured loop is warmed first: the same receive code runs a pass of its own threads and sockets,
+ * fed in-process, and its result is thrown away.
  */
 final class ReceiveRun {
 
@@ -52,7 +52,8 @@ final class ReceiveRun {
     private ReceiveRun() {
     }
 
-    /** One thread's counters. Each receive thread allocates its own, so two threads do not share a line. */
+    /** One thread's counters. Each receive thread allocates its own, so two threads are unlikely to share a line (Java has no
+     * {@code alignas}; separate allocations from separate thread-local buffers are likely, not guaranteed, to sit on separate lines). */
     static final class Counters {
         long datagrams;
         long malformed;

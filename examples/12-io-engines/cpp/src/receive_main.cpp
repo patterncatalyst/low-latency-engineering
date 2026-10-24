@@ -163,6 +163,12 @@ int run(const lf::Options& o) {
     }
     try {
       auto handle = [&](std::size_t camera, std::span<const std::byte> bytes) {
+        const std::int64_t now = line::monotonic_ns();
+        if (counters.first_rx_ns == 0) {
+          counters.first_rx_ns = now;
+          counters.cpu_first_ns = io::thread_cpu_ns();
+        }
+        counters.last_rx_ns = now;
         io::spin_work(receive_ns);
         if (const auto parcel = io::accept(cameras[camera], bytes, counters)) {
           if (pool) {
@@ -180,6 +186,7 @@ int run(const lf::Options& o) {
     } catch (const std::exception& e) {
       shared.failures[r] = e.what();
     }
+    counters.cpu_last_ns = io::thread_cpu_ns();
     for (const io::Camera& c : cameras) shared.lost[r] += c.lost();
     if (pool) pool->finish();
   };
@@ -224,6 +231,8 @@ int run(const lf::Options& o) {
   merged.add_dropped(dropped);
 
   const std::int64_t skew_ns = last_start - first_start;
+  std::int64_t busiest = 0;  // the most loaded receive thread: the acceptor, or the busiest of the four receivers
+  for (std::size_t r = 0; r < plan.receivers; ++r) busiest = std::max(busiest, io::busy_permille(shared.counters[r]));
   const std::uint64_t syscalls = total.syscalls();
   std::println("receive: {} parcels {} dropped {} syscalls {} (epoll_wait {} recvmsg {} recvmmsg {} io_uring_enter {}) cqes {} handoffs {} start skew {} ns",
                plan.variant, total.parcels, dropped, syscalls, total.epoll_waits, total.recvmsgs, total.recvmmsgs,
@@ -247,6 +256,7 @@ int run(const lf::Options& o) {
                                            {"multishot_rearms", count(total.rearms)},
                                            {"handoffs", count(total.handoffs)},
                                            {"start_skew_ns", skew_ns},
+                                           {"receiver_busy_permille_max", busiest},
                                            {"io_uring_setup_errno", 0},
                                            {"rcvbuf_granted", shared.rcvbuf[0]},
                                            {"threads", count(plan.threads())}});

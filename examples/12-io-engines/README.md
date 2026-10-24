@@ -28,14 +28,14 @@ no equivalent, the divergence is the lesson: the JDK has no io_uring, and neithe
   thread holds the wait. `worker-pool`: `@Blocking` and `Thread.sleep(2)` on a worker pool fixed at 8 threads.
   `virtual-thread`: `@RunOnVirtualThread` and `Thread.sleep(2)`, which parks the virtual thread and frees its carrier.
   And the defect `blocking-on-event-loop`: the same `Thread.sleep(2)` on the event loop, which holds one of its few
-  threads for the whole wait. The load exceeds the pool on purpose. By Little's law (Ch2), 5 kHz x 2 ms is 10 requests in
-  flight, and a pool of 8 cannot hold them.
+  threads for the whole wait. The load exceeds the pool. By Little's law (Ch2), 5 kHz x 2 ms is 10 requests in
+  flight, and a pool of 8 can't hold them.
 - **(d) Python.** `asyncio-datagram` (`loop.create_datagram_endpoint`, the selector loop) against `blocking-thread` (one
   thread per socket, under the GIL and under the free-threaded build) against `uvloop` (GIL build only).
 
 Where the code leaves the ordinary idiom, it says why. `epoll_wait` plus `recvmsg` written out by hand, beside the
 idiom, is there to show the system calls; Boost.Asio's reactor runs this loop for you. The spin-waiting hand-off workers
-and the pinned threads exist to expose the mechanism; they are not advice for general code.
+and the pinned threads exist to expose the mechanism; they're not advice for general code.
 
 ## Workload
 
@@ -44,18 +44,22 @@ and the pinned threads exist to expose the mechanism; they are not advice for ge
   decodes `seq` and `intended_emit_ns` at fixed offsets, checks the sequence, looks up the lane for the SSCC and records
   `now - intended_emit_ns` into an HdrHistogram. UDP ports 47320 to 47335, one per camera.
   - **Line.** 2.5 kHz per camera x 20 s: 200,000 parcels.
-  - **Saturation.** A rate per camera, chosen so the mechanism shows with `dropped = 0`. They are variables at the top of
-    `verify.sh`. `DECIDE_NS` (3 us) is the decide work this example does not build (the tracker lookup and the divert
-    command's encode), modelled as a busy-wait per parcel. Without it one receive thread has a capacity the four
-    simulators cannot exceed, and nothing saturates. The three single-thread engines run at 60 kHz per camera (240 kHz
-    offered, one thread, 3 us of decide work each: about 72 percent busy). The layout pair, `thread-per-core` against
-    `acceptor-pool`, runs at 66 kHz per camera with `RECEIVE_NS_LAYOUT` (3.5 us) of modelled receive-side work per
-    datagram, done by whichever thread received it: the validation a real camera frame carries (a checksum, a framing
-    check) that this flat wire doesn't. That is what a single acceptor can't spread over cores. One acceptor then has a
-    capacity of about 260 kHz against 264 kHz offered, and four threads each carry a quarter of the work at about
-    half load. Without the receive-side work both layouts keep up until the simulators themselves fall behind
-    (around 150 kHz per camera on this host), so the difference never shows. The input is a model, like `DECIDE_NS`,
-    and both are printed in each report's notes.
+  - **Saturation.** A rate per camera for each lane, set where the mechanism shows and nothing drops (`dropped = 0` is
+    asserted for every saturation run). The rates are variables at the top of `verify.sh`. `DECIDE_NS` (3 us) is the
+    decide work this example doesn't build (the tracker lookup and the divert command's encode), modelled as a busy-wait
+    per parcel. Without it one receive thread has a capacity the four simulators can't exceed, and nothing saturates. The
+    three single-thread engines run at 60 kHz per camera: 240 kHz offered, 3 us of decide work each, so the thread is
+    about 72 percent busy.
+  - **The layout pair.** `thread-per-core` and `acceptor-pool` run at 52 kHz per camera (208 kHz offered) with
+    `RECEIVE_NS_LAYOUT` (3.5 us) of modelled receive-side work per datagram, done by whichever thread received it. That's
+    the serial receive stage: the validation a real camera frame carries (a checksum, a framing check) that this flat
+    wire doesn't have, and the part of the work a single acceptor can't spread over cores. At that rate the acceptor is on
+    a CPU for about 80 to 85 percent of its receive window (the run measures it with the thread's CPU time and checks it
+    stays inside a guard band), while each of the four receivers is about 40 percent busy. Push the rate higher and the
+    acceptor overloads: the sockets' buffers fill, parcels drop, and the p99 is a backlog growing for the length of the
+    run, not a property of the layout. So the tail ratio is observed, and the exact hand-off counts carry the claim. The
+    input is a model, like `DECIDE_NS`, and both are printed in each report's notes. Without the receive-side work both
+    layouts keep up until the simulators themselves fall behind (around 150 kHz per camera on this host).
   - The commands keep their own channel (Ch10): this example measures the receive and decide path and sends no divert
     command.
 - **(c) the service.** `GET /plan/<variant>/<sscc>` over HTTP/1.1 on loopback (TCP 47336), 2 ms downstream wait. The open-loop
@@ -64,8 +68,8 @@ and the pinned threads exist to expose the mechanism; they are not advice for ge
   measurement at `Q_RATE` (5 kHz): the Little's-law in-flight number, `Q_RATE x 2 ms` = 10 against a pool of 8, is printed and
   recorded in the report's `model` block. The plan's example was 12 kHz against 16; a JDK HTTP/1.1 client and a four-core
   Quarkus service on this host fall behind in every variant above about 6 kHz, the pool or not, so the pool shrank to 8 and
-  the rate to 5 kHz to keep `lambda x W` above it. The defect variant runs at `DEFECT_RATE` (1.8 kHz): four event loops each
-  blocked for 2 ms carry at most 2 kHz, so it is driven below that and the queue it shows is the loop's, not the client's. The client records its own lateness (a second report, variant `client-lateness`) and counts the
+  the rate to 5 kHz to keep `lambda x W` above it. The defect variant runs at `DEFECT_RATE` (1.85 kHz): four event loops each
+  blocked for 2 ms carry at most 2 kHz, so it is driven below that and the queue it shows is the loop's, not the client's. The `event-loop` variant runs at the same rate in every alternation as the control for it. The client records its own lateness (a second report, variant `client-lateness`) and counts the
   requests it started more than a millisecond late; the JDK client opens a connection for every request that finds none
   idle, so a request never waits for a connection, and `max_in_flight` is the evidence.
   HTTP/1.1 on loopback is a harness, not a transport recommendation (Part 6).
@@ -74,7 +78,7 @@ Placement is unprivileged `sched_setaffinity` on our own threads (`pthread_setaf
 `os.sched_setaffinity`) on one logical CPU per physical core from `distinct_cores`, CPU 0 left out. The simulators and the
 open-loop client run on the CPUs of the cores that are left over, so they never share a core with a thread under test, and
 the Quarkus server gets four of the pinned cores (so the JVM reports 4 processors and Quarkus starts 4 event loops).
-It is an experiment control, not isolation; isolation is Part 5. Each run records `runtime.placement`, and `verify.sh`
+It's an experiment control, not isolation; isolation is Part 5. Each run records `runtime.placement`, and `verify.sh`
 checks every pinned thread's last CPU in `/proc/<pid>/task/<tid>/stat` while the run holds at its start gate.
 
 The start gate has the handshake of Ch10: each pinned thread pins itself and waits, the coordinator prints one
@@ -109,7 +113,7 @@ The three engines live in `engines.hpp` as templates over the per-datagram handl
 time, as in the Ch0 consumer. Each counts every system call it makes in a per-thread `EngineCounters`, padded to
 `2 * std::hardware_destructive_interference_size` (the L2 spatial prefetcher pulls line pairs): `epoll_wait`,
 `recvmsg`, `recvmmsg` and `io_uring_enter` calls, completions reaped, multishot re-arms and hand-offs. The counts are exact
-and do not depend on a tracer; `strace -f -c` is the cross-check. The ring is an RAII `Ring` over liburing, with an
+and don't depend on a tracer; `strace -f -c` is the cross-check. The ring is an RAII `Ring` over liburing, with an
 RAII `BufRing` for the provided buffers (`ring.hpp`).
 
 `io-uring` reaps in two steps. It first walks the completions already in the ring with `io_uring_for_each_cqe`, which makes
@@ -125,15 +129,15 @@ is in `cpp/CMakeLists.txt`. The workers busy-spin on their log, as Ch10's consum
 cores against `thread-per-core`'s four.
 
 `SO_REUSEPORT` is set on every socket, and `Sockets.TwoSocketsShareAPortWithReusePort` shows two sockets binding one port.
-With four cameras at four fixed source ports the kernel's hash over the 4-tuple cannot balance four flows over four
+With four cameras at four fixed source ports the kernel's hash over the 4-tuple can't balance four flows over four
 sockets reliably (two flows can share a socket while another socket idles), so the lane steers by port instead: one port
-per camera, one socket per core. That is the thread-per-core pattern with the balancing decided by the sender, which is
+per camera, one socket per core. That's the thread-per-core pattern with the balancing decided by the sender, which is
 how an ingest tier with one port per feed would run.
 
 `asio-io-uring` is a separate executable, `io-receive-asio`, compiled with `BOOST_ASIO_HAS_IO_URING` and
 `BOOST_ASIO_DISABLE_EPOLL` as private compile definitions of that one target, so they reach no other. The first alone
 sends file I/O through io_uring and keeps epoll for sockets; both together put sockets on io_uring too (Boost 1.92 docs,
-`overview/implementation`). Asio owns its ring, so the program cannot count the calls; the strace summary shows them.
+`overview/implementation`). Asio owns its ring, so the program can't count the calls; the strace summary shows them.
 
 Provenance: the raw epoll loop and the pinned-thread start protocol follow `12-asio-strand` of the companion project
 cpp-concurrency-and-parallelism, adapted up to C++23 (`std::print`, `std::expected`, `std::jthread`, concepts). The
@@ -147,13 +151,14 @@ blocked, and let the JDK park the virtual thread on its poller, which is epoll u
 poller's `epoll_wait`). One carrier thread (`-Djdk.virtualThreadScheduler.parallelism=1`, `maxPoolSize=1`) lets the pin
 land on a thread the harness can name: the pin is applied from inside a virtual thread and takes effect on the carrier it is
 mounted on. `thread-per-core` is four pinned platform threads, each in a blocking `receive`. The JDK has no io_uring, so
-there is no completion variant: that is the divergence from C++.
+there's no completion variant: that's the divergence from C++.
 
 The Java call counters (`receive_calls`, `select_calls`) count calls in Java, not system calls; `selector` counts the
 `receive` that returns null at the end of each drain. The system calls come from `strace -f -c` (observed). The whole
-measured loop is warmed first: the same threads and sockets run a pass of 6,000 parcels per camera, fed in process and
-thrown away, so JIT compilation is not in the numbers. Each receive thread allocates its own counters, so two threads do
-not share a cache line (Java has no `alignas`; the allocations come from separate thread-local allocation buffers).
+measured loop is warmed first: the same receive code runs a pass of 6,000 parcels per camera on its own threads and sockets, fed in process and
+thrown away, so JIT compilation isn't in the numbers. Each receive thread allocates its own counters, so two threads are
+unlikely to share a cache line (Java has no `alignas`; the allocations come from separate thread-local allocation buffers,
+which makes separate lines likely, not guaranteed).
 `DatagramChannel.receive` allocates an `InetSocketAddress` per call; with a fixed, pre-touched 1 GiB heap no collection
 starts inside a run, and the JDK offers no allocation-free receive on an unconnected channel.
 
@@ -198,9 +203,9 @@ the language offers. `asyncio-datagram` is the idiom: a `DatagramProtocol` per c
 calls `epoll_wait` and one `recvfrom` per ready socket. `blocking-thread` is one thread per socket in a blocking `recv`.
 Under the GIL the four threads take turns; under the free-threaded `3.14.8+freethreaded` (a user-local
 `uv python install 3.14t`) they run in parallel. `uvloop` is the same protocols on libuv's loop; a cp314t wheel exists
-but it was not tested for keeping the GIL off, so the lane runs it under the GIL build only.
+but it wasn't tested for keeping the GIL off, so the lane runs it under the GIL build only.
 
-The measuring process imports neither `lowlat_measure` (its `pyhdrh` extension does not declare free-threading support,
+The measuring process imports neither `lowlat_measure` (its `pyhdrh` extension doesn't declare free-threading support,
 and importing it turns the GIL back on) nor `uvloop` outside the one function that needs it. It writes the raw samples
 as little-endian `int64` nanoseconds and a JSON sidecar (`build.compiler` is its own `sys.version`, `build.gil_enabled` its own
 `sys._is_gil_enabled()` at the end of the run, `runtime.python_build`, counters and placement). `from_samples` in `lib.sh`
@@ -215,7 +220,7 @@ Java client uses `HttpClient` on virtual threads, and the Python lane uses `asyn
 What is written by hand, and the reason:
 
 - **`epoll_wait` plus `recvmsg` loop (C++).** The point is to count the system calls; Asio's reactor runs the same loop and
-  hides the calls. It is shown once, beside the idiom.
+  hides the calls. It's shown once, beside the idiom.
 - **`io_uring` multishot `recvmsg` over a provided-buffer ring (C++).** liburing has no higher-level API for this; the
   `Ring` and `BufRing` wrappers are RAII over its calls. Asio's backend can't expose the call counts.
 - **`spin_work` (C++, Java) and the spinning hand-off workers.** The busy-wait stands in for decide work this example
@@ -295,31 +300,45 @@ Latency ratios compare variants within one run, alternating A B C A B C A B C an
 per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. All bounds are
 provisional until the S10 calibration (`_plans/r04-plan.md`).
 
-1. **System calls per parcel at saturation, C++ (exact).** `io-uring`'s `io_uring_enter` calls per parcel are at most 1/4
-   of `epoll`'s system calls per parcel (`epoll_wait` + `recvmsg`); `recvmmsg` makes fewer than 1 system call per parcel.
-   The CQEs per enter are printed.
+1. **System calls per parcel at saturation, C++.** `io-uring`'s `io_uring_enter` calls per parcel are at most 1/4 of
+   `epoll`'s system calls per parcel (`epoll_wait` + `recvmsg`). Both counts are read in the program, but the ratio
+   depends on how many completions queue up behind each other, so it's a property of the load, not a constant. At 240 kHz
+   `epoll` makes about 1.4 calls per parcel (level-triggered wake-ups find several sockets ready, so the plan's "at least
+   2" doesn't hold) and `io-uring` about 0.06. `recvmmsg`'s calls per parcel and the CQEs per enter are printed, with the
+   margin under 1 call per parcel, and not bounded.
 2. **Hand-offs per parcel (exact).** `thread-per-core` 0, `acceptor-pool` 1.
-3. **Receive tail at saturation, C++.** `thread-per-core` p99 is at most 1/2 of `acceptor-pool`'s, median of 3, at the
-   layout rate with the modelled receive-side work.
-   `io-uring` against `epoll` p99 is observed.
+3. **The layout pair at a loaded acceptor.** At 52 kHz per camera with the modelled receive-side work, `dropped` is 0
+   for both layouts in every alternation (exact), and the acceptor's CPU share of its receive window sits inside a
+   750 to 900 per-thousand guard band (the workload check). The p99 ratio, `thread-per-core` over `acceptor-pool`, median of 3,
+   is observed: the plan's bound of 1/2 is asserted only when the ratio clears it twice over in every calibration run.
+   The hand-off cost at line rate is observed too.
 4. **Quarkus at 5 kHz x 2 ms > 8.** `worker-pool` p99 is at least 3x `virtual-thread` p99, median of 3. `event-loop`
    against `virtual-thread` is observed.
-5. **The defect.** `blocking-on-event-loop` logs at least one blocked-thread warning (exact; the in-process count must equal
-   the log's) and its p99 is at least 2 ms.
+5. **The defect.** At 1.85 kHz, `blocking-on-event-loop` logs at least one blocked-thread warning during the measured run
+   (exact; the in-process count and the log's `has been blocked for` lines are two views of the same log records and must
+   agree), and requests in a handler at once never exceed the event-loop threads (exact). Its p99 against `event-loop` driven at the same
+   1.85 kHz in the same alternation is observed unless it clears the bound twice over. The defect's p99 against 2 ms is
+   observed: the sleep alone meets it.
 6. **Line.** 200,000 parcels counted and `dropped` 0 for every C++, plain-JDK and Python variant. Percentiles are
    observed: at 2.5 kHz per camera everything fits 480 ms many times over.
 7. **Reports.** Every report passes `lowlat-report check`, carries `runtime.counters`, `build.flags` (C++ and Java),
    `runtime.placement` (pinned runs) or `runtime.python_build` (Python), and the free-threaded runs kept the GIL off.
-8. **Start gates.** The recorded start skew of every multi-thread run is under 1 ms; every pinned thread is on its CPU.
+8. **Start gates.** The recorded start skew of every multi-thread run is under 1 ms, except the single-carrier
+   `virtual-thread-blocking` receive: one carrier runs the four virtual threads one after the other, so its skew is the
+   carrier serializing them (as in Ch11's single-carrier ping-pong) and is printed, not bounded. Every pinned thread is
+   on its CPU.
 9. **The service (exact counters).** The worker pool's active maximum equals the fixed pool size; the event-loop and
    virtual-thread variants use no worker thread; the client saw no error and answered every request. How many requests
    the client started more than 1 ms late is printed, not bounded: the overloaded `worker-pool` run holds thousands of
    connections open in the client, and the latency is measured from the intended time anyway, so a late start shows in the
    percentiles instead of hiding.
 
-Observed, not asserted: `asio-io-uring`; `io-uring` against `epoll` tails; the plain-JDK variants against each other;
+A run is complete only if every variant x alternation report exists and every saturation run received its full count
+with `dropped` 0; a missing report fails the run, and so does `ONLY=` (a lane left out), which ends non-zero as partial.
+
+Observed, not asserted: `asio-io-uring`; `io-uring` against `epoll` tails; `recvmmsg`'s calls per parcel; the p99 ratio of the layout pair and of the defect against its control; the plain-JDK variants against each other;
 every Python variant; `uvloop`; `event-loop` against `virtual-thread`; the `strace -f -c` cross-check. The summaries are
-committed and the raw strace output never is. `verify.sh` flags any asserted bound that clears with under 2x margin.
+committed and the raw strace output never is. `verify.sh` prints a note beside any asserted bound that clears with under 2x margin.
 
 ## Observation surfaces
 

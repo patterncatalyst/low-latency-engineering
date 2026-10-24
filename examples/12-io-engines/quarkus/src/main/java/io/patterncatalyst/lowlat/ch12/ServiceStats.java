@@ -25,6 +25,7 @@ public class ServiceStats {
     private final AtomicInteger onWorkers = new AtomicInteger();
     private final LongAccumulator workerActiveMax = new LongAccumulator(Long::max, 0);
     private final AtomicLong blockedWarnings = new AtomicLong();
+    private final AtomicLong blockedAtReset = new AtomicLong();
 
     /** A request enters a handler on the current thread. */
     public void begin() {
@@ -81,7 +82,9 @@ public class ServiceStats {
         eventLoopThreads.clear();
         workerThreads.clear();
         carrierThreads.clear();
-        // blockedWarnings is not reset: it counts the server's whole life, as the log does
+        // blockedWarnings is not reset: it counts the server's whole life, as the log does. The count at this moment is kept,
+        // so that the warnings of the measured run alone (the ones after the warm-up) can be read.
+        blockedAtReset.set(blockedWarnings.get());
     }
 
     /** {@code name value} lines. */
@@ -92,6 +95,7 @@ public class ServiceStats {
                 + "worker_threads_seen " + workerThreads.size() + "\n"
                 + "event_loop_threads_seen " + eventLoopThreads.size() + "\n"
                 + "carrier_threads " + carrierThreads.size() + "\n"
-                + "blocked_thread_warnings " + blockedWarnings.get() + "\n";
+                + "blocked_thread_warnings " + blockedWarnings.get() + "\n"
+                + "blocked_thread_warnings_in_run " + (blockedWarnings.get() - blockedAtReset.get()) + "\n";
     }
 }

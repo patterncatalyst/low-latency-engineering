@@ -8,9 +8,9 @@ import io.vertx.mutiny.core.Vertx;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.jboss.resteasy.reactive.RestPath;
 
 /**
  * The sort-plan lookup with a 2 ms downstream wait, served four ways. Same wait, same answer; what differs
@@ -40,7 +40,7 @@ public class PlanResource {
 
     @GET
     @Path("/event-loop/{sscc}")
-    public Uni<String> eventLoop(@PathParam("sscc") String sscc) {
+    public Uni<String> eventLoop(@RestPath String sscc) {
         stats.begin();
         return Uni.createFrom().<String>emitter(emitter -> vertx.setTimer(SortPlan.WAIT_MS, id -> emitter.complete(SortPlan.answer(sscc))))
                 .onTermination().invoke(stats::end);
@@ -49,7 +49,7 @@ public class PlanResource {
     @GET
     @Path("/worker-pool/{sscc}")
     @Blocking
-    public String workerPool(@PathParam("sscc") String sscc) throws InterruptedException {
+    public String workerPool(@RestPath String sscc) throws InterruptedException {
         stats.begin();
         stats.workerBegin();
         try {
@@ -64,7 +64,7 @@ public class PlanResource {
     @GET
     @Path("/virtual-thread/{sscc}")
     @RunOnVirtualThread
-    public String virtualThread(@PathParam("sscc") String sscc) throws InterruptedException {
+    public String virtualThread(@RestPath String sscc) throws InterruptedException {
         stats.begin();
         try {
             Thread.sleep(SortPlan.WAIT_MS);
@@ -78,7 +78,7 @@ public class PlanResource {
     @GET
     @Path("/blocking-on-event-loop/{sscc}")
     @NonBlocking
-    public String blockingOnEventLoop(@PathParam("sscc") String sscc) throws InterruptedException {
+    public String blockingOnEventLoop(@RestPath String sscc) throws InterruptedException {
         stats.begin();
         try {
             Thread.sleep(SortPlan.WAIT_MS);

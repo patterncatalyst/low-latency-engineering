@@ -7,7 +7,7 @@ import java.util.List;
  *
  * <pre>
  *   receive --variant selector|virtual-thread-blocking|thread-per-core   the UDP receive micro lane
- *   client  --url URL --rate HZ --seconds S ...                          the open-loop HTTP client (D6)
+ *   client  --base-url URL --rate HZ --seconds S ...                          the open-loop HTTP client (D6)
  * </pre>
  *
  * Shared options: {@code --cpus A,B,...} pins the threads (distinct physical cores), {@code --hold-ms}

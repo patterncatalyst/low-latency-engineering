@@ -7,6 +7,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 #include <new>
 #include <optional>
 #include <span>
@@ -38,6 +39,10 @@ struct alignas(2 * std::hardware_destructive_interference_size) EngineCounters {
   std::uint64_t rearms = 0;      ///< multishot receives re-submitted after the kernel ended them
   std::uint64_t handoffs = 0;    ///< parcels passed to a different thread
   std::int64_t start_ns = 0;     ///< CLOCK_MONOTONIC at the first instruction after the start gate
+  std::int64_t first_rx_ns = 0;  ///< CLOCK_MONOTONIC at the first datagram handed to the handler
+  std::int64_t last_rx_ns = 0;   ///< ... and at the last
+  std::int64_t cpu_first_ns = 0; ///< this thread's CPU time at the first datagram
+  std::int64_t cpu_last_ns = 0;  ///< ... and when the receive loop ended
   std::array<std::uint64_t, line::kLanes> lanes{};  ///< the decide step's result, kept so it cannot be elided
 
   /// Every system call the receive path made: the number the strace cross-check compares against.
@@ -60,6 +65,20 @@ struct alignas(2 * std::hardware_destructive_interference_size) EngineCounters {
 };
 static_assert(alignof(EngineCounters) >= 2 * std::hardware_destructive_interference_size);
 static_assert(sizeof(EngineCounters) % alignof(EngineCounters) == 0);
+
+/// This thread's CPU time (CLOCK_THREAD_CPUTIME_ID) in nanoseconds.
+[[nodiscard]] inline std::int64_t thread_cpu_ns() noexcept {
+  timespec ts{};
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+  return static_cast<std::int64_t>(ts.tv_sec) * 1'000'000'000 + ts.tv_nsec;
+}
+
+/// Share of the receive window this thread spent on a CPU, in thousandths: how loaded a receive thread was. A thread blocked
+/// in the kernel waiting for the next completion uses no CPU time, so a loaded acceptor reads near 1000.
+[[nodiscard]] inline std::int64_t busy_permille(const EngineCounters& c) noexcept {
+  const std::int64_t window = c.last_rx_ns - c.first_rx_ns;
+  return window > 0 ? 1000 * (c.cpu_last_ns - c.cpu_first_ns) / window : 0;
+}
 
 /// The last step of the start: each thread arrives and spins until every thread has, then reads the
 /// clock. The kernel's wake-up from the gate's futex barrier can take a millisecond on a core that
