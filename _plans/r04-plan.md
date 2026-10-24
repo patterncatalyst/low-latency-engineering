@@ -242,7 +242,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 
 | id | Title | Files touched | Depends on | Model | Status |
 |---|---|---|---|---|---|
-| S0 | Upstream survey, exact pins, read-only probes | `_plans/dependency-pins.md` ("r04 pins"), `versions.env` (only if a tarball or image is pinned there) | – | sonnet (opus validates) | todo |
+| S0 | Upstream survey, exact pins, read-only probes | `_plans/dependency-pins.md` ("r04 pins"), `versions.env` (only if a tarball or image is pinned there) | – | sonnet (opus validates) | done (pending validation) |
 | S1 | Record D1–D17 answers; iteration-plan status (r03 complete, #6, `r03.x`; r04 in progress); commit this plan, `r04-chapters.md`, `r04-figures.md` | `_plans/iteration-plan.md`, `_plans/r04-*.md`, `CLAUDE.md` only if D9 changes a rule | user answers | opus (MAIN) | done |
 | S2 | Report and profile contract, additive in `lowlat-report/1` | `contracts/measurement/latency-report.schema.json`, `contracts/measurement/examples/`, `examples/common/measure-{py,cpp,java}/**`, `examples/common/measure-fixtures/`, `scripts/profile.sh`, `scripts/scrub-host-ids.py` | S0 | sonnet | todo |
 | S3 | `lib.sh` helpers: lanes, containers, raw-sample conversion | `examples/_lib/lib.sh`, `examples/_lib/tests/`, `examples/common/measure-py/**` | S2 | sonnet | todo |
