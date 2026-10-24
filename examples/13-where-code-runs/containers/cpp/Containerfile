@@ -1,5 +1,7 @@
-# Ch13 C++ lane image: the line simulator, the C++ line consumer and the Ch13 cgroup probe,
-# built once with the UBI 10 GCC and run unchanged in every lane (D10).
+# Ch13 C++ lane image: the line simulator, the Ch12 receive consumer (io-receive), the Ch13 place-probe
+# and busy-pool, built once with the UBI 10 GCC and run unchanged in every lane (D10). vm/run.sh copies
+# these four binaries out of the image (through container_run) and runs the very same files on the
+# host and in the guest, so a lane differs by where it runs, not by what runs.
 #
 # Build context: the REPOSITORY ROOT (the build needs examples/, contracts/, versions.env and
 # scripts/deps/). From the root, in the lab guest:
@@ -51,13 +53,13 @@ RUN CC=gcc CXX=g++ bash /src/scripts/deps/build-protobuf.sh
 # ---- build -----------------------------------------------------------------------------------------
 # An explicit configure that mirrors the `release-gcc` preset (Release, -O2 -g -fno-omit-frame-pointer
 # -DNDEBUG, g++) and replaces its host-only CMAKE_PREFIX_PATH ($HOME/.cache/lowlat/prefix). Tests
-# are off (no GoogleTest in the image). Add a binary here when a later step creates it: put its
-# CMake target in TARGETS and its file name in BINARIES (the Ch12 receive consumer and the Ch13
-# executables of S6 and S7 are not in the tree yet; lowlat_place is the Ch13 cgroup_probe library).
+# are off (no GoogleTest in the image). TARGETS are the CMake targets and BINARIES the files installed
+# into the image: every executable a Ch13 lane runs is listed in both (line-simulator, io-receive,
+# place-probe, busy-pool). Add a binary a lane needs to both.
 FROM deps AS build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG TARGETS="line-simulator line-consumer lowlat_place"
-ARG BINARIES="line-simulator line-consumer"
+ARG TARGETS="line-simulator io-receive place-probe busy-pool"
+ARG BINARIES="line-simulator io-receive place-probe busy-pool"
 COPY contracts /src/contracts
 COPY examples /src/examples
 RUN cmake -S /src/examples -B /build -G Ninja \
@@ -78,7 +80,7 @@ RUN cmake -S /src/examples -B /build -G Ninja \
 # ---- runtime: ubi-minimal + libstdc++, binaries only -----------------------------------------------
 FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e AS runtime
 LABEL org.opencontainers.image.title="lowlat place-cpp" \
-      org.opencontainers.image.description="Ch13 C++ lane: line simulator, line consumer, built with the UBI 10 GCC" \
+      org.opencontainers.image.description="Ch13 C++ lane: line simulator, io-receive, place-probe, busy-pool, built with the UBI 10 GCC" \
       org.opencontainers.image.licenses="Apache-2.0"
 # libstdc++ and zlib-ng-compat (libz, used by the HdrHistogram log writer) are in the UBI 10
 # BaseOS repository; installing them is a no-op when the base already has them.
