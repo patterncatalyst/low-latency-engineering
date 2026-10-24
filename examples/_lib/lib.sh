@@ -16,6 +16,13 @@
 #   SKIP_BUILD=1  reuse existing builds
 #   LOWLAT_BUILD  C++ binary dir (default examples/build/release); set a private
 #                 one when several builds run at once
+#   TARGET_VM     the lab guest the `guest` helpers talk to (default lowlat-target); its name must
+#                 start with LAB_GUARD_PREFIX (default lowlat-)
+#   GUEST_REPO    repo path in the guest, relative to the guest user's home
+#                 (default low-latency-engineering)
+#   LAB_SSH       the vsock ssh wrapper (default scripts/lab/lab-ssh.sh); tests point it at a shim
+#   GUEST_PROFILE guest snapshot/profile name (like lab-ready-r04/stock-unpinned) that
+#                 container_run records in runtime.environment
 #   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
 #                 scratch_dir (a caller-provided value is kept)
 
@@ -136,12 +143,53 @@ redact_host() {
 # example_dir: absolute path of the calling example (the dir holding verify.sh).
 example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 
-# Refuse to take host measurements while a lab VM competes for the CPUs.
+# require_quiet_host [--lab-idle]: refuse to take host measurements while a lab VM competes for
+# the CPUs. Without the flag any running lowlat-* VM refuses the run.
+#   --lab-idle   the lowlat-target VM may be running, but only idle: its load1 (read in the guest
+#                through `guest`) must be <= LAB_IDLE_LOAD1 (default 0.5). Any other running
+#                domain (an ebpf-* or systems-* VM, a lowlat peer) refuses the run: this check
+#                reads libvirt's domain list and talks only to the lowlat target, and never
+#                starts, stops or touches another VM. The state is exported as LOWLAT_LAB_VM
+#                ("down" or "up (idle)") and, when RUN_START_JSON names a file, merged into it as
+#                "lab_vm" with "lab_vm_load1" (the run-start.json the driver writes).
+# ALLOW_BUSY=1 skips the check in both forms.
 require_quiet_host() {
+  local lab_idle=0 running domains others
+  if [[ ${1:-} == --lab-idle ]]; then lab_idle=1; shift; fi
+  (($# == 0)) || die "require_quiet_host: unknown argument '$1' (only --lab-idle)"
   [[ ${ALLOW_BUSY:-0} == 1 ]] && return 0
-  local running
-  running=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null | grep '^lowlat-' || true)
-  [[ -z $running ]] || die "lab VM running ($running): stop it (scripts/lab/lab-down.sh) or set ALLOW_BUSY=1"
+  domains=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null | sed '/^$/d' || true)
+  running=$(grep '^lowlat-' <<<"$domains" || true)
+  if ((!lab_idle)); then
+    [[ -z $running ]] || die "lab VM running ($running): stop it (scripts/lab/lab-down.sh) or set ALLOW_BUSY=1"
+    return 0
+  fi
+  local prefix=${LAB_GUARD_PREFIX:-lowlat-} target=${TARGET_VM:-lowlat-target} load1=''
+  [[ $target == "$prefix"* ]] || die "require_quiet_host: '$target' is not a $prefix* domain; the lab helpers never touch it"
+  others=$(grep -v "^$prefix" <<<"$domains" || true)
+  [[ -z $others ]] || die "--lab-idle: a non-lab VM is running ($(tr '\n' ' ' <<<"$others")): stop it or set ALLOW_BUSY=1"
+  if [[ -z $running ]]; then
+    _run_start_record "down" ''
+    return 0
+  fi
+  [[ $running == "$target" ]] || die "--lab-idle: running lab domains are ($(tr '\n' ' ' <<<"$running")), expected only $target"
+  load1=$(guest cat /proc/loadavg | awk '{print $1}') || die "--lab-idle: cannot read the guest load average (is $target reachable over vsock ssh?)"
+  [[ $load1 =~ ^[0-9]+([.][0-9]+)?$ ]] || die "--lab-idle: unreadable guest load1 '$load1'"
+  awk -v l="$load1" -v m="${LAB_IDLE_LOAD1:-0.5}" 'BEGIN { exit !(l <= m) }' ||
+    die "--lab-idle: $target is not idle (load1 $load1 > ${LAB_IDLE_LOAD1:-0.5}); wait, or stop it with scripts/lab/lab-down.sh"
+  _run_start_record "up (idle)" "$load1"
+}
+
+# _run_start_record STATE LOAD1: export LOWLAT_LAB_VM and merge lab_vm (and the guest load1) into
+# $RUN_START_JSON when it is set (the file is created as {} if absent).
+_run_start_record() {
+  export LOWLAT_LAB_VM=$1
+  [[ -n ${RUN_START_JSON:-} ]] || return 0
+  [[ -s $RUN_START_JSON ]] || printf '{}\n' >"$RUN_START_JSON"
+  jq --arg s "$1" --arg l "$2" \
+    '.lab_vm = $s | if $l == "" then . else .lab_vm_load1 = ($l | tonumber) end' \
+    "$RUN_START_JSON" >"$RUN_START_JSON.tmp" || die "run-start: jq failed on $RUN_START_JSON"
+  mv "$RUN_START_JSON.tmp" "$RUN_START_JSON"
 }
 
 # results_dir: create and print $RESULTS_DIR (default <example>/results/latest).
@@ -669,3 +717,324 @@ time_to_ready() (
   wait "$pid" 2>/dev/null || true
   echo $(((t1 - t0) * 1000))
 )
+
+# ---- the lab guest, containers in the guest, environment lanes -------------------------------
+# Everything below reaches the guest through scripts/lab/lab-ssh.sh (ssh over vsock, never NAT)
+# and only ever to a domain whose name starts with LAB_GUARD_PREFIX (default lowlat-). Nothing
+# here starts or stops a VM, and nothing runs docker on the host.
+
+# lab_ssh CMD...: run CMD in the guest's login shell; refuses a target outside the lab prefix.
+lab_ssh() {
+  local prefix=${LAB_GUARD_PREFIX:-lowlat-} target=${TARGET_VM:-lowlat-target}
+  [[ $target == "$prefix"* ]] || die "lab_ssh: '$target' is not a $prefix* domain; refusing"
+  "${LAB_SSH:-$LOWLAT_ROOT/scripts/lab/lab-ssh.sh}" "$target" "$@"
+}
+
+# guest CMD...: run CMD in the guest from the repo root (GUEST_REPO under the guest user's home),
+# each word quoted for the guest shell. Returns CMD's status.
+#   guest examples/build/release/line-simulator --help
+guest() { lab_ssh "cd ${GUEST_REPO:-low-latency-engineering} && $(printf '%q ' "$@")"; }
+
+# guest_fetch REMOTE LOCAL: copy a file out of the guest (REMOTE relative to the guest user's
+# home) to LOCAL. A REMOTE ending in / is a directory: its contents are unpacked into LOCAL
+# (created if needed) through tar, so file modes survive.
+guest_fetch() {
+  local remote=${1:?guest_fetch REMOTE LOCAL} local_path=${2:?guest_fetch REMOTE LOCAL}
+  if [[ $remote == */ ]]; then
+    mkdir -p "$local_path"
+    lab_ssh "tar -C $(printf '%q' "$remote") -cf - ." | tar -C "$local_path" -xf - || die "guest_fetch: cannot fetch $remote"
+  else
+    lab_ssh "cat $(printf '%q' "$remote")" >"$local_path" || die "guest_fetch: cannot fetch $remote"
+  fi
+}
+
+# _scrub_ids: stdin to stdout through scripts/scrub-host-ids.py --filter.
+_scrub_ids() { python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter; }
+
+# The guest-side reader behind cgroup_stat and container_run, POSIX sh run as
+#   sh -c "$_CGROUP_SH" sh CONTAINER CGROUP_ROOT once|watch
+# It prints four lines: cpu.max, cpuset.cpus.effective, nr_throttled, throttled_usec (an empty
+# line for a file it could not read). "once" samples a running container. "watch" waits up to
+# CGROUP_WAIT x 0.1 s (default 10 s) for the container's cgroup to appear, samples every CGROUP_POLL seconds (default 0.05)
+# and, when the cgroup disappears (the container exited; the scope goes with it), prints the
+# last sample. Docker 29 with the systemd cgroup driver puts the container at
+# <root>/system.slice/docker-<id>.scope; the cgroupfs driver at <root>/docker/<id>.
+_CGROUP_SH=$(
+  cat <<'EOF'
+name=$1 root=$2 mode=$3 poll=${CGROUP_POLL:-0.05}
+id=$(docker inspect --format '{{.Id}}' "$name") || exit 1
+find_dir() {
+  for d in "$root/system.slice/docker-$id.scope" "$root/docker/$id"; do
+    [ -d "$d" ] && return 0
+  done
+  return 1
+}
+sample() {
+  [ -r "$d/cpu.stat" ] || return 1
+  cm=$(cat "$d/cpu.max" 2>/dev/null) || cm=
+  cs=$(cat "$d/cpuset.cpus.effective" 2>/dev/null) || cs=
+  nr=$(awk '$1 == "nr_throttled" { print $2 }' "$d/cpu.stat" 2>/dev/null)
+  us=$(awk '$1 == "throttled_usec" { print $2 }' "$d/cpu.stat" 2>/dev/null)
+  [ -n "$nr" ] && [ -n "$us" ] || return 1 # the cgroup went away mid-read: not a sample
+  printf '%s\n%s\n%s\n%s\n' "$cm" "$cs" "$nr" "$us"
+}
+tries=0
+until find_dir; do
+  [ "$mode" = once ] && { echo "no cgroup for container $name (not running?)" >&2; exit 3; }
+  tries=$((tries + 1))
+  [ "$tries" -gt "${CGROUP_WAIT:-100}" ] && exit 0
+  sleep 0.1
+done
+if [ "$mode" = once ]; then
+  sample || exit 3
+  exit 0
+fi
+last=
+while [ -d "$d" ]; do
+  s=$(sample) && last=$s
+  sleep "$poll"
+done
+[ -n "$last" ] && printf '%s\n' "$last"
+exit 0
+EOF
+)
+
+# _cgroup_json < four lines: the JSON object cgroup_stat prints (null for an empty line).
+_cgroup_json() {
+  local -a v
+  mapfile -t v
+  jq -n --arg cm "${v[0]:-}" --arg cs "${v[1]:-}" --arg nr "${v[2]:-}" --arg us "${v[3]:-}" \
+    '{nr_throttled: ($nr | if . == "" then null else tonumber end),
+      throttled_usec: ($us | if . == "" then null else tonumber end),
+      cpu_max: ($cm | if . == "" then null else . end),
+      cpuset_effective: ($cs | if . == "" then null else . end)}'
+}
+
+# cgroup_stat CONTAINER: print {nr_throttled, throttled_usec, cpu_max, cpuset_effective} as JSON
+# for a RUNNING container in the guest, read from its cgroup (CGROUP_ROOT, default /sys/fs/cgroup).
+# A stopped container has no cgroup: the kernel removes it at exit, so this returns 3 with a
+# message instead of guessing; container_run samples the cgroup while the container runs and
+# keeps the last sample, which is how it gets its numbers for a short-lived container.
+cgroup_stat() {
+  local name=${1:?cgroup_stat CONTAINER} out
+  out=$(guest sh -c "$_CGROUP_SH" sh "$name" "${CGROUP_ROOT:-/sys/fs/cgroup}" once) || return 3
+  _cgroup_json <<<"$out"
+}
+
+# _container_check_opt KEY VALUE: die for a docker option that breaks the isolation being measured.
+_container_check_opt() {
+  case "$1=$2" in
+    --privileged=*) die "container_run: --privileged is refused (a privileged container is not the container being measured)" ;;
+    --cap-add=ALL | --cap-add=all) die "container_run: --cap-add=ALL is refused" ;;
+    --security-opt=seccomp=unconfined | --security-opt=seccomp:unconfined)
+      die "container_run: --security-opt seccomp=unconfined is refused (the schema rejects it, and so do we)" ;;
+    --pid=host) die "container_run: --pid=host is refused" ;;
+    --cgroupns=host) die "container_run: --cgroupns=host is refused" ;;
+  esac
+}
+
+# container_run NAME [--env-out FILE] [docker-run-args...] -- IMAGE CMD...
+# Run CMD in IMAGE as a container named NAME INSIDE THE GUEST (docker through `guest`), wait for
+# it, print its output (stdout and stderr merged, scrubbed of host identifiers) and return its
+# exit status. Writes FILE (required) with the environment block for the report:
+#   {"runtime": {"environment": {kind: "container", guest_profile: $GUEST_PROFILE,
+#      container: {runtime docker, image name:tag, image_digest, network, cpu_quota, cpuset,
+#      seccomp}, cgroup: {cpu_max, cpuset_effective, nr_throttled, throttled_usec}}}}
+# which a caller merges into a report's runtime with `jq -s '.[0] * .[1]'`. GUEST_PROFILE
+# (snapshot/profile) must be set. Facts come from `docker inspect` (network mode, NanoCpus as a
+# decimal CPU count or null, CpusetCpus or null, the image) and from the container's own cgroup.
+# The cgroup is gone once the container exits, so the helper creates the container, starts a
+# watcher in the guest that samples cpu.stat every CGROUP_POLL seconds (default 0.05), starts the
+# container and keeps the last sample: nr_throttled and throttled_usec are floors, at most one
+# poll interval short of the final values. The watcher is one more small process in the guest.
+# Refused with an error: --privileged, --cap-add=ALL, --security-opt seccomp=unconfined,
+# --pid=host, --cgroupns=host, and --rm / -d (the helper detaches and removes the container itself).
+# IMAGE is name:tag or name:tag@sha256:digest (a tagless or :latest reference is refused, as the
+# schema does). If examples/13-where-code-runs/containers/IMAGES.lock exists, the reference must
+# be listed there and its digest, when listed, must match the image; if the file is absent a
+# warning is printed. seccomp is "default" unless `--security-opt seccomp=FILE.json` is passed
+# (then FILE.json's base name). The container is removed on every exit path, a failure or Ctrl-C
+# included, and its ID is never printed. Return 2 for a bad call, 3 if the container never got
+# created, otherwise the container's status.
+container_run() (
+  local name=${1:?container_run NAME [args...] -- IMAGE CMD...} image='' env_out='' seccomp=default
+  local -a run_args=()
+  shift
+  while (($#)); do
+    case $1 in
+      --) shift; break ;;
+      --env-out) env_out=${2:?container_run: --env-out needs a file}; shift 2 ;;
+      --env-out=*) env_out=${1#*=}; shift ;;
+      --rm | -d | --detach) die "container_run: $1 is refused (the helper detaches, waits and removes the container itself)" ;;
+      --privileged | --privileged=*) _container_check_opt --privileged "${1#--privileged}"; shift ;;
+      --cap-add | --pid | --cgroupns | --security-opt)
+        (($# >= 2)) || die "container_run: $1 needs a value"
+        _container_check_opt "$1" "$2"
+        if [[ $1 == --security-opt && $2 == seccomp=* ]]; then
+          seccomp=$(basename "${2#seccomp=}")
+          [[ $seccomp == *.json ]] || die "container_run: seccomp profile '$seccomp' must be a FILE.json"
+        fi
+        run_args+=("$1" "$2"); shift 2 ;;
+      --cap-add=* | --pid=* | --cgroupns=* | --security-opt=*)
+        _container_check_opt "${1%%=*}" "${1#*=}"
+        if [[ $1 == --security-opt=seccomp=* ]]; then
+          seccomp=$(basename "${1#--security-opt=seccomp=}")
+          [[ $seccomp == *.json ]] || die "container_run: seccomp profile '$seccomp' must be a FILE.json"
+        fi
+        run_args+=("$1"); shift ;;
+      *) run_args+=("$1"); shift ;;
+    esac
+  done
+  (($# >= 1)) || die "container_run: no IMAGE after --"
+  image=$1
+  shift
+  [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "container_run: bad container name '$name'"
+  [[ -n $env_out ]] || die "container_run: --env-out FILE is required"
+  [[ ${GUEST_PROFILE:-} =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] ||
+    die "container_run: set GUEST_PROFILE to snapshot/profile (like lab-ready-r04/stock-unpinned)"
+
+  # The image: name:tag, optionally @sha256:digest; never untagged or :latest.
+  local ref digest_arg='' last tag
+  [[ $image =~ ^([^[:space:]@]+)(@sha256:[0-9a-f]{64})?$ ]] || die "container_run: image '$image' is not name:tag[@sha256:digest]"
+  ref=${BASH_REMATCH[1]}
+  digest_arg=${BASH_REMATCH[2]#@}
+  last=${ref##*/}
+  [[ $last == *:* ]] || die "container_run: image '$image' has no tag (name:tag[@sha256:digest])"
+  tag=${last##*:}
+  [[ $tag != latest ]] || die "container_run: image '$image' uses :latest; pin an exact tag"
+  [[ $ref =~ ^([^[:space:]:@/]+:[0-9]+/)?[^[:space:]:@]+:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] ||
+    die "container_run: image '$ref' is not a name:tag the report schema accepts"
+  local lock=${LOWLAT_IMAGES_LOCK:-$LOWLAT_EXAMPLES/13-where-code-runs/containers/IMAGES.lock} lock_digest=''
+  if [[ -f $lock ]]; then
+    lock_digest=$(awk -v ref="$ref" -v dg="$digest_arg" '
+      /^[[:space:]]*(#|$)/ { next }
+      { for (i = 1; i <= NF; i++) { n = split($i, a, "@"); if (a[1] == ref && (dg == "" || a[2] == dg)) { found = 1; print a[2]; exit } } }
+      END { exit !found }' "$lock") || die "container_run: $ref is not listed in $lock"
+  else
+    echo "container_run: warning: no IMAGES.lock at $lock; the image is not checked against a lock" >&2
+  fi
+
+  local tmp created=0 wpid='' rc=0
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-container.XXXXXX")
+  # shellcheck disable=SC2317  # runs from the EXIT trap
+  _container_cleanup() {
+    [[ -z $wpid ]] || kill "$wpid" 2>/dev/null || true
+    if ((created)); then guest docker rm -f "$name" >/dev/null 2>&1 || true; fi
+    rm -rf "$tmp"
+  }
+  trap _container_cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  # create (pulls if needed), watch the cgroup, start, wait. Docker's stdout (the container ID)
+  # is discarded, never printed.
+  guest docker create --name "$name" "${run_args[@]}" "$image" "$@" >/dev/null 2> >(_scrub_ids >&2) ||
+    { echo "container_run: docker create failed for $name" >&2; return 3; }
+  created=1
+  guest sh -c "$_CGROUP_SH" sh "$name" "${CGROUP_ROOT:-/sys/fs/cgroup}" watch >"$tmp/cgroup.txt" 2>/dev/null &
+  wpid=$!
+  guest docker start "$name" >/dev/null 2> >(_scrub_ids >&2) || { echo "container_run: docker start failed for $name" >&2; return 3; }
+  rc=$(guest docker wait "$name") || { echo "container_run: docker wait failed for $name" >&2; return 3; }
+  [[ $rc =~ ^[0-9]+$ ]] || { echo "container_run: unreadable exit status '$rc'" >&2; return 3; }
+  wait "$wpid" 2>/dev/null || true
+  wpid=''
+  guest docker logs "$name" 2>&1 | _scrub_ids || true
+
+  # The facts, while the container still exists.
+  local image_id
+  guest docker inspect "$name" >"$tmp/inspect.json" || { echo "container_run: docker inspect failed for $name" >&2; return 3; }
+  image_id=$(jq -er '.[0].Image' "$tmp/inspect.json") || die "container_run: inspect has no Image"
+  guest docker image inspect "$image_id" >"$tmp/image.json" || die "container_run: docker image inspect failed"
+  local digest=${digest_arg:-$lock_digest}
+  if [[ -n $digest ]]; then
+    jq -e --arg d "$digest" --arg i "$image_id" \
+      '.[0] | (.Id == $i) and ((.Id == $d) or ((.RepoDigests // []) | any(endswith("@" + $d))))' \
+      "$tmp/image.json" >/dev/null || die "container_run: the image the guest ran is not $digest (inspect says $image_id)"
+  else
+    digest=$image_id
+  fi
+  [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] || die "container_run: no usable image digest ('$digest')"
+  local -a cg
+  mapfile -t cg <"$tmp/cgroup.txt"
+  jq -n --slurpfile ins "$tmp/inspect.json" --arg gp "$GUEST_PROFILE" --arg image "$ref" --arg digest "$digest" \
+    --arg seccomp "$seccomp" --arg cm "${cg[0]:-}" --arg cs "${cg[1]:-}" --arg nr "${cg[2]:-}" --arg us "${cg[3]:-}" '
+    ($ins[0][0].HostConfig) as $h
+    | {runtime: {environment: {
+        kind: "container",
+        guest_profile: $gp,
+        container: {
+          runtime: "docker", image: $image, image_digest: $digest,
+          network: ($h.NetworkMode | if . == "host" then "host" elif . == "none" then "none" else "bridge" end),
+          cpu_quota: (if ($h.NanoCpus // 0) == 0 then null else (($h.NanoCpus / 1e9) | tostring) end),
+          cpuset: (if ($h.CpusetCpus // "") == "" then null else $h.CpusetCpus end),
+          seccomp: $seccomp},
+        cgroup: {
+          cpu_max: ($cm | if . == "" then null else . end),
+          cpuset_effective: ($cs | if . == "" then null else . end),
+          nr_throttled: ($nr | if . == "" then null else tonumber end),
+          throttled_usec: ($us | if . == "" then null else tonumber end)}}}}' >"$env_out.tmp" ||
+    die "container_run: jq could not build the environment block"
+  mv "$env_out.tmp" "$env_out"
+  return "$rc"
+)
+
+# interleave_env N LANE...: run N alternations over named environment lanes (host, vm, container)
+# in the order A B C A B C ... by calling the caller's `run_lane LANE ALT` for each (ALT counts
+# alternations from 1). The order is interleave's, so lanes share the machine's drift. A failing
+# run_lane stops the sequence and its status is returned.
+#   run_lane() { lane_run "$1" "$2"; }
+#   interleave_env 3 host vm container
+interleave_env() {
+  local n=${1:?interleave_env N LANE...} lane i=0 lanes
+  shift
+  (($#)) || die "interleave_env: no lanes"
+  [[ $n =~ ^[1-9][0-9]*$ ]] || die "interleave_env: N must be a positive integer, got '$n'"
+  for lane in "$@"; do
+    [[ $lane =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "interleave_env: bad lane name '$lane'"
+  done
+  declare -F run_lane >/dev/null || die "interleave_env: define run_lane LANE ALT first"
+  lanes=$#
+  while IFS= read -r lane; do
+    run_lane "$lane" $((i / lanes + 1)) || return $?
+    i=$((i + 1))
+  done < <(interleave "$n" "$@")
+}
+
+# strace_summary OUT -- CMD...: run CMD under `strace -f -c` (syscall counts and time, children
+# followed; our own child, so no privilege) and write only the summary table to OUT, scrubbed
+# through scripts/scrub-host-ids.py --filter. The raw strace file OUT.raw is deleted. CMD's own
+# output passes through. Returns CMD's status, or 3 (skip) when strace is not installed or
+# kernel.yama.ptrace_scope (read only) is 2 or more, with the reason on stderr.
+strace_summary() {
+  local out=${1:?strace_summary OUT -- CMD...} scope rc=0
+  shift
+  [[ ${1:-} == -- ]] || die "usage: strace_summary OUT -- CMD..."
+  shift
+  (($#)) || die "strace_summary: no command"
+  command -v strace >/dev/null 2>&1 || { echo "strace_summary: skipped, strace is not installed" >&2; return 3; }
+  scope=$(cat /proc/sys/kernel/yama/ptrace_scope 2>/dev/null || echo 0)
+  if [[ $scope =~ ^[0-9]+$ ]] && ((scope >= 2)); then
+    echo "strace_summary: skipped, kernel.yama.ptrace_scope is $scope (tracing needs privilege)" >&2
+    return 3
+  fi
+  strace -f -c -o "$out.raw" "$@" || rc=$?
+  if [[ -s $out.raw ]]; then
+    sed -n '/^% time/,$p' "$out.raw" | _scrub_ids >"$out"
+  else
+    : >"$out"
+  fi
+  rm -f "$out.raw"
+  [[ -s $out ]] || { echo "strace_summary: strace wrote no summary for '$*'" >&2; return 1; }
+  return "$rc"
+}
+
+# from_samples SAMPLES SIDECAR OUT: convert the raw little-endian int64 nanosecond file a
+# free-threaded process wrote with array('q').tofile, plus its JSON sidecar (example, variant,
+# count, dropped, build/runtime.python_build, gil_enabled false, ...), to a lowlat-report/1 JSON
+# at OUT, through `lowlat-report from-samples`. The measured process never imports lowlat_measure
+# (that re-enables the GIL); this runs in the ordinary GIL environment. Needs LOWLAT_PROFILE.
+from_samples() {
+  (($# == 3)) || die "usage: from_samples SAMPLES SIDECAR OUT"
+  [[ -f $1 && -f $2 ]] || die "from_samples: missing $1 or $2"
+  uvrun lowlat-report from-samples "$(realpath "$1")" "$(realpath "$2")" "$(realpath -m "$3")" >/dev/null || die "from_samples: conversion failed for $1"
+}

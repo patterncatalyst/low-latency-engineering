@@ -16,7 +16,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from lowlat_measure import harness
+from lowlat_measure import harness, samples
 from lowlat_measure.recorder import decode, percentiles_of, require_profile
 from lowlat_measure.table import format_rows
 
@@ -156,6 +156,18 @@ def cmd_from_gbench(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_from_samples(args: argparse.Namespace) -> int:
+    if not require_profile("lowlat-report"):
+        return 2
+    try:
+        samples.write_report(args.samples, args.sidecar, args.out)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        print(f"lowlat-report: from-samples: {exc}", file=sys.stderr)
+        return 1
+    print(args.out)
+    return 0
+
+
 def _add_convert(sub: Any, name: str, func: Any, text: str) -> argparse.ArgumentParser:
     p = sub.add_parser(name, help=text, description=text)
     p.add_argument("source", type=Path, help="the harness's JSON output")
@@ -211,6 +223,19 @@ def build_parser() -> argparse.ArgumentParser:
         default=harness.DEFAULT_TOOLCHAIN,
         help="toolchain text appended to build.compiler (default: %(default)s)",
     )
+    raw = sub.add_parser(
+        "from-samples",
+        help="convert raw int64 nanosecond samples and a JSON sidecar to a report; "
+        "needs LOWLAT_PROFILE",
+        description="convert the raw little-endian int64 nanosecond file a free-threaded process "
+        "wrote with array('q').tofile, plus its JSON sidecar (example, variant, count, dropped, "
+        "runtime.python_build, gil_enabled, ...), to a lowlat-report/1 JSON. Run it in a GIL "
+        "process; the measured process never imports lowlat_measure.",
+    )
+    raw.add_argument("samples", type=Path, help="raw little-endian int64 nanoseconds")
+    raw.add_argument("sidecar", type=Path, help="the report metadata, JSON")
+    raw.add_argument("out", type=Path, help="the report to write")
+    raw.set_defaults(func=cmd_from_samples)
     return parser
 
 
