@@ -26,6 +26,12 @@
     <module>08-zero-copy-flat/java</module>
     <module>09-eliminating-work/java</module>
     <module>10-lockfree-waitfree/java</module>
+    <module>11-stackful-stackless/java</module>
+    <module>12-io-engines/java</module>
+    <module>13-where-code-runs/java</module>
+    <!-- Standalone (no parent): Quarkus imports its own BOM, which would clash with the JUnit and
+         Jackson versions this parent manages. It repeats the parent's enforcer rules and compiler policy. -->
+    <module>12-io-engines/quarkus</module>
   </modules>
 
   <properties>
