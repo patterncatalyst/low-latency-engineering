@@ -195,9 +195,12 @@ provisional and sit in variables at the top of `verify.sh`; calibration (S10, se
 1. **Memory per waiting task, on the quantity that shows the gap.** C++ `os-thread` over `fiber` on address space per task
    (`VmSize` growth over the 10,000 tasks) at least 10x; C++ fiber address space per task (measured `VmSize` growth, about 68 KiB) over the counted coroutine frame
    bytes at least 10x; the coroutine frame itself at most 1,024 bytes (exact: the promise's counting `operator new`, on frames
-   that escape into a vector) with one allocation per frame (exact). Java `platform-thread` address space per task over
-   `virtual-thread` address space per task (`VmSize` growth) at least 10x, the same measure as the C++ pair. Platform-thread RSS
-   over virtual-thread RSS, and over virtual-thread heap (`MemoryMXBean` after a forced collection), are printed as observed. Python thread RSS over asyncio task
+   that escape into a vector) with one allocation per frame (exact). Java `platform-thread` full resident cost per task (RSS, page tables and
+   kernel stack, measured the same way on both sides) over `virtual-thread`'s at least 5x. The `VmSize` ratio, platform RSS over
+   virtual RSS, and platform RSS over virtual-thread heap (`MemoryMXBean` after a forced collection) are printed as observed. A
+   virtual thread's `VmSize` growth is not a per-task cost: it is 0 at 300 tasks and about 34 KB per task at 10,000, which is
+   about five steps of 64 MiB, most likely the malloc arenas of new carrier threads, so it's reported and not asserted.
+   Python thread RSS over asyncio task
    bytes (measured by `tracemalloc`, not exact) at least 5x, in each build.
 2. **Parked tasks armed, and RSS observed.** For the C++ `fiber` and `coroutine` variants, the number of tasks that had reached
    their wait when the memory was read equals 10,000 (exact). In the other parked runs the start gate opens only when every task
@@ -221,7 +224,8 @@ provisional and sit in variables at the top of `verify.sh`; calibration (S10, se
    inside the 480 ms budget, so the saving is memory and CPU per wait, not latency.
 7. **Reports and gates.** Every report passes `lowlat-report check`, with count above 0, `dropped` 0, `build.flags` (C++ and
    Java), `runtime.placement` for pinned runs and `runtime.python_build` for Python; every run that records a start gate has a
-   skew under 1 ms (a timing bound); every ping-pong served exactly the configured round trips with its payload intact (exact);
+   skew under 1 ms (a timing bound), except the single-carrier virtual-thread ping-pong: one carrier serializes its two threads, so
+   the second leaves the gate only after the first parks, and its skew is printed; every ping-pong served exactly the configured round trips with its payload intact (exact);
    free-threaded runs kept the GIL off.
 
 Observed, not asserted: how the other lanes' neighbours wake with no blocking call, `std::binary_semaphore` against
