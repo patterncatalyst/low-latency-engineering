@@ -8,9 +8,9 @@ same CPython release (`examples/.python-version`).
 
 | Image | Contents | Entry |
 |---|---|---|
-| `lowlat/place-cpp:r04` | `line-simulator`, `line-consumer` (and the Ch13 and Ch12 binaries when S6/S7 add them to `TARGETS`/`BINARIES`), built with the UBI 10 GCC 14 | none; `container_run` passes the command |
-| `lowlat/place-java:r04` | Ch12 Quarkus fast-jar and the Ch13 `CpuProbe` jar, Temurin 25.0.5+8 | `java -jar /app/quarkus-app/quarkus-run.jar` |
-| `lowlat/place-py:r04` | uv-managed CPython (GIL build) and `lowlat-place` in `/opt/venv` | `python` |
+| `lowlat/place-cpp:r04` | `line-simulator`, `io-receive` (the Ch12 receive consumer), `place-probe`, `busy-pool`, built with the UBI 10 GCC 14 | none; `container_run` passes the command |
+| `lowlat/place-java:r04` | Ch12 Quarkus fast-jar and the Ch13 `CpuProbe` jar (`/app/cpuprobe/where-code-runs-java.jar`, shaded), Temurin 25.0.5+8 | `java -jar /app/quarkus-app/quarkus-run.jar` |
+| `lowlat/place-py:r04` | uv-managed CPython 3.14.9 (GIL build), uv 0.13.5, and `lowlat-place` in `/opt/venv` | `python -m lowlat_place` |
 
 All run as a non-root user (10001). None uses `latest`, `--privileged` or a subscription.
 
