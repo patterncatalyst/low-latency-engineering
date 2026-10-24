@@ -58,6 +58,9 @@ case $cmd in
           printf '@@LOWLAT_CGROUP_BEGIN\nnr_throttled 999\n\n'
         fi
         echo "@@LOWLAT_CGROUP_BEGIN"
+        rc=${FAKE_EXIT:-0}
+        [[ $FAKE_BLOCK != badrc ]] || rc=99
+        [[ $FAKE_BLOCK == norc ]] || echo "rc $rc"
         case $FAKE_BLOCK in
           garbage) echo "nr_throttled many" ;;
           *)
@@ -223,6 +226,15 @@ REFUSED = [
     "-v {OUT}:/var/run",
     "-v {OUT}:/etc",
     "-v {OUT}:/etc/x",
+    "-v {OUT}:/bin",
+    "-v {OUT}:/bin/sh",
+    "-v {OUT}:/sbin",
+    "-v {OUT}:/usr",
+    "-v {OUT}:/usr/bin/cat",
+    "-v {OUT}:/lib",
+    "-v {OUT}:/lib64/ld-linux.so",
+    "-v {OUT}:/opt/venv",
+    "-v {OUT}:/opt/venv/bin",
     "-v {OUT}//run1:/out",
     "-v {OUT}/./run1:/out",
     "-v {OUT}/link:/out",
@@ -338,6 +350,8 @@ BAD_BLOCKS = [
     "badcpu",
     "badcpuset",
     "negative",
+    "badrc",
+    "norc",
 ]
 
 
@@ -681,6 +695,44 @@ def test_container_run_validates_the_output_directory_itself(
     assert run.returncode != 0, out
     assert "refused" in run.stderr
     assert calls(tmp_path) == []
+
+
+@pytest.mark.parametrize("root", ["/etc", "/", "/usr/share", "/var/lib", "/proc", "/opt/x"])
+def test_container_run_refuses_a_system_tree_as_the_guest_root(
+    env: dict[str, str], tmp_path: Path, root: str
+) -> None:
+    out = f"{root.rstrip('/')}/ssh"
+    run = sh(
+        f"container_run t --env-out {tmp_path}/e.json -v {out}:/out -- {IMAGE} true",
+        {**env, "LOWLAT_GUEST_ROOT": root, "CONTAINER_OUT_DIR": out},
+    )
+    assert run.returncode != 0
+    assert "refused" in run.stderr or "system tree" in run.stderr
+    assert calls(tmp_path) == []
+
+
+def test_container_run_refuses_a_guest_root_that_is_a_symlink_to_a_system_tree(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    link = tmp_path / "rootlink"
+    link.symlink_to("/etc")
+    run = sh(
+        f"container_run t --env-out {tmp_path}/e.json -v {link}/ssh:/out -- {IMAGE} true",
+        {**env, "LOWLAT_GUEST_ROOT": str(link), "CONTAINER_OUT_DIR": f"{link}/ssh"},
+    )
+    assert run.returncode != 0
+    assert calls(tmp_path) == []
+
+
+def test_container_run_rejects_a_block_whose_rc_differs_from_docker_wait(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    # the workload exited 7 (docker wait) but a forged block says 0
+    run = run_container({**env, "FAKE_EXIT": "7", "FAKE_BLOCK": "badrc"}, tmp_path, "--cpus 1")
+    assert run.returncode == 4
+    ok = run_container({**env, "FAKE_EXIT": "7"}, tmp_path, "--cpus 1", name="ty")
+    assert ok.returncode == 7
+    assert (tmp_path / "e.json").exists()
 
 
 def test_container_run_resolves_a_planted_symlink_in_the_guest(

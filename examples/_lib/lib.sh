@@ -840,6 +840,7 @@ _CGROUP_WRAP=$(
   cat <<'SCRIPT'
 "$@"; rc=$?
 printf '\n@@LOWLAT_CGROUP_BEGIN\n'
+echo "rc $rc"
 cat /sys/fs/cgroup/cpu.stat 2>/dev/null
 echo "cpu.max $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)"
 echo "cpuset.cpus.effective $(cat /sys/fs/cgroup/cpuset.cpus.effective 2>/dev/null)"
@@ -863,6 +864,17 @@ _path_canonical() {
   [[ $1 == /* && $1 != *//* && $1/ != */./* && $1/ != */../* ]]
 }
 
+# _system_tree P: succeed if P is / or one of the system trees (or beneath them), which a guest
+# checkout never is.
+_system_tree() {
+  case $1 in
+    / | /etc | /etc/* | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | /run | /run/* | /var | /var/* \
+      | /usr | /usr/* | /boot | /boot/* | /root | /root/* | /bin | /bin/* | /sbin | /sbin/* \
+      | /lib | /lib/* | /lib64 | /lib64/* | /opt | /opt/*) return 0 ;;
+  esac
+  return 1
+}
+
 # _container_out_dir: print the validated, guest-resolved CONTAINER_OUT_DIR, or die. It must be
 # absolute, canonical, not /, strictly under LOWLAT_GUEST_ROOT (default: the guest user's home plus GUEST_REPO),
 # and (resolved in the guest, symlinks followed) still under the resolved root.
@@ -873,17 +885,19 @@ _container_out_dir() {
   _path_canonical "$out" && [[ $out != / ]] || _container_deny "CONTAINER_OUT_DIR '${CONTAINER_OUT_DIR}'" "must be an absolute canonical path (no //, ., .. or relative)"
   out=${out%/}
   _path_canonical "$root" || die "container_run: LOWLAT_GUEST_ROOT '$root' is not an absolute canonical path"
+  _system_tree "$root" && die "container_run: LOWLAT_GUEST_ROOT '$root' is a system tree, not a checkout"
   [[ $out == "${root%/}"/* ]] || _container_deny "CONTAINER_OUT_DIR '$out'" "is not under the guest checkout $root"
   res_out=$(guest realpath -e -- "$out") || _container_deny "CONTAINER_OUT_DIR '$out'" "does not exist in the guest"
   res_root=$(guest realpath -e -- "$root") || _container_deny "LOWLAT_GUEST_ROOT '$root'" "does not exist in the guest"
+  _system_tree "$res_root" && die "container_run: LOWLAT_GUEST_ROOT '$root' resolves to the system tree $res_root"
   [[ $res_out == "$res_root"/* ]] || _container_deny "CONTAINER_OUT_DIR '$out'" "resolves to $res_out, outside $res_root"
   printf '%s' "$res_out"
 }
 
 # _container_mount_ok SRC DST: die unless a bind mount's source is under the validated
 # CONTAINER_OUT_DIR (canonical, and still under it once symlinks are resolved in the guest) and its
-# target is canonical and not /, /proc, /sys, /dev, /run, /var/run, /etc (or beneath them) or a
-# socket for docker or containerd.
+# target is canonical and not /, /proc, /sys, /dev, /run, /var/run, /etc, /bin, /sbin, /usr, /lib, /lib64,
+# /opt/venv (or beneath them: the wrapper's sh and cat must not be overmounted) or a docker/containerd socket.
 _container_mount_ok() {
   local src=$1 dst=$2 res_out res_src
   res_out=$(_container_out_dir)
@@ -895,7 +909,9 @@ _container_mount_ok() {
   case $res_src in *docker.sock* | *containerd*.sock | */run/*) _container_deny "mount source '$src'" "resolves to a protected path" ;; esac
   dst=${dst%/}
   case $dst in
-    "" | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | /run | /run/* | /var/run | /var/run/* | /etc | /etc/* | *docker.sock* | *containerd*.sock)
+    "" | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | /run | /run/* | /var/run | /var/run/* | /etc | /etc/* \
+      | /bin | /bin/* | /sbin | /sbin/* | /usr | /usr/* | /lib | /lib/* | /lib64 | /lib64/* | /opt/venv | /opt/venv/* \
+      | *docker.sock* | *containerd*.sock)
       _container_deny "mount target '${dst:-/}'" "is a protected path" ;;
   esac
 }
@@ -920,12 +936,15 @@ _container_mount_ok() {
 #   -e|--env KEY=VALUE, --hostname NAME, --init, -u|--user USER, -w|--workdir /ABS
 #   -v|--volume SRC:DST[:ro|rw|z|Z], --mount type=bind,src=SRC,dst=DST[,readonly]
 #       SRC must be under $CONTAINER_OUT_DIR (symlinks resolved in the guest); DST must be canonical
-#       and not /, /proc, /sys, /dev, /run, /var/run, /etc or a docker/containerd socket
+#       and not /, /proc, /sys, /dev, /run, /var/run, /etc, /bin, /sbin, /usr, /lib, /lib64, /opt/venv
+#       (or beneath them) or a docker/containerd socket
 # --name is internal; --hostname defaults to NAME (so the container ID cannot show up as the
 # hostname); --cgroupns=private and --entrypoint sh are added (any image ENTRYPOINT is bypassed:
 # CMD is the whole command). The image needs sh and cat (see _CGROUP_WRAP).
 #
-# The container's own cpu.stat, cpu.max and cpuset.cpus.effective are printed by the wrapper as
+# The block also carries `rc N`, the workload's exit status, which must equal docker wait's (a
+# workload that kills sh and forges a block cannot know it). The container's own cpu.stat, cpu.max
+# and cpuset.cpus.effective are printed by the wrapper as
 # the last output between sentinels and parsed into the block's cgroup (exact final counters,
 # not a sample); the fenced block is removed from the printed log. If the block is missing or
 # unparsable the run fails with status 4 when --cpus or --cpuset-cpus was passed (a limited lane
@@ -1135,6 +1154,7 @@ container_run() (
       if [[ $seen == *" $key "* ]]; then block_ok=0; break; fi
       seen+="$key "
       case $key in
+        rc) [[ $rest_of == "$rc" ]] || block_ok=0 ;;
         nr_throttled) [[ $rest_of =~ ^[0-9]+$ ]] && nr=$rest_of || block_ok=0 ;;
         throttled_usec) [[ $rest_of =~ ^[0-9]+$ ]] && us=$rest_of || block_ok=0 ;;
         cpu.max) [[ $rest_of =~ ^(max|[0-9]+)\ [0-9]+$ ]] && cm=$rest_of || block_ok=0 ;;
@@ -1143,7 +1163,7 @@ container_run() (
       esac
       ((block_ok)) || break
     done <"$tmp/block.txt"
-    [[ $seen == *" nr_throttled "* && $seen == *" throttled_usec "* && $seen == *" cpu.max "* ]] || block_ok=0
+    [[ $seen == *" rc "* && $seen == *" nr_throttled "* && $seen == *" throttled_usec "* && $seen == *" cpu.max "* ]] || block_ok=0
   fi
   if ((!block_ok)); then
     nr='' us='' cm='' cs=''
