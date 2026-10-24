@@ -11,8 +11,8 @@
 
 FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e AS build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG UV_VERSION=0.13.0
-ARG UV_SHA256=b0828fc4cdc47d65951e94b5f0a15a5364420e8dcd88723f3b21e7a2eb30bbc3
+ARG UV_VERSION=0.13.5
+ARG UV_SHA256=57ef9d9ccb01fb1bd998df995b0dd221b52f7d7841fbea93f2d4463bf61fb7a9
 # hadolint ignore=DL3041
 RUN microdnf -y --setopt=install_weak_deps=0 install tar gzip \
     && microdnf clean all

@@ -662,7 +662,7 @@ if ((RUN)); then
       --samples 20 --cpu "$CPU" --hold-ms "$HOLD_MS" --out "$OUT/python/hub-sweep-$v.json"
   done
   PYCPUS=$(IFS=,; echo "${CORES[*]:0:5}")
-  FT=$(command -v python3.14t || true)
+  FT=$(uv python find 3.14.9t 2>/dev/null || true)
   for v in adjacent-counters pair-padded; do
     # The measured process writes only raw batch times (no HdrHistogram import); the report is built afterwards.
     raw="$OUT/python/counters-processes-$v.raw.json"

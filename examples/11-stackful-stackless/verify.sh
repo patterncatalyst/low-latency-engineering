@@ -45,7 +45,7 @@
 # On TERM or INT the script stops its whole process tree before it exits. UDP ports 47310 (C++ os-thread),
 # 47311 (fiber), 47312 (coroutine), 47313 (platform-thread), 47314 (virtual-thread) on 127.0.0.1. Threads are pinned to
 # distinct physical cores with sched_setaffinity as an experiment control; that is not isolation. Never changes the
-# host: no sudo, no sysctl, no governor. The free-threaded interpreter is a user-local download: `uv python install 3.14t`.
+# host: no sudo, no sysctl, no governor. The free-threaded interpreter is a user-local download: `uv python install 3.14.9t`.
 # shellcheck disable=SC2016
 set -euo pipefail
 trap 'exit 143' TERM
@@ -278,7 +278,7 @@ cpp_pins_pingpong() { [[ $1 == os-thread ]] && echo 2 || echo 1; }
 
 # ---- build and unit tests ------------------------------------------------------------------------------------------
 if ((RUN)); then
-  uv python find 3.14t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14t (a user-local download)"
+  uv python find 3.14.9t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14.9t (a user-local download)"
   build_cpp tasks-bench tasks-line tasks-test line-simulator
   BUILD_JAVA_TESTS=1 build_java "$HERE/java" # the Java tests run on the way
   py_sync
@@ -288,7 +288,7 @@ if ((RUN)); then
   "$(cpp_bin tasks-test)" --gtest_brief=1 >"$LOGS/cpp-unit-tests.log" 2>&1 || { tail -20 "$LOGS/cpp-unit-tests.log" >&2; die "C++ unit tests failed"; }
   uvrun pytest -q "$HERE/tasks-py/tests" >"$LOGS/python-unit-tests-gil.log" 2>&1 || { tail -20 "$LOGS/python-unit-tests-gil.log" >&2; die "Python (GIL) tests failed"; }
   (cd "$LOWLAT_EXAMPLES" && LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$LOWLAT_EXAMPLES/.venv-ft \
-    uv run -q --python 3.14t --all-packages pytest -q "$HERE/tasks-py/tests") >"$LOGS/python-unit-tests-free-threaded.log" 2>&1 ||
+    uv run -q --python 3.14.9t --all-packages pytest -q "$HERE/tasks-py/tests") >"$LOGS/python-unit-tests-free-threaded.log" 2>&1 ||
     { tail -20 "$LOGS/python-unit-tests-free-threaded.log" >&2; die "Python (free-threaded) tests failed"; }
   ok "C++, Java and Python (both builds) unit tests pass"
   BENCH=$(cpp_bin tasks-bench)
@@ -322,7 +322,7 @@ py_measure() {
   local cmd=(tasks-py measure "$@" --out "$raw" --hold-ms "$HOLD_MS")
   if [[ $build == free-threaded ]]; then
     run_pinned "$log" "$pins" env UV_PROJECT_ENVIRONMENT="$LOWLAT_EXAMPLES/.venv-ft" \
-      uv --directory "$LOWLAT_EXAMPLES" run -q --python 3.14t --package lowlat-tasks "${cmd[@]}"
+      uv --directory "$LOWLAT_EXAMPLES" run -q --python 3.14.9t --package lowlat-tasks "${cmd[@]}"
   else
     # env -C execs uv itself, so the background PID is uv's and there is no subshell between it and python.
     run_pinned "$log" "$pins" env -C "$LOWLAT_EXAMPLES" uv run -q "${cmd[@]}"

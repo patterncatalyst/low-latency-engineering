@@ -126,7 +126,7 @@ torn snapshot, `seq-cst` forbids `0, 0` in C++ at 200,000 trials).
 
 CPython has no public atomics API, and under the GIL its threads don't run in parallel. So the lane is the claim only, with no
 memory-order test and no seqlock. It runs under two builds, recorded as `runtime.python_build`: the default GIL build
-and the free-threaded `3.14.8+freethreaded` (a user-local `uv python install 3.14t`). The same code shows the
+and the free-threaded `3.14.9+freethreaded` (a user-local `uv python install 3.14.9t`). The same code shows the
 difference. A lost claim is rare under the GIL (the interpreter switches threads every 5 ms, `sys.getswitchinterval()`) and
 by the thousand without it. `itertools.count` isn't documented as thread-safe, and the free-threading howto says threads sharing an iterator may
 see duplicate or missing elements. The lane reports what it saw and asserts nothing.
@@ -165,14 +165,14 @@ uv run sync-py measure --variant lock --cpus 1,2,3,4 --out /tmp/claim-gil
 uv run sync-py report /tmp/claim-gil --out /tmp/python-gil-lock.json
 
 # free-threaded build: a separate environment, .venv-ft (ignored by git)
-UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14t --package lowlat-sync \
+UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14.9t --package lowlat-sync \
     sync-py measure --variant lock --racy-claim --cpus 1,2,3,4 --out /tmp/claim-ft
 uv run sync-py report /tmp/claim-ft --out /tmp/python-free-threaded-lock-racy-claim.json   # reporting stays in the GIL build
 
 # unit tests under both builds
 uv run pytest 10-lockfree-waitfree/sync-py
 LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
-    uv run --python 3.14t --all-packages pytest 10-lockfree-waitfree/sync-py
+    uv run --python 3.14.9t --all-packages pytest 10-lockfree-waitfree/sync-py
 ```
 
 The C++ and Java programs by hand (CPUs from `distinct_cores 6` in `lib.sh`, without the first; `LOWLAT_PROFILE` from `scripts/profile.sh --out`):

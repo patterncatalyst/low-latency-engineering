@@ -201,8 +201,8 @@ quarkus-optimization (`quarkus-demo-02-gc-monitoring`, `GcMonitoringResource`), 
 CPython 3.14 has no io_uring in the standard library, and no mature third-party binding exists, so the lane compares what
 the language offers. `asyncio-datagram` is the idiom: a `DatagramProtocol` per camera on the default selector loop, which
 calls `epoll_wait` and one `recvfrom` per ready socket. `blocking-thread` is one thread per socket in a blocking `recv`.
-Under the GIL the four threads take turns; under the free-threaded `3.14.8+freethreaded` (a user-local
-`uv python install 3.14t`) they run in parallel. `uvloop` is the same protocols on libuv's loop; a cp314t wheel exists
+Under the GIL the four threads take turns; under the free-threaded `3.14.9+freethreaded` (a user-local
+`uv python install 3.14.9t`) they run in parallel. `uvloop` is the same protocols on libuv's loop; a cp314t wheel exists
 but it wasn't tested for keeping the GIL off, so the lane runs it under the GIL build only.
 
 The measuring process imports neither `lowlat_measure` (its `pyhdrh` extension doesn't declare free-threading support,
@@ -273,13 +273,13 @@ uv run python -m lowlat_io receive --variant asyncio-datagram --cpus 1 --out /tm
 uv run lowlat-report from-samples /tmp/py-gil/samples.bin /tmp/py-gil/sidecar.json /tmp/py-gil.json
 
 # free-threaded build: a separate environment, .venv-ft (ignored by git)
-UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14t --package lowlat-io \
+UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14.9t --package lowlat-io \
     python -m lowlat_io receive --variant blocking-thread --cpus 1,2,3,4 --out /tmp/py-ft
 
 # unit tests under both builds
 uv run pytest 12-io-engines/io-py
 LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
-    uv run --python 3.14t --all-packages pytest 12-io-engines/io-py
+    uv run --python 3.14.9t --all-packages pytest 12-io-engines/io-py
 ```
 
 The service by hand (`mvn -B -f examples/12-io-engines/quarkus/pom.xml verify`, then):
@@ -368,7 +368,7 @@ receive path is Part 7.
 | nlohmann/json | v3.12.0 | MIT | C++ reports |
 | JUnit | 6.1.3 (Quarkus module: the platform's) | EPL-2.0 | Java tests |
 | pytest | 9.1.1 | MIT | Python tests |
-| CPython | 3.14.8 and 3.14.8+freethreaded | PSF-2.0 | the Python lanes |
+| CPython | 3.14.9 and 3.14.9+freethreaded | PSF-2.0 | the Python lanes |
 
 Example 12 also builds on example 10's `lowlat::lockfree` library (the multi-producer log and the start gate).
 

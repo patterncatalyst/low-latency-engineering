@@ -48,7 +48,7 @@ marks an image not built yet. `check-prereqs.sh --vm` compares the guest's image
 - The C++ configure mirrors the `release-gcc` preset (the `release` preset uses clang and a
   host-only `CMAKE_PREFIX_PATH`); the binaries are built by GCC 14 with `-O2 -g -fno-omit-frame-pointer`.
 - The runtime image installs `libstdc++` from the UBI 10 BaseOS repository (a no-op if present).
-- CPython 3.14.9 is not used: uv 0.13.0 cannot resolve it. The image follows
+- CPython 3.14.9 (GIL build) is what the image installs: it follows
   `examples/.python-version`, so promoting the other lanes promotes this one.
 
 ## Why there is no compose file

@@ -2,7 +2,7 @@
 
 GIL (default workspace run):  uv run pytest 11-stackful-stackless/tasks-py
 free-threaded:                LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
-                                uv run --python 3.14t --all-packages pytest <this package>
+                                uv run --python 3.14.9t --all-packages pytest <this package>
 Nothing is pinned, so no particular host is needed.
 """
 
@@ -28,7 +28,7 @@ def test_python_build_is_one_of_the_two_builds() -> None:
 
 @pytest.mark.skipif(
     os.environ.get("LOWLAT_EXPECT_FREE_THREADED") != "1",
-    reason="set LOWLAT_EXPECT_FREE_THREADED=1 when running under python3.14t",
+    reason="set LOWLAT_EXPECT_FREE_THREADED=1 when running under 3.14.9t",
 )
 def test_free_threaded_build_was_requested() -> None:
     assert sys._is_gil_enabled() is False

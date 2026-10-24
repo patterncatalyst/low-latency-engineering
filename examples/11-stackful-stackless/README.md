@@ -121,8 +121,8 @@ split the count, and nothing in the report would show it.
 
 ### Python
 
-Both builds run the same code: the default GIL build and the free-threaded `3.14.8+freethreaded` (a user-local
-`uv python install 3.14t`). The measuring process, `tasks-py measure`, imports nothing from `lowlat_measure`: that package's
+Both builds run the same code: the default GIL build and the free-threaded `3.14.9+freethreaded` (a user-local
+`uv python install 3.14.9t`). The measuring process, `tasks-py measure`, imports nothing from `lowlat_measure`: that package's
 HdrHistogram extension doesn't declare free-threading support, so importing it turns the GIL back on, and the run would measure
 a free-threaded interpreter that has a GIL. The process asserts `sys._is_gil_enabled()` is false right after its imports and
 again at the end, and exits otherwise. It writes the samples with `array('q').tofile` and a sidecar with `build.compiler`
@@ -161,14 +161,14 @@ uv run tasks-py measure pingpong --variant threads --cpus 1,2 --out /tmp/pp-gil
 uv run lowlat-report from-samples /tmp/pp-gil/samples.bin /tmp/pp-gil/sidecar.json /tmp/python-gil-pingpong-threads.json
 
 # free-threaded build: a separate environment, .venv-ft (ignored by git)
-UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14t --package lowlat-tasks \
+UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft uv run --python 3.14.9t --package lowlat-tasks \
     tasks-py measure parked --variant asyncio-tasks --out /tmp/parked-ft
 uv run lowlat-report from-samples /tmp/parked-ft/samples.bin /tmp/parked-ft/sidecar.json /tmp/python-ft-parked.json
 
 # unit tests under both builds
 uv run pytest 11-stackful-stackless/tasks-py
 LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
-    uv run --python 3.14t --all-packages pytest 11-stackful-stackless/tasks-py
+    uv run --python 3.14.9t --all-packages pytest 11-stackful-stackless/tasks-py
 ```
 
 The C++ and Java programs by hand (`LOWLAT_PROFILE` from `scripts/profile.sh --out`; CPUs from `distinct_cores 3` in `lib.sh`, without the first):
@@ -264,7 +264,7 @@ distributions in the reports. Live observability of the lookup tasks is Part 7.
 | Jackson (`jackson-databind`, `jackson-core`) | 3.2.4 (`jackson-annotations` 2.22) | Apache-2.0 | JSON reports in the Java measurement kit |
 | slf4j-api | 2.0.17 | MIT | logging facade, pulled in by Affinity |
 | JUnit | 6.1.3 | EPL-2.0 | Java tests |
-| CPython | 3.14.8 and 3.14.8+freethreaded | PSF-2.0 | the Python lanes (GIL and free-threaded builds) |
+| CPython | 3.14.9 and 3.14.9+freethreaded | PSF-2.0 | the Python lanes (GIL and free-threaded builds) |
 
 Java Flight Recorder and the FFM API ship with the OpenJDK (GPL-2.0-only WITH Classpath-exception-2.0); nothing links them
 on a hot path.

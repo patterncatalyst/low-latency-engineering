@@ -53,7 +53,7 @@
 # The simulators run on the cores left over, and the Quarkus server and the open-loop client get disjoint CPUs.
 # Never changes the host: no sudo, no sysctl, no governor. io_uring is used only if the host allows it (read, never
 # changed); on EPERM or ENOSYS the io_uring parts are skipped with the reason recorded.
-# The free-threaded interpreter is a user-local download: `uv python install 3.14t`.
+# The free-threaded interpreter is a user-local download: `uv python install 3.14.9t`.
 # shellcheck disable=SC2016
 set -euo pipefail
 trap 'exit 143' TERM
@@ -299,7 +299,7 @@ fi
 
 # ---- build and unit tests ------------------------------------------------------------------------------------------
 if ((RUN)); then
-  uv python find 3.14t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14t (a user-local download)"
+  uv python find 3.14.9t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14.9t (a user-local download)"
   build_cpp io-receive io-receive-asio io-test line-simulator
   RECV=$(cpp_bin io-receive)
   RECV_ASIO=$(cpp_bin io-receive-asio)
@@ -316,7 +316,7 @@ if ((RUN)); then
   "$(cpp_bin io-test)" --gtest_brief=1 >"$LOGS/cpp-unit-tests.log" 2>&1 || { tail -20 "$LOGS/cpp-unit-tests.log" >&2; die "C++ unit tests failed"; }
   uvrun pytest -q "$HERE/io-py/tests" >"$LOGS/python-unit-tests-gil.log" 2>&1 || { tail -20 "$LOGS/python-unit-tests-gil.log" >&2; die "Python (GIL) tests failed"; }
   (cd "$LOWLAT_EXAMPLES" && LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$LOWLAT_EXAMPLES/.venv-ft \
-    uv run -q --python 3.14t --all-packages pytest -q "$HERE/io-py/tests") >"$LOGS/python-unit-tests-free-threaded.log" 2>&1 ||
+    uv run -q --python 3.14.9t --all-packages pytest -q "$HERE/io-py/tests") >"$LOGS/python-unit-tests-free-threaded.log" 2>&1 ||
     { tail -20 "$LOGS/python-unit-tests-free-threaded.log" >&2; die "Python (free-threaded) tests failed"; }
   ok "C++, Java, Quarkus and Python (both builds) unit tests pass"
 

@@ -26,7 +26,7 @@ def test_python_build_is_one_of_the_two_builds() -> None:
 
 @pytest.mark.skipif(
     os.environ.get("LOWLAT_EXPECT_FREE_THREADED") != "1",
-    reason="set LOWLAT_EXPECT_FREE_THREADED=1 when running under python3.14t",
+    reason="set LOWLAT_EXPECT_FREE_THREADED=1 when running under 3.14.9t",
 )
 def test_free_threaded_build_was_requested() -> None:
     assert sys._is_gil_enabled() is False

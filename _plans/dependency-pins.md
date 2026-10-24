@@ -132,7 +132,7 @@ Sources: `api.adoptium.net`, Maven Central `maven-metadata.xml` and resolved POM
 | async-profiler (linux x64) | 4.6 | Apache-2.0 | `gh api repos/async-profiler/async-profiler/releases/tags/v4.6` (prerelease=false, 2026-10-19) | yes | URL `https://github.com/async-profiler/async-profiler/releases/download/v4.6/async-profiler-4.6-linux-x64.tar.gz`, SHA256 `1e79ed54d8952889a2e74f993d22ee925e3322460d4f37a2ed95bfb88585da36` (GitHub asset digest). The `nightly` release is a prerelease, not used. |
 | org.openjdk.jol:jol-core | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | Maven Central metadata (lastUpdated 2023-02-27); openjdk/jol `LICENSE` | yes | Latest; used for object layout in Ch5/Ch8 prose and compact-header footprint. |
 | stress-ng (guest) | 0.22.01-1.fc44 (updates) | GPL-2.0-or-later | `dnf repoquery --latest-limit=1 stress-ng` | yes | Distro package in the guest; floats with Fedora, recorded not pinned. |
-| CPython | 3.14.8 | PSF-2.0 | `python3.14 -V`; docs.python.org/3.14 | yes | Unchanged; hold on 3.14.9 stays (see Holds). GC mode below. |
+| CPython | 3.14.9 (GIL build, `3.14.9+gil`; python-build-standalone 20261021, via uv 0.13.5) | PSF-2.0 | `uv python find 3.14.9`; install-dir `BUILD` file; docs.python.org/3.14 | yes | Promoted from 3.14.8 in r04 S4 (user decision 2026-10-23). User-local uv download; the Fedora system `python3.14` stays 3.14.8 until Fedora updates, and CI uses that system interpreter. GC mode below. |
 
 ### Chronicle: the 2026.x calendar line is the public open-source line
 
@@ -177,7 +177,7 @@ Sources: Maven Central `maven-metadata.xml` and POMs, `gh api repos/.../releases
 | org.agrona:agrona | 2.7.0 | Apache-2.0 | Maven Central metadata (lastUpdated 2026-10-12); `gh api repos/real-logic/agrona/releases/latest` (2.7.0, prerelease=false, 2026-10-12) | yes | Still the latest. Unchanged. |
 | org.openjdk.jol:jol-core | 0.17 | GPL-2.0-only WITH Classpath-exception-2.0 | Maven Central metadata (lastUpdated 2023-02-27); tags show 0.17 newest | yes | Still the latest. Unchanged. |
 | net.openhft:chronicle-bom / affinity | BOM 2026.26 / affinity 2026.2 | Apache-2.0 | Maven Central metadata: BOM release 2026.26 (2026-10-06), affinity release 2026.2 (2026-01-28) | yes | Current pin equals latest for both; unchanged from r02. |
-| CPython free-threaded (uv) | cpython-3.14.8+freethreaded (python-build-standalone 20261009, via uv 0.13.0) | PSF-2.0 | `uv python install cpython-3.14.8+freethreaded`; install-dir `BUILD` file; docs.python.org/3.14 | yes | User-local, not a system package. Interpreter `python3.14t`. Held at 3.14.8 with the GIL build (see Holds). |
+| CPython free-threaded (uv) | cpython-3.14.9+freethreaded (python-build-standalone 20261021, via uv 0.13.5) | PSF-2.0 | `uv python install 3.14.9t`; install-dir `BUILD` file; docs.python.org/3.14 | yes | User-local, not a system package. Selector `3.14.9t` everywhere (never the floating `3.14t`). Promoted from 3.14.8 (python-build-standalone 20261009) in r04 S4. |
 | abseil-cpp (`absl::flat_hash_map`) | 20250512.1 (held) | Apache-2.0 | Installed prefix `~/.cache/lowlat/prefix` | yes | Hold unchanged (protobuf v36.2 requires it; see Holds). The prefix ships `include/absl/container/flat_hash_map.h` and its `lib64/cmake/absl/abslTargets.cmake` defines the imported target `absl::flat_hash_map`, so S4 can link it without a new dependency. |
 | net.java.dev.jna:jna, jna-platform | 5.19.1 (managed in `examples/pom.xml` as `jna.version`) | LGPL-2.1-or-later OR Apache-2.0 | Maven Central; validator run of `mvn verify` and a jcstress quick pass on 2026-10-23 | yes | Managed in the parent `dependencyManagement`, so 07, 09 and 10 all resolve the newest stable: Affinity (via chronicle-bom) would bring 5.5.0 and jcstress-core 0.16 brings 5.8.0, which also keeps `dependencyConvergence` on in 10. Test-time/affinity use only. |
 | net.sf.jopt-simple:jopt-simple | 5.0.4 (managed in the `10-lockfree-waitfree` POM) | MIT | Maven Central | yes | Convergence between JMH 1.37 (5.0.4) and jcstress-core 0.16 (4.6); newest stable. Known: jcstress `-h` throws `NoSuchMethodError` on 5.0.4 (its help formatter needs 4.6), so never call `-h`; running tests is unaffected. |
@@ -188,7 +188,7 @@ Sources: Maven Central `maven-metadata.xml` and POMs, `gh api repos/.../releases
 |---|---|---|
 | valgrind | 3.27 (3.27.1 on the host) | `valgrind --version` |
 | perf | 7.2 (major.minor only) | `perf --version` |
-| uv | 0.13.0 | `uv --version`; hold unchanged |
+| uv | 0.13.5 | `uv --version`; promoted from 0.13.0 in r04 S4 |
 | GCC / Clang | 16.2.1 / 22.1.8 | `g++ --version`, `clang++ --version` (CMake presets `release-gcc` and `release`) |
 
 ### perf probes at the current `perf_event_paranoid` (2)
@@ -206,7 +206,7 @@ GCC 16.2.1 and Clang 22.1.8 (both using the host libstdc++, the standard library
 
 ### Free-threaded CPython (Q3)
 
-- Installed `cpython-3.14.8+freethreaded` with `uv python install` (user-local, interpreter `python3.14t`). Not a system package. Build: 3.14.8, python-build-standalone 20261009.
+- Installed `cpython-3.14.8+freethreaded` with `uv python install` (user-local, interpreter `python3.14t`). Not a system package. Build: 3.14.8, python-build-standalone 20261009. (r03 record; promoted to 3.14.9+freethreaded, python-build-standalone 20261021, in r04 S4.)
 - `sys._is_gil_enabled()`: `False` on the free-threaded build (`Py_GIL_DISABLED` 1); `True` on the host 3.14.8 (`Py_GIL_DISABLED` 0).
 - Documentation: the CPython 3.14 free-threading howto (docs.python.org/3.14/howto/free-threading-python.html, "Iterators") says "It is generally not thread-safe to access the same iterator object from multiple threads concurrently, and threads may see duplicate or missing elements." The 3.14 `itertools` page makes no thread-safety statement for `count` or its `__next__`. Result: **`itertools.count.__next__` is not documented thread-safe in either build.**
 - Observation (not a documentation claim): 4 threads x 1,000,000 `next(count)` calls, 3 repetitions per build: every repetition yielded exactly 4,000,000 unique values 0..3,999,999 on both the GIL and the free-threaded build.
@@ -230,7 +230,7 @@ Sources: `gh api` on GitHub releases and tags, Maven Central `maven-metadata.xml
 
 - `io.quarkus:quarkus-junit` (the test artifact; `quarkus-junit5` is still in the 3.40.1.1 BOM as the old name) and `io.rest-assured:rest-assured` carry no version in the POM: both come from `quarkus-bom` 3.40.1.1. The standalone Quarkus module repeats the parent's compiler plugin 3.16.0, surefire 3.6.0 and enforcer 3.6.3.
 - `versions.env` now repeats the Boost, liburing, Quarkus platform and uvloop pins (nothing new was chosen).
-- CPython 3.14.9 promotion not done: uv 0.13.0 cannot see it (see the r04 plan Follow-ups).
+- CPython 3.14.9 promotion was done in r04 S4 once uv 0.13.5 could see it (see Hold re-check).
 
 ### Images (UBI, newest first)
 
@@ -303,9 +303,9 @@ Each line is a fact the chapters may assert, with its source and the date checke
 
 | Component | Held at | Latest stable found 2026-10-23 | Status / decision |
 |---|---|---|---|
-| CPython 3.14 | 3.14.8 (until S4) | 3.14.9 (python.org, 2026-10-21) | **User decision 2026-10-23: promote to 3.14.9** (python-build-standalone `20261021`, which ships both the GIL and the free-threaded builds). S4 pins `examples/.python-version` as `3.14.9+gil` and the free-threaded lane as `cpython-3.14.9+freethreaded`; neither file is changed in S0. The old hold reason (no standalone build of 3.14.9) is resolved. Fedora 44 stable is still 3.14.8 (Bodhi), so the system `python3.14` stays 3.14.8 until it updates; uv-managed 3.14.9 is the pin source. |
+| CPython 3.14 | 3.14.8 (until S4) | 3.14.9 (python.org, 2026-10-21) | **Promoted in r04 S4 (user decision 2026-10-23).** python-build-standalone `20261021` (BUILD file of both installs) ships the GIL and the free-threaded builds. `examples/.python-version` is `3.14.9+gil` and the free-threaded lane is `3.14.9t` (`cpython-3.14.9+freethreaded`). Fedora 44 stable is still 3.14.8, so the system `python3.14` stays 3.14.8 and CI (which uses it) is unchanged; uv-managed 3.14.9 is the pin source. Hold closed. |
 | CPython 3.15 | not used | 3.15.1 (3.15 GA 2026-10-09; endoflife.date) | **Held by user decision 2026-10-23.** The book targets 3.14, and wheel support (`pyhdrh`, `protobuf`) for 3.15 must be checked first. Revisit next iteration. |
-| uv | 0.13.0 | 0.13.5 (2026-10-22) | **User runs `uv self update` themselves.** The new version will be recorded here after they do; until then 0.13.0 is the recorded version and nothing in the repo is pinned to 0.13.5. |
+| uv | 0.13.0 | 0.13.5 (2026-10-22) | **Promoted to 0.13.5 in r04 S4** (the user ran `uv self update`). `versions.env` and the python Containerfile now carry 0.13.5 and its sha256 (image rebuild pending). |
 | Temurin 25 | 25.0.5+8 | 25.0.5+8 (Adoptium API, built 2026-10-22) | Current; SHA256 `68982529869257d0ee6b824ec5aa270ff8b118bb438670da0b97ebdab178d7fb` matches the r02 pin. No hold. |
 
 ### Findings that change the r04 plan
@@ -316,15 +316,15 @@ Each line is a fact the chapters may assert, with its source and the date checke
 - Quarkus 3.40.1.1 is the stable LTS pin; the sibling 3.33.1 is two minors behind the 3.33 LTS head and one LTS behind.
 - Docker's default seccomp does block `io_uring_*` (Engine 25.0 onward), as the plan assumed.
 - ubi10 AppStream GCC is 14.3.1, at least 14; there is no `ubi10/python-314` image.
-- The CPython 3.14.9 hold is resolved by the user's decision to promote in S4; 3.15.1 is held.
+- The CPython 3.14.9 hold is closed: promoted in S4; 3.15.1 stays held.
 
 ## Holds
 
 | Component | Held at | Latest stable | Reason | Re-check |
 |---|---|---|---|---|
-| CPython | 3.14.8 (promotion to 3.14.9 decided 2026-10-23, applied in r04 S4) | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | Resolved: python-build-standalone `20261021` now ships 3.14.9 (GIL and free-threaded), and the user decided on 2026-10-23 to promote. Until S4 changes `examples/.python-version` (to `3.14.9+gil`) the repo stays on 3.14.8; Fedora 44 still ships 3.14.8. | S4 |
+| CPython | 3.14.9 (promoted in r04 S4) | 3.14.9 (python.org, released 2026-10-21 13:08 UTC) | Closed: python-build-standalone `20261021` ships 3.14.9 (GIL and free-threaded); `examples/.python-version` is `3.14.9+gil`. Fedora 44 still ships 3.14.8 and CI uses that system interpreter. | closed |
 | CPython 3.15 | not used | 3.15.1 (3.15 GA 2026-10-09) | User decision 2026-10-23: held. The book targets 3.14 and wheel support (`pyhdrh`, `protobuf`) for 3.15 needs checking. | next iteration |
-| uv | 0.13.0 on this host | 0.13.5 (2026-10-22) | User-local tool, not changed by the build. The user runs `uv self update` themselves; the new version is recorded here after they do. | after the user's update |
+| uv | 0.13.5 | 0.13.5 (2026-10-22) | Closed: promoted from 0.13.0 in r04 S4. | next survey |
 | JDK 27 (non-LTS) | not used | 27 GA (2026-09-15, Temurin 27.0.0+35); jdk.java.net/27 lists 27.0.1.0.2 as the current update (checked 2026-10-22) | Base is LTS 25 (Q1); libraries certify LTS | JDK 28 GA, or next LTS (JDK 29) |
 | JDK 28 / Valhalla EA, jextract EA | not used | EA only | Prerelease policy (Q2) | JDK 28 GA (~2027-03); GA jextract |
 | GraalVM CE 25 Innovation | not pinned | graal-25.4.4.1.1 | Prose only (Q3) | only if native-image is ever run in an example |
@@ -338,7 +338,7 @@ Pins used only inside the Ch13 Containerfiles (`examples/13-where-code-runs/cont
 | CMake (upstream binary, builder stage only) | 4.4.4 | BSD-3-Clause | `gh api repos/Kitware/CMake/releases/latest` (v4.4.4, prerelease=false); `https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4-linux-x86_64.tar.gz` | SHA256 `e5bb807f7728cb60cd8b27ebc97a2edb469b68655f21e844a600c3575b76f5bb` (GitHub asset digest; equal to the line in `cmake-4.4.4-SHA-256.txt`) | UBI 10 AppStream (public repo metadata, 2026-10-24) carries `cmake` 3.31.8-1.el10 only; the repo needs 4.3 or later (`cmake_minimum_required(VERSION 4.3)`). |
 | Ninja (upstream binary, builder stage only) | 1.13.2 | Apache-2.0 | `gh api repos/ninja-build/ninja/releases/latest` (v1.13.2, prerelease=false); asset `ninja-linux.zip` | SHA256 `5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6` (GitHub asset digest) | `ninja-build` is in none of UBI 10 BaseOS, AppStream or CodeReady Builder (public repo metadata, 2026-10-24). |
 | Apache Maven (builder stage only) | 3.9.16 | Apache-2.0 | Maven Central `maven-metadata.xml` for `org.apache.maven:apache-maven` (newest 3.9.x); `https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz` | SHA256 `80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb` (computed from the downloaded file, 9278065 bytes; Central's `.sha512` is `831a8591...6f6`) | Latest stable 3.9 line. Maven 4.0.0 is only at `4.0.0-rc-7` (2026-10-01), a prerelease, not used. The POMs require `[3.9,)`. |
-| uv (upstream static binary, python image) | 0.13.0 | Apache-2.0 OR MIT | `gh api repos/astral-sh/uv/releases/tags/0.13.0`; asset `uv-x86_64-unknown-linux-musl.tar.gz` | SHA256 `b0828fc4cdc47d65951e94b5f0a15a5364420e8dcd88723f3b21e7a2eb30bbc3` (GitHub asset digest) | Same uv version as the host (see the hold table: 0.13.5 exists, the user updates uv themselves). It installs the CPython named by `examples/.python-version` (3.14.8 GIL build until uv can see 3.14.9). |
+| uv (upstream static binary, python image) | 0.13.5 | Apache-2.0 OR MIT | `gh api repos/astral-sh/uv/releases/tags/0.13.5`; asset `uv-x86_64-unknown-linux-musl.tar.gz` | SHA256 `57ef9d9ccb01fb1bd998df995b0dd221b52f7d7841fbea93f2d4463bf61fb7a9` (upstream `uv-x86_64-unknown-linux-musl.tar.gz.sha256`, re-verified against the downloaded tarball) | Same uv version as the host. It installs the CPython named by `examples/.python-version` (3.14.9 GIL build). Image rebuild pending. |
 | GCC, libstdc++ (UBI 10 AppStream/BaseOS) | 14.3.1-4.4.el10 | GPL-3.0-or-later WITH GCC-exception-3.1 | public UBI 10 repository metadata, 2026-10-24 | n/a (dnf's own signatures) | Unchanged from the Images note: at least 14, so `<generator>` and `<print>` exist. |
 
 The same versions are in `versions.env` (`CMAKE_*`, `NINJA_*`, `MAVEN_*`, `UV_*`) and repeated as `ARG` defaults in the Containerfiles.

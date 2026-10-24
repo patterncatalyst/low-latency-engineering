@@ -130,7 +130,7 @@ Python can't place an object or pad a field. The lever is the number of objects,
 - False sharing between processes through `multiprocessing.shared_memory` (observed). Shared memory is a
   page-aligned array of 64-bit cells at known offsets, so adjacent and padded layouts exist even in Python.
   Threads under the GIL never write in parallel, so there's nothing to false-share. The free-threaded build
-  (`python3.14t`, a user-local uv download) runs the same thread code in parallel, and the lane runs both
+  (`3.14.9t`, a user-local uv download) runs the same thread code in parallel, and the lane runs both
   builds. The measured process records raw batch times and never imports `lowlat_measure`, because importing
   the HdrHistogram C extension re-enables the GIL. `counters-report` turns the raw file into reports in the
   normal interpreter.

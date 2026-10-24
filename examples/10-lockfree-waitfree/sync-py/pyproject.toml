@@ -1,10 +1,10 @@
 # Ch10 Python lane. The tests run under both interpreter builds:
 #
 #   GIL (default workspace run):  uv run pytest 10-lockfree-waitfree/sync-py
-#   free-threaded 3.14.8:         LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
-#                                   uv run --python 3.14t --all-packages pytest 10-lockfree-waitfree/sync-py
+#   free-threaded 3.14.9:         LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
+#                                   uv run --python 3.14.9t --all-packages pytest 10-lockfree-waitfree/sync-py
 #
-# (from examples/; the free-threaded interpreter is a user-local `uv python install 3.14t`).
+# (from examples/; the free-threaded interpreter is a user-local `uv python install 3.14.9t`).
 # With LOWLAT_EXPECT_FREE_THREADED=1 a test asserts sys._is_gil_enabled() is False, so a silent
 # fall back to the GIL build fails the run instead of passing as a free-threaded one.
 # UV_PROJECT_ENVIRONMENT keeps the free-threaded environment (.venv-ft, ignored by git) apart from
