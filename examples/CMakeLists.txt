@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 4.3)
 project(lowlat_examples VERSION 1.0 LANGUAGES C CXX)
 
+# C++23 is the floor for every target (CLAUDE.md language floor). A configure that asks for less
+# stops here instead of failing on <generator> or std::expected later.
+if(DEFINED CMAKE_CXX_STANDARD AND CMAKE_CXX_STANDARD LESS 23)
+  message(FATAL_ERROR "CMAKE_CXX_STANDARD is ${CMAKE_CXX_STANDARD}; this project needs C++23 or later")
+endif()
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -69,6 +74,10 @@ file(GLOB _lowlat_example_dirs LIST_DIRECTORIES true RELATIVE "${CMAKE_CURRENT_S
      "${CMAKE_CURRENT_SOURCE_DIR}/[0-9][0-9]-*/cpp")
 list(SORT _lowlat_example_dirs)
 foreach(_dir IN LISTS _lowlat_example_dirs)
+  # Chapters 11 to 13 need the pinned Boost and liburing (cmake/deps.cmake).
+  if(_dir MATCHES "^1[1-3]-" AND NOT LOWLAT_BUILD_R04)
+    continue()
+  endif()
   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_dir}/CMakeLists.txt")
     add_subdirectory("${_dir}")
   endif()

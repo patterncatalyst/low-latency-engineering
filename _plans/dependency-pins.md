@@ -226,7 +226,12 @@ Sources: `gh api` on GitHub releases and tags, Maven Central `maven-metadata.xml
 | Quarkus platform (`io.quarkus.platform:quarkus-bom`) | 3.40.1.1 | Apache-2.0 | Maven Central `maven-metadata.xml` (versions 3.40.1, 3.40.1.1; `latest` is the beta below); `https://quarkus.io/releases` | yes | none (Maven artifact; resolved by Maven's own checksums) | 3.40 is the current LTS (released 2026-09-30, community support until 2027-09-30); 3.40.1.1 is its newest micro, an emergency CVE release of 2026-10-19. 4.0.0.Beta1 (2026-10-01; Maven `latest`/`release` point at it) is a prerelease, not used; the releases page lists 4.0.0 as upcoming. See the Quarkus notes below. |
 | uvloop | 0.23.0 | MIT OR Apache-2.0 (dual-licensed; the README says "dual-licensed under MIT and Apache 2.0", PyPI lists both classifiers) | PyPI JSON API `https://pypi.org/pypi/uvloop/json` | yes | none pinned here; `uv.lock` in S4 records the wheel hashes | Uploaded 2026-10-01. Wheels exist for cp314 and cp314t: `uvloop-0.23.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl` and `uvloop-0.23.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl` (also aarch64, musllinux, macOS, and cp315). A cp314t wheel existing does not prove uvloop runs without re-enabling the GIL: not tested. D11 plan is the GIL lane only, observed. |
 
-### Images (UBI, newest first)
+### S4 additions (2026-10-24)
+
+- `io.quarkus:quarkus-junit` (the test artifact; `quarkus-junit5` is still in the 3.40.1.1 BOM as the old name) and `io.rest-assured:rest-assured` carry no version in the POM: both come from `quarkus-bom` 3.40.1.1. The standalone Quarkus module repeats the parent's compiler plugin 3.16.0, surefire 3.6.0 and enforcer 3.6.3.
+- `versions.env` now repeats the Boost, liburing, Quarkus platform and uvloop pins (nothing new was chosen).
+- CPython 3.14.9 promotion not done: uv 0.13.0 cannot see it (see the r04 plan Follow-ups).
+
 
 Digests are the multi-arch index digest of the pinned tag, and the linux/amd64 manifest digest in the last column. Taken with `skopeo inspect` and `skopeo inspect --raw` on 2026-10-23. The tag is the exact `version-release` label of the build that `latest` pointed at when checked. Pin the tag and the index digest together (`image:tag@sha256:...`).
 
