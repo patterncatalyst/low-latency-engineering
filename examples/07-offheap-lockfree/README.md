@@ -125,7 +125,7 @@ uv run --project examples lowlat-report show examples/07-offheap-lockfree/result
 ```
 
 By hand, one variant (the JVM first, then the simulator). The `--add-opens`/`--add-exports`
-list is the `chronicle.jvmArgs` property of `java/pom.xml`:
+list is the `chronicle.jvmArgs` property of the parent `examples/pom.xml`:
 
 ```bash
 export LOWLAT_PROFILE=/tmp/profile.json && scripts/profile.sh --out "$LOWLAT_PROFILE"
