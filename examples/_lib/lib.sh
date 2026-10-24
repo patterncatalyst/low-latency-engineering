@@ -97,7 +97,7 @@ _alive() {
 # lock descriptors, and a flock held that way blocks every later run): TERM, up to LOWLAT_KILL_GRACE seconds (default 3) for
 # them to go, then KILL for whatever is left. Then scrubs the results and removes the scratch dir.
 _bg_cleanup() {
-  local p kids i left
+  local p kids now i left
   trap - TERM INT
   for p in "${BG_PIDS[@]}"; do
     kill "$p" 2>/dev/null || true
@@ -111,8 +111,11 @@ _bg_cleanup() {
     ((left)) || break
     sleep 0.1
   done
+  # Collect again: only a PID that is still a descendant is killed, so a PID the kernel has reused isn't hit.
+  # shellcheck disable=SC2207
+  now=($(_descendants $$))
   for p in "${kids[@]}"; do
-    ! _alive "$p" || kill -KILL "$p" 2>/dev/null || true
+    [[ " ${now[*]} " == *" $p "* ]] && _alive "$p" && kill -KILL "$p" 2>/dev/null || true
   done
   scrub_results
   # Scratch (JFR recordings, FIFOs) is ours only when lib.sh created it.
