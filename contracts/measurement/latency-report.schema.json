@@ -129,6 +129,52 @@
           "additionalProperties": { "type": "integer", "minimum": 0 },
           "description": "Exact event counts of the run, name -> integer: CAS failures, maximum retries, torn reads, litmus outcomes, lost claims."
         },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "description": "Where the measured program ran: on the host, in a VM, or in a container (in the VM). VM and container lanes name the guest snapshot and profile; a container lane records the image, its digest and the resource limits.",
+          "allOf": [
+            {
+              "if": { "properties": { "kind": { "enum": ["vm", "container"] } }, "required": ["kind"] },
+              "then": { "required": ["guest_profile"] }
+            },
+            {
+              "if": { "properties": { "kind": { "const": "container" } }, "required": ["kind"] },
+              "then": { "required": ["container"] }
+            }
+          ],
+          "properties": {
+            "kind": { "enum": ["host", "vm", "container"], "description": "Execution environment of the measured program." },
+            "guest_profile": { "type": "string", "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$", "description": "Guest snapshot and profile name, e.g. 'lab-ready-r04/stock-unpinned'. Required when kind is vm or container." },
+            "container": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["runtime", "image", "image_digest", "network", "cpu_quota", "cpuset", "seccomp"],
+              "description": "Container facts; required when kind is container.",
+              "properties": {
+                "runtime": { "type": "string", "minLength": 1, "description": "Container engine, e.g. 'docker'." },
+                "image": { "type": "string", "pattern": "^[^\\s:@]+(:[0-9]+)?(/[^\\s:@]+)*:(?!latest$)[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", "description": "Image reference with an exact tag. A tagless reference or ':latest' is rejected." },
+                "image_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "Digest of the image that ran." },
+                "network": { "enum": ["host", "bridge", "none"], "description": "Container network mode." },
+                "cpu_quota": { "type": ["string", "null"], "description": "CPU quota in CPUs (for example '2'), or null when unlimited." },
+                "cpuset": { "type": ["string", "null"], "description": "Cpuset list (for example '2,3'), or null when unrestricted." },
+                "seccomp": { "type": "string", "minLength": 1, "not": { "const": "unconfined" }, "description": "'default' or a profile file name; 'unconfined' is not allowed." }
+              }
+            },
+            "cgroup": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "cgroup v2 facts read after the run; null when a file was not readable.",
+              "properties": {
+                "cpu_max": { "type": ["string", "null"], "description": "Contents of cpu.max, e.g. '200000 100000' or 'max 100000'." },
+                "cpuset_effective": { "type": ["string", "null"], "description": "Contents of cpuset.cpus.effective." },
+                "nr_throttled": { "type": ["integer", "null"], "minimum": 0, "description": "cpu.stat nr_throttled." },
+                "throttled_usec": { "type": ["integer", "null"], "minimum": 0, "description": "cpu.stat throttled_usec." }
+              }
+            }
+          }
+        },
         "python_build": { "enum": ["gil", "free-threaded"], "description": "Python lanes only: which CPython build ran the measurement." },
         "alloc_stalls": {
           "type": "object",

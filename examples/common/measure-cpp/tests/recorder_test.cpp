@@ -222,7 +222,13 @@ TEST_F(Measure, RuntimePlacementCountersRoundTrip) {
   const std::array cpus{2, 4};
   json runtime = {{"placement", m::placement(cpus, true, false)},
                   {"hw_counters", m::hw_counters(m::HwSource::perf, 1'000'000, {{"L1-dcache-load-misses", 0.42}})},
-                  {"counters", m::counters({{"cas_failures", 18}, {"max_retries", 7}, {"torn_reads", 0}})}};
+                  {"counters", m::counters({{"cas_failures", 18}, {"max_retries", 7}, {"torn_reads", 0}})},
+                  {"environment",
+                   m::environment(m::EnvKind::container, "lab-ready-r04/stock-unpinned",
+                                  m::ContainerInfo{"docker", "localhost/lowlat-cpp:r04-1",
+                                                   "sha256:" + [] { std::string d; for (int i = 0; i < 32; ++i) d += "ab"; return d; }(),
+                                                   m::NetworkMode::bridge, "2", std::nullopt, "default"},
+                                  m::CgroupInfo{"200000 100000", "0-3", 12, 480000})}};
   const auto path = regen_golden() ? kFixtures / "cpp-placement.json"
                                    : fs::path{testing::TempDir()} / std::format("cpp-placement-{}.json", ::getpid());
   const json doc = golden_recorder().write_report(path, "", std::nullopt, runtime);
@@ -240,6 +246,10 @@ TEST_F(Measure, RuntimePlacementCountersRoundTrip) {
   EXPECT_EQ(rt.at("hw_counters").at("ops"), 1'000'000);
   EXPECT_EQ(rt.at("counters").at("cas_failures"), 18);
   EXPECT_TRUE(rt.at("counters").at("torn_reads").is_number_integer());
+  EXPECT_EQ(rt.at("environment").at("kind"), "container");
+  EXPECT_TRUE(rt.at("environment").at("container").at("cpuset").is_null());
+  EXPECT_EQ(rt.at("environment").at("cgroup").at("nr_throttled"), 12);
+  EXPECT_EQ(m::environment(m::EnvKind::host), (json{{"kind", "host"}}));
   EXPECT_TRUE(has_no_mean(written));
   EXPECT_THROW((void)m::hw_counters(m::HwSource::perf, 0, {}), std::invalid_argument);
 }

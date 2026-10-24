@@ -11,6 +11,8 @@ from typing import Any, Literal
 
 HwSource = Literal["perf", "cachegrind", "perfnorm"]
 PythonBuild = Literal["gil", "free-threaded"]
+EnvKind = Literal["host", "vm", "container"]
+NetworkMode = Literal["host", "bridge", "none"]
 
 
 def placement(cpus: Iterable[int], *, distinct_cores: bool, smt_siblings: bool) -> dict[str, Any]:
@@ -26,6 +28,67 @@ def hw_counters(source: HwSource, ops: int, per_op: Mapping[str, float]) -> dict
     if ops < 1:
         raise ValueError(f"ops must be positive: {ops}")
     return {"source": source, "ops": ops, "per_op": dict(per_op)}
+
+
+def container(
+    *,
+    runtime: str,
+    image: str,
+    image_digest: str,
+    network: NetworkMode,
+    seccomp: str,
+    cpu_quota: str | None = None,
+    cpuset: str | None = None,
+) -> dict[str, Any]:
+    """``runtime.environment.container``; ``cpu_quota`` and ``cpuset`` are None when not set."""
+    return {
+        "runtime": runtime,
+        "image": image,
+        "image_digest": image_digest,
+        "network": network,
+        "cpu_quota": cpu_quota,
+        "cpuset": cpuset,
+        "seccomp": seccomp,
+    }
+
+
+def cgroup(
+    *,
+    cpu_max: str | None = None,
+    cpuset_effective: str | None = None,
+    nr_throttled: int | None = None,
+    throttled_usec: int | None = None,
+) -> dict[str, Any]:
+    """``runtime.environment.cgroup``: cgroup v2 facts read after the run (None becomes null)."""
+    return {
+        "cpu_max": cpu_max,
+        "cpuset_effective": cpuset_effective,
+        "nr_throttled": nr_throttled,
+        "throttled_usec": throttled_usec,
+    }
+
+
+def environment(
+    kind: EnvKind,
+    *,
+    guest_profile: str | None = None,
+    container: Mapping[str, Any] | None = None,
+    cgroup: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """``runtime.environment``: where the measured program ran.
+
+    The schema requires ``guest_profile`` (snapshot/profile, for example
+    ``lab-ready-r04/stock-unpinned``) for vm and container and ``container`` for container;
+    ``lowlat-report check`` enforces both, so this builder does not. Parts left None stay out.
+    """
+    env: dict[str, Any] = {"kind": kind}
+    if guest_profile is not None:
+        env["guest_profile"] = guest_profile
+    if container is not None:
+        env["container"] = dict(container)
+    if cgroup is not None:
+        env["cgroup"] = dict(cgroup)
+    return env
 
 
 def python_build() -> PythonBuild:
@@ -45,13 +108,14 @@ def runtime_block(
     hw: Mapping[str, Any] | None = None,
     event_counts: Mapping[str, int] | None = None,
     build: PythonBuild | None = None,
+    env: Mapping[str, Any] | None = None,
     **other: Any,
 ) -> dict[str, Any]:
     """A ``runtime`` object from the parts given; omitted parts stay out of the report.
 
     ``pinned`` is a :func:`placement`, ``hw`` a :func:`hw_counters`, ``event_counts`` the
-    ``counters`` map and ``build`` a :func:`python_build` value. ``other`` passes through the
-    existing keys (``gc``, ``jit``, ``ctx_switches``, ...).
+    ``counters`` map, ``build`` a :func:`python_build` value and ``env`` an :func:`environment`.
+    ``other`` passes through the existing keys (``gc``, ``jit``, ``ctx_switches``, ...).
     """
     block: dict[str, Any] = dict(other)
     if pinned:
@@ -62,4 +126,6 @@ def runtime_block(
         block["counters"] = dict(event_counts)
     if build:
         block["python_build"] = build
+    if env:
+        block["environment"] = dict(env)
     return block

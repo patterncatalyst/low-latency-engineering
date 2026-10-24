@@ -13,6 +13,30 @@ nlohmann::json hw_counters(HwSource source, std::uint64_t ops, const std::map<st
   return {{"source", source}, {"ops", ops}, {"per_op", per_op}};
 }
 
+namespace {
+nlohmann::json opt(const std::optional<std::string>& v) { return v ? nlohmann::json(*v) : nlohmann::json(nullptr); }
+nlohmann::json opt(const std::optional<std::int64_t>& v) { return v ? nlohmann::json(*v) : nlohmann::json(nullptr); }
+}  // namespace
+
+nlohmann::json environment(EnvKind kind, std::optional<std::string> guest_profile,
+                           const std::optional<ContainerInfo>& container, const std::optional<CgroupInfo>& cgroup) {
+  nlohmann::json env = {{"kind", kind}};
+  if (guest_profile) env["guest_profile"] = *guest_profile;
+  if (container) {
+    env["container"] = {{"runtime", container->runtime},     {"image", container->image},
+                        {"image_digest", container->image_digest}, {"network", container->network},
+                        {"cpu_quota", opt(container->cpu_quota)},  {"cpuset", opt(container->cpuset)},
+                        {"seccomp", container->seccomp}};
+  }
+  if (cgroup) {
+    env["cgroup"] = {{"cpu_max", opt(cgroup->cpu_max)},
+                     {"cpuset_effective", opt(cgroup->cpuset_effective)},
+                     {"nr_throttled", opt(cgroup->nr_throttled)},
+                     {"throttled_usec", opt(cgroup->throttled_usec)}};
+  }
+  return env;
+}
+
 nlohmann::json counters(const std::map<std::string, std::int64_t>& counts) { return counts; }
 
 }  // namespace lowlat::measure

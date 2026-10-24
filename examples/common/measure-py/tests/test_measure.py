@@ -6,7 +6,17 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from lowlat_measure import Recorder, decode, hw_counters, placement, python_build, runtime_block
+from lowlat_measure import (
+    Recorder,
+    cgroup,
+    container,
+    decode,
+    environment,
+    hw_counters,
+    placement,
+    python_build,
+    runtime_block,
+)
 from lowlat_measure.cli import main
 
 COMMON = Path(__file__).resolve().parents[2]
@@ -306,6 +316,96 @@ def test_writer_placement_fixtures_check(language: str) -> None:
     assert runtime["placement"]["cpus"] == [2, 4]
     assert runtime["hw_counters"]["ops"] == 1_000_000
     assert runtime["counters"]["cas_failures"] == 18
+    assert main(["check", str(report)]) == 0
+
+
+DIGEST = "sha256:" + "ab" * 32
+
+
+def _container_env(**over: object) -> dict:
+    parts: dict = {
+        "runtime": "docker",
+        "image": "localhost/lowlat-cpp:r04-1",
+        "image_digest": DIGEST,
+        "network": "bridge",
+        "seccomp": "default",
+        "cpu_quota": "2",
+    }
+    parts.update(over)
+    return environment(
+        "container",
+        guest_profile="lab-ready-r04/stock-unpinned",
+        container=container(**parts),
+        cgroup=cgroup(
+            cpu_max="200000 100000",
+            cpuset_effective="0-3",
+            nr_throttled=12,
+            throttled_usec=480000,
+        ),
+    )
+
+
+def test_runtime_environment_round_trip(lowlat_profile: Path, tmp_path: Path) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    runtime = runtime_block(env=_container_env())
+    out = tmp_path / "env.json"
+    rec.write_report(out, runtime=runtime)
+    written = json.loads(out.read_text(encoding="utf-8"))["runtime"]["environment"]
+    assert written["kind"] == "container"
+    assert written["container"]["cpuset"] is None
+    assert written["cgroup"]["nr_throttled"] == 12
+    assert main(["check", str(out)]) == 0
+    host = tmp_path / "host.json"
+    rec.write_report(host, runtime=runtime_block(env=environment("host")))
+    assert main(["check", str(host)]) == 0
+
+
+@pytest.mark.parametrize(
+    "over",
+    [
+        {"image": "localhost/lowlat-cpp:latest"},
+        {"image": "localhost/lowlat-cpp"},
+        {"seccomp": "unconfined"},
+        {"image_digest": "sha256:abc"},
+        {"network": "macvlan"},
+    ],
+)
+def test_runtime_environment_rejects_bad_container(
+    lowlat_profile: Path, tmp_path: Path, over: dict
+) -> None:
+    rec = Recorder("t", "v")
+    rec.record(1000)
+    out = tmp_path / "bad.json"
+    rec.write_report(out, runtime=runtime_block(env=_container_env(**over)))
+    assert main(["check", str(out)]) == 1
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "invalid-runtime-env-container-no-digest.json",
+        "invalid-runtime-env-container-latest.json",
+        "invalid-runtime-env-container-tagless.json",
+        "invalid-runtime-env-container-unconfined.json",
+        "invalid-runtime-env-container-missing.json",
+        "invalid-runtime-env-container-no-guest.json",
+        "invalid-runtime-env-vm-no-guest.json",
+    ],
+)
+def test_runtime_environment_planted_failures(
+    name: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["check", str(EXAMPLES / name)]) == 1
+    assert capsys.readouterr().err
+
+
+@pytest.mark.parametrize("language", ["cpp", "java"])
+def test_writer_environment_fixtures_check(language: str) -> None:
+    """The C++ and Java writers' container environment passes check and matches the builder."""
+    report = FIXTURES / f"{language}-placement.json"
+    env = json.loads(report.read_text(encoding="utf-8"))["runtime"]["environment"]
+    assert env == _container_env()
     assert main(["check", str(report)]) == 0
 
 

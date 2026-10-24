@@ -17,14 +17,25 @@ from lowlat_measure.recorder import (
     decode,
     new_histogram,
 )
-from lowlat_measure.runtime import hw_counters, placement, python_build, runtime_block
+from lowlat_measure.runtime import (
+    cgroup,
+    container,
+    environment,
+    hw_counters,
+    placement,
+    python_build,
+    runtime_block,
+)
 
 __all__ = [
     "HIGHEST_TRACKABLE_NS",
     "LOWEST_DISCERNIBLE_NS",
     "SIGNIFICANT_DIGITS",
     "Recorder",
+    "cgroup",
+    "container",
     "decode",
+    "environment",
     "hw_counters",
     "new_histogram",
     "placement",

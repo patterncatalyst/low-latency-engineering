@@ -10,7 +10,10 @@
 # Publishable by design: no CPU model, no DMI product name, no kernel build number or
 # date, no hostname (see the publishing rule in CLAUDE.md and `validate.py` check host-ids).
 # No root needed. Every probe degrades to null/"unknown" when a file or tool is
-# missing or unreadable, so it runs on the Fedora host and inside a KVM guest.
+# missing or unreadable, so it runs on the Fedora host, inside a KVM guest and in a container.
+# It needs jq. A minimal container image has none: container profiles are written by the
+# host-side driver, which runs this script in the guest and merges the container fields
+# (docker inspect plus the container's cgroup files). See _plans/r04-plan.md Follow-ups.
 set -euo pipefail
 
 SYS=/sys/devices/system/cpu
@@ -227,11 +230,47 @@ g_process() {
      '{pid: $pid, cpu_affinity: $aff, sched_policy: $pol}'
 }
 
+# Container runtime we are inside, or "none". systemd-detect-virt --container first; without it
+# (or when it says none) the marker files and PID 1's cgroup path decide.
+detect_container() {
+  local c="" cg
+  if have systemd-detect-virt; then c=$(systemd-detect-virt --container 2>/dev/null || true); fi
+  if [[ -z $c || $c == none ]]; then
+    c=none
+    if [[ -e /.dockerenv ]]; then c=docker
+    elif [[ -e /run/.containerenv ]]; then c=podman
+    else
+      cg=$(read_file /proc/1/cgroup all)
+      case $cg in
+        *docker*) c=docker ;;
+        *libpod*) c=podman ;;
+        *kubepods*|*containerd*|*cri-o*) c=other ;;
+      esac
+    fi
+  fi
+  printf '%s' "$c"
+}
+
 g_virt() {
-  local v=""
-  if have systemd-detect-virt; then v=$(systemd-detect-virt 2>/dev/null || true); fi
-  jq -nc --arg v "${v:-unknown}" \
-     '{type: $v}'
+  local v="" c
+  # --vm: the hypervisor only, so a container inside a VM still reports the VM type.
+  if have systemd-detect-virt; then v=$(systemd-detect-virt --vm 2>/dev/null || true); fi
+  c=$(detect_container)
+  jq -nc --arg v "${v:-unknown}" --arg c "$c" '{type: $v, container: $c}'
+}
+
+# cgroup v2 facts of the cgroup this process runs in (inside a container: the container's own
+# cgroup). Each field is null when its file is missing or unreadable.
+g_cgroup() {
+  local cg=/sys/fs/cgroup nt tu
+  # shellcheck disable=SC2016  # awk program, not shell
+  nt=$(try awk '$1 == "nr_throttled" {print $2}' "$cg/cpu.stat")
+  # shellcheck disable=SC2016  # awk program, not shell
+  tu=$(try awk '$1 == "throttled_usec" {print $2}' "$cg/cpu.stat")
+  jq -nc --argjson max "$(jstr "$(read_file "$cg/cpu.max")")" \
+     --argjson eff "$(jstr "$(read_file "$cg/cpuset.cpus.effective")")" \
+     --argjson nt "$(jnum "$nt")" --argjson tu "$(jnum "$tu")" \
+     '{cpu_max: $max, cpuset_effective: $eff, nr_throttled: $nt, throttled_usec: $tu}'
 }
 
 g_load() {
@@ -292,12 +331,14 @@ g_tools() {
        perf_event_paranoid: $para, memlock_kb: $ml}'
 }
 
-# Publishable label instead of the real hostname: the lab VM's name inside a
-# lowlat-* guest, otherwise "bare-metal-host"; LOWLAT_HOST_LABEL overrides.
+# Publishable label instead of the real hostname: "container" inside a container (its hostname
+# is the container ID and is never recorded), the lab VM's name inside a lowlat-* guest,
+# otherwise "bare-metal-host"; LOWLAT_HOST_LABEL overrides.
 host_label() {
   local h
   h=$(hostname 2>/dev/null || true)
   if [[ -n ${LOWLAT_HOST_LABEL:-} ]]; then printf '%s' "$LOWLAT_HOST_LABEL"
+  elif [[ $(detect_container) != none ]]; then printf 'container'
   elif [[ $h == lowlat-* ]]; then printf '%s' "$h"
   else printf 'bare-metal-host'
   fi
@@ -308,10 +349,11 @@ build_json() {
     --argjson cpu "$(g_cpu)" --argjson power "$(g_power)" --argjson tuned "$(g_tuned)" \
     --argjson kernel "$(g_kernel)" --argjson clock "$(g_clock)" --argjson process "$(g_process)" \
     --argjson virt "$(g_virt)" --argjson load "$(g_load)" --argjson memory "$(g_memory)" \
-    --argjson lab "$(g_lab)" --argjson tools "$(g_tools)" \
+    --argjson lab "$(g_lab)" --argjson tools "$(g_tools)" --argjson cgroup "$(g_cgroup)" \
     '{schema: "lowlat-profile/1", captured_at: $at, host_label: $host,
       cpu: $cpu, power: $power, tuned: $tuned, kernel: $kernel, clock: $clock,
-      process: $process, virt: $virt, load: $load, memory: $memory, lab: $lab, tools: $tools}'
+      process: $process, virt: $virt, cgroup: $cgroup, load: $load, memory: $memory, lab: $lab,
+      tools: $tools}'
 }
 
 # Flatten JSON to aligned "path  value" lines.

@@ -75,6 +75,91 @@ public final class RuntimeInfo {
         return hw;
     }
 
+    /** Where the measured program ran; {@link #json()} is the schema's enum value. */
+    public enum EnvKind {
+        HOST("host"),
+        VM("vm"),
+        CONTAINER("container");
+
+        private final String json;
+
+        EnvKind(String json) {
+            this.json = json;
+        }
+
+        public String json() {
+            return json;
+        }
+    }
+
+    /** Container network mode; {@link #json()} is the schema's enum value. */
+    public enum NetworkMode {
+        HOST("host"),
+        BRIDGE("bridge"),
+        NONE("none");
+
+        private final String json;
+
+        NetworkMode(String json) {
+            this.json = json;
+        }
+
+        public String json() {
+            return json;
+        }
+    }
+
+    /**
+     * {@code runtime.environment.container}. {@code cpuQuota} and {@code cpuset} are null when the
+     * limit is not set; {@code seccomp} is "default" or a profile file name, never "unconfined".
+     */
+    public static Map<String, Object> container(String runtime, String image, String imageDigest,
+            NetworkMode network, String cpuQuota, String cpuset, String seccomp) {
+        Map<String, Object> c = new LinkedHashMap<>();
+        c.put("runtime", runtime);
+        c.put("image", image);
+        c.put("image_digest", imageDigest);
+        c.put("network", network.json());
+        c.put("cpu_quota", cpuQuota);
+        c.put("cpuset", cpuset);
+        c.put("seccomp", seccomp);
+        return c;
+    }
+
+    /** {@code runtime.environment.cgroup}: cgroup v2 facts read after the run; a null argument is written as null. */
+    public static Map<String, Object> cgroup(String cpuMax, String cpusetEffective, Long nrThrottled,
+            Long throttledUsec) {
+        Map<String, Object> g = new LinkedHashMap<>();
+        g.put("cpu_max", cpuMax);
+        g.put("cpuset_effective", cpusetEffective);
+        g.put("nr_throttled", nrThrottled);
+        g.put("throttled_usec", throttledUsec);
+        return g;
+    }
+
+    /**
+     * {@code runtime.environment}. The schema requires {@code guestProfile} (snapshot/profile, for
+     * example "lab-ready-r04/stock-unpinned") for vm and container and {@code container} for
+     * container; {@code lowlat-report check} enforces both, so this builder does not. Null
+     * {@code guestProfile}, {@code container} and {@code cgroup} are left out. Put the result under
+     * {@code "environment"} in the runtime map.
+     */
+    public static Map<String, Object> environment(EnvKind kind, String guestProfile,
+            Map<String, Object> container, Map<String, Object> cgroup) {
+        Map<String, Object> env = new LinkedHashMap<>();
+        env.put("kind", kind.json());
+        if (guestProfile != null) {
+            env.put("guest_profile", guestProfile);
+        }
+        if (container != null) {
+            env.put("container", container);
+        }
+        if (cgroup != null) {
+            env.put("cgroup", cgroup);
+        }
+        return env;
+    }
+
     /**
      * {@code runtime.counters}: exact event counts (CAS failures, max retries, torn reads, ...), sorted by name so the report is stable. Put
      * the result under {@code "counters"} in the runtime map.

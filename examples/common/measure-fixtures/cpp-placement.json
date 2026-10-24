@@ -101,6 +101,25 @@
       "max_retries": 7,
       "torn_reads": 0
     },
+    "environment": {
+      "cgroup": {
+        "cpu_max": "200000 100000",
+        "cpuset_effective": "0-3",
+        "nr_throttled": 12,
+        "throttled_usec": 480000
+      },
+      "container": {
+        "cpu_quota": "2",
+        "cpuset": null,
+        "image": "localhost/lowlat-cpp:r04-1",
+        "image_digest": "sha256:abababababababababababababababababababababababababababababababab",
+        "network": "bridge",
+        "runtime": "docker",
+        "seccomp": "default"
+      },
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "kind": "container"
+    },
     "hw_counters": {
       "ops": 1000000,
       "per_op": {

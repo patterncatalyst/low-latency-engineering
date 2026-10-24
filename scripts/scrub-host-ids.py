@@ -10,6 +10,7 @@ and (via --print-rules) as the rule file for a `git filter-repo --replace-text` 
     scripts/scrub-host-ids.py [PATH ...]    scrub files or directories (default: every
                                             tracked file in the repository)
     scripts/scrub-host-ids.py --check ...   change nothing; exit 1 if anything would change
+    scripts/scrub-host-ids.py --self-test   check the container-ID and guest-home rules
     scripts/scrub-host-ids.py --filter      read stdin, write the scrubbed text to stdout
     scripts/scrub-host-ids.py --print-rules print `git filter-repo --replace-text` rules
                                             to stdout (they contain the account name:
@@ -18,7 +19,9 @@ and (via --print-rules) as the rule file for a `git filter-repo --replace-text` 
 Text files are rewritten as bytes, so only the matched strings change. `.gz` files are
 decompressed, scrubbed and recompressed with no stored name or mtime (like `gzip -n`).
 The account name is read at run time (HOME, else the passwd entry); it is never written
-in this file.
+in this file. The same goes for the lab guest account ($GUEST_USER, else scripts/lab/lab.env,
+else the cloud-init user). Container IDs (64-hex and 12-hex) are scrubbed only in container
+contexts, so sha256 digests survive.
 """
 
 from __future__ import annotations
@@ -92,6 +95,46 @@ FIXED_RULES: list[Rule] = [
     # under the home root trips the host-ids check, so it is shortened like the host's.
     Rule(HOMES + "/fedora/low-latency-engineering", "<repo>", why="guest repo checkout"),
     Rule(HOMES + "/fedora", "~", why="guest home"),
+    # Container IDs (64-hex and 12-hex) only where the context says container: a hostname or
+    # container key, a docker/podman/containerd cgroup or storage path, a `docker ps` row, the
+    # HOSTNAME environment variable. A bare hex run is never touched, so `sha256:<64 hex>`
+    # digests (image_digest, @sha256: in image references) survive.
+    Rule(
+        r'("(?:[Hh]ostname|container(?:[_-]?[Ii][Dd])?|ContainerId|Id)"\s*:\s*")[0-9a-f]{12}(?:[0-9a-f]{52})?(")',
+        r"\1<container-id>\2",
+        regex=True,
+        why="container id in a hostname, container or Id key",
+    ),
+    Rule(
+        r"\b(docker|libpod|crio|cri-containerd|containerd)-[0-9a-f]{64}\b",
+        r"\1-<container-id>",
+        regex=True,
+        why="container cgroup scope",
+    ),
+    Rule(
+        r"(/(?:docker|containers|libpod|kubepods[\w./-]*|libpod_parent[\w./-]*))/[0-9a-f]{64}\b",
+        r"\1/<container-id>",
+        regex=True,
+        why="container id in a cgroup or storage path",
+    ),
+    Rule(
+        r"(?m)^[0-9a-f]{12}(?=\s+\S+\s+\"[^\"\n]*\"\s)",
+        "<container-id>",
+        regex=True,
+        why="docker ps row",
+    ),
+    Rule(
+        r"\b(HOSTNAME=)[0-9a-f]{12}\b",
+        r"\1<container-id>",
+        regex=True,
+        why="container hostname variable",
+    ),
+    Rule(
+        r"(?i)\b(container[ _-]?id[=: ]+)[0-9a-f]{12}(?:[0-9a-f]{52})?\b",
+        r"\1<container-id>",
+        regex=True,
+        why="container id in prose or key=value",
+    ),
 ]
 
 
@@ -154,8 +197,48 @@ def user_rules(user: str) -> list[Rule]:
     ]
 
 
+def guest_user() -> str:
+    """The lab guest account, read at run time: $GUEST_USER, lab.env or the cloud-init user."""
+    env = os.environ.get("GUEST_USER", "").strip()
+    if env:
+        return env
+    sources = [
+        (ROOT / "scripts/lab/lab.env", r"GUEST_USER:=([A-Za-z_][\w.-]*)\}"),
+        (
+            ROOT / "scripts/lab/cloud-init/user-data.tmpl",
+            r"^users:\s*\n\s*-\s*name:\s*([A-Za-z_][\w.-]*)",
+        ),
+    ]
+    for path, pat in sources:
+        m = re.search(pat, _read(str(path)), re.MULTILINE)
+        if m:
+            return m.group(1)
+    return ""
+
+
+def guest_rules(user: str) -> list[Rule]:
+    """Home paths of the guest account (checkout first), like user_rules for the host account."""
+    if not user or user == "user":
+        return []
+    q = re.escape(user)
+    return [
+        Rule(
+            rf"{HOMES}/{q}/(?:Dev/)?low-latency-engineering",
+            "<repo>",
+            regex=True,
+            why="guest checkout",
+        ),
+        Rule(rf"{HOMES}/{q}(?![A-Za-z0-9_])", "~", regex=True, why="guest home directory"),
+    ]
+
+
 def all_rules(user: str | None = None) -> list[Rule]:
-    return host_rules() + FIXED_RULES + user_rules(account_name() if user is None else user)
+    return (
+        host_rules()
+        + FIXED_RULES
+        + guest_rules(guest_user())
+        + user_rules(account_name() if user is None else user)
+    )
 
 
 def compile_rules(rules: list[Rule]) -> list[tuple[re.Pattern[str], str]]:
@@ -271,6 +354,61 @@ def print_rules() -> None:
             print(f"{r.pattern}==>{r.replacement}")
 
 
+# ----------------------------------------------------------------- self-test
+SELF_TEST_CASES: list[tuple[str, str, str]] = [
+    # (name, input, expected output)
+    (
+        "container id in hostname key",
+        '{"hostname": "0123456789ab"}',
+        '{"hostname": "<container-id>"}',
+    ),
+    ("64-hex container key", '"container": "' + "ab" * 32 + '"', '"container": "<container-id>"'),
+    ("docker inspect Id", '"Id": "' + "cd" * 32 + '"', '"Id": "<container-id>"'),
+    (
+        "cgroup scope",
+        "/system.slice/docker-" + "ef" * 32 + ".scope",
+        "/system.slice/docker-<container-id>.scope",
+    ),
+    ("cgroup path", "0::/docker/" + "12" * 32 + "\n", "0::/docker/<container-id>\n"),
+    (
+        "docker ps row",
+        '0123456789ab   img:1.0   "/bin/sh"   2 min ago   Up',
+        '<container-id>   img:1.0   "/bin/sh"   2 min ago   Up',
+    ),
+    ("HOSTNAME variable", "HOSTNAME=0123456789ab", "HOSTNAME=<container-id>"),
+    (
+        "sha256 digest survives",
+        "image_digest: sha256:" + "ab" * 32,
+        "image_digest: sha256:" + "ab" * 32,
+    ),
+    ("pinned reference survives", "img:1.0@sha256:" + "01" * 32, "img:1.0@sha256:" + "01" * 32),
+    (
+        "image Id digest survives",
+        '"Id": "sha256:' + "ab" * 32 + '"',
+        '"Id": "sha256:' + "ab" * 32 + '"',
+    ),
+    ("bare hex survives", "commit 0123456789ab fixed it", "commit 0123456789ab fixed it"),
+]
+
+
+def self_test() -> int:
+    """Check the container-ID and guest-home rules, with a made-up guest account."""
+    bad = 0
+    compiled = compile_rules(FIXED_RULES + guest_rules("guestacct"))
+    cases = SELF_TEST_CASES + [
+        ("guest home", HOMES + "/guestacct/notes.txt", "~/notes.txt"),
+        ("guest checkout", HOMES + "/guestacct/low-latency-engineering/x", "<repo>/x"),
+        ("other home survives", HOMES + "/otheracct/x", HOMES + "/otheracct/x"),
+    ]
+    for name, text, want in cases:
+        got = scrub_text(text, compiled)
+        ok = got == want and scrub_text(got, compiled) == got  # expected output, idempotent
+        print(f"  {'ok  ' if ok else 'FAIL'} {name}")
+        bad += not ok
+    print(f"scrub-host-ids self-test: {len(cases) - bad}/{len(cases)} cases behave")
+    return 1 if bad else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("paths", nargs="*", help="files or directories (default: tracked files)")
@@ -278,10 +416,13 @@ def main() -> int:
         "--check", action="store_true", help="change nothing; exit 1 if a file would change"
     )
     ap.add_argument("--filter", action="store_true", help="scrub stdin to stdout")
+    ap.add_argument("--self-test", action="store_true", help="check the container and guest rules")
     ap.add_argument(
         "--print-rules", action="store_true", help="print git filter-repo --replace-text rules"
     )
     args = ap.parse_args()
+    if args.self_test:
+        return self_test()
     if args.print_rules:
         print_rules()
         return 0

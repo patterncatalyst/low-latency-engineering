@@ -130,6 +130,11 @@ class LatencyRecorderTest {
                 Map.of("L1-dcache-load-misses", 0.42)));
         runtime.put("counters", RuntimeInfo.counters(new LinkedHashMap<>(Map.of("cas_failures", 18L,
                 "max_retries", 7L, "torn_reads", 0L))));
+        runtime.put("environment", RuntimeInfo.environment(RuntimeInfo.EnvKind.CONTAINER,
+                "lab-ready-r04/stock-unpinned",
+                RuntimeInfo.container("docker", "localhost/lowlat-cpp:r04-1",
+                        "sha256:" + "ab".repeat(32), RuntimeInfo.NetworkMode.BRIDGE, "2", null, "default"),
+                RuntimeInfo.cgroup("200000 100000", "0-3", 12L, 480000L)));
         Path out = regenGolden() ? fixtures.resolve("java-placement.json") : dir.resolve("java-placement.json");
         goldenRecorder().writeReport(out, null, null, runtime);
 
@@ -145,6 +150,10 @@ class LatencyRecorderTest {
         assertEquals(1_000_000L, rt.get("hw_counters").get("ops").asLong());
         assertEquals(18L, rt.get("counters").get("cas_failures").asLong());
         assertTrue(rt.get("counters").get("torn_reads").isIntegralNumber());
+        assertEquals("container", rt.get("environment").get("kind").asString());
+        assertTrue(rt.get("environment").get("container").get("cpuset").isNull());
+        assertEquals(12L, rt.get("environment").get("cgroup").get("nr_throttled").asLong());
+        assertEquals(Map.of("kind", "host"), RuntimeInfo.environment(RuntimeInfo.EnvKind.HOST, null, null, null));
         assertThrows(IllegalArgumentException.class,
                 () -> RuntimeInfo.hwCounters(RuntimeInfo.HwSource.PERF, 0, Map.of()));
     }
