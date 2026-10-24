@@ -8,7 +8,9 @@ vsock ssh wrapper is a shim named by LAB_SSH; ``virsh`` is a shim that lists cho
 import json
 import os
 import shutil
+import signal
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -24,30 +26,53 @@ DIGEST = "sha256:" + "2" * 64
 IMAGE = "registry.example/lowlat/app:1.2.3"
 
 FAKE_DOCKER = r"""#!/usr/bin/env bash
-# Fake docker: logs its arguments, answers from FAKE_* variables.
+# Fake docker: logs its arguments, answers from FAKE_* variables. A container "exists" while the
+# marker file c_NAME does; create makes it, rm removes it.
 printf '%s\n' "$*" >>"$FAKE_DIR/docker.log"
 cmd=$1
 shift
-[[ ${FAKE_FAIL:-} == "$cmd" ]] && { echo "boom: $cmd" >&2; exit 1; }
+if [[ ${FAKE_FAIL:-} == "$cmd" ]]; then echo "boom: $cmd" >&2; exit 1; fi
+marker() { echo "$FAKE_DIR/c_$1"; }
 case $cmd in
-  create) echo "$FAKE_CID" ;;
-  start) echo "$2" ;;
+  create)
+    while (($#)); do [[ $1 == --name ]] && { touch "$(marker "$2")"; break; }; shift; done
+    echo "$FAKE_CID"
+    ;;
+  start) echo "$1" ;;
   wait)
-    sleep 0.3
-    rm -rf "$FAKE_SCOPE"
+    sleep "${FAKE_WAIT_SLEEP:-0}"
     echo "${FAKE_EXIT:-0}"
     ;;
   logs)
     echo "container says hi from $FAKE_HOME_PATH"
+    case ${FAKE_BLOCK:-ok} in
+      ok | trailing | no-end | garbage)
+        echo "@@LOWLAT_CGROUP_BEGIN"
+        if [[ $FAKE_BLOCK == garbage ]]; then
+          echo "nr_throttled many"
+        else
+          printf 'usage_usec 99\nnr_periods 100\nnr_throttled 7\nthrottled_usec 12345\n'
+          echo "cpu.max 150000 100000"
+          echo "cpuset.cpus.effective 2-3"
+        fi
+        [[ $FAKE_BLOCK == no-end ]] || echo "@@LOWLAT_CGROUP_END"
+        [[ $FAKE_BLOCK != trailing ]] || echo "late output"
+        ;;
+    esac
     echo "container stderr line" >&2
     ;;
-  rm) ;;
+  rm) rm -f "$(marker "${!#}")" ;;
   image)
     printf '[{"Id":"%s","RepoDigests":["registry.example/lowlat/app@%s"]}]\n' \
       "$FAKE_IMG_ID" "$FAKE_DIGEST"
     ;;
   inspect)
-    if [[ $1 == --format ]]; then echo "$FAKE_CID"; exit 0; fi
+    if [[ $1 == --format ]]; then
+      [[ -e $(marker "$3") ]] || exit 1
+      echo "$FAKE_CID"
+      exit 0
+    fi
+    [[ -e $(marker "$1") ]] || exit 1
     printf '[{"Id":"%s","Image":"%s",' "$FAKE_CID" "$FAKE_IMG_ID"
     printf '"HostConfig":{"NetworkMode":"%s",' "${FAKE_NET:-default}"
     printf '"NanoCpus":%s,"CpusetCpus":"%s"}}]\n' "${FAKE_NANO:-0}" "${FAKE_CPUSET:-}"
@@ -58,6 +83,7 @@ esac
 FAKE_VIRSH = r"""#!/usr/bin/env bash
 printf '%s\n' "$*" >>"$FAKE_DIR/virsh.log"
 [[ $* == "-c qemu:///system list --name" ]] || exit 9
+[[ -z ${FAKE_VIRSH_FAIL:-} ]] || exit 1
 printf '%s\n' "${FAKE_DOMAINS:-}"
 """
 
@@ -84,6 +110,7 @@ def env(tmp_path: Path) -> dict[str, str]:
     (scope / "cpu.stat").write_text(
         "usage_usec 99\nnr_periods 100\nnr_throttled 7\nthrottled_usec 12345\n"
     )
+    (tmp_path / "c_lowlat-x").touch()  # a running container for cgroup_stat
     home = tmp_path / "home"
     (home / "low-latency-engineering").mkdir(parents=True)
     return {
@@ -96,8 +123,6 @@ def env(tmp_path: Path) -> dict[str, str]:
         "FAKE_SCOPE": str(scope),
         "FAKE_HOME_PATH": f"/home/{os.environ.get('USER', 'nobody')}/work",
         "CGROUP_ROOT": str(tmp_path / "cg"),
-        "CGROUP_POLL": "0.02",
-        "CGROUP_WAIT": "2",
         "GUEST_PROFILE": "lab-ready-r04/stock-unpinned",
         "LOWLAT_IMAGES_LOCK": str(tmp_path / "absent.lock"),
         "LAB_SSH": str(bin_dir / "lab-ssh"),
@@ -124,31 +149,156 @@ def calls(tmp_path: Path, name: str = "docker.log") -> list[str]:
 
 # ---- container_run ---------------------------------------------------------------------------
 
+OUT_DIR = "/srv/lowlat-out"
 
-@pytest.mark.parametrize(
-    "flags",
-    [
-        "--privileged",
-        "--privileged=true",
-        "--cap-add=ALL",
-        "--cap-add ALL",
-        "--security-opt seccomp=unconfined",
-        "--security-opt=seccomp=unconfined",
-        "--pid=host",
-        "--pid host",
-        "--cgroupns=host",
-        "--rm",
-        "-d",
-    ],
-)
-def test_container_run_refuses_unsafe_flags_before_any_docker_call(
+REFUSED = [
+    # capabilities, every spelling
+    "--privileged",
+    "--privileged=true",
+    "--cap-add=ALL",
+    "--cap-add=All",
+    "--cap-add ALL",
+    "--cap-add all",
+    "--cap-add=' all'",
+    "--cap-add=SYS_ADMIN",
+    "--cap-add CAP_SYS_ADMIN",
+    "--cap-add=sys_ptrace",
+    "--cap-drop=ALL",
+    # devices
+    "--device /dev/kvm",
+    "--device=/dev/mem",
+    # mounts outside the declared output directory, or onto protected targets
+    "-v /:/host",
+    "--volume=/:/host",
+    "--volume /:/host",
+    "--mount type=bind,src=/,dst=/host",
+    "--mount=type=bind,source=/,target=/host",
+    "-v /var/run/docker.sock:/var/run/docker.sock",
+    f"-v {OUT_DIR}/../etc:/data",
+    f"-v {OUT_DIR}:/",
+    f"-v {OUT_DIR}:/proc",
+    f"-v {OUT_DIR}:/sys/fs",
+    f"-v {OUT_DIR}:/dev/x",
+    f"-v {OUT_DIR}:/var/run/docker.sock",
+    f"-v {OUT_DIR}:/data:suid",
+    "-v namedvolume:/data",
+    f"--mount type=volume,src={OUT_DIR},dst=/data",
+    f"--mount type=bind,src={OUT_DIR},dst=/data,bind-propagation=shared",
+    # namespaces
+    "--userns=host",
+    "--userns host",
+    "--ipc=host",
+    "--ipc host",
+    "--uts=host",
+    "--uts host",
+    "--pid=host",
+    "--pid=HOST",
+    "--pid host",
+    "--cgroupns=host",
+    "--cgroupns host",
+    "--cgroupns=private",
+    # security options
+    "--security-opt seccomp=unconfined",
+    "--security-opt=seccomp=unconfined",
+    "--security-opt=SECCOMP=Unconfined",
+    "--security-opt 'seccomp=unconfined '",
+    "--security-opt seccomp=default",
+    "--security-opt apparmor=unconfined",
+    "--security-opt=label=disable",
+    "--security-opt systempaths=unconfined",
+    "--security-opt seccomp=a.json,seccomp=unconfined",
+    # other knobs
+    "--sysctl net.core.somaxconn=1",
+    "--sysctl=kernel.shmmax=1",
+    "--cgroup-parent=/",
+    "--oom-kill-disable",
+    "--network=container:other",
+    "--network mynet",
+    "--net=HOST2",
+    "--name other",
+    "--entrypoint sh",
+    "--restart=always",
+    "--ulimit nofile=1",
+    "--pids-limit=-1",
+    # detach and removal, every spelling
+    "--rm",
+    "--rm=true",
+    "-d",
+    "--detach",
+    "--detach=true",
+    "-di",
+    "-dit",
+    "-it",
+    "-i",
+    "-t",
+    # not options at all
+    "stray",
+    " --privileged",
+]
+
+ALLOWED = [
+    "--cpus 1.5",
+    "--cpus=2",
+    "--cpuset-cpus 2,3",
+    "--cpuset-cpus=2-3",
+    "--memory 512m",
+    "--memory=1G",
+    "--network host",
+    "--net=none",
+    "--network=BRIDGE",
+    "--security-opt seccomp=/x/profile.json",
+    "--security-opt=seccomp=profile.json",
+    "-e FOO=bar",
+    "--env FOO",
+    "--env=FOO=bar",
+    "-eFOO=bar",
+    "--hostname lane-a",
+    "--init",
+    "--user 1000:1000",
+    "-u root",
+    "--workdir /work",
+    "-w /work",
+    f"-v {OUT_DIR}/run1:/out",
+    f"--volume={OUT_DIR}:/out:ro",
+    f"--mount type=bind,src={OUT_DIR}/r,dst=/out",
+    f"--mount type=bind,source={OUT_DIR},target=/out,readonly",
+]
+
+
+def run_container(env: dict[str, str], tmp_path: Path, opts: str, name: str = "tx"):
+    return sh(
+        f"container_run {name} --env-out {tmp_path}/e.json {opts} -- {IMAGE}@{DIGEST} true",
+        {"CONTAINER_OUT_DIR": OUT_DIR, **env},
+    )
+
+
+@pytest.mark.parametrize("flags", REFUSED)
+def test_container_run_refuses_everything_off_the_allowlist_before_any_docker_call(
     env: dict[str, str], tmp_path: Path, flags: str
 ) -> None:
-    run = sh(f"container_run t1 --env-out {tmp_path}/e.json {flags} -- {IMAGE}@{DIGEST} true", env)
-    assert run.returncode != 0
+    run = run_container(env, tmp_path, flags)
+    assert run.returncode != 0, flags
     assert "refused" in run.stderr
     assert calls(tmp_path) == []
     assert not (tmp_path / "e.json").exists()
+
+
+@pytest.mark.parametrize("flags", ALLOWED)
+def test_container_run_passes_the_allowed_options(
+    env: dict[str, str], tmp_path: Path, flags: str
+) -> None:
+    run = run_container(env, tmp_path, flags)
+    assert run.returncode == 0, run.stderr
+    assert (tmp_path / "e.json").exists()
+
+
+def test_container_run_refuses_a_mount_without_an_output_dir(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = sh(f"container_run t --env-out {tmp_path}/e.json -v {OUT_DIR}:/out -- {IMAGE} true", env)
+    assert run.returncode != 0
+    assert "CONTAINER_OUT_DIR" in run.stderr
+    assert calls(tmp_path) == []
 
 
 @pytest.mark.parametrize(
@@ -171,10 +321,8 @@ def test_container_run_requires_a_pinned_image(
 
 def test_container_run_needs_guest_profile_and_env_out(env: dict[str, str], tmp_path: Path) -> None:
     no_profile = {**env, "GUEST_PROFILE": ""}
-    assert (
-        "GUEST_PROFILE"
-        in sh(f"container_run t1 --env-out {tmp_path}/e.json -- {IMAGE} x", no_profile).stderr
-    )
+    out = sh(f"container_run t1 --env-out {tmp_path}/e.json -- {IMAGE} x", no_profile)
+    assert "GUEST_PROFILE" in out.stderr
     assert "--env-out" in sh(f"container_run t1 -- {IMAGE} x", env).stderr
     assert calls(tmp_path) == []
 
@@ -182,7 +330,7 @@ def test_container_run_needs_guest_profile_and_env_out(env: dict[str, str], tmp_
 def test_container_run_records_the_merged_environment_and_hides_the_id(
     env: dict[str, str], tmp_path: Path
 ) -> None:
-    run_env = {**env, "FAKE_NANO": "1500000000", "FAKE_CPUSET": "2,3", "FAKE_NET": "host"}
+    run_env = {**env, "FAKE_NANO": "1500000000", "FAKE_CPUSET": "2,3"}
     out = tmp_path / "env.json"
     run = sh(
         f"container_run lowlat-t1 --env-out {out} --cpus 1.5 --cpuset-cpus 2,3 --network host"
@@ -215,31 +363,43 @@ def test_container_run_records_the_merged_environment_and_hides_the_id(
     }
     everything = run.stdout + run.stderr + out.read_text()
     assert CID not in everything
-    assert "container says hi" in run.stdout
     assert f"/home/{os.environ.get('USER', 'nobody')}/" not in everything  # scrubbed
     log = calls(tmp_path)
     create = next(line for line in log if line.startswith("create"))
-    assert "--name lowlat-t1 --cpus 1.5 --cpuset-cpus 2,3 --network host" in create
-    assert create.endswith(f"{IMAGE}@{DIGEST} app --flag a b")
+    # the wrapper, entrypoint, private cgroupns and default hostname are added; the command follows
+    assert create.startswith(
+        "create --name lowlat-t1 --cgroupns=private --entrypoint sh --cpus 1.5 --cpuset-cpus 2,3"
+        " --network host --security-opt seccomp=/x/y/profile.json"
+    )
+    assert "--hostname lowlat-t1" in create
+    assert f"{IMAGE}@{DIGEST} -c " in create
+    assert (tmp_path / "docker.log").read_text().count("exit $rc sh app --flag a b\n") == 1
     assert [
         line.split()[0] for line in log if line.split()[0] in {"create", "start", "wait", "rm"}
-    ] == [
-        "create",
-        "start",
-        "wait",
-        "rm",
-    ]
+    ] == ["create", "start", "wait", "rm"]
     assert log[-1] == "rm -f lowlat-t1"
 
 
-def test_container_run_defaults_are_null_bridge_and_default_seccomp(
+def test_container_run_passes_the_log_through_without_the_fenced_block(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run = run_container(env, tmp_path, "--cpus 1")
+    assert run.returncode == 0, run.stderr
+    assert "container says hi" in run.stdout
+    assert "container stderr line" in run.stderr
+    assert "@@LOWLAT" not in run.stdout + run.stderr
+    assert "nr_throttled" not in run.stdout + run.stderr
+    assert "cpu.max" not in run.stdout + run.stderr
+
+
+def test_container_run_defaults_are_null_bridge_default_seccomp_and_own_hostname(
     env: dict[str, str], tmp_path: Path
 ) -> None:
     out = tmp_path / "env.json"
     run = sh(f"container_run t2 --env-out {out} -- {IMAGE} app", env)
     assert run.returncode == 0, run.stderr
     block = json.loads(out.read_text())["runtime"]["environment"]
-    assert block["container"] | {} == {
+    assert block["container"] == {
         "runtime": "docker",
         "image": IMAGE,
         "image_digest": IMG_ID,  # no digest given: the image ID the container ran
@@ -247,6 +407,42 @@ def test_container_run_defaults_are_null_bridge_and_default_seccomp(
         "cpu_quota": None,
         "cpuset": None,
         "seccomp": "default",
+    }
+    create = next(line for line in calls(tmp_path) if line.startswith("create"))
+    assert "--hostname t2" in create
+    assert CID not in create
+    # a caller's own hostname replaces the default
+    sh(f"container_run t2b --env-out {out} --hostname other -- {IMAGE} app", env)
+    create_b = next(line for line in calls(tmp_path) if line.startswith("create --name t2b"))
+    assert "--hostname other" in create_b
+    assert "--hostname t2b" not in create_b
+
+
+@pytest.mark.parametrize("block", ["none", "garbage", "trailing", "no-end"])
+@pytest.mark.parametrize("limit", ["--cpus 1", "--cpuset-cpus 2"])
+def test_container_run_fails_a_limited_lane_without_a_usable_cgroup_block(
+    env: dict[str, str], tmp_path: Path, block: str, limit: str
+) -> None:
+    run = run_container({**env, "FAKE_BLOCK": block}, tmp_path, limit)
+    assert run.returncode == 4, run.stderr
+    assert "no usable cgroup block" in run.stderr
+    assert not (tmp_path / "e.json").exists()
+    assert calls(tmp_path)[-1] == "rm -f tx"
+    assert "@@LOWLAT" not in run.stdout
+
+
+@pytest.mark.parametrize("block", ["none", "garbage", "trailing", "no-end"])
+def test_container_run_records_null_cgroup_for_an_unlimited_lane(
+    env: dict[str, str], tmp_path: Path, block: str
+) -> None:
+    run = run_container({**env, "FAKE_BLOCK": block}, tmp_path, "--network none")
+    assert run.returncode == 0, run.stderr
+    cg = json.loads((tmp_path / "e.json").read_text())["runtime"]["environment"]["cgroup"]
+    assert cg == {
+        "cpu_max": None,
+        "cpuset_effective": None,
+        "nr_throttled": None,
+        "throttled_usec": None,
     }
 
 
@@ -260,7 +456,7 @@ def test_container_run_returns_the_container_status_and_still_cleans_up(
     assert calls(tmp_path)[-1] == "rm -f t3"
 
 
-@pytest.mark.parametrize("fail", ["start", "wait", "inspect"])
+@pytest.mark.parametrize("fail", ["create", "start", "wait", "inspect"])
 def test_container_run_cleanup_trap_fires_on_failure(
     env: dict[str, str], tmp_path: Path, fail: str
 ) -> None:
@@ -268,24 +464,27 @@ def test_container_run_cleanup_trap_fires_on_failure(
         f"container_run t4 --env-out {tmp_path}/e.json -- {IMAGE} app", {**env, "FAKE_FAIL": fail}
     )
     assert run.returncode != 0
+    # created is set before docker create, so even a failed or interrupted create is cleaned up
     assert calls(tmp_path)[-1] == "rm -f t4"
     assert CID not in run.stdout + run.stderr
     assert not (tmp_path / "e.json").exists()
     assert not list(tmp_path.glob("lowlat-container.*"))
 
 
-def test_container_run_does_not_remove_a_container_it_did_not_create(
+def test_container_run_refuses_a_name_that_already_exists_and_does_not_remove_it(
     env: dict[str, str], tmp_path: Path
 ) -> None:
-    run = sh(
-        f"container_run t5 --env-out {tmp_path}/e.json -- {IMAGE} app",
-        {**env, "FAKE_FAIL": "create"},
-    )
-    assert run.returncode == 3
-    assert not any(line.startswith("rm") for line in calls(tmp_path))
+    (tmp_path / "c_t5").touch()
+    run = sh(f"container_run t5 --env-out {tmp_path}/e.json -- {IMAGE} app", env)
+    assert run.returncode != 0
+    assert "already exists" in run.stderr
+    assert not any(line.startswith(("create", "rm")) for line in calls(tmp_path))
 
 
-def test_container_run_cleanup_trap_fires_on_sigterm(env: dict[str, str], tmp_path: Path) -> None:
+@pytest.mark.parametrize("sig", [signal.SIGINT, signal.SIGTERM])
+def test_container_run_cleanup_trap_fires_on_a_signal(
+    env: dict[str, str], tmp_path: Path, sig: signal.Signals
+) -> None:
     proc = subprocess.Popen(
         [
             "bash",
@@ -293,18 +492,20 @@ def test_container_run_cleanup_trap_fires_on_sigterm(env: dict[str, str], tmp_pa
             f'. "{LIB}"\nguest() {{ "$@"; }}\n'
             f"container_run t6 --env-out {tmp_path}/e.json -- {IMAGE} app",
         ],
-        env={**os.environ, **env},
+        env={**os.environ, **env, "FAKE_WAIT_SLEEP": "20"},
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         start_new_session=True,
     )
-    for _ in range(100):
-        if any(line.startswith("start") for line in calls(tmp_path)):
+    for _ in range(300):
+        if any(line.startswith("wait") for line in calls(tmp_path)):
             break
-        subprocess.run(["sleep", "0.01"], check=False)
-    os.killpg(proc.pid, 15)
-    proc.communicate(timeout=20)
+        time.sleep(0.01)
+    os.killpg(proc.pid, sig)
+    proc.communicate(timeout=30)
+    assert proc.returncode in (130, 143, -sig)
     assert calls(tmp_path)[-1] == "rm -f t6"
+    assert not list(tmp_path.glob("lowlat-container.*"))
 
 
 def test_container_run_checks_images_lock_when_present(env: dict[str, str], tmp_path: Path) -> None:
@@ -328,28 +529,8 @@ def test_container_run_checks_images_lock_when_present(env: dict[str, str], tmp_
     lock.write_text(f"{IMAGE}@{DIGEST}\n")
     good = sh(cmd + f"{IMAGE} app", base)
     assert good.returncode == 0, good.stderr
-    assert (
-        json.loads((tmp_path / "e.json").read_text())["runtime"]["environment"]["container"][
-            "image_digest"
-        ]
-        == DIGEST
-    )
-
-
-def test_container_run_leaves_cgroup_nulls_when_the_cgroup_never_appears(
-    env: dict[str, str], tmp_path: Path
-) -> None:
-    shutil.rmtree(env["FAKE_SCOPE"])
-    out = tmp_path / "env.json"
-    run = sh(f"container_run t8 --env-out {out} -- {IMAGE} app", env)
-    assert run.returncode == 0, run.stderr
-    cg = json.loads(out.read_text())["runtime"]["environment"]["cgroup"]
-    assert cg == {
-        "cpu_max": None,
-        "cpuset_effective": None,
-        "nr_throttled": None,
-        "throttled_usec": None,
-    }
+    env_block = json.loads((tmp_path / "e.json").read_text())["runtime"]["environment"]
+    assert env_block["container"]["image_digest"] == DIGEST
 
 
 # ---- cgroup_stat -----------------------------------------------------------------------------
@@ -424,6 +605,28 @@ def test_guest_fetch_copies_a_file_and_a_directory(env: dict[str, str], tmp_path
     assert sh(f"guest_fetch out/missing {tmp_path}/m", env, local_guest=False).returncode != 0
 
 
+@pytest.mark.parametrize("kind", ["symlink", "hardlink"])
+def test_guest_fetch_refuses_an_archive_with_links(
+    env: dict[str, str], tmp_path: Path, kind: str
+) -> None:
+    out = Path(env["HOME"]) / "evil"
+    out.mkdir()
+    (out / "a.txt").write_text("x\n")
+    if kind == "symlink":
+        (out / "link").symlink_to("/etc/passwd")
+    else:
+        (out / "link").hardlink_to(out / "a.txt")
+    dest = tmp_path / "dest"
+    run = sh(f"guest_fetch evil/ {dest}", env, local_guest=False)
+    if kind == "hardlink":
+        # tar stores the second name as a hard link member
+        assert run.returncode != 0
+    else:
+        assert run.returncode != 0
+    assert "link or special file" in run.stderr
+    assert not dest.exists()
+
+
 # ---- require_quiet_host ----------------------------------------------------------------------
 
 
@@ -433,7 +636,7 @@ def quiet(
     start = tmp_path / "run-start.json"
     start.write_text('{"example": "13"}\n')
     script = (
-        f"guest() {{ echo '{load} 0.2 0.3 1/200 99'; }}\n"
+        f"lab_ssh() {{ echo '{load} 0.2 0.3 1/200 99'; }}\n"
         f"RUN_START_JSON={start} require_quiet_host {args}"
     )
     run = sh(script, {**env, "FAKE_DOMAINS": domains}, local_guest=False)
@@ -491,13 +694,19 @@ def test_quiet_host_lab_idle_records_a_down_lab_and_honours_allow_busy(
 ) -> None:
     run, rec = quiet(env, tmp_path, "--lab-idle", "")
     assert run.returncode == 0
-    assert rec["lab_vm"] == "down"
-    assert (
-        quiet({**env, "ALLOW_BUSY": "1"}, tmp_path, "--lab-idle", "lowlat-target", "9.0")[
-            0
-        ].returncode
-        == 0
-    )
+    assert rec["lab_vm"] == "down (require_quiet_host)"
+    busy, rec = quiet({**env, "ALLOW_BUSY": "1"}, tmp_path, "--lab-idle", "lowlat-target", "9.0")
+    assert busy.returncode == 0
+    assert rec["lab_vm"] == "unchecked (ALLOW_BUSY)"
+
+
+def test_quiet_host_lab_idle_never_records_down_when_virsh_fails(
+    env: dict[str, str], tmp_path: Path
+) -> None:
+    run, rec = quiet({**env, "FAKE_VIRSH_FAIL": "1"}, tmp_path, "--lab-idle", "")
+    assert run.returncode != 0
+    assert "cannot read the libvirt domain list" in run.stderr
+    assert rec["lab_vm"] == "unknown"
 
 
 def test_quiet_host_lab_idle_refuses_a_target_outside_the_lab_prefix(
@@ -546,7 +755,7 @@ def strace_works() -> bool:
     )
 
 
-def test_strace_summary_skips_with_code_3_when_strace_is_missing(
+def test_strace_summary_skips_with_code_77_when_strace_is_missing(
     env: dict[str, str], tmp_path: Path
 ) -> None:
     bare = tmp_path / "bare"
@@ -564,7 +773,7 @@ def test_strace_summary_skips_with_code_3_when_strace_is_missing(
         env={**os.environ, **env, "PATH": str(bare)},
         check=False,
     )
-    assert run.returncode == 3
+    assert run.returncode == 77
     assert "strace is not installed" in run.stderr
     assert not (tmp_path / "o.txt").exists()
 
@@ -587,6 +796,32 @@ def test_strace_summary_writes_only_the_scrubbed_table_and_no_raw_file(
     assert not Path(f"{out}.raw").exists()
     assert sh(f"strace_summary {out} -- false", env).returncode == 1  # the command's status
     assert sh(f"strace_summary {out} true", env).returncode != 0  # usage
+    # a command that itself exits 3 is its status, not a skip (the skip code is 77)
+    assert sh(f"strace_summary {out} -- bash -c 'exit 3'", env).returncode == 3
+    assert not Path(f"{out}.raw").exists()
+
+
+@pytest.mark.skipif(not strace_works(), reason="strace is not installed or cannot trace here")
+@pytest.mark.parametrize("sig", [signal.SIGINT, signal.SIGTERM])
+def test_strace_summary_removes_the_raw_file_on_a_signal(
+    env: dict[str, str], tmp_path: Path, sig: signal.Signals
+) -> None:
+    out = tmp_path / "summary.txt"
+    proc = subprocess.Popen(
+        ["bash", "-c", f'. "{LIB}"\nstrace_summary {out} -- sleep 30'],
+        env={**os.environ, **env},
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    for _ in range(300):
+        if Path(f"{out}.raw").exists():
+            break
+        time.sleep(0.01)
+    assert Path(f"{out}.raw").exists()
+    os.killpg(proc.pid, sig)
+    proc.communicate(timeout=30)
+    assert not Path(f"{out}.raw").exists()
 
 
 # ---- from_samples ----------------------------------------------------------------------------
@@ -606,7 +841,7 @@ def test_from_samples_wraps_the_cli(env: dict[str, str], tmp_path: Path) -> None
                 "variant": "threads-ft",
                 "count": 100,
                 "dropped": 0,
-                "gil_enabled": False,
+                "build": {"compiler": "CPython 3.14 free-threading build", "gil_enabled": False},
                 "runtime": {"python_build": "free-threaded"},
             }
         )

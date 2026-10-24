@@ -21,6 +21,7 @@
 #   GUEST_REPO    repo path in the guest, relative to the guest user's home
 #                 (default low-latency-engineering)
 #   LAB_SSH       the vsock ssh wrapper (default scripts/lab/lab-ssh.sh); tests point it at a shim
+#   CONTAINER_OUT_DIR  the one guest directory container_run may bind-mount from (-v/--mount)
 #   GUEST_PROFILE guest snapshot/profile name (like lab-ready-r04/stock-unpinned) that
 #                 container_run records in runtime.environment
 #   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
@@ -145,35 +146,44 @@ example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 
 # require_quiet_host [--lab-idle]: refuse to take host measurements while a lab VM competes for
 # the CPUs. Without the flag any running lowlat-* VM refuses the run.
-#   --lab-idle   the lowlat-target VM may be running, but only idle: its load1 (read in the guest
-#                through `guest`) must be <= LAB_IDLE_LOAD1 (default 0.5). Any other running
+#   --lab-idle   the lowlat-target VM may be running, but only idle: its load1 (read
+#                through `lab_ssh`) must be <= LAB_IDLE_LOAD1 (default 0.5). Any other running
 #                domain (an ebpf-* or systems-* VM, a lowlat peer) refuses the run: this check
 #                reads libvirt's domain list and talks only to the lowlat target, and never
 #                starts, stops or touches another VM. The state is exported as LOWLAT_LAB_VM
 #                ("down" or "up (idle)") and, when RUN_START_JSON names a file, merged into it as
 #                "lab_vm" with "lab_vm_load1" (the run-start.json the driver writes).
-# ALLOW_BUSY=1 skips the check in both forms.
+# ALLOW_BUSY=1 skips the check in both forms (with --lab-idle it records "unchecked (ALLOW_BUSY)").
 require_quiet_host() {
   local lab_idle=0 running domains others
   if [[ ${1:-} == --lab-idle ]]; then lab_idle=1; shift; fi
   (($# == 0)) || die "require_quiet_host: unknown argument '$1' (only --lab-idle)"
-  [[ ${ALLOW_BUSY:-0} == 1 ]] && return 0
-  domains=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null | sed '/^$/d' || true)
-  running=$(grep '^lowlat-' <<<"$domains" || true)
+  if [[ ${ALLOW_BUSY:-0} == 1 ]]; then
+    ((!lab_idle)) || _run_start_record "unchecked (ALLOW_BUSY)" ''
+    return 0
+  fi
   if ((!lab_idle)); then
+    running=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null | grep '^lowlat-' || true)
     [[ -z $running ]] || die "lab VM running ($running): stop it (scripts/lab/lab-down.sh) or set ALLOW_BUSY=1"
     return 0
   fi
   local prefix=${LAB_GUARD_PREFIX:-lowlat-} target=${TARGET_VM:-lowlat-target} load1=''
   [[ $target == "$prefix"* ]] || die "require_quiet_host: '$target' is not a $prefix* domain; the lab helpers never touch it"
+  # A failed or timed-out virsh is "unknown", never "down".
+  if ! domains=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null); then
+    _run_start_record "unknown" ''
+    die "--lab-idle: cannot read the libvirt domain list (virsh failed or timed out); not assuming the lab is down"
+  fi
+  domains=$(sed '/^$/d' <<<"$domains")
+  running=$(grep "^$prefix" <<<"$domains" || true)
   others=$(grep -v "^$prefix" <<<"$domains" || true)
   [[ -z $others ]] || die "--lab-idle: a non-lab VM is running ($(tr '\n' ' ' <<<"$others")): stop it or set ALLOW_BUSY=1"
   if [[ -z $running ]]; then
-    _run_start_record "down" ''
+    _run_start_record "down (require_quiet_host)" ''
     return 0
   fi
   [[ $running == "$target" ]] || die "--lab-idle: running lab domains are ($(tr '\n' ' ' <<<"$running")), expected only $target"
-  load1=$(guest cat /proc/loadavg | awk '{print $1}') || die "--lab-idle: cannot read the guest load average (is $target reachable over vsock ssh?)"
+  load1=$(lab_ssh cat /proc/loadavg | awk '{print $1}') || die "--lab-idle: cannot read the guest load average (is $target reachable over vsock ssh?)"
   [[ $load1 =~ ^[0-9]+([.][0-9]+)?$ ]] || die "--lab-idle: unreadable guest load1 '$load1'"
   awk -v l="$load1" -v m="${LAB_IDLE_LOAD1:-0.5}" 'BEGIN { exit !(l <= m) }' ||
     die "--lab-idle: $target is not idle (load1 $load1 > ${LAB_IDLE_LOAD1:-0.5}); wait, or stop it with scripts/lab/lab-down.sh"
@@ -737,12 +747,25 @@ guest() { lab_ssh "cd ${GUEST_REPO:-low-latency-engineering} && $(printf '%q ' "
 
 # guest_fetch REMOTE LOCAL: copy a file out of the guest (REMOTE relative to the guest user's
 # home) to LOCAL. A REMOTE ending in / is a directory: its contents are unpacked into LOCAL
-# (created if needed) through tar, so file modes survive.
+# (created if needed) through tar, as the calling user, without the archive's owners or
+# permission bits. An archive with a symlink, hard link or device member is refused before
+# anything is extracted (a guest is not trusted not to plant ../ links).
 guest_fetch() {
-  local remote=${1:?guest_fetch REMOTE LOCAL} local_path=${2:?guest_fetch REMOTE LOCAL}
+  local remote=${1:?guest_fetch REMOTE LOCAL} local_path=${2:?guest_fetch REMOTE LOCAL} tar_file bad
   if [[ $remote == */ ]]; then
+    tar_file=$(mktemp "${TMPDIR:-/tmp}/lowlat-fetch.XXXXXX")
+    if ! lab_ssh "tar -C $(printf '%q' "$remote") -cf - ." >"$tar_file"; then
+      rm -f "$tar_file"
+      die "guest_fetch: cannot fetch $remote"
+    fi
+    bad=$(tar -tvf "$tar_file" | grep -v '^[-d]' || true)
+    if [[ -n $bad ]]; then
+      rm -f "$tar_file"
+      die "guest_fetch: $remote holds a link or special file, refusing to extract: $(head -n1 <<<"$bad")"
+    fi
     mkdir -p "$local_path"
-    lab_ssh "tar -C $(printf '%q' "$remote") -cf - ." | tar -C "$local_path" -xf - || die "guest_fetch: cannot fetch $remote"
+    tar -C "$local_path" --no-same-owner --no-same-permissions -xf "$tar_file" || { rm -f "$tar_file"; die "guest_fetch: cannot unpack $remote"; }
+    rm -f "$tar_file"
   else
     lab_ssh "cat $(printf '%q' "$remote")" >"$local_path" || die "guest_fetch: cannot fetch $remote"
   fi
@@ -751,52 +774,26 @@ guest_fetch() {
 # _scrub_ids: stdin to stdout through scripts/scrub-host-ids.py --filter.
 _scrub_ids() { python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter; }
 
-# The guest-side reader behind cgroup_stat and container_run, POSIX sh run as
-#   sh -c "$_CGROUP_SH" sh CONTAINER CGROUP_ROOT once|watch
+# The guest-side reader behind cgroup_stat, POSIX sh run as
+#   sh -c "$_CGROUP_SH" sh CONTAINER CGROUP_ROOT
 # It prints four lines: cpu.max, cpuset.cpus.effective, nr_throttled, throttled_usec (an empty
-# line for a file it could not read). "once" samples a running container. "watch" waits up to
-# CGROUP_WAIT x 0.1 s (default 10 s) for the container's cgroup to appear, samples every CGROUP_POLL seconds (default 0.05)
-# and, when the cgroup disappears (the container exited; the scope goes with it), prints the
-# last sample. Docker 29 with the systemd cgroup driver puts the container at
-# <root>/system.slice/docker-<id>.scope; the cgroupfs driver at <root>/docker/<id>.
+# line for a file it could not read). Docker 29 with the systemd cgroup driver puts the container
+# at <root>/system.slice/docker-<id>.scope; the cgroupfs driver at <root>/docker/<id>.
 _CGROUP_SH=$(
-  cat <<'EOF'
-name=$1 root=$2 mode=$3 poll=${CGROUP_POLL:-0.05}
+  cat <<'SCRIPT'
+name=$1 root=$2
 id=$(docker inspect --format '{{.Id}}' "$name") || exit 1
-find_dir() {
-  for d in "$root/system.slice/docker-$id.scope" "$root/docker/$id"; do
-    [ -d "$d" ] && return 0
-  done
-  return 1
-}
-sample() {
-  [ -r "$d/cpu.stat" ] || return 1
-  cm=$(cat "$d/cpu.max" 2>/dev/null) || cm=
-  cs=$(cat "$d/cpuset.cpus.effective" 2>/dev/null) || cs=
-  nr=$(awk '$1 == "nr_throttled" { print $2 }' "$d/cpu.stat" 2>/dev/null)
-  us=$(awk '$1 == "throttled_usec" { print $2 }' "$d/cpu.stat" 2>/dev/null)
-  [ -n "$nr" ] && [ -n "$us" ] || return 1 # the cgroup went away mid-read: not a sample
-  printf '%s\n%s\n%s\n%s\n' "$cm" "$cs" "$nr" "$us"
-}
-tries=0
-until find_dir; do
-  [ "$mode" = once ] && { echo "no cgroup for container $name (not running?)" >&2; exit 3; }
-  tries=$((tries + 1))
-  [ "$tries" -gt "${CGROUP_WAIT:-100}" ] && exit 0
-  sleep 0.1
+for d in "$root/system.slice/docker-$id.scope" "$root/docker/$id"; do
+  [ -d "$d" ] && break
+  d=
 done
-if [ "$mode" = once ]; then
-  sample || exit 3
-  exit 0
-fi
-last=
-while [ -d "$d" ]; do
-  s=$(sample) && last=$s
-  sleep "$poll"
-done
-[ -n "$last" ] && printf '%s\n' "$last"
-exit 0
-EOF
+[ -n "$d" ] && [ -r "$d/cpu.stat" ] || { echo "no cgroup for container $name (not running?)" >&2; exit 3; }
+cm=$(cat "$d/cpu.max" 2>/dev/null) || cm=
+cs=$(cat "$d/cpuset.cpus.effective" 2>/dev/null) || cs=
+nr=$(awk '$1 == "nr_throttled" { print $2 }' "$d/cpu.stat")
+us=$(awk '$1 == "throttled_usec" { print $2 }' "$d/cpu.stat")
+printf '%s\n%s\n%s\n%s\n' "$cm" "$cs" "$nr" "$us"
+SCRIPT
 )
 
 # _cgroup_json < four lines: the JSON object cgroup_stat prints (null for an empty line).
@@ -812,82 +809,193 @@ _cgroup_json() {
 
 # cgroup_stat CONTAINER: print {nr_throttled, throttled_usec, cpu_max, cpuset_effective} as JSON
 # for a RUNNING container in the guest, read from its cgroup (CGROUP_ROOT, default /sys/fs/cgroup).
-# A stopped container has no cgroup: the kernel removes it at exit, so this returns 3 with a
-# message instead of guessing; container_run samples the cgroup while the container runs and
-# keeps the last sample, which is how it gets its numbers for a short-lived container.
+# A stopped container has no cgroup (the kernel removes it at exit), so this returns 3 with a
+# message instead of guessing. container_run does not use it: it reads the container's own view.
 cgroup_stat() {
   local name=${1:?cgroup_stat CONTAINER} out
-  out=$(guest sh -c "$_CGROUP_SH" sh "$name" "${CGROUP_ROOT:-/sys/fs/cgroup}" once) || return 3
+  out=$(guest sh -c "$_CGROUP_SH" sh "$name" "${CGROUP_ROOT:-/sys/fs/cgroup}") || return 3
   _cgroup_json <<<"$out"
 }
 
-# _container_check_opt KEY VALUE: die for a docker option that breaks the isolation being measured.
-_container_check_opt() {
-  case "$1=$2" in
-    --privileged=*) die "container_run: --privileged is refused (a privileged container is not the container being measured)" ;;
-    --cap-add=ALL | --cap-add=all) die "container_run: --cap-add=ALL is refused" ;;
-    --security-opt=seccomp=unconfined | --security-opt=seccomp:unconfined)
-      die "container_run: --security-opt seccomp=unconfined is refused (the schema rejects it, and so do we)" ;;
-    --pid=host) die "container_run: --pid=host is refused" ;;
-    --cgroupns=host) die "container_run: --cgroupns=host is refused" ;;
+# The wrapper the container runs as its entrypoint (sh -c WRAPPER sh CMD...): CMD, then, as the
+# very last output, its own cgroup files between sentinels. With Docker's default private cgroup
+# namespace on cgroup v2 (https://docs.docker.com/engine/containers/runmetrics/) the container's
+# /sys/fs/cgroup is its own cgroup, so these are the container's own cpu.stat, cpu.max and
+# cpuset.cpus.effective, read while the cgroup still exists. container_run passes
+# --cgroupns=private explicitly so the daemon default cannot drift. The image needs sh and cat
+# (ubi10/ubi-minimal ships bash and coreutils-single; S5 confirms it in the guest).
+_CGROUP_WRAP=$(
+  cat <<'SCRIPT'
+"$@"; rc=$?
+echo @@LOWLAT_CGROUP_BEGIN
+cat /sys/fs/cgroup/cpu.stat 2>/dev/null
+echo "cpu.max $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)"
+echo "cpuset.cpus.effective $(cat /sys/fs/cgroup/cpuset.cpus.effective 2>/dev/null)"
+echo @@LOWLAT_CGROUP_END
+exit $rc
+SCRIPT
+)
+
+# _container_deny OPT WHY: refuse a docker option that is not on container_run's allowlist.
+_container_deny() { die "container_run: $1 is refused: $2"; }
+
+# _container_mount_ok SRC DST: die unless a bind mount's source is under $CONTAINER_OUT_DIR and
+# its target is not /, /proc, /sys, /dev (or beneath them) or the docker socket.
+_container_mount_ok() {
+  local src=$1 dst=$2 out=${CONTAINER_OUT_DIR:-}
+  [[ -n $out ]] || _container_deny "a mount" "set CONTAINER_OUT_DIR to the declared output directory"
+  out=${out%/}
+  [[ $src == /* && $src != *..* ]] || _container_deny "mount source '$src'" "must be an absolute path without .."
+  [[ $src == "$out" || $src == "$out"/* ]] || _container_deny "mount source '$src'" "is not under CONTAINER_OUT_DIR ($out)"
+  dst=${dst%/}
+  [[ $dst == /* && $dst != *..* ]] || _container_deny "mount target '$dst'" "must be an absolute path without .."
+  case $dst in
+    "" | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | *docker.sock*)
+      _container_deny "mount target '${dst:-/}'" "is a protected path" ;;
   esac
 }
 
-# container_run NAME [--env-out FILE] [docker-run-args...] -- IMAGE CMD...
+# container_run NAME --env-out FILE [OPTION...] -- IMAGE CMD...
 # Run CMD in IMAGE as a container named NAME INSIDE THE GUEST (docker through `guest`), wait for
-# it, print its output (stdout and stderr merged, scrubbed of host identifiers) and return its
-# exit status. Writes FILE (required) with the environment block for the report:
+# it, print its stdout and stderr (scrubbed of host identifiers) and return its exit status.
+# Writes FILE (required) with the environment block for the report:
 #   {"runtime": {"environment": {kind: "container", guest_profile: $GUEST_PROFILE,
 #      container: {runtime docker, image name:tag, image_digest, network, cpu_quota, cpuset,
 #      seccomp}, cgroup: {cpu_max, cpuset_effective, nr_throttled, throttled_usec}}}}
 # which a caller merges into a report's runtime with `jq -s '.[0] * .[1]'`. GUEST_PROFILE
-# (snapshot/profile) must be set. Facts come from `docker inspect` (network mode, NanoCpus as a
-# decimal CPU count or null, CpusetCpus or null, the image) and from the container's own cgroup.
-# The cgroup is gone once the container exits, so the helper creates the container, starts a
-# watcher in the guest that samples cpu.stat every CGROUP_POLL seconds (default 0.05), starts the
-# container and keeps the last sample: nr_throttled and throttled_usec are floors, at most one
-# poll interval short of the final values. The watcher is one more small process in the guest.
-# Refused with an error: --privileged, --cap-add=ALL, --security-opt seccomp=unconfined,
-# --pid=host, --cgroupns=host, and --rm / -d (the helper detaches and removes the container itself).
+# (snapshot/profile) must be set.
+#
+# OPTIONs are an ALLOWLIST; anything else is refused before any docker call. Both "--opt=value"
+# and "--opt value" are read, values are trimmed and compared case-insensitively, and combined
+# short flags (-dit) are expanded and refused. Allowed:
+#   --cpus N, --cpuset-cpus LIST, --memory SIZE
+#   --network|--net host|bridge|none
+#   --security-opt seccomp=FILE.json   (nothing else: no unconfined, apparmor, label, systempaths)
+#   -e|--env KEY[=VALUE], --hostname NAME, --init, -u|--user USER, -w|--workdir /ABS
+#   -v|--volume SRC:DST[:ro|rw|z|Z], --mount type=bind,src=SRC,dst=DST[,readonly]
+#       SRC must be under $CONTAINER_OUT_DIR; DST must not be /, /proc, /sys, /dev or the docker socket
+# --name is internal; --hostname defaults to NAME (so the container ID cannot show up as the
+# hostname); --cgroupns=private and --entrypoint sh are added (any image ENTRYPOINT is bypassed:
+# CMD is the whole command). The image needs sh and cat (see _CGROUP_WRAP).
+#
+# The container's own cpu.stat, cpu.max and cpuset.cpus.effective are printed by the wrapper as
+# the last output between sentinels and parsed into the block's cgroup (exact final counters,
+# not a sample); the fenced block is removed from the printed log. If the block is missing or
+# unparsable the run fails with status 4 when --cpus or --cpuset-cpus was passed (a limited lane
+# without its throttle counters is not a result); otherwise cgroup is all null.
+#
 # IMAGE is name:tag or name:tag@sha256:digest (a tagless or :latest reference is refused, as the
 # schema does). If examples/13-where-code-runs/containers/IMAGES.lock exists, the reference must
 # be listed there and its digest, when listed, must match the image; if the file is absent a
-# warning is printed. seccomp is "default" unless `--security-opt seccomp=FILE.json` is passed
-# (then FILE.json's base name). The container is removed on every exit path, a failure or Ctrl-C
-# included, and its ID is never printed. Return 2 for a bad call, 3 if the container never got
-# created, otherwise the container's status.
+# warning is printed. seccomp is "default" unless a seccomp FILE.json is passed (then its base
+# name). The container is removed on every exit path, a failure or a signal included, and its ID
+# is never printed. Returns 2 for a bad call (die), 3 if create/start/wait/inspect failed,
+# 4 for the missing cgroup block above, otherwise the container's status.
 container_run() (
-  local name=${1:?container_run NAME [args...] -- IMAGE CMD...} image='' env_out='' seccomp=default
+  local name=${1:?container_run NAME --env-out FILE [option...] -- IMAGE CMD...} image='' env_out=''
+  local seccomp=default network=bridge host_set=0 has_limit=0
   local -a run_args=()
   shift
+  local arg opt val have_val rest c
   while (($#)); do
-    case $1 in
-      --) shift; break ;;
-      --env-out) env_out=${2:?container_run: --env-out needs a file}; shift 2 ;;
-      --env-out=*) env_out=${1#*=}; shift ;;
-      --rm | -d | --detach) die "container_run: $1 is refused (the helper detaches, waits and removes the container itself)" ;;
-      --privileged | --privileged=*) _container_check_opt --privileged "${1#--privileged}"; shift ;;
-      --cap-add | --pid | --cgroupns | --security-opt)
-        (($# >= 2)) || die "container_run: $1 needs a value"
-        _container_check_opt "$1" "$2"
-        if [[ $1 == --security-opt && $2 == seccomp=* ]]; then
-          seccomp=$(basename "${2#seccomp=}")
-          [[ $seccomp == *.json ]] || die "container_run: seccomp profile '$seccomp' must be a FILE.json"
-        fi
-        run_args+=("$1" "$2"); shift 2 ;;
-      --cap-add=* | --pid=* | --cgroupns=* | --security-opt=*)
-        _container_check_opt "${1%%=*}" "${1#*=}"
-        if [[ $1 == --security-opt=seccomp=* ]]; then
-          seccomp=$(basename "${1#--security-opt=seccomp=}")
-          [[ $seccomp == *.json ]] || die "container_run: seccomp profile '$seccomp' must be a FILE.json"
-        fi
-        run_args+=("$1"); shift ;;
-      *) run_args+=("$1"); shift ;;
+    arg=$1
+    shift
+    [[ $arg == -- ]] && break
+    opt='' val='' have_val=0
+    if [[ $arg == --*=* ]]; then
+      opt=${arg%%=*} val=${arg#*=} have_val=1
+    elif [[ $arg == --* ]]; then
+      opt=$arg
+    elif [[ $arg =~ ^-[A-Za-z][A-Za-z]+$ && ! $arg =~ ^-[evwu] ]]; then
+      _container_deny "$arg" "combined short flags (${arg:1}) are not on the allowlist"
+    elif [[ $arg =~ ^-[evwu] ]]; then
+      c=${arg:1:1} rest=${arg:2}
+      case $c in e) opt=--env ;; v) opt=--volume ;; w) opt=--workdir ;; u) opt=--user ;; esac
+      [[ -z $rest ]] || { val=$rest have_val=1; }
+    elif [[ $arg == -* ]]; then
+      _container_deny "$arg" "not on the allowlist"
+    else
+      _container_deny "$arg" "unexpected argument before --"
+    fi
+    opt=${opt,,}
+    case $opt in
+      --init)
+        ((!have_val)) || _container_deny "$arg" "--init takes no value"
+        run_args+=(--init)
+        continue ;;
+      --env-out | --cpus | --cpuset-cpus | --memory | --network | --net | --security-opt | --env | --hostname | --user | --workdir | --volume | --mount) ;;
+      *) _container_deny "${arg%%=*}" "not on the allowlist (allowed: --cpus --cpuset-cpus --memory --network --security-opt seccomp=FILE.json -e --hostname --init --user --workdir -v --mount)" ;;
+    esac
+    if ((!have_val)); then
+      (($# >= 1)) || _container_deny "$opt" "needs a value"
+      val=$1
+      shift
+    fi
+    val=${val#"${val%%[![:space:]]*}"}
+    val=${val%"${val##*[![:space:]]}"}
+    case $opt in
+      --env-out) env_out=$val ;;
+      --cpus)
+        [[ $val =~ ^[0-9]+([.][0-9]+)?$ ]] || _container_deny "--cpus $val" "not a number of CPUs"
+        has_limit=1; run_args+=(--cpus "$val") ;;
+      --cpuset-cpus)
+        [[ $val =~ ^[0-9]+([-,][0-9]+)*$ ]] || _container_deny "--cpuset-cpus $val" "not a CPU list"
+        has_limit=1; run_args+=(--cpuset-cpus "$val") ;;
+      --memory)
+        [[ $val =~ ^[0-9]+[bBkKmMgG]?$ ]] || _container_deny "--memory $val" "not a size"
+        run_args+=(--memory "$val") ;;
+      --network | --net)
+        case ${val,,} in
+          host | bridge | none) network=${val,,} ;;
+          *) _container_deny "$opt $val" "only host, bridge or none" ;;
+        esac
+        run_args+=(--network "$network") ;;
+      --security-opt)
+        [[ ${val,,} == seccomp=* && ${val,,} != seccomp=unconfined && $val == *.json && $val != *[,[:space:]]* ]] ||
+          _container_deny "--security-opt $val" "only seccomp=FILE.json is allowed"
+        seccomp=$(basename "${val#*=}")
+        run_args+=(--security-opt "$val") ;;
+      --env)
+        [[ $val =~ ^[A-Za-z_][A-Za-z0-9_]*(=.*)?$ ]] || _container_deny "--env $val" "not KEY[=VALUE]"
+        run_args+=(--env "$val") ;;
+      --hostname)
+        [[ $val =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || _container_deny "--hostname $val" "not a host name"
+        host_set=1; run_args+=(--hostname "$val") ;;
+      --user)
+        [[ $val =~ ^[A-Za-z0-9_.:-]+$ ]] || _container_deny "--user $val" "not a user"
+        run_args+=(--user "$val") ;;
+      --workdir)
+        [[ $val =~ ^/[^[:space:]]*$ && $val != *..* ]] || _container_deny "--workdir $val" "not an absolute path"
+        run_args+=(--workdir "$val") ;;
+      --volume)
+        local vsrc vdst vopts
+        IFS=: read -r vsrc vdst vopts <<<"$val"
+        [[ -z $vopts || $vopts =~ ^(ro|rw|z|Z)(,(ro|rw|z|Z))*$ ]] || _container_deny "--volume $val" "unknown mount options"
+        _container_mount_ok "$vsrc" "$vdst"
+        run_args+=(--volume "$val") ;;
+      --mount)
+        local msrc='' mdst='' kv key mtype=''
+        local -a kvs
+        IFS=, read -ra kvs <<<"$val"
+        for kv in "${kvs[@]}"; do
+          key=${kv%%=*}
+          case ${key,,} in
+            type) mtype=${kv#*=} ;;
+            src | source) msrc=${kv#*=} ;;
+            dst | destination | target) mdst=${kv#*=} ;;
+            readonly | ro) ;;
+            *) _container_deny "--mount $val" "key '$key' is not allowed" ;;
+          esac
+        done
+        [[ ${mtype,,} == bind ]] || _container_deny "--mount $val" "only type=bind"
+        _container_mount_ok "$msrc" "$mdst"
+        run_args+=(--mount "$val") ;;
     esac
   done
   (($# >= 1)) || die "container_run: no IMAGE after --"
   image=$1
   shift
+  ((host_set)) || run_args+=(--hostname "$name")
   [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "container_run: bad container name '$name'"
   [[ -n $env_out ]] || die "container_run: --env-out FILE is required"
   [[ ${GUEST_PROFILE:-} =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] ||
@@ -914,11 +1022,15 @@ container_run() (
     echo "container_run: warning: no IMAGES.lock at $lock; the image is not checked against a lock" >&2
   fi
 
-  local tmp created=0 wpid='' rc=0
+  # A name already in use is not ours to remove: refuse before the trap can know it.
+  if guest docker inspect --format '{{.Id}}' "$name" >/dev/null 2>&1; then
+    die "container_run: a container named $name already exists in the guest"
+  fi
+  local tmp created=0 rc=0
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-container.XXXXXX")
-  # shellcheck disable=SC2317  # runs from the EXIT trap
+  # shellcheck disable=SC2317,SC2329 # runs from the EXIT trap
   _container_cleanup() {
-    [[ -z $wpid ]] || kill "$wpid" 2>/dev/null || true
+    # created is set before docker create, so a signal between the two still removes NAME.
     if ((created)); then guest docker rm -f "$name" >/dev/null 2>&1 || true; fi
     rm -rf "$tmp"
   }
@@ -926,19 +1038,44 @@ container_run() (
   trap 'exit 130' INT
   trap 'exit 143' TERM
 
-  # create (pulls if needed), watch the cgroup, start, wait. Docker's stdout (the container ID)
-  # is discarded, never printed.
-  guest docker create --name "$name" "${run_args[@]}" "$image" "$@" >/dev/null 2> >(_scrub_ids >&2) ||
-    { echo "container_run: docker create failed for $name" >&2; return 3; }
+  # create (pulls if needed), start, wait. Docker's stdout (the container ID) is discarded.
   created=1
-  guest sh -c "$_CGROUP_SH" sh "$name" "${CGROUP_ROOT:-/sys/fs/cgroup}" watch >"$tmp/cgroup.txt" 2>/dev/null &
-  wpid=$!
+  guest docker create --name "$name" --cgroupns=private --entrypoint sh "${run_args[@]}" "$image" \
+    -c "$_CGROUP_WRAP" sh "$@" >/dev/null 2> >(_scrub_ids >&2) ||
+    { echo "container_run: docker create failed for $name" >&2; return 3; }
   guest docker start "$name" >/dev/null 2> >(_scrub_ids >&2) || { echo "container_run: docker start failed for $name" >&2; return 3; }
   rc=$(guest docker wait "$name") || { echo "container_run: docker wait failed for $name" >&2; return 3; }
   [[ $rc =~ ^[0-9]+$ ]] || { echo "container_run: unreadable exit status '$rc'" >&2; return 3; }
-  wait "$wpid" 2>/dev/null || true
-  wpid=''
-  guest docker logs "$name" 2>&1 | _scrub_ids || true
+
+  # Output: stdout minus the fenced cgroup block (which must be last), then stderr.
+  : >"$tmp/stdout.txt"; : >"$tmp/block.txt"
+  guest docker logs "$name" >"$tmp/out.txt" 2>"$tmp/err.txt" || true
+  local block_ok=1
+  awk -v blk="$tmp/block.txt" -v rest="$tmp/stdout.txt" '
+    /^@@LOWLAT_CGROUP_BEGIN$/ && !inb && !seen { inb = 1; seen = 1; next }
+    /^@@LOWLAT_CGROUP_END$/ && inb { inb = 0; ended = 1; next }
+    inb { print > blk; next }
+    ended { trailing = 1 }
+    { print > rest }
+    END { exit !(seen && ended && !trailing) }' "$tmp/out.txt" || block_ok=0
+  _scrub_ids <"$tmp/stdout.txt" || true
+  _scrub_ids <"$tmp/err.txt" >&2 || true
+
+  local nr='' us='' cm='' cs=''
+  if ((block_ok)); then
+    nr=$(awk '$1 == "nr_throttled" { print $2 }' "$tmp/block.txt")
+    us=$(awk '$1 == "throttled_usec" { print $2 }' "$tmp/block.txt")
+    cm=$(sed -n 's/^cpu\.max //p' "$tmp/block.txt")
+    cs=$(sed -n 's/^cpuset\.cpus\.effective //p' "$tmp/block.txt")
+    [[ $nr =~ ^[0-9]+$ && $us =~ ^[0-9]+$ && -n $cm ]] || block_ok=0
+  fi
+  if ((!block_ok)); then
+    nr='' us='' cm='' cs=''
+    if ((has_limit)); then
+      echo "container_run: no usable cgroup block in the output of $name; a --cpus/--cpuset-cpus lane needs it (does the image have sh and cat?)" >&2
+      return 4
+    fi
+  fi
 
   # The facts, while the container still exists.
   local image_id
@@ -954,17 +1091,15 @@ container_run() (
     digest=$image_id
   fi
   [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] || die "container_run: no usable image digest ('$digest')"
-  local -a cg
-  mapfile -t cg <"$tmp/cgroup.txt"
   jq -n --slurpfile ins "$tmp/inspect.json" --arg gp "$GUEST_PROFILE" --arg image "$ref" --arg digest "$digest" \
-    --arg seccomp "$seccomp" --arg cm "${cg[0]:-}" --arg cs "${cg[1]:-}" --arg nr "${cg[2]:-}" --arg us "${cg[3]:-}" '
+    --arg seccomp "$seccomp" --arg net "$network" --arg cm "$cm" --arg cs "$cs" --arg nr "$nr" --arg us "$us" '
     ($ins[0][0].HostConfig) as $h
     | {runtime: {environment: {
         kind: "container",
         guest_profile: $gp,
         container: {
           runtime: "docker", image: $image, image_digest: $digest,
-          network: ($h.NetworkMode | if . == "host" then "host" elif . == "none" then "none" else "bridge" end),
+          network: $net,
           cpu_quota: (if ($h.NanoCpus // 0) == 0 then null else (($h.NanoCpus / 1e9) | tostring) end),
           cpuset: (if ($h.CpusetCpus // "") == "" then null else $h.CpusetCpus end),
           seccomp: $seccomp},
@@ -1002,31 +1137,37 @@ interleave_env() {
 
 # strace_summary OUT -- CMD...: run CMD under `strace -f -c` (syscall counts and time, children
 # followed; our own child, so no privilege) and write only the summary table to OUT, scrubbed
-# through scripts/scrub-host-ids.py --filter. The raw strace file OUT.raw is deleted. CMD's own
-# output passes through. Returns CMD's status, or 3 (skip) when strace is not installed or
-# kernel.yama.ptrace_scope (read only) is 2 or more, with the reason on stderr.
-strace_summary() {
-  local out=${1:?strace_summary OUT -- CMD...} scope rc=0
+# through scripts/scrub-host-ids.py --filter. The raw strace file OUT.raw is removed on every
+# path, a failure or a signal included. CMD's own output passes through.
+# Returns CMD's status, except 77 (the automake "skipped" code, so a CMD that exits 3 is not taken
+# for a skip) when strace is not installed or kernel.yama.ptrace_scope (read only) is 2 or more,
+# with the reason on stderr; 1 when strace wrote no summary.
+strace_summary() (
+  out=${1:?strace_summary OUT -- CMD...}
   shift
   [[ ${1:-} == -- ]] || die "usage: strace_summary OUT -- CMD..."
   shift
   (($#)) || die "strace_summary: no command"
-  command -v strace >/dev/null 2>&1 || { echo "strace_summary: skipped, strace is not installed" >&2; return 3; }
+  command -v strace >/dev/null 2>&1 || { echo "strace_summary: skipped, strace is not installed" >&2; return 77; }
   scope=$(cat /proc/sys/kernel/yama/ptrace_scope 2>/dev/null || echo 0)
   if [[ $scope =~ ^[0-9]+$ ]] && ((scope >= 2)); then
     echo "strace_summary: skipped, kernel.yama.ptrace_scope is $scope (tracing needs privilege)" >&2
-    return 3
+    return 77
   fi
-  strace -f -c -o "$out.raw" "$@" || rc=$?
-  if [[ -s $out.raw ]]; then
-    sed -n '/^% time/,$p' "$out.raw" | _scrub_ids >"$out"
+  raw=$out.raw
+  trap 'rm -f "$raw"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  rc=0
+  strace -f -c -o "$raw" "$@" || rc=$?
+  if [[ -s $raw ]]; then
+    sed -n '/^% time/,$p' "$raw" | _scrub_ids >"$out"
   else
     : >"$out"
   fi
-  rm -f "$out.raw"
   [[ -s $out ]] || { echo "strace_summary: strace wrote no summary for '$*'" >&2; return 1; }
   return "$rc"
-}
+)
 
 # from_samples SAMPLES SIDECAR OUT: convert the raw little-endian int64 nanosecond file a
 # free-threaded process wrote with array('q').tofile, plus its JSON sidecar (example, variant,

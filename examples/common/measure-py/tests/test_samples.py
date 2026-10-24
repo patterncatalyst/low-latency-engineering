@@ -2,13 +2,13 @@
 
 import json
 import random
-import sys
 from array import array
 from pathlib import Path
 
 import pytest
 from lowlat_measure import Recorder
 from lowlat_measure.cli import main
+from lowlat_measure.samples import read_samples
 
 SIDE = {
     "example": "11-stackful-stackless",
@@ -56,15 +56,12 @@ def test_from_samples_is_identical_to_the_recorder(lowlat_profile: Path, tmp_pat
     assert main(["check", str(out)]) == 0
 
 
-def test_from_samples_defaults_the_build_to_this_interpreter(
-    lowlat_profile: Path, tmp_path: Path
-) -> None:
-    side = {k: v for k, v in SIDE.items() if k != "build"} | {"count": 3, "gil_enabled": False}
-    raw, sidecar = _write(tmp_path, [1000, 2000, 3000], side)
-    out = tmp_path / "o.json"
-    assert main(["from-samples", str(raw), str(sidecar), str(out)]) == 0
-    build = json.loads(out.read_text(encoding="utf-8"))["build"]
-    assert build == {"compiler": sys.version, "gil_enabled": False}
+def _without(key: str, **extra: object) -> dict:
+    return {k: v for k, v in SIDE.items() if k != key} | extra
+
+
+def _bad_build(**build: object) -> dict:
+    return {**SIDE, "count": 1, "build": {**SIDE["build"], **build}}
 
 
 @pytest.mark.parametrize(
@@ -72,13 +69,37 @@ def test_from_samples_defaults_the_build_to_this_interpreter(
     [
         ([1000, 2000], {**SIDE, "count": 3}, "count 3"),
         ([1000, -5], {**SIDE, "count": 2}, "negative"),
-        ([1000], {k: v for k, v in SIDE.items() if k != "variant"} | {"count": 1}, "variant"),
+        ([1000, 3_600_000_000_001], {**SIDE, "count": 2}, "highest trackable"),
+        ([1000], _without("variant", count=1), "variant"),
         ([1000], {**SIDE, "count": 1, "mean_ns": 4}, "unknown keys"),
+        # the sidecar must carry what the measured process wrote; the converter never fills it in
+        ([1000], _without("build", count=1), "missing build"),
+        ([1000], _bad_build(gil_enabled="false"), "gil_enabled must be a boolean"),
+        ([1000], _bad_build(gil_enabled=0), "gil_enabled must be a boolean"),
+        ([1000], _bad_build(compiler=""), "build.compiler"),
+        ([1000], {**SIDE, "count": 1, "build": {"gil_enabled": False}}, "build.compiler"),
+        ([1000], {**SIDE, "count": 1, "gil_enabled": True}, "conflicts"),
+        ([1000], {**SIDE, "count": 1, "gil_enabled": "false"}, "gil_enabled must be a boolean"),
+        # the GIL came back: free-threaded claimed, gil_enabled true
+        ([1000], _bad_build(gil_enabled=True), "GIL came back"),
         (
             [1000],
-            {**SIDE, "count": 1, "gil_enabled": False, "runtime": {"python_build": "gil"}},
-            "python_build",
+            {**SIDE, "count": 1, "runtime": {"python_build": "gil"}},
+            "python_build is 'gil'",
         ),
+        ([1000], {**SIDE, "count": 1, "runtime": [1]}, "runtime must be a JSON object"),
+        ([1000], {**SIDE, "count": 1, "runtime": "x"}, "runtime must be a JSON object"),
+        ([1000], {**SIDE, "count": True}, "count must be"),
+        ([1000], {**SIDE, "count": 1.0}, "count must be"),
+        ([1000], {**SIDE, "count": 1, "dropped": True}, "dropped must be"),
+        ([1000], {**SIDE, "count": 1, "dropped": -1}, "dropped must be"),
+        ([1000], {**SIDE, "count": 1, "dropped": 1.5}, "dropped must be"),
+        ([1000], {**SIDE, "count": 1, "notes": 5}, "notes must be"),
+        ([1000], {**SIDE, "count": 1, "model": []}, "model must be"),
+        ([1000], {**SIDE, "count": 1, "variant": ""}, "variant must be"),
+        # the schema is the last gate and nothing is written when it fails
+        ([1000], {**SIDE, "count": 1, "language": "cobol"}, "schema"),
+        ([1000], {**SIDE, "count": 1, "runtime": {"environment": {"kind": "vm"}}}, "schema"),
     ],
 )
 def test_from_samples_rejects_bad_input(
@@ -92,8 +113,31 @@ def test_from_samples_rejects_bad_input(
     raw, sidecar = _write(tmp_path, samples, side)
     out = tmp_path / "o.json"
     assert main(["from-samples", str(raw), str(sidecar), str(out)]) == 1
-    assert needle in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert needle in err
+    assert "Traceback" not in err
     assert not out.exists()
+
+
+def test_from_samples_accepts_a_matching_top_level_gil_flag(
+    lowlat_profile: Path, tmp_path: Path
+) -> None:
+    raw, sidecar = _write(tmp_path, [1000], {**SIDE, "count": 1, "gil_enabled": False})
+    assert main(["from-samples", str(raw), str(sidecar), str(tmp_path / "o.json")]) == 0
+
+
+def test_from_samples_accepts_the_gil_build_with_the_gil_on(
+    lowlat_profile: Path, tmp_path: Path
+) -> None:
+    side = {**SIDE, "count": 1, "build": {"compiler": "CPython", "gil_enabled": True}}
+    side["runtime"] = {"python_build": "gil"}
+    raw, sidecar = _write(tmp_path, [1000], side)
+    assert main(["from-samples", str(raw), str(sidecar), str(tmp_path / "o.json")]) == 0
+
+
+def test_read_samples_is_typed_as_an_int_array(tmp_path: Path) -> None:
+    raw, _ = _write(tmp_path, [1, 2, 3], {**SIDE, "count": 3})
+    assert read_samples(raw).tolist() == [1, 2, 3]
 
 
 def test_from_samples_rejects_a_torn_file(

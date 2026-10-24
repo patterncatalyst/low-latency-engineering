@@ -160,10 +160,16 @@ def cmd_from_samples(args: argparse.Namespace) -> int:
     if not require_profile("lowlat-report"):
         return 2
     try:
-        samples.write_report(args.samples, args.sidecar, args.out)
+        report = samples.report_from_samples(args.samples, args.sidecar)
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         print(f"lowlat-report: from-samples: {exc}", file=sys.stderr)
         return 1
+    errors = _schema_errors(_validator(), report)
+    if errors:
+        for err in errors:
+            print(f"lowlat-report: from-samples: schema: {err}", file=sys.stderr)
+        return 1
+    args.out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(args.out)
     return 0
 
