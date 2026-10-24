@@ -144,6 +144,26 @@ jobs:
           key: lowlat-prefix-fedora44-${{ hashFiles('versions.env', 'scripts/deps/build-protobuf.sh') }}
       - name: Ensure the pinned protobuf (no-op on a cache hit)
         run: scripts/deps/build-protobuf.sh
+      # The Boost tarball (103 MB) is cached on its SHA256; cmake/deps.cmake uses the file when present.
+      - name: Read the Boost pin
+        id: boostpin
+        run: |
+          . ./versions.env
+          echo "sha256=$BOOST_SHA256" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6.1.0
+        id: boost
+        with:
+          path: ~/.cache/lowlat/boost-1.92.0-cmake.tar.xz
+          key: lowlat-boost-${{ steps.boostpin.outputs.sha256 }}
+      - name: Fetch the pinned Boost tarball (skipped on a cache hit), verify the SHA256
+        if: steps.boost.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          . ./versions.env
+          tarball="$HOME/.cache/lowlat/boost-$BOOST_VERSION-cmake.tar.xz"
+          mkdir -p "$(dirname "$tarball")"
+          curl -fL --retry 3 -o "$tarball" "$BOOST_URL"
+          [ "$(sha256sum "$tarball" | cut -d' ' -f1)" = "$BOOST_SHA256" ] || { echo "Boost SHA256 mismatch" >&2; rm -f "$tarball"; exit 1; }
       - name: Configure, build, test (release preset)
         working-directory: examples
         run: |
@@ -156,6 +176,7 @@ jobs:
       # this step prints that reason so a skip is visible, not silent.
       - name: Ch12 io_uring test (passes, or skips with the printed reason)
         working-directory: examples
+        shell: bash   # bash -eo pipefail: a failing ctest is not hidden by the grep
         run: ctest --preset release -R '^Ring\.' -V | grep -E 'Passed|Skipped|SKIPPED|io_uring_queue_init'
 
   # Python: the uv workspace (every *-py member, chapters 11 to 13 included; lowlat-io pins
@@ -183,7 +204,7 @@ jobs:
       - name: Sync, test, lint
         working-directory: examples
         run: |
-          uv sync --all-packages
+          uv sync --locked --all-packages
           uv run pytest
           uv run ruff check . ../scripts ../diagrams
           uv run ruff format --check . ../scripts ../diagrams

@@ -16,9 +16,10 @@ def run_on_uvloop[T](main: Awaitable[T]) -> T:
 
 
 def loop_class_name() -> str:
-    """Name of the loop class uvloop.run installs."""
+    """Qualified name of the loop class uvloop.run installs (uvloop.Loop)."""
 
     async def name() -> str:
-        return type(asyncio.get_running_loop()).__module__
+        loop_class = type(asyncio.get_running_loop())
+        return f"{loop_class.__module__}.{loop_class.__qualname__}"
 
     return run_on_uvloop(name())

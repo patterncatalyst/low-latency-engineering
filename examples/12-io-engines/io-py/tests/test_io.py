@@ -12,4 +12,4 @@ def test_uvloop_runs_the_coroutine() -> None:
 
 
 def test_the_running_loop_is_uvloop() -> None:
-    assert loop_class_name().startswith("uvloop")
+    assert loop_class_name() == "uvloop.Loop"

@@ -49,15 +49,31 @@ endif()
 # ---- r04 (Part 4, chapters 11 to 13): Boost and liburing, pinned upstream sources -------------
 # Distro boost-devel and liburing-devel are never the source (_plans/dependency-pins.md "r04 pins").
 # Nothing here runs unless LOWLAT_BUILD_R04 is ON (the default), so a configure with
-# -DLOWLAT_BUILD_R04=OFF skips the 108 MB Boost download and the liburing fetch entirely.
+# -DLOWLAT_BUILD_R04=OFF skips the Boost download (a 103 MB tarball; the extracted source and build
+# take about 0.8 GB per build directory) and the liburing fetch entirely.
 option(LOWLAT_BUILD_R04 "Build chapters 11 to 13 (needs Boost 1.92.0 and liburing 2.15 sources)" ON)
 
 if(LOWLAT_BUILD_R04)
   # Boost 1.92.0, upstream's CMake superproject tarball. Only asio (header-only), fiber and context
   # (compiled, static) are configured, plus the libraries they depend on. The release was
   # downloaded and hashed on 2026-10-23; the hash equals the one in the release's .txt asset.
+  #
+  # The tarball is taken from the user-local cache when it is there, which saves the 103 MB fetch
+  # per build directory (CI restores it with actions/cache). The build never creates that
+  # directory; opt in with
+  #   curl -fL -o ~/.cache/lowlat/boost-1.92.0-cmake.tar.xz <the GitHub URL below>
+  # CMake turns a file:// URL into a path and rejects a path inside a URL list, so this is a
+  # choice of one source, not a two-URL fallback. URL_HASH checks whichever bytes arrive.
+  # No FIND_PACKAGE_ARGS: without it FetchContent never consults find_package, so the distro Boost
+  # (1.90 on the host) cannot be picked up instead of the pin.
+  set(_lowlat_boost_url
+    https://github.com/boostorg/boost/releases/download/boost-1.92.0/boost-1.92.0-cmake.tar.xz)
+  set(_lowlat_boost_cached "$ENV{HOME}/.cache/lowlat/boost-1.92.0-cmake.tar.xz")
+  if(EXISTS "${_lowlat_boost_cached}")
+    set(_lowlat_boost_url "${_lowlat_boost_cached}")
+  endif()
   FetchContent_Declare(Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-1.92.0/boost-1.92.0-cmake.tar.xz
+    URL "${_lowlat_boost_url}"
     URL_HASH SHA256=9bed76128d4e46755dbe818487788c6fceb6f72b378f4daa49b7e1e600d9088d
     SYSTEM
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
@@ -68,16 +84,22 @@ if(LOWLAT_BUILD_R04)
   # their own settings.
   set(_lowlat_saved_shared "${BUILD_SHARED_LIBS}")
   set(BUILD_SHARED_LIBS OFF)
+  # Boost libraries probe for optional ICU; the pinned build does not use it, and probing makes
+  # the configure depend on the host's packages.
+  set(CMAKE_DISABLE_FIND_PACKAGE_ICU ON)
   set(_lowlat_saved_testing "${BUILD_TESTING}")
   set(BUILD_TESTING OFF)
   FetchContent_MakeAvailable(Boost)
   set(BUILD_SHARED_LIBS "${_lowlat_saved_shared}")
   set(BUILD_TESTING "${_lowlat_saved_testing}")
+  unset(CMAKE_DISABLE_FIND_PACKAGE_ICU)
 
   # liburing 2.15: its own configure script and Makefile, built in the build tree. Only
   # src/liburing.a is made and nothing is installed anywhere (the include directory is the
   # source tree's src/include, whose generated headers configure writes in place). GitHub does
   # not guarantee a tag archive's bytes, so URL_HASH is the fetch-time check.
+  # Not sanitized: liburing is a C library built by its own Makefile, serially and outside the
+  # first-party targets, so the sanitize preset leaves it uninstrumented (like lowlat_proto).
   include(ExternalProject)
   set(_lowlat_uring_src "${CMAKE_BINARY_DIR}/_deps/liburing-src")
   ExternalProject_Add(liburing_ep

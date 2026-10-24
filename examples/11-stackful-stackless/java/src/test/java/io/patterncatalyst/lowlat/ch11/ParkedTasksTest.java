@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 class ParkedTasksTest {
 
     @Test
-    void everyVirtualThreadRuns() throws InterruptedException {
+    void everyVirtualThreadRuns() {
         assertEquals(100, ParkedTasks.runOnVirtualThreads(100));
     }
 }

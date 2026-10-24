@@ -1,17 +1,15 @@
 #include "ring.hpp"
 
-#include <liburing.h>
-
 namespace lowlat::io {
 
-std::expected<void, int> probe_ring(unsigned entries) {
-  io_uring ring{};
-  const int rc = io_uring_queue_init(entries, &ring, 0);
+std::expected<Ring, int> Ring::create(unsigned entries, unsigned flags) {
+  Ring ring;
+  const int rc = io_uring_queue_init(entries, &ring.ring_, flags);
   if (rc < 0) {
     return std::unexpected(-rc);
   }
-  io_uring_queue_exit(&ring);
-  return {};
+  ring.live_ = true;
+  return ring;
 }
 
 }  // namespace lowlat::io

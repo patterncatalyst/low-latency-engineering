@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Ch12 Quarkus service tier. Standalone on purpose: no <parent>. Quarkus imports its own BOM
-     (JUnit, Jackson, Vert.x), and the aggregator's managed JUnit 6 and Jackson 3 versions would
-     override it. The policy that the parent sets is repeated here: release 25, -Xlint:all -Werror
-     and the enforcer rules. The aggregator lists this module, so one `mvn -f examples/pom.xml verify`
-     builds it. -->
+<!-- Ch12 Quarkus service tier. Standalone on purpose: no <parent>. Quarkus is configured by
+     importing its own BOM, and that import must be the only dependency management in force, so
+     that the platform alone decides the versions of the extensions and their libraries (the BOM
+     manages JUnit and Vert.x too). Inheriting the aggregator would put its managed versions
+     ahead of the BOM's. Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) have different
+     coordinates and do not collide. The policy the parent sets is repeated here: release 25,
+     -Xlint:all -Werror and the enforcer rules. The aggregator lists this module, so one
+     `mvn -f examples/pom.xml verify` builds it. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">

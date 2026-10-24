@@ -1,6 +1,5 @@
 package io.patterncatalyst.lowlat.ch11;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -9,18 +8,13 @@ public final class ParkedTasks {
 
     private ParkedTasks() {}
 
-    public static int runOnVirtualThreads(int n) throws InterruptedException {
+    public static int runOnVirtualThreads(int n) {
         AtomicInteger done = new AtomicInteger();
-        CountDownLatch finished = new CountDownLatch(n);
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int i = 0; i < n; i++) {
-                executor.execute(() -> {
-                    done.incrementAndGet();
-                    finished.countDown();
-                });
+                executor.execute(done::incrementAndGet);
             }
-            finished.await();
-        }
+        } // close() waits for every submitted task
         return done.get();
     }
 }

@@ -232,6 +232,7 @@ Sources: `gh api` on GitHub releases and tags, Maven Central `maven-metadata.xml
 - `versions.env` now repeats the Boost, liburing, Quarkus platform and uvloop pins (nothing new was chosen).
 - CPython 3.14.9 promotion not done: uv 0.13.0 cannot see it (see the r04 plan Follow-ups).
 
+### Images (UBI, newest first)
 
 Digests are the multi-arch index digest of the pinned tag, and the linux/amd64 manifest digest in the last column. Taken with `skopeo inspect` and `skopeo inspect --raw` on 2026-10-23. The tag is the exact `version-release` label of the build that `latest` pointed at when checked. Pin the tag and the index digest together (`image:tag@sha256:...`).
 
