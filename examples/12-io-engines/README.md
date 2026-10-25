@@ -2,8 +2,8 @@
 
 Chapter 12: what wakes the thread. Ch11 asked who holds a wait. This chapter asks what tells a thread that its wait is over,
 and how many threads there should be. A hub concentrator takes four scan tunnels' UDP feeds. For each datagram something
-has to tell a receive thread there is work: a readiness event ("this socket has data, come and get it") or a completion
-("this receive finished, here is the data"). The same question comes back one tier up, in the sort-plan service: when
+has to tell a receive thread there's work: a readiness event ("this socket has data, come and get it") or a completion
+("this receive finished, here's the data"). The same question comes back one tier up, in the sort-plan service: when
 every lookup waits 2 ms on the warehouse management system (WMS), a worker thread, a virtual thread or an event-loop
 callback holds that wait.
 
@@ -14,7 +14,7 @@ no equivalent, the divergence is the lesson: the JDK has no io_uring, and neithe
 
 - **(a) Readiness against completion on the UDP receive path.** `epoll` is readiness: `epoll_wait` says which socket has
   data and `recvmsg` takes one datagram from it, so every parcel costs at least one system call and usually
-  more. `recvmmsg` keeps the readiness model and takes a batch: after the wake-up one call collects what is queued, up to
+  more. `recvmmsg` keeps the readiness model and takes a batch: after the wake-up one call collects what's queued, up to
   32 datagrams. `io-uring` is completion: one multishot `recvmsg` per socket stays armed in the kernel, the kernel picks
   a buffer from a provided-buffer ring for each datagram and posts a completion, and the program reaps every completion
   already queued with no system call at all. One `io_uring_enter` waits for the next one. The measure is system calls per
@@ -40,7 +40,7 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
 ## Workload
 
 - **(a) and (b) the receive path.** Four simulator instances as four tunnel cameras, the simulator unchanged, on the flat
-  80-byte `parcel-v1` wire (`--wire flat`: no protobuf parse, so the receive path is what is measured). Each receiver
+  80-byte `parcel-v1` wire (`--wire flat`: no protobuf parse, so the receive path is what's measured). Each receiver
   decodes `seq` and `intended_emit_ns` at fixed offsets, checks the sequence, looks up the lane for the SSCC and records
   `now - intended_emit_ns` into an HdrHistogram. UDP ports 47320 to 47335, one per camera.
   - **Line.** 2.5 kHz per camera x 20 s: 200,000 parcels.
@@ -70,7 +70,7 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
   recorded in the report's `model` block. The first sizing was 12 kHz against a pool of 16; a JDK HTTP/1.1 client and a four-core
   Quarkus service on this host fall behind in every variant above about 6 kHz, the pool or not, so the pool shrank to 8 and
   the rate to 5 kHz to keep `lambda x W` above it. The defect variant runs at `DEFECT_RATE` (1.85 kHz): four event loops each
-  blocked for 2 ms carry at most 2 kHz, so it is driven below that and the queue it shows is the loop's, not the client's. The `event-loop` variant runs at the same rate in every alternation as the control for it. The client records its own lateness (a second report, variant `client-lateness`) and counts the
+  blocked for 2 ms carry at most 2 kHz, so it's driven below that and the queue it shows is the loop's, not the client's. The `event-loop` variant runs at the same rate in every alternation as the control for it. The client records its own lateness (a second report, variant `client-lateness`) and counts the
   requests it started more than a millisecond late; the JDK client opens a connection for every request that finds none
   idle, so a request never waits for a connection, and `max_in_flight` is the evidence.
   HTTP/1.1 on loopback is a harness, not a transport recommendation (Part 6).
@@ -120,7 +120,7 @@ C++ wrapper; each is a few lines that pair `io_uring_queue_init` with `io_uring_
 free, so no error path leaks a registration.
 
 `io-uring` reaps in two steps. It first walks the completions already in the ring with `io_uring_for_each_cqe`, which makes
-no system call, and only when there is none does it call `io_uring_submit_and_wait_timeout`, which submits any re-armed
+no system call, and only when there's none does it call `io_uring_submit_and_wait_timeout`, which submits any re-armed
 receive and waits for the next completion. So at a rate where parcels queue up behind each other it makes far fewer
 enters than parcels, and at a rate where each parcel finds an empty ring it makes about one per parcel; the effect is a
 property of the load, and the saturation run is where it shows. The kernel can end the multishot receive at any completion (no
@@ -156,7 +156,7 @@ The plain-JDK micro lane (`ReceiveRun`) has three variants. `selector` is the NI
 and a drain loop on each ready channel. `virtual-thread-blocking` is the Loom idiom: write the loop as if the receive
 blocked, and let the JDK park the virtual thread on its poller, which is epoll underneath (the strace summary shows the
 poller's `epoll_wait`). One carrier thread (`-Djdk.virtualThreadScheduler.parallelism=1`, `maxPoolSize=1`) lets the pin
-land on a thread the harness can name: the pin is applied from inside a virtual thread and takes effect on the carrier it is
+land on a thread the harness can name: the pin is applied from inside a virtual thread and takes effect on the carrier it's
 mounted on. `thread-per-core` is four pinned platform threads, each in a blocking `receive`. The JDK has no io_uring, so
 there's no completion variant: that's the divergence from C++.
 

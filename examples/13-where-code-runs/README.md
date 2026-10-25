@@ -62,14 +62,14 @@ one declared output directory. No `--privileged`, no host Docker (decision D7). 
   `busy-pool` (`std::jthread` and `stop_token`, a spin start gate, padded counters, an external-linkage sink), and the
   `lowlat_place` library with its tests.
 - `java/`: `CpuProbe` records `availableProcessors()`, the most virtual threads mounted at once under a spin, the GC thread flags.
-- `place-py/`: `python -m lowlat_place` records `os.cpu_count()`, `os.process_cpu_count()` and the affinity mask. There is no
+- `place-py/`: `python -m lowlat_place` records `os.cpu_count()`, `os.process_cpu_count()` and the affinity mask. There's no
   latency lane in Python here.
 - `vm/lane-cpp.sh`: one C++ lane in whatever environment it starts in (POSIX sh, so it runs in a ubi-minimal image).
   `vm/service-lane.sh` runs the Quarkus service in its container and counts its threads. `vm/guest-run.sh` runs in the
   guest. `vm/run.sh` drives everything from the host.
 - `containers/`: the three images (UBI 10) and `IMAGES.lock`. The C++ image holds `line-simulator`, `io-receive`,
   `place-probe` and `busy-pool`; `vm/run.sh` copies those four files out of it, so the host, the guest and the containers run
-  one file each. libstdc++ and libgcc are linked statically; glibc is not, and it still differs between the three places
+  one file each. libstdc++ and libgcc are linked statically; glibc isn't, and it still differs between the three places
   (each lane records its glibc version in `probe-cpp.json`).
 
 ## Run
@@ -114,7 +114,7 @@ three alternations within the one run.
 - The Quarkus comparison between the quota and the cpuset is confounded and observed only. The open-loop client runs in the
   guest on CPUs 0 and 1, and the quota container is free to use those CPUs too, while the cpuset container can't.
 - The `container-cpuset` lane carries the simulators, the consumer and the pool in one cgroup on two CPUs, and the quota lane
-  carries them in one cgroup under one quota. That is the point of the lane (everything the container runs shares its limit),
+  carries them in one cgroup under one quota. That's the point of the lane (everything the container runs shares its limit),
   and it means the simulators' emit lateness moves with the limit as well.
 - The busy pool's start skew is observed. Four spinning workers on two CPUs are spread by the scheduler, not by the gate, so a
   1 ms bound would measure the scheduler.
@@ -153,7 +153,7 @@ neighbour shares its cgroup.
 
 ## Hand-rolled constructs, and why
 
-- `busy-pool` spins because it's the load. Busy-spinning is the opposite of what a decide path should do; here it is the load that
+- `busy-pool` spins because it's the load. Busy-spinning is the opposite of what a decide path should do; here it's the load that
   makes the limit visible. Its start gate is a spinning atomic counter instead of `std::latch`, because a futex wake leaves
   each worker's start to the scheduler.
 - `place-probe` calls `io_uring_setup` through the raw system call, not liburing: the probe must report what the kernel or a

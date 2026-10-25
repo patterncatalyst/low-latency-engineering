@@ -116,7 +116,7 @@ counts are kept. The JFR file never lands in the tree.
 Pinning of a virtual thread is the carrier's: a call to `Affinity.setAffinity` from a virtual thread lands on the carrier
 thread that's running it. With one carrier, both ping-pong threads print the same tid and CPU, and `verify.sh` checks both lines.
 The virtual-thread run's context-switch count is read by the ping thread from `/proc/thread-self`, which is the carrier that thread is
-on when it reads. With `parallelism=1` there is one carrier, unless the JDK compensates for the blocking `/proc` read itself by adding
+on when it reads. With `parallelism=1` there's one carrier, unless the JDK compensates for the blocking `/proc` read itself by adding
 one (a file read from a virtual thread can do that); the ping-pong's queue operations never block a carrier. A second carrier would
 split the count, and nothing in the report would show it.
 
@@ -150,7 +150,8 @@ examples/11-stackful-stackless/verify.sh
 ```
 
 Environment (from `examples/_lib/lib.sh`): `ALLOW_BUSY=1`, `SKIP_BUILD=1`, `RESULTS_DIR`, `LOWLAT_BUILD`; also
-`RECHECK=results/<run-id>` (evaluate the criteria on committed reports; the placement checks need a live run) and
+`RECHECK=results/<run-id>` (evaluate the criteria on committed reports; the placement checks need a live run).
+
 Run it as `flock -o "$LOCK" ./verify.sh` when another example measures on the host: `-o` keeps the lock descriptor out of the script and everything it starts, and the script stops its whole process tree on TERM or INT. A full run takes about 12 minutes, a clean
 build included. The 10,000-thread runs need the process and map limits of an ordinary desktop session.
 
@@ -198,7 +199,7 @@ per-alternation ratios; a p50 is never compared across runs. Counters marked exa
    that escape into a vector) with one allocation per frame (exact). Java `platform-thread` full resident cost per task (RSS, page tables and
    kernel stack, measured the same way on both sides) over `virtual-thread`'s at least 5x. The `VmSize` ratio, platform RSS over
    virtual RSS, and platform RSS over virtual-thread heap (`MemoryMXBean` after a forced collection) are printed as observed. A
-   virtual thread's `VmSize` growth is not a per-task cost: it is 0 at 300 tasks and about 34 KB per task at 10,000, which is
+   virtual thread's `VmSize` growth isn't a per-task cost: it's 0 at 300 tasks and about 34 KB per task at 10,000, which is
    about five steps of 64 MiB, most likely the malloc arenas of new carrier threads, so it's reported and not asserted.
    Python thread RSS over asyncio task
    bytes (measured by `tracemalloc`, not exact) at least 5x, in each build.
