@@ -72,8 +72,7 @@ qk_q = box(
     "user",
     "Quarkus service",
     "2 event-loop threads running",
-    "8 workers, fixed in",
-    "application.properties",
+    "8 workers (configured)",
 )
 
 lim_c = box(466, 74, 90, 280, "kernel", "Limit", "cpuset", "2,3")
@@ -106,8 +105,7 @@ qk_c = box(
     "user",
     "Quarkus service",
     "2 event-loop threads running",
-    "8 workers, fixed in",
-    "application.properties",
+    "8 workers (configured)",
 )
 
 q = [cpp_q, py_q, jv_q, qk_q]

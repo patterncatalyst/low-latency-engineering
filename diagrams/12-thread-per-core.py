@@ -76,9 +76,6 @@ res_r = box(
 nodes = [cam_l, *t, res_l, cam_r, acc, hand, *w, res_r]
 
 edges = [edge(bottom(cam_l, round((t[i]["x"] + 44 - 60) / 330, 4)), top(t[i])) for i in range(4)]
-edges[0]["label"] = "one port per camera"
-edges[0]["lx"] = 62
-edges[0]["ly"] = -4
 edges += [
     edge(bottom(cam_r), top(acc)),
     edge(bottom(acc), top(hand, 0.5)),

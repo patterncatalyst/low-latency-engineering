@@ -254,7 +254,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 | S9 | Idiom review before calibration (`lgtm-idiomatic-review`) on 11–13 and kit diffs; r03 lesson checks; fix now | all r04 code | S6, S7, S8 | opus + sonnet fixes | done (16 findings fixed; measured-path changes recorded in Follow-ups) |
 | S10 | Calibration gate: 3 quiet dry runs each into `results/latest`; margin table; user decides asserted vs observed | READMEs, this file's Follow-ups | S9 | opus (MAIN) | done (margin table in §5; Ch13 criterion 4 asserted) |
 | S11 | Measurement `r04-run{1,2,3}` for 11, 12 (host) and 13 (host+VM+container), serial, one recorded commit | `examples/1[1-3]-*/results/r04-run*/` | S10 | opus (MAIN) | done (commit 4434ed1 recorded; 9 of 9 exit 0) |
-| S12 | Figures 11.1–11.3, 12.1–12.3, 13.1–13.3; value table from S11 only | `_plans/r04-figures.md`, `diagrams/1[1-3]-*.py`, `assets/diagrams/`, `_data/diagrams.yml` | S11 | sonnet | todo |
+| S12 | Figures 11.1–11.3, 12.1–12.3, 13.1–13.3; value table from S11 only | `_plans/r04-figures.md`, `diagrams/1[1-3]-*.py`, `assets/diagrams/`, `_data/diagrams.yml` | S11 | sonnet | done (a8064cd, f02dfdb, repair round 2 by MAIN; Opus validated twice) |
 | S13 | Ch11 prose | `_docs/11-stackful-stackless.md`, `_plans/r04-chapters.md` (claims table) | S12 | sonnet | todo |
 | S14 | Ch12 prose | `_docs/12-io-engines.md`, `_plans/r04-chapters.md` | S12 | sonnet | todo |
 | S15 | Ch13 prose | `_docs/13-where-code-runs.md`, `_plans/r04-chapters.md` | S12 | sonnet | todo |
