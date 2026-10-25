@@ -164,7 +164,7 @@ One task in 1,000 makes a 2 ms blocking call every tenth iteration. #A, `boost::
                 time.sleep(block_ns / NS)
 ```
 
-The Python twin runs 50 tasks, not 1,000: an asyncio loop can't wake 1,000 tasks every 2 ms (500,000 a second) on this host, so the run would measure overload.
+The Python twin runs 50 tasks, not 1,000: 500,000 wakes a second at about 1.9 us each (half the asyncio round trip below) take about 0.95 s of each second, so the run would measure overload.
 
 ## Measure
 
@@ -224,7 +224,7 @@ A simulator at 10 kHz for 20 s sends 200,000 parcels. One lookup task per parcel
 
 ## Cross-check
 
-The stack sizes account for the memory. A fiber's 65,536 B stack plus one 4,096 B guard page is 69,632 B; the run measured 69,645 B. A thread's default stack is 8,192 KiB, glibc's default from `ulimit -s`, and it's 8,388,608 of the 9,245,449 B it reserved (the notes print that default; the run doesn't read the limit). The 10,000 allocations `operator new` counted agree with one frame per task. Under Clang, 1,000 of 1,000 non-escaping coroutines still reached `operator new`, while the ping-pong's two frames made 0 allocations in all nine alternations. HALO (heap allocation elision) happens where the compiler can prove the lifetime, so neither outcome can be assumed.
+The stack sizes account for the memory. A fiber's 65,536 B stack plus one 4,096 B guard page is 69,632 B; the run measured 69,645 B. A thread's default stack is 8,192 KiB, glibc's default from `ulimit -s`, and it's 8,388,608 of the 9,245,449 B it reserved (the notes print that default; the run doesn't read the limit). The 10,000 allocations `operator new` counted agree with one frame per task. Under Clang, 1,000 of 1,000 non-escaping coroutines still reached `operator new`, while the ping-pong's two frames made 0 allocations in all nine alternations. The standard permits HALO (heap allocation elision) but never requires it, so neither outcome can be assumed.
 
 The `/proc` switch counts explain the histogram: a thread round trip is 2 voluntary switches in about 3.8 us, and fiber and coroutine round trips never left user space.
 

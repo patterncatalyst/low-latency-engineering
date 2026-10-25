@@ -154,13 +154,12 @@ neighbour shares its cgroup.
 ## Hand-rolled constructs, and why
 
 - `busy-pool` spins because it's the load. Busy-spinning is the opposite of what a decide path should do; here it is the load that
-  makes the limit visible. Its start gate is a spinning atomic counter instead of `std::latch`, because a futex wake can
-  arrive a millisecond late on an idle core.
+  makes the limit visible. Its start gate is a spinning atomic counter instead of `std::latch`, because a futex wake leaves
+  each worker's start to the scheduler.
 - `place-probe` calls `io_uring_setup` through the raw system call, not liburing: the probe must report what the kernel or a
   seccomp filter answers, with nothing linked that could change it.
 - `cgroup_probe` parses the one-line and key-value cgroup v2 files (`cpu.max`, `cpu.stat`, `cpuset.cpus.effective`) by hand.
-  There's no maintained C++ cgroup v2 library, and each file is a line or a list of `key value` pairs that
-  `std::from_chars` reads in a few lines; every parse returns `std::expected` and the tests cover the odd forms.
+  Each file is a line or a list of `key value` pairs that `std::from_chars` reads in a few lines; every parse returns `std::expected` and the tests cover the odd forms.
 - `lane-cpp.sh` is POSIX sh and coreutils only. The images have no `jq`, no Python and no `taskset`.
 - `CpuProbe` reads the virtual-thread scheduler's parallelism from `jdk.management.VirtualThreadSchedulerMXBean` (exact), and
   samples `getMountedVirtualThreadCount()` while a spinning load saturates the carriers, as a cross-check: its maximum is the

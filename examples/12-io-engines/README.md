@@ -123,8 +123,8 @@ free, so no error path leaks a registration.
 no system call, and only when there is none does it call `io_uring_submit_and_wait_timeout`, which submits any re-armed
 receive and waits for the next completion. So at a rate where parcels queue up behind each other it makes far fewer
 enters than parcels, and at a rate where each parcel finds an empty ring it makes about one per parcel; the effect is a
-property of the load, and the saturation run is where it shows. The multishot receive ends when the kernel runs out of
-buffers; the loop re-arms it and counts the re-arm. Buffers return to the ring after each batch.
+property of the load, and the saturation run is where it shows. The kernel can end the multishot receive at any completion (no
+`IORING_CQE_F_MORE`), for example with `-ENOBUFS` when the buffer ring is empty; the loop re-arms it and counts the re-arm. Buffers return to the ring after each batch.
 
 `acceptor-pool` uses `lowlat::lockfree::ClaimLog` from Ch10 (`examples/10-lockfree-waitfree`): one log per worker, the receive
 thread the single producer, parcels dealt out in turn. That makes this lane depend on example 10's library; the dependency
@@ -166,8 +166,9 @@ measured loop is warmed first: the same receive code runs a pass of 6,000 parcel
 thrown away, so JIT compilation isn't in the numbers. Each receive thread allocates its own counters, so two threads are
 unlikely to share a cache line (Java has no `alignas`; the allocations come from separate thread-local allocation buffers,
 which makes separate lines likely, not guaranteed).
-`DatagramChannel.receive` allocates an `InetSocketAddress` per call; with a fixed, pre-touched 1 GiB heap no collection
-starts inside a run, and the JDK offers no allocation-free receive on an unconnected channel.
+`DatagramChannel.receive` returns a cached `InetSocketAddress` while the sender stays the same (`sourceSocketAddress` in
+`DatagramChannelImpl`), so a channel fed by one simulator allocates no address per datagram; with a fixed, pre-touched
+1 GiB heap no collection starts inside a run.
 
 The open-loop client (`OpenLoopClient`) is in the same module, in the plain-JDK lane. It uses the kit's Java recorder
 (HdrHistogram) and writes `lowlat-report/1`.
@@ -207,8 +208,7 @@ quarkus-optimization (`quarkus-demo-02-gc-monitoring`, `GcMonitoringResource`), 
 
 ### Python
 
-CPython 3.14 has no io_uring in the standard library, and no mature third-party binding exists, so the lane compares what
-the language offers. `asyncio-datagram` is the idiom: a `DatagramProtocol` per camera on the default selector loop, which
+CPython 3.14 has no io_uring in the standard library, so the lane compares what the standard library and uvloop offer. `asyncio-datagram` is the idiom: a `DatagramProtocol` per camera on the default selector loop, which
 calls `epoll_wait` and one `recvfrom` per ready socket. `blocking-thread` is one thread per socket in a blocking `recv`.
 Under the GIL the four threads take turns; under the free-threaded `3.14.9+freethreaded` (a user-local
 `uv python install 3.14.9t`) they run in parallel. `uvloop` is the same protocols on libuv's loop; a cp314t wheel exists
@@ -236,8 +236,8 @@ What is written by hand, and the reason:
   doesn't build. The workers spin on Ch10's `ClaimLog` so the hand-off is a cache-line transfer and not a futex
   wake-up. At line rate the two tails were about the same (the p99 ranges overlap: acceptor-pool 91 to 113 us,
   thread-per-core 98 to 115 us, one measurement per run; the acceptor was lower in two runs), so the hand-off cost is small there; the exact hand-off counts are what the example asserts. Neither is advice for general code.
-- **`SpinStart` and the start gate.** A futex barrier can wake threads a millisecond apart on an idle core; the spin brings
-  them to one instant so the recorded start skew means something. `std::latch` and `CountDownLatch` do the coarse gate.
+- **`SpinStart` and the start gate.** A futex barrier leaves each thread's wake-up to the scheduler, so the threads leave it
+  at different times; the spin brings them to one instant so the recorded start skew means something. `std::latch` and `CountDownLatch` do the coarse gate.
 - **`EngineCounters` padded to twice `std::hardware_destructive_interference_size`.** Per-thread counters written on every
   datagram would otherwise share a line. The doubling is for the L2 spatial prefetcher.
 - **The open-loop dispatcher (Java).** `HttpClient` has no open-loop mode; the dispatcher computes each intended send time

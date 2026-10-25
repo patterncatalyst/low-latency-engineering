@@ -46,9 +46,9 @@ measured), so those gaps are the lesson, not something to paper over.
   is dead code.
 - **(c) Neighbours.** 1,000 tasks on 2 ms timers, staggered across the period, 500 iterations (one second), recording how late
   each wake was. With `--blocking-sleep-in-fiber` (C++) or `--blocking-sleep-in-coroutine` (Python), task 0 makes one 2 ms
-  blocking call every tenth iteration, 50 in all. The Python lane runs 50 tasks on the same 2 ms timers: an asyncio loop wakes
-  about 75,000 tasks a second at most, and 1,000 tasks every 2 ms is 500,000, so with 1,000 the loop falls behind by seconds
-  and the run measures overload, not the blocking call. The Python debug run switches asyncio's debug mode on after the tasks
+  blocking call every tenth iteration, 50 in all. The Python lane runs 50 tasks on the same 2 ms timers: 1,000 tasks every 2 ms is 500,000 wakes a second, and at
+  about 1.9 us per asyncio wake (half the measured asyncio ping-pong round trip) that takes about 0.95 s of each second,
+  so with 1,000 the run would measure overload, not the blocking call. The Python debug run switches asyncio's debug mode on after the tasks
   exist, with `slow_callback_duration` at 1 ms, and counts the `Executing <...> took N seconds` warnings.
 - **Line.** One simulator instance at 10 kHz x 20 s (200,000 parcels) to UDP 47310 (C++ `os-thread`), 47311 (`fiber`), 47312
   (`coroutine`), 47313 (`platform-thread`) and 47314 (`virtual-thread`). The receive thread decodes each datagram and starts
@@ -130,8 +130,8 @@ again at the end, and exits otherwise. It writes the samples with `array('q').to
 (its own `sys.version`), `build.gil_enabled` and `runtime.python_build`. `verify.sh` converts them with
 `lowlat-report from-samples` in the GIL environment, for both builds, so the two paths are the same.
 
-asyncio rounds its epoll timeout up to a whole millisecond (`selectors.EpollSelector.select` in CPython 3.14), so an asyncio
-timer fires up to 1 ms late whatever else happens. That sets the floor of the Python neighbour lateness, and it's why the
+asyncio rounds its epoll timeout up to a whole millisecond (`selectors.EpollSelector.select` in CPython 3.14), so the rounding
+alone can make an asyncio timer fire up to 1 ms late. That sets the floor of the Python neighbour lateness, and it's why the
 blocking-call result is stated as a p99 against 1 ms and the baseline is printed beside it.
 
 ## Layout
