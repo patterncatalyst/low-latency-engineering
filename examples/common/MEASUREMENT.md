@@ -101,12 +101,16 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
   - `hw_counters`: `source` (`perf`, `cachegrind` or `perfnorm`), `ops` (integer, at least 1) and
     `per_op` (event name to count per operation, at least one entry). Never a time-average.
   - `counters`: exact event counts, name to non-negative integer (CAS failures, max retries, torn
-    reads, `io_uring_setup` errno).
+    reads, `io_uring_setup` errno). r05 names: `samples`, `overflows` (samples beyond a cyclictest
+    histogram's range) and `safepoints`, plus `interrupts`, the one nested member: row name (`LOC`,
+    `RES`, `CAL`, `TLB` or an IRQ name) to logical CPU number to the delta over the run.
   - `python_build`: `gil` or `free-threaded`, for Python lanes.
   - `environment` (r04): where the measured program ran.
     - `kind`: `host`, `vm` or `container`. Required.
     - `guest_profile`: guest snapshot and profile, like `lab-ready-r04/stock-unpinned`. Required for `vm`
-      and `container`, forbidden for `host`.
+      and `container`, forbidden for `host`. From r05 it may instead be an object `{snapshot, profile,
+      vcpupin}` (`vcpupin`: optional list of `{vcpu, cpus}`, host CPU lists from `virsh vcpupin`, written
+      by the host driver because the guest can't see them).
     - `container`: required for `container`, forbidden for `host` and `vm`. All fields are required:
       `runtime` (`docker`), `image` (exact tag; `:latest` and tagless references fail, and a registry
       port must be followed by `/`), `image_digest` (`sha256:` plus 64 lowercase hex), `network`

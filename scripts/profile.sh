@@ -182,7 +182,7 @@ latency_cmdline() {
 }
 
 g_kernel() {
-  local rel ver cmd preempt rt_file rt=false
+  local rel ver cmd preempt rt_file mode rt=false
   rel=$(uname -r); ver=$(uname -v); cmd=$(latency_cmdline "$(read_file /proc/cmdline)")
   case $ver in
     *PREEMPT_RT*) preempt=PREEMPT_RT ;;
@@ -191,22 +191,51 @@ g_kernel() {
     *) preempt=none ;;
   esac
   rt_file=$(read_file /sys/kernel/realtime)
+  # Dynamic-preempt mode: the active one is parenthesised ("none voluntary (full) lazy").
+  # debugfs is root-only, so unprivileged this is null; the profile never asks for sudo.
+  mode=$(read_file /sys/kernel/debug/sched/preempt | sed -n 's/.*(\([a-z_]*\)).*/\1/p')
   if [[ $rt_file == 1 || $preempt == PREEMPT_RT ]]; then rt=true; fi
   # Publish major.minor and the preempt model only: the build number and build date
   # pin one machine's exact kernel.
   rel=$(sed -E 's/^([0-9]+\.[0-9]+).*/\1/' <<<"$rel")
   jq -nc --arg rel "$rel" --arg pre "$preempt" --argjson rt "$rt" \
-     --argjson rtf "$(jstr "$rt_file")" --argjson cmd "$(jstr "$cmd")" \
+     --argjson rtf "$(jstr "$rt_file")" --argjson mode "$(jstr "$mode")" --argjson cmd "$(jstr "$cmd")" \
      --argjson iso "$(cmdline_param "$cmd" isolcpus)" \
      --argjson nohz "$(cmdline_param "$cmd" nohz_full)" \
      --argjson rcu "$(cmdline_param "$cmd" rcu_nocbs)" \
      --argjson irq "$(cmdline_param "$cmd" irqaffinity)" \
      --argjson sysiso "$(jstr "$(read_file "$SYS/isolated")")" \
      --argjson sysnohz "$(jstr "$(read_file "$SYS/nohz_full")")" '
-    { release: $rel, version: $pre, preempt_model: $pre, realtime: $rt,
+    { release: $rel, version: $pre, preempt_model: $pre, preempt_mode: $mode, realtime: $rt,
       sys_kernel_realtime: $rtf, cmdline: $cmd,
       isolcpus: $iso, nohz_full: $nohz, rcu_nocbs: $rcu, irqaffinity: $irq,
       sys_isolated: $sysiso, sys_nohz_full: $sysnohz }'
+}
+
+# Idle driver and governor the kernel uses; null where cpuidle is absent (some guests).
+g_cpuidle() {
+  local d=$SYS/cpuidle gov
+  gov=$(read_file $d/current_governor)
+  [[ -n $gov ]] || gov=$(read_file $d/current_governor_ro)
+  jq -nc --argjson drv "$(jstr "$(read_file $d/current_driver)")" --argjson gov "$(jstr "$gov")" \
+     '{driver: $drv, governor: $gov}'
+}
+
+# irqbalance: "active", "inactive" or "not installed" (null when systemd cannot say).
+irqbalance_state() {
+  if have systemctl && [[ -n $(try systemctl list-unit-files irqbalance.service --no-legend) ]]; then
+    try systemctl is-active irqbalance || true
+  elif have irqbalance; then
+    echo inactive
+  else
+    echo "not installed"
+  fi
+}
+
+g_irq() {
+  jq -nc --argjson aff "$(jstr "$(read_file /proc/irq/default_smp_affinity)")" \
+     --argjson bal "$(jstr "$(irqbalance_state | head -n1)")" \
+     '{default_smp_affinity: $aff, balance: $bal}'
 }
 
 g_clock() {
@@ -350,11 +379,12 @@ host_label() {
 build_json() {
   jq -n --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg host "$(host_label)" \
     --argjson cpu "$(g_cpu)" --argjson power "$(g_power)" --argjson tuned "$(g_tuned)" \
-    --argjson kernel "$(g_kernel)" --argjson clock "$(g_clock)" --argjson process "$(g_process)" \
+    --argjson kernel "$(g_kernel)" --argjson cpuidle "$(g_cpuidle)" --argjson irq "$(g_irq)" \
+    --argjson clock "$(g_clock)" --argjson process "$(g_process)" \
     --argjson virt "$(g_virt)" --argjson load "$(g_load)" --argjson memory "$(g_memory)" \
     --argjson lab "$(g_lab)" --argjson tools "$(g_tools)" --argjson cgroup "$(g_cgroup)" \
     '{schema: "lowlat-profile/1", captured_at: $at, host_label: $host,
-      cpu: $cpu, power: $power, tuned: $tuned, kernel: $kernel, clock: $clock,
+      cpu: $cpu, power: $power, tuned: $tuned, kernel: $kernel, cpuidle: $cpuidle, irq: $irq, clock: $clock,
       process: $process, virt: $virt, cgroup: $cgroup, load: $load, memory: $memory, lab: $lab,
       tools: $tools}'
 }

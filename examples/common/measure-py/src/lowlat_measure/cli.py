@@ -16,7 +16,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from lowlat_measure import harness, samples
+from lowlat_measure import cyclictest, harness, samples
 from lowlat_measure.recorder import decode, percentiles_of, require_profile
 from lowlat_measure.table import format_rows
 
@@ -174,6 +174,35 @@ def cmd_from_samples(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_from_cyclictest(args: argparse.Namespace) -> int:
+    if not require_profile("lowlat-report"):
+        return 2
+    try:
+        converted = cyclictest.convert(
+            args.json,
+            args.histfile,
+            args.out_dir,
+            example=args.example,
+            variant=args.variant,
+            allow_overflow=args.allow_overflow,
+            guest_profile=args.guest_profile,
+        )
+    except (ValueError, KeyError, OSError, json.JSONDecodeError) as exc:
+        print(f"lowlat-report: from-cyclictest: {exc}", file=sys.stderr)
+        return 1
+    validator = _validator()
+    errors = [e for _, report in converted for e in _schema_errors(validator, report)]
+    if errors:
+        for err in errors:
+            print(f"lowlat-report: from-cyclictest: schema: {err}", file=sys.stderr)
+        return 1
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    for path, report in converted:
+        path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(path)
+    return 0
+
+
 def _add_convert(sub: Any, name: str, func: Any, text: str) -> argparse.ArgumentParser:
     p = sub.add_parser(name, help=text, description=text)
     p.add_argument("source", type=Path, help="the harness's JSON output")
@@ -229,6 +258,32 @@ def build_parser() -> argparse.ArgumentParser:
         default=harness.DEFAULT_TOOLCHAIN,
         help="toolchain text appended to build.compiler (default: %(default)s)",
     )
+    ct = sub.add_parser(
+        "from-cyclictest",
+        help="convert cyclictest --json and --histfile to one <variant>-t<N>.json report per "
+        "thread; needs LOWLAT_PROFILE",
+        description="convert cyclictest (rt-tests v2.11) --json plus --histfile output to "
+        "lowlat-report/1 reports, one per thread, with percentiles from the histogram buckets. "
+        "cyclictest's average and the guest hostname are dropped. Fails on a histogram overflow "
+        "unless --allow-overflow.",
+    )
+    ct.add_argument("json", type=Path, help="cyclictest --json output")
+    ct.add_argument("histfile", type=Path, help="cyclictest --histfile output")
+    ct.add_argument("out_dir", type=Path, metavar="OUT_DIR", help="directory for the reports")
+    ct.add_argument("--example", required=True, help="example id recorded in each report")
+    ct.add_argument("--variant", default="cyclictest", help="variant prefix (default: %(default)s)")
+    ct.add_argument(
+        "--allow-overflow",
+        action="store_true",
+        help="convert despite samples beyond the histogram range; recorded in notes and "
+        "runtime.counters.overflows",
+    )
+    ct.add_argument(
+        "--guest-profile",
+        metavar="SNAPSHOT/PROFILE",
+        help="record runtime.environment as a vm lane with this guest snapshot and profile",
+    )
+    ct.set_defaults(func=cmd_from_cyclictest)
     raw = sub.add_parser(
         "from-samples",
         help="convert raw int64 nanosecond samples and a JSON sidecar to a report; "

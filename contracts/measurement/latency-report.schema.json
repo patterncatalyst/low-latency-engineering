@@ -127,7 +127,20 @@
           "type": "object",
           "minProperties": 1,
           "additionalProperties": { "type": "integer", "minimum": 0 },
-          "description": "Exact event counts of the run, name -> integer: CAS failures, maximum retries, torn reads, litmus outcomes, lost claims."
+          "description": "Exact event counts of the run, name -> integer: CAS failures, maximum retries, torn reads, litmus outcomes, lost claims. 'samples' (latency samples taken, including any beyond a histogram's range), 'overflows' (samples beyond a histogram's range) and 'safepoints' are integers like the rest; 'interrupts' is the one nested member.",
+          "properties": {
+            "interrupts": {
+              "type": "object",
+              "minProperties": 1,
+              "description": "Interrupt count deltas over the run, by /proc/interrupts row name (LOC, RES, CAL, TLB, or an IRQ name), then by logical CPU number.",
+              "additionalProperties": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": { "pattern": "^[0-9]+$" },
+                "additionalProperties": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
         },
         "environment": {
           "type": "object",
@@ -154,7 +167,35 @@
           ],
           "properties": {
             "kind": { "enum": ["host", "vm", "container"], "description": "Execution environment of the measured program." },
-            "guest_profile": { "type": "string", "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$", "description": "Guest snapshot and profile name, e.g. 'lab-ready-r04/stock-unpinned'. Required when kind is vm or container." },
+            "guest_profile": {
+              "description": "Guest snapshot and profile. Required when kind is vm or container. Either the string 'snapshot/profile', e.g. 'lab-ready-r04/stock-unpinned', or an object that also records the vCPU pinning, which the host driver writes (the guest can't see it).",
+              "oneOf": [
+                { "type": "string", "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["snapshot", "profile"],
+                  "properties": {
+                    "snapshot": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$", "description": "Guest snapshot the lane started from, e.g. 'lab-ready-rt'." },
+                    "profile": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$", "description": "Guest profile applied, e.g. 'isolated'." },
+                    "vcpupin": {
+                      "type": "array",
+                      "minItems": 1,
+                      "description": "Host CPUs each guest vCPU is pinned to (from virsh vcpupin).",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["vcpu", "cpus"],
+                        "properties": {
+                          "vcpu": { "type": "integer", "minimum": 0 },
+                          "cpus": { "type": "string", "minLength": 1, "pattern": "^[0-9]+([,-][0-9]+)*$", "description": "Host CPU list, e.g. '2' or '2-3,6'." }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
             "container": {
               "type": "object",
               "additionalProperties": false,
