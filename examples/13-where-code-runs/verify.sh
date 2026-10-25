@@ -514,8 +514,13 @@ fi
 for lane in "${LANES[@]}"; do
   [[ $lane == host ]] && continue
   ok_lane "$lane" || continue
+  steal=() total=()
+  for a in $(seq 1 "$ROUNDS"); do
+    steal+=("$(val "$(P "$lane" "$a" steal.json)" .steal_ticks)")
+    total+=("$(val "$(P "$lane" "$a" steal.json)" .total_ticks)")
+  done
   printf '  observed: %s steal ticks over the lane, per alternation: %s (of %s guest ticks)\n' "$lane" \
-    "$(val "$(P "$lane" 1 steal.json)" .total_ticks)"
+    "${steal[*]}" "${total[*]}"
 done
 if ok_lane container-cpu-quota && ok_lane container-cpuset; then
   printf '  observed: Quarkus (virtual-thread variant, %s Hz) p50 / p99 / p99.9 / max, alternation 1: container-cpu-quota %s; container-cpuset %s\n' "$Q_RATE" \

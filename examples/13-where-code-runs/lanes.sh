@@ -1,4 +1,6 @@
 # shellcheck shell=bash
+# Sourced by verify.sh, vm/run.sh and vm/guest-run.sh, which use these names.
+# shellcheck disable=SC2034
 # lanes.sh - what verify.sh, vm/run.sh and vm/guest-run.sh agree on: the lanes, the workload, the ports,
 # the images and the helpers that put a lane's environment into its reports. Source it after
 # examples/_lib/lib.sh.
