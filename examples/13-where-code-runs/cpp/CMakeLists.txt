@@ -25,3 +25,34 @@ if(BUILD_TESTING)
   include(GoogleTest)
   gtest_discover_tests(place-test)
 endif()
+
+# The four binaries every lane runs link libstdc++ and libgcc statically, so the same file starts on the host
+# (Fedora), in the guest and in a ubi-minimal container without depending on whichever libstdc++ is installed there.
+# glibc stays dynamic and still differs between those places; each lane records its glibc version.
+# line-simulator and io-receive belong to other directories; target_link_options applies to a target from anywhere.
+# libstdc++ is GPLv3 with the GCC Runtime Library Exception, which permits linking it into a program under any licence.
+#
+# LOWLAT_STATIC_LIBSTDCXX=ON (the container build sets it) requires the static libraries and fails to link without them.
+# AUTO (the default) uses them when this toolchain has them, so a developer machine without libstdc++-static still builds
+# these targets dynamically. OFF never links statically.
+set(LOWLAT_STATIC_LIBSTDCXX "AUTO" CACHE STRING "Link the Ch13 lane binaries with -static-libstdc++ -static-libgcc: AUTO, ON or OFF")
+set_property(CACHE LOWLAT_STATIC_LIBSTDCXX PROPERTY STRINGS AUTO ON OFF)
+set(_static_libstdcxx FALSE)
+if(LOWLAT_STATIC_LIBSTDCXX STREQUAL "ON")
+  set(_static_libstdcxx TRUE)
+elseif(LOWLAT_STATIC_LIBSTDCXX STREQUAL "AUTO")
+  include(CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_LINK_OPTIONS -static-libstdc++ -static-libgcc)
+  check_cxx_source_compiles("#include <string>\nint main() { std::string s{\"x\"}; return static_cast<int>(s.size()) - 1; }" LOWLAT_HAVE_STATIC_LIBSTDCXX)
+  unset(CMAKE_REQUIRED_LINK_OPTIONS)
+  set(_static_libstdcxx ${LOWLAT_HAVE_STATIC_LIBSTDCXX})
+endif()
+if(_static_libstdcxx)
+  foreach(_lane_binary IN ITEMS place-probe busy-pool line-simulator io-receive)
+    if(TARGET ${_lane_binary})
+      target_link_options(${_lane_binary} PRIVATE -static-libstdc++ -static-libgcc)
+    endif()
+  endforeach()
+else()
+  message(STATUS "Ch13 lane binaries: libstdc++ is linked dynamically (LOWLAT_STATIC_LIBSTDCXX=${LOWLAT_STATIC_LIBSTDCXX})")
+endif()

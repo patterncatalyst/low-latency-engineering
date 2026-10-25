@@ -4,7 +4,7 @@ Chapter 13: where the code runs. Ch11 asked who holds a wait and Ch12 asked what
 where the thread runs: on bare metal, in a VM, or in a container in that VM. The decide path is the same binary in all of
 them. What changes is the jitter floor under it, the network path in front of it, and what each runtime believes about the
 CPUs it may use. A container is a cgroup and a few namespaces, not a smaller machine, and the most expensive mistakes are
-the ones where a runtime sizes its pools from a machine it doesn't actually have.
+the ones where a runtime sizes its pools from a machine it doesn't have.
 
 ## Technique
 
@@ -69,12 +69,13 @@ one declared output directory. No `--privileged`, no host Docker (decision D7). 
   guest. `vm/run.sh` drives everything from the host.
 - `containers/`: the three images (UBI 10) and `IMAGES.lock`. The C++ image holds `line-simulator`, `io-receive`,
   `place-probe` and `busy-pool`; `vm/run.sh` copies those four files out of it, so the host, the guest and the containers run
-  the very same bytes.
+  one file each. libstdc++ and libgcc are linked statically; glibc is not, and it still differs between the three places
+  (each lane records its glibc version in `probe-cpp.json`).
 
 ## Run
 
 ```bash
-flock -o "$LOCK" ./verify.sh            # host lane x 3 only: ends non-zero as a partial run, by design
+flock -o "$LOCK" ./verify.sh            # host lane x 3 only: ends non-zero as a partial run, by design (the other lanes need the guest)
 flock -o "$LOCK" env VM=1 ./verify.sh   # the whole thing: revert lab-ready-r04, six lanes interleaved x 3, evaluate
 RECHECK=results/<run-id> ./verify.sh    # evaluate a results directory, run nothing
 DRY_RUN=1 SMOKE=1 RESULTS_DIR=/tmp/x vm/run.sh   # print the commands vm/run.sh and vm/guest-run.sh would run
@@ -102,6 +103,18 @@ three alternations within the one run.
    lane, the guest profile recorded, the container image digest equal to `IMAGES.lock`, and one set of binary checksums
    across all lanes.
 
+## Reading the numbers
+
+- The Quarkus comparison between the quota and the cpuset is confounded and observed only. The open-loop client runs in the
+  guest on CPUs 0 and 1, and the quota container is free to use those CPUs too, while the cpuset container can't.
+- The `container-cpuset` lane carries the simulators, the consumer and the pool in one cgroup on two CPUs, and the quota lane
+  carries them in one cgroup under one quota. That is the point of the lane (everything the container runs shares its limit),
+  and it means the simulators' emit lateness moves with the limit as well.
+- The busy pool's start skew is observed. Four spinning workers on two CPUs are spread by the scheduler, not by the gate, so a
+  1 ms bound would measure the scheduler.
+- A plain `./verify.sh` is a host-only partial run and exits non-zero by design: a run without the other
+  lanes proves nothing about them.
+
 ## Observed, not asserted
 
 Host against VM jitter floor and end-to-end percentiles; bridge against host network; guest steal ticks (from
@@ -112,7 +125,7 @@ threads, Vert.x event loops, carriers).
 
 Every number is labelled with its lane and means "on this laptop's KVM, in this run". The host and the guest don't share a
 kernel, a CPU model view or a clock, so host against VM is printed and never asserted. Container costs are measured
-against the VM-native lane in the same guest, so they are container-in-VM costs, not container-on-bare-metal costs. The host
+against the VM-native lane in the same guest, so they're container-in-VM costs, not container-on-bare-metal costs. The host
 lane runs with the lab VM booted and idle, and the guest's busy share across it is recorded.
 
 ## What the VM can't show
@@ -129,19 +142,22 @@ the scan-to-divert path they add three things you can measure here: the veth and
 cgroup limit that can stop every thread in it at once (a quota throttles the whole group, not the busy thread), and runtimes
 that size their pools from a machine they can't see. If the decide path must live in one, give it `--network host` or a
 cpuset rather than a quota, size pools from the cgroup (or pass the number explicitly), and gate the rollout on a
-latency-and-jitter SLO and not just a health check. A quota on a latency-sensitive service is a bug waiting for a busy
-neighbour inside the same cgroup.
+latency-and-jitter SLO and not just a health check. A quota on a latency-sensitive service fails the first time a busy
+neighbour shares its cgroup.
 
 ## Hand-rolled constructs, and why
 
-- `busy-pool` spins on purpose. Busy-spinning is the opposite of what a decide path should do; here it is the load that
+- `busy-pool` spins because it's the load. Busy-spinning is the opposite of what a decide path should do; here it is the load that
   makes the limit visible. Its start gate is a spinning atomic counter instead of `std::latch`, because a futex wake can
   arrive a millisecond late on an idle core.
 - `place-probe` calls `io_uring_setup` through the raw system call, not liburing: the probe must report what the kernel or a
   seccomp filter answers, with nothing linked that could change it.
 - `lane-cpp.sh` is POSIX sh and coreutils only. The images have no `jq`, no Python and no `taskset`.
-- The carrier count in `CpuProbe` reads the carrier's name from `Thread.toString()`: the JDK 25 has no public API for the
-  virtual-thread scheduler's parallelism (the documented default is `availableProcessors()`; both are recorded).
+- `CpuProbe` reads the virtual-thread scheduler's parallelism from `jdk.management.VirtualThreadSchedulerMXBean` (exact), and
+  counts the carriers that ran a spinning load, from `Thread.toString()`, as a cross-check. The pool size after the spin is
+  recorded and observed only.
+- The vm lane runs the uv-managed CPython that `examples/.python-version` names, like the other lanes. `vm/guest-run.sh
+  prepare` installs it in the guest with `uv python install`.
 
 ## Licences
 
@@ -153,6 +169,11 @@ neighbour inside the same cgroup.
 | Temurin (Eclipse Adoptium) | 25.0.5+8 | GPLv2 + Classpath Exception | the JDK in the host, guest and Java image |
 | UBI 10 base images | per `containers/IMAGES.lock` | UBI EULA, free to redistribute | all three images |
 | Docker Engine | the guest's, recorded in its profile | Apache-2.0 | containers, in the guest only |
+| protobuf | per `versions.env` | BSD-3-Clause | the wire contract, linked into the simulator and `io-receive` |
+| abseil | 20250512.1 | Apache-2.0 | protobuf's dependency |
+| CPython | 3.14.9 | PSF-2.0 | the Python lanes (uv-managed, python-build-standalone) |
+| uv | 0.13.5 | MIT / Apache-2.0 | installs and runs that CPython |
+| libstdc++, libgcc | the compiler's | GPLv3 with the GCC Runtime Library Exception | linked statically into the four binaries; the exception permits that under any licence |
 | HdrHistogram, nlohmann/json, GoogleTest, Jackson, pytest | per `versions.env` | BSD / MIT / Apache-2.0 / EPL-2.0 | reports and tests |
 
 ## Observation surfaces

@@ -37,7 +37,8 @@ class CpuProbeTest {
         assertEquals("lowlat-place-probe/1", out.get("schema"));
         Map<String, Object> java = (Map<String, Object>) out.get("java");
         assertEquals(CpuProbe.availableProcessors(), java.get("available_processors"));
-        assertEquals(CpuProbe.availableProcessors(), java.get("virtual_thread_parallelism_expected"));
+        assertEquals(CpuProbe.availableProcessors(), java.get("virtual_thread_parallelism"));
+        assertTrue((Integer) java.get("virtual_thread_pool_size_after_spin") >= 1);
     }
 
     @Test

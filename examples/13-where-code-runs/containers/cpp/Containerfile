@@ -25,7 +25,7 @@ ARG NINJA_VERSION=1.13.2
 ARG NINJA_SHA256=5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6
 # hadolint ignore=DL3041
 RUN dnf -y --setopt=install_weak_deps=False install \
-        gcc-c++ make git python3 unzip tar gzip xz zlib-ng-compat-devel \
+        gcc-c++ libstdc++-static make git python3 unzip tar gzip xz zlib-ng-compat-devel \
     && dnf clean all \
     && g++ --version | head -n1
 RUN curl -fsSL --retry 3 -o /tmp/cmake.tgz \
@@ -68,7 +68,7 @@ RUN cmake -S /src/examples -B /build -G Ninja \
         "-DCMAKE_C_FLAGS_RELEASE=-O2 -g -fno-omit-frame-pointer -DNDEBUG" \
         "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -g -fno-omit-frame-pointer -DNDEBUG" \
         -DCMAKE_PREFIX_PATH=/opt/lowlat-prefix \
-        -DBUILD_TESTING=OFF -DLOWLAT_BUILD_R04=ON \
+        -DBUILD_TESTING=OFF -DLOWLAT_BUILD_R04=ON -DLOWLAT_STATIC_LIBSTDCXX=ON \
     && cmake --build /build --target ${TARGETS} \
     && mkdir -p /out/bin \
     && for b in ${BINARIES}; do \

@@ -9,6 +9,7 @@
 // one a cgroup-aware rule would. A file that cannot be read is a null with the reason in "errors".
 //
 // Provenance: adapted from cgroup_probe in the companion project cpp-concurrency-and-parallelism (Ch32).
+#include <gnu/libc-version.h>
 #include <sched.h>
 
 #include <algorithm>
@@ -110,6 +111,7 @@ json probe() {
   out["cpus"] = std::move(cpus);
   out["cgroup"] = std::move(cgroup);
   out["pool_size"] = std::move(pool);
+  out["libc"] = {{"glibc", gnu_get_libc_version()}};  // the one dynamic dependency left: it differs between the host, the guest and the image
   out["io_uring"] = std::move(uring);
   out["errors"] = std::move(errors);
   return out;

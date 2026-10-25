@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
+import jdk.management.VirtualThreadSchedulerMXBean;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -19,7 +20,9 @@ import tools.jackson.databind.json.JsonMapper;
  * What the JVM thinks it has: the processor count it ergonomics-sizes everything from, the virtual-thread
  * scheduler's parallelism, and the GC thread counts. The JVM reads a container's CPU quota (ceil of
  * quota over period) and its cpuset (through the affinity mask) when it starts, so the same jar prints
- * different numbers in the guest, under {@code --cpus=2} and under {@code --cpuset-cpus=2,3}.
+ * different numbers in the guest, under {@code --cpus=2} and under {@code --cpuset-cpus=2,3}. The virtual-thread
+ * scheduler's parallelism comes from {@code VirtualThreadSchedulerMXBean}; the carriers that ran a spinning load are
+ * counted as a cross-check.
  *
  * <pre>
  *   java -cp where-code-runs-java.jar io.patterncatalyst.lowlat.ch13.CpuProbe [--out FILE]
@@ -28,9 +31,6 @@ import tools.jackson.databind.json.JsonMapper;
  * Every value is exact (a count the JVM or the kernel reports), none is a measurement of time.
  */
 public final class CpuProbe {
-
-    /** The scheduler of virtual threads is a ForkJoinPool whose parallelism defaults to availableProcessors. */
-    static final String PARALLELISM_PROPERTY = "jdk.virtualThreadScheduler.parallelism";
 
     private static final long SPIN_NANOS = 100_000_000L;
 
@@ -47,7 +47,8 @@ public final class CpuProbe {
      * The number of distinct carrier threads that ran virtual threads, counted by starting more spinning
      * virtual threads than there are processors. A carrier is a platform thread of the scheduler's pool, which
      * starts one per unit of parallelism as work arrives, so with enough concurrent work the count is the
-     * scheduler's parallelism. The carrier is named in {@code Thread.toString()} after the {@code @}.
+     * scheduler's parallelism. The carrier is named in {@code Thread.toString()} after the {@code @}. This is the
+     * cross-check; the parallelism itself is read from the scheduler's MXBean.
      */
     public static int observedCarriers(int processors) {
         Set<String> carriers = ConcurrentHashMap.newKeySet();
@@ -71,6 +72,10 @@ public final class CpuProbe {
         return carriers.size();
     }
 
+    private static VirtualThreadSchedulerMXBean scheduler() {
+        return ManagementFactory.getPlatformMXBean(VirtualThreadSchedulerMXBean.class);
+    }
+
     /** A HotSpot flag's value as a number, or -1 when the flag does not exist in this VM. */
     static long vmOption(String name) {
         try {
@@ -84,9 +89,9 @@ public final class CpuProbe {
         int processors = availableProcessors();
         Map<String, Object> java = new LinkedHashMap<>();
         java.put("available_processors", processors);
-        java.put("virtual_thread_parallelism_property", System.getProperty(PARALLELISM_PROPERTY));
-        java.put("virtual_thread_parallelism_expected", Integer.getInteger(PARALLELISM_PROPERTY, processors));
+        java.put("virtual_thread_parallelism", scheduler().getParallelism());
         java.put("virtual_thread_carriers_observed", observedCarriers(processors));
+        java.put("virtual_thread_pool_size_after_spin", scheduler().getPoolSize());
         java.put("parallel_gc_threads", vmOption("ParallelGCThreads"));
         java.put("conc_gc_threads", vmOption("ConcGCThreads"));
         java.put("collectors", ManagementFactory.getGarbageCollectorMXBeans().stream().map(b -> b.getName()).toList());

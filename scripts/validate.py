@@ -605,7 +605,10 @@ UNPINNED_BENCHMARKS = {
         "cpp-release-acquire.json",
         "java-seq-cst.json",
         "java-release-acquire.json",
-    }
+    },
+    # Ch13: the line simulator's emit-lateness report and the Quarkus client's report come from unpinned programs by design
+    # (the simulators and the open-loop client are load generators, not pinned experiment threads).
+    "13-where-code-runs": {"lateness.json", "client.json"},
 }
 
 

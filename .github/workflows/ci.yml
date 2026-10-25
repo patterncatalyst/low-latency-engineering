@@ -105,7 +105,7 @@ jobs:
       - name: Show the version
         run: shellcheck --version
       - name: shellcheck -x -S warning
-        run: shellcheck -x -S warning examples/*/verify.sh examples/_lib/lib.sh scripts/*.sh
+        run: shellcheck -x -S warning examples/*/verify.sh examples/*/vm/*.sh examples/*/lanes.sh examples/_lib/lib.sh scripts/*.sh
 
   # Builds protoc and the C++ protobuf library once and caches them for cpp and python.
   protobuf:

@@ -62,4 +62,4 @@ started by the Ch13 scripts through `container_run`.
 ## Production idiom
 
 For a production service, Red Hat's `ubi10/openjdk-25-runtime` is the idiomatic Java base. The
-measured lanes do not use it because its JDK build differs from the Temurin the other lanes run.
+measured lanes don't use it because its JDK build differs from the Temurin the other lanes run.

@@ -2,7 +2,7 @@
 # lane-cpp.sh - one C++ lane run: the same script on the host, in the guest and inside a container.
 #
 #   lane-cpp.sh --bin DIR --out DIR [--mode full|consumer|sims] [--consumer-cpu N] [--pool] [--pool-workers N]
-#               [--rate HZ] [--seconds S] [--base-port P] [--dest HOST] [--decide-ns N] [--hold-ms N]
+#               [--rate HZ] [--seconds S] [--base-port P] [--dest HOST] [--decide-ns N] [--hold-ms N] [--bind ADDR]
 #
 # It runs only POSIX sh, coreutils and the four binaries in --bin (line-simulator, io-receive,
 # place-probe, busy-pool), because it runs in a ubi-minimal image that has no jq, no taskset and no
@@ -19,7 +19,7 @@
 # pool.json (with --pool), and one .log per process. Exit status is non-zero if any process failed.
 set -eu
 
-BIN='' OUT='' MODE=full CPU='' POOL=0 POOL_WORKERS='' RATE=2500 SECS=20 BASE=47340 DEST=127.0.0.1 DECIDE_NS=3000 HOLD_MS=500
+BIN='' OUT='' MODE=full CPU='' POOL=0 POOL_WORKERS='' RATE=2500 SECS=20 BASE=47340 DEST=127.0.0.1 DECIDE_NS=3000 HOLD_MS=500 BIND=''
 CAMERAS=4
 
 usage() {
@@ -40,6 +40,7 @@ while [ $# -gt 0 ]; do
     --dest) DEST=${2:?}; shift 2 ;;
     --decide-ns) DECIDE_NS=${2:?}; shift 2 ;;
     --hold-ms) HOLD_MS=${2:?}; shift 2 ;;
+    --bind) BIND=${2:?}; shift 2 ;;
     *) usage ;;
   esac
 done
@@ -96,7 +97,8 @@ if [ "$POOL" = 1 ] && [ "$MODE" != sims ]; then
   fi
   pool_pid=$!
   pids="$pids $pool_pid"
-  # Its first line, "N workers started", is printed once every worker thread exists and is spinning at the gate.
+  # Its first line, "N workers started", is printed once the worker threads exist (they spin at their start gate until all
+  # have arrived), so a non-empty log is the signal.
   n=0
   until [ -s "$OUT/pool.log" ] || [ "$n" -ge 200 ]; do sleep 0.05; n=$((n + 1)); done
   [ -s "$OUT/pool.log" ] || { echo "lane-cpp: the busy pool did not start" >&2; exit 1; }
@@ -104,15 +106,12 @@ fi
 
 cons_pid=''
 if [ "$MODE" != sims ]; then
-  cpu_arg=''
-  [ -z "$CPU" ] || cpu_arg=$CPU
-  if [ -n "$cpu_arg" ]; then
-    timeout "$((SECS + 90))" "$BIN/io-receive" --variant epoll --base-port "$BASE" --expect "$((RATE * SECS))" --cpus "$cpu_arg" \
-      --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --report "$OUT/consumer.json" >"$OUT/consumer.log" 2>&1 &
-  else
-    timeout "$((SECS + 90))" "$BIN/io-receive" --variant epoll --base-port "$BASE" --expect "$((RATE * SECS))" \
-      --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --report "$OUT/consumer.json" >"$OUT/consumer.log" 2>&1 &
-  fi
+  # The options are built in the positional parameters (the command line was parsed above): POSIX sh has no arrays.
+  set -- --variant epoll --base-port "$BASE" --expect "$((RATE * SECS))" --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" \
+    --report "$OUT/consumer.json"
+  [ -z "$CPU" ] || set -- "$@" --cpus "$CPU"
+  [ -z "$BIND" ] || set -- "$@" --bind "$BIND"
+  timeout "$((SECS + 90))" "$BIN/io-receive" "$@" >"$OUT/consumer.log" 2>&1 &
   cons_pid=$!
   pids="$pids $cons_pid"
   # The receiver binds before the start hold ends, and prints "released" when the threads go: only then do the simulators start.

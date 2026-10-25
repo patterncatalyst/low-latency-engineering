@@ -113,6 +113,21 @@ steal_ticks() { awk '/^cpu / {print $9, $2 + $3 + $4 + $5 + $6 + $7 + $8 + $9}' 
 # busy_ticks: "busy_ticks total_ticks" of the same line (everything but idle and iowait), for the idle check around the host lane.
 busy_ticks() { awk '/^cpu / {print $2 + $3 + $4 + $7 + $8, $2 + $3 + $4 + $5 + $6 + $7 + $8 + $9}' /proc/stat; }
 
+# run_bg LOG CMD...: run CMD in the background, wait for it, and print its output afterwards. A bash trap runs only
+# after a foreground command ends, so a TERM or INT to the driver would otherwise wait out a 20 s lane; a `wait` returns
+# at once, the trap exits, and the EXIT handler stops the whole tree (_bg_cleanup). CMD is reachable by $!.
+run_bg() {
+  local log=$1 pid rc=0
+  shift
+  "$@" >"$log" 2>&1 &
+  pid=$!
+  bg_track "$pid"
+  wait "$pid" || rc=$?
+  bg_forget "$pid"
+  cat "$log"
+  return "$rc"
+}
+
 EXAMPLE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # host_lane_run ALT: the host lane, one alternation, into $OUT/host/altN. Needs OUT (the results directory), HOST_BIN (the four C++

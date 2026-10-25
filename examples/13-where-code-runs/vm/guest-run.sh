@@ -33,6 +33,13 @@ HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 DRY_RUN=${DRY_RUN:-0}
 SMOKE=${SMOKE:-0}
 
+# This script starts containers, writes under the checkout and deletes files: it belongs in the lab guest and nowhere
+# else. Unless it is a dry run, it refuses to start on anything that is not a KVM guest carrying the lab's marker file.
+if ((!DRY_RUN)); then
+  [[ $(systemd-detect-virt 2>/dev/null || true) == kvm && -r /var/log/lab-ready ]] ||
+    die "guest-run.sh runs only in the lab guest (systemd-detect-virt must say kvm and /var/log/lab-ready must exist); use DRY_RUN=1 to print what it would do"
+fi
+
 # The guest checkout, resolved, and the one directory containers may mount (lib.sh's rule).
 LOWLAT_GUEST_ROOT=$(cd "$LOWLAT_ROOT" && pwd -P)
 export LOWLAT_GUEST_ROOT
@@ -50,6 +57,7 @@ export GUEST_PROFILE=$GUEST_PROFILE_NAME
 export LOWLAT_PROFILE=$VMOUT/profile.json
 BIN=$VMOUT/bin
 JARS=$VMOUT/jars
+PY_VERSION=$(<"$LOWLAT_ROOT/examples/.python-version")
 
 # x CMD...: run CMD, or print it under DRY_RUN=1.
 x() {
@@ -95,7 +103,9 @@ set_lane_args
 # probes_native DIR: the Python and Java views in the guest itself (the vm lane).
 probes_native() {
   local d=$1
-  x env PYTHONPATH="$LOWLAT_ROOT/examples/$EXAMPLE/place-py/src" python3 -m lowlat_place --out "$d/python/probe-python.json"
+  # The interpreter every other lane uses: uv-managed CPython from examples/.python-version (installed by `prepare`).
+  x env PYTHONPATH="$LOWLAT_ROOT/examples/$EXAMPLE/place-py/src" uv run --no-project --no-config --python "$PY_VERSION" \
+    python -m lowlat_place --out "$d/python/probe-python.json"
   x java -cp "$JARS/where-code-runs-java.jar" "$CPUPROBE_CLASS" --out "$d/java/probe-java.json"
 }
 
@@ -166,13 +176,13 @@ container_bridge() {
   step "guest: container-bridge, alternation $alt: consumer in $name, simulators in the guest"
   if ((DRY_RUN)); then
     container_run "$name" --env-out "$d/cpp-env.json" --network bridge -v "$VMOUT:/out" -e LOWLAT_PROFILE=/out/profile.json -- "$IMAGE_CPP" \
-      sh /out/lane-cpp.sh --bin /usr/local/bin --out "/out/$rel/cpp" --mode consumer --consumer-cpu "$GUEST_CPU" "${LANE_ARGS[@]}"
-    x docker inspect --format '{{.NetworkSettings.IPAddress}}' "$name"
+      sh /out/lane-cpp.sh --bin /usr/local/bin --out "/out/$rel/cpp" --mode consumer --bind 0.0.0.0 --consumer-cpu "$GUEST_CPU" "${LANE_ARGS[@]}"
+    x docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' "$name"
     x "$VMOUT/lane-cpp.sh" --bin "$BIN" --out "$d/cpp" --mode sims --dest "<container address on the bridge>" "${LANE_ARGS[@]}"
     return 0
   fi
   container_run "$name" --env-out "$d/cpp-env.json" --network bridge -v "$VMOUT:/out" -e LOWLAT_PROFILE=/out/profile.json -- "$IMAGE_CPP" \
-    sh /out/lane-cpp.sh --bin /usr/local/bin --out "/out/$rel/cpp" --mode consumer --consumer-cpu "$GUEST_CPU" "${LANE_ARGS[@]}" &
+    sh /out/lane-cpp.sh --bin /usr/local/bin --out "/out/$rel/cpp" --mode consumer --bind 0.0.0.0 --consumer-cpu "$GUEST_CPU" "${LANE_ARGS[@]}" &
   cpid=$!
   bg_track "$cpid"
   # The consumer's log is in the bind mount: "released" means it is bound and the start gate has opened.
@@ -183,7 +193,7 @@ container_bridge() {
   done
   ((tries < 1200)) || die "the bridge consumer was not released within 120 s"
   # Its address on the bridge, read once and used only on the command line: it is never written to a result.
-  ip=$(docker inspect --format '{{.NetworkSettings.IPAddress}}' "$name")
+  ip=$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' "$name")
   [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "no bridge address for $name"
   "$VMOUT/lane-cpp.sh" --bin "$BIN" --out "$d/cpp" --mode sims --dest "$ip" "${LANE_ARGS[@]}" || die "the simulators failed"
   wait "$cpid" || die "the bridge consumer container failed"
@@ -266,6 +276,9 @@ prepare() {
   x install -m 0755 "$HERE/lane-cpp.sh" "$HERE/service-lane.sh" "$VMOUT/"
   x "$LOWLAT_ROOT/scripts/profile.sh" --out "$VMOUT/profile.json"
   x chmod a+r "$VMOUT/profile.json"
+  # The vm lane's Python: the same uv-managed CPython the host lane and the python image run. uv downloads it once per
+  # prepared guest (python-build-standalone); a uv too old to list this release fails here, not in the middle of a lane.
+  x uv python install "$PY_VERSION"
   local -a paths=()
   local b
   for b in "${CPP_BINARIES[@]}"; do paths+=("/usr/local/bin/$b"); done
@@ -300,8 +313,8 @@ case ${1:-} in
     ;;
   proc-stat) busy_ticks ;;
   idle-wait)
-    limit=${2:-120}
-    for ((i = 0; i < limit; i += 2)); do
+    max_wait=${2:-120}
+    for ((i = 0; i < max_wait; i += 2)); do
       read -r b0 t0 < <(busy_ticks)
       sleep 2
       read -r b1 t1 < <(busy_ticks)
@@ -309,7 +322,7 @@ case ${1:-} in
       # under 1 percent busy
       if ((100 * (b1 - b0) <= (t1 - t0))); then exit 0; fi
     done
-    die "the guest was still busy after $limit s"
+    die "the guest was still busy after $max_wait s"
     ;;
   *) die "usage: guest-run.sh prepare | lane LANE ALT | proc-stat | idle-wait [SEC]" ;;
 esac

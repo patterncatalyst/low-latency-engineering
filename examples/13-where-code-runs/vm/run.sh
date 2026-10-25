@@ -122,14 +122,19 @@ gx() {
     printf ' %q' "$@"
     printf '\n'
   else
-    guest "$@"
+    guest "$@" </dev/null # no stdin: an ssh that reads it would swallow whatever the caller is reading
   fi
 }
 # guest_lane LANE ALT: one guest lane, its console output to a driver log outside the results.
 guest_lane() {
   local lane=$1 alt=$2
-  gx env SMOKE="$SMOKE" LINE_RATE="$LINE_RATE" LINE_SECONDS="$LINE_SECONDS" Q_RATE="$Q_RATE" Q_SECONDS="$Q_SECONDS" \
-    Q_WARMUP_SECONDS="$Q_WARMUP_SECONDS" "$GUEST_RUN" lane "$lane" "$alt" 2>&1 | tee "$LOGS/guest-$lane-alt$alt.log"
+  if ((DRY_RUN)); then
+    gx env SMOKE="$SMOKE" LINE_RATE="$LINE_RATE" LINE_SECONDS="$LINE_SECONDS" Q_RATE="$Q_RATE" Q_SECONDS="$Q_SECONDS" \
+      Q_WARMUP_SECONDS="$Q_WARMUP_SECONDS" "$GUEST_RUN" lane "$lane" "$alt"
+  else
+    run_bg "$LOGS/guest-$lane-alt$alt.log" gx env SMOKE="$SMOKE" LINE_RATE="$LINE_RATE" LINE_SECONDS="$LINE_SECONDS" Q_RATE="$Q_RATE" \
+      Q_SECONDS="$Q_SECONDS" Q_WARMUP_SECONDS="$Q_WARMUP_SECONDS" "$GUEST_RUN" lane "$lane" "$alt"
+  fi
   if ((DRY_RUN)); then
     # What the guest would run, printed by the guest script itself (it runs nothing under DRY_RUN=1).
     DRY_RUN=1 SMOKE="$SMOKE" LINE_SECONDS="$LINE_SECONDS" "$DIR/vm/guest-run.sh" lane "$lane" "$alt"
@@ -163,7 +168,7 @@ step "the guest: Temurin, and the three images against containers/IMAGES.lock"
 if ((DRY_RUN)); then
   printf '[dry-run] lab_ssh java -version | expect Temurin-%s\n' "${TEMURIN_VERSION:-?}"
 else
-  java_line=$(lab_ssh 'java -version 2>&1' | head -n2 | tr '\n' ' ')
+  java_line=$(lab_ssh 'java -version 2>&1' </dev/null | head -n2 | tr '\n' ' ')
   [[ $java_line == *"Temurin-$TEMURIN_VERSION+"* ]] || die "the guest's java is not Temurin $TEMURIN_VERSION: $java_line"
   ok "the guest runs Temurin $TEMURIN_VERSION"
 fi
@@ -174,7 +179,7 @@ for image in "$IMAGE_CPP" "$IMAGE_JAVA" "$IMAGE_PY"; do
   if ((DRY_RUN)); then
     printf '[dry-run] lab_ssh docker image inspect --format {{.Id}} %s | expect %s\n' "$image" "$want"
   else
-    have=$(lab_ssh "docker image inspect --format '{{.Id}}' $image" 2>/dev/null) || have=missing
+    have=$(lab_ssh "docker image inspect --format '{{.Id}}' $image" </dev/null 2>/dev/null) || have=missing
     [[ $have == "$want" ]] ||
       die "the guest's $image is $have, IMAGES.lock says $want: rebuild the images in the guest (containers/build-images.sh), commit the lock, and take the lab-ready-r04 snapshot again"
     ok "$image is $want"
@@ -193,7 +198,11 @@ push_jar() {
 }
 push_jar "$CLIENT_JAR" io-engines-java.jar
 push_jar "$CPUPROBE_JAR" where-code-runs-java.jar
-gx "$GUEST_RUN" prepare 2>&1 | tee "$LOGS/guest-prepare.log"
+if ((DRY_RUN)); then
+  gx "$GUEST_RUN" prepare
+else
+  run_bg "$LOGS/guest-prepare.log" gx "$GUEST_RUN" prepare
+fi
 
 HOST_BIN=$LOWLAT_SCRATCH/bin
 if ((DRY_RUN)); then
@@ -227,8 +236,8 @@ else
   # The consumer's CPU on the host: a physical core other than CPU 0 (an experiment control, not isolation).
   HOST_CPU=$(distinct_cores 3 | awk '$1 != 0 {print; exit}')
   [[ -n $HOST_CPU ]] || die "no physical core other than CPU 0 for the host consumer"
-  jq --arg ex "$EXAMPLE" --argjson host_cpu "$HOST_CPU" --argjson guest_cpu "$GUEST_CPU" --argjson rounds "$ROUNDS" --arg smoke "$SMOKE" \
-    '. + {example: $ex, mode: "vm", host_consumer_cpu: $host_cpu, guest_consumer_cpu: $guest_cpu, rounds: $rounds, smoke: ($smoke == "1")}' \
+  jq --arg ex "$EXAMPLE" --argjson host_cpu "$HOST_CPU" --argjson guest_cpu "$GUEST_CPU" --argjson rounds "$ROUNDS" --arg smoke "$SMOKE" --arg reused "${REUSE_VM:-0}" \
+    '. + {example: $ex, mode: "vm", reverted: ($reused != "1"), host_consumer_cpu: $host_cpu, guest_consumer_cpu: $guest_cpu, rounds: $rounds, smoke: ($smoke == "1")}' \
     "$RUN_START_JSON" >"$RUN_START_JSON.tmp" && mv "$RUN_START_JSON.tmp" "$RUN_START_JSON"
   ok "guest state for the host lane: $(jq -r '"\(.lab_vm), load1 \(.lab_vm_load1)"' "$RUN_START_JSON")"
 fi
@@ -243,7 +252,7 @@ host_lane() {
   fi
   gx "$GUEST_RUN" idle-wait 180
   read -r b0 t0 < <(gx "$GUEST_RUN" proc-stat)
-  host_lane_run "$alt"
+  run_bg "$LOGS/host-alt$alt.log" host_lane_run "$alt"
   read -r b1 t1 < <(gx "$GUEST_RUN" proc-stat)
   ((t1 > t0)) || die "the guest's /proc/stat did not advance across the host lane"
   jq -n --argjson b $((b1 - b0)) --argjson t $((t1 - t0)) --arg ex "$EXAMPLE" \

@@ -70,10 +70,7 @@ CRIT3_ASSERTED=${CRIT3_ASSERTED:-1}           # 3: the EPERM and success are exa
 EPERM=1
 GUEST_IDLE_MAX_PERMILLE=100                   # 5: workload guard, the guest's busy share across the host lane (10 percent; idle is about 0)
 POOL_WORKERS=4                                # 1: the pool is sized by hardware_concurrency(), which is 4 on the guest
-EXPECT_JAVA_CPUS=2                            # 2: availableProcessors() under --cpus=2 and under --cpuset-cpus=2,3
-EXPECT_PY_QUOTA=4                             # 2: os.process_cpu_count() under the quota (a quota is not a mask)
-EXPECT_PY_CPUSET=2                            # 2: ... and under the cpuset
-EXPECT_AWARE_POOL=2                           # 2: a cgroup-aware pool size under either limit
+EXPECT_GUEST_VCPUS=4                          # 2: the lab guest has 4 vCPUs (stock-unpinned); GUEST_VCPUS below is read from its profile and must say so
 
 if [[ ${SMOKE:-0} == 1 ]]; then
   # A check of this script, not a measurement: small workloads, every criterion evaluated and printed, none enforced.
@@ -210,7 +207,7 @@ if ((RUN)); then
       '. + {example: $ex, mode: "host-only", host_consumer_cpu: $host_cpu, guest_consumer_cpu: $guest_cpu, rounds: $rounds}' \
       "$RUN_START_JSON" >"$RUN_START_JSON.tmp" && mv "$RUN_START_JSON.tmp" "$RUN_START_JSON"
     export HOST_BIN HOST_CPU CPUPROBE_JAR
-    run_lane() { host_lane_run "$2" 2>&1 | tee "$LOGS/host-alt$2.log"; }
+    run_lane() { run_bg "$LOGS/host-alt$2.log" host_lane_run "$2"; }
     interleave_env "$ROUNDS" host
   fi
   scrub_results "$OUT"
@@ -218,10 +215,41 @@ fi
 
 # ---- evaluate -----------------------------------------------------------------------------------------------------------------
 [[ -f $OUT/profile.json ]] || die "no profile.json in $OUT"
-mapfile -t all_reports < <(find "$OUT" -name '*.json' ! -name profile.json ! -name guest-profile.json -exec grep -lE '"schema" ?: ?"lowlat-report/1"' {} + | sort)
+# The reports this example is made of: the consumer and the simulator's lateness in every lane, and the Quarkus client in the
+# limit lanes. They are named, not discovered, and each must say it is a lowlat-report/1: a file that swaps its schema string
+# for something else would otherwise slip past both the discovery and the check below.
+named_reports=()
+for lane in "${LANES[@]}"; do
+  for n in $(seq 1 "$ROUNDS"); do
+    named_reports+=("$(P "$lane" "$n" cpp/consumer.json)" "$(P "$lane" "$n" cpp/lateness.json)")
+    ! lane_has_pool "$lane" || named_reports+=("$(P "$lane" "$n" quarkus/client.json)")
+  done
+done
+mapfile -t all_reports < <({
+  find "$OUT" -name '*.json' ! -name profile.json ! -name guest-profile.json -exec grep -lE '"schema" ?: ?"lowlat-report/1"' {} +
+  for f in "${named_reports[@]}"; do [[ -f $f ]] && echo "$f"; done
+} | sort -u)
 ((${#all_reports[@]} > 0)) || die "no reports under $OUT"
+RUN_MODE=unknown
+[[ -f $OUT/run-start.json ]] && RUN_MODE=$(jq -r '.mode // "unknown"' "$OUT/run-start.json")
+# The guest's CPU count comes from the guest's own profile, so the expectations below follow the machine that ran and a guest
+# that was resized fails the first assertion instead of moving the others with it.
+GUEST_VCPUS=$EXPECT_GUEST_VCPUS
+[[ ! -f $OUT/guest-profile.json ]] || GUEST_VCPUS=$(val "$OUT/guest-profile.json" .cpu.logical_cpus)
+# cpuset_count LIST: how many CPUs a list like 2,3 or 0-3 names.
+cpuset_count() { local n=0 part; for part in ${1//,/ }; do if [[ $part == *-* ]]; then n=$((n + ${part#*-} - ${part%-*} + 1)); else n=$((n + 1)); fi; done; echo "$n"; }
+CPUSET_COUNT=$(cpuset_count "$LIMIT_CPUSET")
+# What each runtime should see on a GUEST_VCPUS guest: a quota is not a mask (Python and C++ still see every CPU; Java rounds the
+# quota up), a cpuset is a mask (Python, C++ affinity and Java see it).
+AWARE_QUOTA=$(( LIMIT_CPUS < GUEST_VCPUS ? LIMIT_CPUS : GUEST_VCPUS ))
+AWARE_CPUSET=$(( CPUSET_COUNT < GUEST_VCPUS ? CPUSET_COUNT : GUEST_VCPUS ))
 
 step "reports: schema (runtime.environment included), histogram decode, percentile recompute"
+for f in "${named_reports[@]}"; do
+  if [[ -f $f ]] && [[ $(jq -r '.schema // "none"' "$f" 2>/dev/null || echo unreadable) != "lowlat-report/1" ]]; then
+    bad "5 ${f#"$OUT"/}: schema is not lowlat-report/1 (the file is not a report, so the checks below would not cover it)"
+  fi
+done
 if report_check "${all_reports[@]}" >/dev/null 2>"$LOWLAT_SCRATCH/report-check.err"; then
   ok "5 ${#all_reports[@]} reports validate (profile embedded: $(jq -r '.profile.host_label' "${all_reports[0]}"))"
 else
@@ -236,7 +264,11 @@ expected_files() {
   echo cpp/consumer.json cpp/lateness.json cpp/probe-cpp.json python/probe-python.json java/probe-java.json
   if [[ $lane == container-bridge ]]; then echo cpp/binaries-consumer.txt cpp/binaries-sims.txt; else echo cpp/binaries-full.txt; fi
   if lane_has_pool "$lane"; then echo cpp/pool.json quarkus/client.json quarkus/service.json; fi
-  if [[ $lane == host ]]; then echo guest-idle.json; else echo steal.json; fi
+  if [[ $lane == host ]]; then
+    [[ $RUN_MODE != vm ]] || echo guest-idle.json # a host-only run has no guest to watch
+  else
+    echo steal.json
+  fi
 }
 step "completeness: every lane x alternation has every file it should, and every lane ran"
 declare -A MISSING=()
@@ -341,7 +373,7 @@ for lane in "${LANES[@]}"; do
       expect_env "$(P "$lane" "$n" quarkus/service.json)" container host "$quota" "$cpuset" "$IMAGE_JAVA" "$IMG_JAVA_DIGEST"
     fi
     if [[ $lane == host ]]; then
-      crit_le "5" "host alt$n guest busy share across the host lane (guard; permille of the guest's ticks)" \
+      [[ $RUN_MODE != vm ]] || crit_le "5" "host alt$n guest busy share across the host lane (guard; permille of the guest's ticks)" \
         "$(val "$(P host "$n" guest-idle.json)" .busy_permille)" "$GUEST_IDLE_MAX_PERMILLE"
     else
       crit_exact "5" "$lane alt$n steal.json says vm" "$(val "$(P "$lane" "$n" steal.json)" .runtime.environment.kind)" vm
@@ -355,6 +387,11 @@ if all_lanes_ok; then
   names=$(cat "$OUT"/*/alt*/cpp/binaries-*.txt | awk '{print $2}' | sort -u | wc -l)
   crit_exact "5" "distinct (binary, checksum) pairs over every lane and alternation, one per binary (the same four files everywhere)" "$distinct" "$names"
   crit_exact "5" "binaries checksummed" "$names" "${#CPP_BINARIES[@]}"
+  crit_exact "5" "the guest was reverted to the snapshot before the run (run-start.json reverted; REUSE_VM=1 would say false)" "$(val "$OUT/run-start.json" .reverted)" true
+  crit_exact "5" "one Python in every lane (python.version, from examples/.python-version)" \
+    "$(cat "$OUT"/*/alt*/python/probe-python.json | jq -r .python.version | sort -u | wc -l)" 1
+  crit_exact "5" "that Python is the one examples/.python-version names" "$(jq -r .python.version "$(P host 1 python/probe-python.json)")" "$(<"$LOWLAT_EXAMPLES/.python-version")"
+  crit_exact "5" "one JDK in every lane (java.version)" "$(cat "$OUT"/*/alt*/java/probe-java.json | jq -r .java.version | sort -u | wc -l)" 1
   crit_exact "5" "the lab guest was up and idle for the host lane (run-start.json lab_vm)" "$(val "$OUT/run-start.json" .lab_vm)" "up (idle)"
   printf '  observed: guest load1 at the start of the run %s\n' "$(val_or_null "$OUT/run-start.json" .lab_vm_load1)"
 fi
@@ -380,38 +417,41 @@ if ok_lane container-cpu-quota && ok_lane container-cpuset; then
       "$(val "$(P container-cpu-quota "$n" cpp/pool.json)" .start_skew_ns)" "$(val "$(P container-cpuset "$n" cpp/pool.json)" .start_skew_ns)"
   done
   for lane in container-host-net container-bridge; do
-    ok_lane "$lane" && printf '  observed: %s alt1 nr_throttled %s (no limit set)\n' "$lane" "$(val "$(P "$lane" 1 cpp/consumer.json)" .runtime.environment.cgroup.nr_throttled)"
+    ok_lane "$lane" && printf '  observed: %s alt1 nr_throttled %s (no limit set)\n' "$lane" "$(val_or_null "$(P "$lane" 1 cpp/consumer.json)" .runtime.environment.cgroup.nr_throttled)"
   done
 fi
 
 # ---- criterion 2 ---------------------------------------------------------------------------------------------------------------
-if ok_lane container-cpu-quota && ok_lane container-cpuset; then
+if ok_lane container-cpu-quota && ok_lane container-cpuset && ok_lane vm; then
   step "criterion 2: what each runtime thinks it has, under the quota and under the cpuset (exact)"
+  crit_exact "2" "the guest's vCPU count, from its own profile" "$GUEST_VCPUS" "$EXPECT_GUEST_VCPUS"
   for n in $(seq 1 "$ROUNDS"); do
     for lane in container-cpu-quota container-cpuset; do
-      if [[ $lane == container-cpu-quota ]]; then mask=$GUEST_VCPUS py_proc=$EXPECT_PY_QUOTA; else mask=2 py_proc=$EXPECT_PY_CPUSET; fi
+      # A quota limits time, not the set of CPUs; a cpuset is the set.
+      if [[ $lane == container-cpu-quota ]]; then mask=$GUEST_VCPUS py_proc=$GUEST_VCPUS jcpus=$AWARE_QUOTA; else mask=$CPUSET_COUNT py_proc=$CPUSET_COUNT jcpus=$AWARE_CPUSET; fi
       cp=$(P "$lane" "$n" cpp/probe-cpp.json) py=$(P "$lane" "$n" python/probe-python.json) jv=$(P "$lane" "$n" java/probe-java.json)
       hc=$(val "$cp" .cpus.hardware_concurrency)
       crit_exact "2" "$lane alt$n C++ hardware_concurrency (the guest's vCPUs: a container does not narrow the online list)" "$hc" "$GUEST_VCPUS"
       crit_exact "2" "$lane alt$n C++ hardware_concurrency equals the online CPU count the kernel lists" "$hc" "$(val "$cp" .cpus.online_count)"
+      crit_exact "2" "$lane alt$n C++ hardware_concurrency equals the vm lane's online CPU count (the same guest)" "$hc" "$(val "$(P vm "$n" cpp/probe-cpp.json)" .cpus.online_count)"
       crit_exact "2" "$lane alt$n C++ affinity mask" "$(val "$cp" .cpus.affinity_count)" "$mask"
-      crit_exact "2" "$lane alt$n C++ cgroup-aware pool size" "$(val "$cp" .pool_size.cgroup_aware)" "$EXPECT_AWARE_POOL"
+      crit_exact "2" "$lane alt$n C++ cgroup-aware pool size" "$(val "$cp" .pool_size.cgroup_aware)" "$jcpus"
       crit_exact "2" "$lane alt$n C++ pool size by hardware_concurrency" "$(val "$cp" .pool_size.by_hardware_concurrency)" "$GUEST_VCPUS"
       crit_exact "2" "$lane alt$n Python os.cpu_count()" "$(val "$py" .python.cpu_count)" "$GUEST_VCPUS"
       crit_exact "2" "$lane alt$n Python os.process_cpu_count()" "$(val "$py" .python.process_cpu_count)" "$py_proc"
       crit_exact "2" "$lane alt$n Python len(os.sched_getaffinity(0)) equals os.process_cpu_count()" "$(val "$py" .python.affinity_count)" "$(val "$py" .python.process_cpu_count)"
-      crit_exact "2" "$lane alt$n Java availableProcessors()" "$(val "$jv" .java.available_processors)" "$EXPECT_JAVA_CPUS"
-      crit_exact "2" "$lane alt$n Java virtual-thread carriers that ran (the scheduler's parallelism)" "$(val "$jv" .java.virtual_thread_carriers_observed)" "$EXPECT_JAVA_CPUS"
-      crit_exact "2" "$lane alt$n Java virtual-thread parallelism the JDK documents (defaults to availableProcessors)" "$(val "$jv" .java.virtual_thread_parallelism_expected)" "$EXPECT_JAVA_CPUS"
+      crit_exact "2" "$lane alt$n Java availableProcessors()" "$(val "$jv" .java.available_processors)" "$jcpus"
+      crit_exact "2" "$lane alt$n Java virtual-thread scheduler parallelism (VirtualThreadSchedulerMXBean)" "$(val "$jv" .java.virtual_thread_parallelism)" "$jcpus"
+      crit_exact "2" "$lane alt$n Java virtual-thread carriers that ran (a cross-check of the parallelism)" "$(val "$jv" .java.virtual_thread_carriers_observed)" "$jcpus"
     done
   done
   for lane in "${LANES[@]}"; do
     ok_lane "$lane" || continue
-    printf '  observed: %s alt1: C++ hardware_concurrency %s, Python cpu_count / process_cpu_count %s / %s, Java availableProcessors %s, GC threads parallel %s concurrent %s, virtual-thread carriers %s\n' "$lane" \
+    printf '  observed: %s alt1: C++ hardware_concurrency %s, Python cpu_count / process_cpu_count %s / %s, Java availableProcessors %s, GC threads parallel %s concurrent %s, virtual-thread pool size after the spin %s, glibc %s\n' "$lane" \
       "$(val "$(P "$lane" 1 cpp/probe-cpp.json)" .cpus.hardware_concurrency)" "$(val "$(P "$lane" 1 python/probe-python.json)" .python.cpu_count)" \
       "$(val "$(P "$lane" 1 python/probe-python.json)" .python.process_cpu_count)" "$(val "$(P "$lane" 1 java/probe-java.json)" .java.available_processors)" \
       "$(val "$(P "$lane" 1 java/probe-java.json)" .java.parallel_gc_threads)" "$(val "$(P "$lane" 1 java/probe-java.json)" .java.conc_gc_threads)" \
-      "$(val "$(P "$lane" 1 java/probe-java.json)" .java.virtual_thread_carriers_observed)"
+      "$(val "$(P "$lane" 1 java/probe-java.json)" .java.virtual_thread_pool_size_after_spin)" "$(val "$(P "$lane" 1 cpp/probe-cpp.json)" .libc.glibc)"
   done
   for lane in container-cpu-quota container-cpuset; do
     printf '  observed: %s alt1 Quarkus service sized itself to Vert.x event loops %s, worker threads %s, virtual-thread carriers %s (counted from the JVM'"'"'s threads in the container)\n' "$lane" \
@@ -475,7 +515,7 @@ for lane in "${LANES[@]}"; do
   [[ $lane == host ]] && continue
   ok_lane "$lane" || continue
   printf '  observed: %s steal ticks over the lane, per alternation: %s (of %s guest ticks)\n' "$lane" \
-    X "$(val "$(P "$lane" 1 steal.json)" .total_ticks)"
+    "$(val "$(P "$lane" 1 steal.json)" .total_ticks)"
 done
 if ok_lane container-cpu-quota && ok_lane container-cpuset; then
   printf '  observed: Quarkus (virtual-thread variant, %s Hz) p50 / p99 / p99.9 / max, alternation 1: container-cpu-quota %s; container-cpuset %s\n' "$Q_RATE" \
