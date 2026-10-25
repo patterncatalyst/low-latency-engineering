@@ -54,13 +54,8 @@ _LONG_WITH_ARG = (
 _LONG_OPTIONAL = ("affinity", "aligned", "secaligned", "threads")
 _LONG_ALL = (*_LONG_NO_ARG, *_LONG_WITH_ARG, *_LONG_OPTIONAL)
 _CLOCKS = {"0": "monotonic", "monotonic": "monotonic", "1": "realtime", "realtime": "realtime"}
-_POLICIES = (
-    ("other", "other"),
-    ("batch", "batch"),
-    ("idle", "idle"),
-    ("fifo", "fifo"),
-    ("rr", "rr"),
-)
+# cyclictest takes a --policy value starting with one of these names; any other means "other".
+_POLICIES = ("other", "batch", "idle", "fifo", "rr")
 LANGUAGE = "cpp"  # cyclictest is C; the schema's language enum has no "c"
 # 1 us buckets stay distinct in HdrHistogram up to about 134 ms with five significant digits
 # (three, the kit default, merge neighbouring buckets from about 1 ms).
@@ -149,9 +144,7 @@ def parse_cmdline(cmdline: str, threads: int) -> CmdLine:
             if policy not in ("fifo", "rr"):
                 policy = "fifo"
         elif name == "--policy":
-            policy = next(
-                (p for prefix, p in _POLICIES if value.lower().startswith(prefix)), "other"
-            )
+            policy = next((p for p in _POLICIES if value.lower().startswith(p)), "other")
     if not 0 <= priority <= 99:
         raise ValueError(f"cmdline: priority {priority} is outside 0-99")
     if spread and priority == 0:

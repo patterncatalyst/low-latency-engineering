@@ -104,9 +104,10 @@ preflight() {
   for t in cyclictest rtla chrt taskset jq awk pgrep timeout gzip grubby; do
     command -v "$t" >/dev/null || die "the guest has no $t"
   done
-  "$HERE/cyclic-probe" --interval-us 1000 --duration-ms 30 >/dev/null || die "cyclic-probe does not run in the guest (a library the host build used?)"
-  printf 'cyclictest %s\n' "$(cyclictest --version 2>&1 | head -n1)"
-  printf 'rtla %s\n' "$(rtla --version 2>&1 | head -n1)"
+  timeout -s KILL 10 "$HERE/cyclic-probe" --interval-us 1000 --duration-ms 30 >/dev/null || die "cyclic-probe does not run in the guest (a library the host build used?)"
+  # awk 'NR == 1', not head -n1: it reads all of the input, so the tool never gets SIGPIPE under pipefail.
+  printf 'cyclictest %s\n' "$(cyclictest --version 2>&1 | awk 'NR == 1')"
+  printf 'rtla %s\n' "$(rtla --version 2>&1 | awk 'NR == 1')"
 }
 
 idle_wait() {
@@ -319,7 +320,7 @@ lane() {
   jq -n --argjson s $((s1 - s0)) --argjson c $((c1 - c0)) --argjson t $((t1 - t0)) --argjson hz "$(getconf CLK_TCK)" --argjson cpu "$MEASURE_CPU" \
     --arg ex "$EXAMPLE" '{schema: "lowlat-steal/1", example: $ex, steal_ticks: $s, measure_cpu: $cpu, measure_cpu_steal_ticks: $c, total_ticks: $t, clk_tck: $hz}' >"$d/steal.json"
   jq -n --arg lane "$lane" --argjson alt "$alt" --arg snap "$SNAPSHOT" --arg prof "$GUEST_PROFILE" --arg started "$started" \
-    --arg ct "$(cyclictest --version 2>&1 | head -n1)" --arg rtla "$(rtla --version 2>&1 | head -n1)" \
+    --arg ct "$(cyclictest --version 2>&1 | awk 'NR == 1')" --arg rtla "$(rtla --version 2>&1 | awk 'NR == 1')" \
     --arg args "${CT_ARGS[*]:-}" --argjson dur "${CT_DUR:-0}" \
     --argjson sums "$(cd "$HERE" && sha256sum cyclic-probe guest-run.sh profile.sh timerlat-summary.awk | jq -Rn '[inputs | split("  ") | {name: .[1], sha256: .[0]}]')" \
     '{schema: "lowlat-lane/1", lane: $lane, alt: $alt, snapshot: $snap, profile: $prof, started: $started, cyclictest_version: $ct,

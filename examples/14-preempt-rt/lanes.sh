@@ -91,19 +91,4 @@ UDP_BASE=47400
 # The guest's tools, by path where the plan says so.
 GUEST_JAVA=/opt/temurin-25.0.5/bin/java
 
-# run_bg LOG CMD...: run CMD in the background, wait for it, and print its output afterwards. A bash trap runs only after a
-# foreground command ends, so a TERM or INT to the driver would otherwise wait out a 300 s lane; a `wait` returns at once, the
-# trap exits, and the EXIT handler stops the whole tree (_bg_cleanup).
-run_bg() {
-  local log=$1 pid rc=0
-  shift
-  "$@" >"$log" 2>&1 &
-  pid=$!
-  bg_track "$pid"
-  wait "$pid" || rc=$?
-  bg_forget "$pid"
-  cat "$log"
-  return "$rc"
-}
-
 EXAMPLE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

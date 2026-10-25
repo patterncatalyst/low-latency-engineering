@@ -85,6 +85,7 @@ uvv="$(gssh 'command -v uv && uv --version')"
 ok "guest uv: $(tail -n1 <<<"$uvv")"
 
 step "stress-ng, strace, perf, rtla"
+# shellcheck disable=SC2016 # $p expands in the guest's shell
 gssh 'for p in stress-ng strace perf rtla; do rpm -q "$p" >/dev/null 2>&1 || sudo dnf -y -q install "$p"; done'
 rtla_nvr="$(gssh "rpm -q --qf '%{VERSION}-%{RELEASE}' rtla")"
 [[ "$rtla_nvr" == "$LAB_STOCK_KERNEL" ]] ||

@@ -185,7 +185,7 @@ lane_median() {
 worst_of() {
   local lane=$1 rel=$2 q=$3 which=$4 a vals=()
   for a in $(alts); do vals+=("$(val "$(P "$lane" "$a" "$rel")" "$q")"); done
-  if [[ $which == max ]]; then printf '%s\n' "${vals[@]}" | sort -n | tail -n1; else printf '%s\n' "${vals[@]}" | sort -n | head -n1; fi
+  if [[ $which == max ]]; then printf '%s\n' "${vals[@]}" | sort -n | tail -n1; else printf '%s\n' "${vals[@]}" | sort -n | sed -n 1p; fi
 }
 # gate ASSERTED: criteria switched to observed print instead of failing.
 gate() { [[ $1 == 1 ]]; }

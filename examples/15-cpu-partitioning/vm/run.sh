@@ -304,7 +304,7 @@ lane_cache() {
 
 # lane_run LANE ALT: one lane, one alternation, from a clean snapshot.
 lane_run() {
-  local lane=$1 alt=$2 snap prof d=$OUT/vm/$1/alt$2 s0 t0 hz s1 t1
+  local lane=$1 alt=$2 snap prof d=$OUT/vm/$1/alt$2 s0 t0 hz s1 t1 ticks
   snap=$(snapshot_of "$lane")
   prof=$(profile_of "$lane")
   step "lane $lane, alternation $alt (snapshot $snap)"
@@ -317,14 +317,17 @@ lane_run() {
   export LOWLAT_PROFILE=$d/profile.json GUEST_PROFILE="$snap/$prof" CYCLICTEST_VARIANT=$lane
   vcpupin_record "$d/vcpupin.json"
   gx facts
-  read -r s0 t0 hz < <(steal_ticks)
+  # A command substitution, not < <(...): a process substitution's status is lost, so a failed ssh would go unnoticed.
+  ticks=$(steal_ticks)
+  read -r s0 t0 hz <<<"$ticks"
   case $lane in
     shared | isolated) lane_main "$lane" "$d" ;;
     irq-steered | irq-on-measure-cpu) lane_irq "$lane" "$d" ;;
     cache-noise) lane_cache "$lane" "$d" ;;
     *) die "unknown lane '$lane'" ;;
   esac
-  read -r s1 t1 hz < <(steal_ticks)
+  ticks=$(steal_ticks)
+  read -r s1 t1 hz <<<"$ticks"
   if ((!DRY_RUN)); then
     jq -n --arg ex "$EXAMPLE" --argjson s $((s1 - s0)) --argjson t $((t1 - t0)) --argjson hz "$hz" \
       '{schema: "lowlat-steal/1", example: $ex, steal_ticks: $s, total_ticks: $t, clk_tck: $hz}' >"$d/steal.json"

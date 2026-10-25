@@ -150,7 +150,8 @@ the end. Grafana: no panel by design (Part 7 covers observability); the numbers 
 
 ## Hand-rolled constructs, and why
 
-- `placement-probe` spins on a volatile sink. A busy loop is the load; the decide thread in production would block or poll.
+- `placement-probe` spins on a volatile sink, and `JvmPlacement`'s hot threads spin with `Thread.onSpinWait()`. A busy loop is
+  the load; the decide thread in production would block or poll.
 - `noise-sample` in `guest-run.sh` reads `/proc/PID/task/TID/stat` for every `stress-ng` and `hackbench` thread in one pass.
   `lib.sh thread_cpus` samples one PID at a time, and a `hackbench` group is dozens of processes.
 - `JvmPlacement` reads `/proc/thread-self/status` and `/proc/self/task/*/stat` directly: neither the context-switch counters

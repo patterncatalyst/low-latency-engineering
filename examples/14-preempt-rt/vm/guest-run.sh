@@ -207,7 +207,9 @@ line() {
   wait "$cons" || { tail -n 20 "$OUT/line/consumer.log" >&2; die "the line consumer failed"; }
   bg_forget "$cons"
   own_out
-  jq --arg e "$EXAMPLE" '.example = $e' "$OUT/line/consumer.json" >"$OUT/line/consumer.json.tmp" && mv "$OUT/line/consumer.json.tmp" "$OUT/line/consumer.json"
+  # `jq ... && mv` would not stop the step when jq fails (set -e ignores a failed && list); `|| die` does.
+  jq --arg e "$EXAMPLE" '.example = $e' "$OUT/line/consumer.json" >"$OUT/line/consumer.json.tmp" || die "jq failed on consumer.json"
+  mv "$OUT/line/consumer.json.tmp" "$OUT/line/consumer.json"
   tag_env "$OUT/line/consumer.json" "$OUT/line/lateness.json"
 }
 
@@ -244,8 +246,9 @@ java_lane() {
   bg_track "$jpid"
   tid=''
   for ((tries = 0; tries < 600; tries++)); do
-    # The JVM creates java.log a moment after it starts; until then sed fails, which must not end the step (pipefail).
-    tid=$(sed -n 's/^hot-thread tid=\([0-9][0-9]*\) .*/\1/p' "$OUT/java/java.log" 2>/dev/null | head -n1 || true)
+    # The JVM creates java.log a moment after it starts; until then sed fails, which must not end the step. sed quits at
+    # the first match itself, so there is no pipe for pipefail to trip on.
+    tid=$(sed -n '/^hot-thread tid=[0-9][0-9]* /{s/^hot-thread tid=\([0-9][0-9]*\) .*/\1/p;q;}' "$OUT/java/java.log" 2>/dev/null || true)
     [[ -n $tid ]] && break
     kill -0 "$jpid" 2>/dev/null || { wait "$jpid" || true; tail -n 20 "$OUT/java/java.log" >&2; die "the Java lane exited before its hot thread was FIFO"; }
     sleep 0.1
@@ -264,7 +267,8 @@ java_lane() {
   n=$(grep -c 'Safepoint "' "$OUT/java/safepoint.log" || true)
   total=$(sed -n 's/.*Total: \([0-9][0-9]*\) ns.*/\1/p' "$OUT/java/safepoint.log" | awk '{s += $1} END {print s + 0}')
   jq --argjson n "$n" --argjson t "$total" '.runtime.counters.safepoints = $n | .runtime.counters.safepoint_total_ns = $t' \
-    "$OUT/java/java-wake.json" >"$OUT/java/java-wake.json.tmp" && mv "$OUT/java/java-wake.json.tmp" "$OUT/java/java-wake.json"
+    "$OUT/java/java-wake.json" >"$OUT/java/java-wake.json.tmp" || die "jq failed on java-wake.json"
+  mv "$OUT/java/java-wake.json.tmp" "$OUT/java/java-wake.json"
 }
 
 # ---- end ------------------------------------------------------------------------------------------------------------------
@@ -276,7 +280,7 @@ thread_census() {
 }
 
 end() {
-  local s0 t0 s1 t1 lane irq ktim ksoft rcuc cmdline cfg_rt
+  local s0 t0 s1 t1 lane irq irq_pol ktim ktim_pol ksoft ksoft_pol rcuc rcuc_pol cmdline cfg_rt
   step "guest: end, steal ticks and the mechanism counters"
   if ((DRY_RUN)); then
     printf '[dry-run] write %s/steal.json and %s/mechanism.json (steal ticks, kernel, preempt mode, irq/ ktimers ksoftirqd rcuc census)\n' "$OUT" "$OUT"

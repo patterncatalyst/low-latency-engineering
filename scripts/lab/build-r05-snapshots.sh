@@ -75,7 +75,7 @@ step "making the $LAB_STOCK_KERNEL stock entry the default boot entry"
 # By BLS id, as install-rt-kernel.sh does: grubby --set-default silently does nothing when /boot is
 # a btrfs subvolume (Fedora Cloud) unless it's given the /boot/loader/entries path.
 # shellcheck disable=SC2029  # expands on the client by design
-id="$(gssh "sudo ls /boot/loader/entries/ | grep -F -- '-$LAB_STOCK_KERNEL.x86_64.conf' | grep -v lowlatrt | sed 's/\\.conf\$//'")"
+id="$(gssh "sudo find /boot/loader/entries -maxdepth 1 -name '*-$LAB_STOCK_KERNEL.x86_64.conf' ! -name '*lowlatrt*' -printf '%f\\n' | sed 's/\\.conf\$//'")"
 [[ -n "$id" && "$id" != *$'\n'* ]] || die "expected one BLS entry for the stock $LAB_STOCK_KERNEL kernel, got: '${id:-none}'"
 # shellcheck disable=SC2029
 gssh "sudo grub2-set-default '$id' && sudo grub2-editenv list | grep saved_entry"
@@ -97,10 +97,12 @@ take iso lab-ready-r05-iso
 # ---- 4. final checks -----------------------------------------------------------------------------
 FAILED=0
 has_cputune() {
-  local x
+  local x xml
   for x in "" "--inactive"; do
+    # The whole XML first: `virsh dumpxml | grep -q` under pipefail fails when grep exits early and virsh gets SIGPIPE.
     # shellcheck disable=SC2086  # $x is empty or one flag
-    virsh dumpxml "$VM" $x | grep -q '<cputune>' && return 0
+    xml="$(virsh dumpxml "$VM" $x)"
+    [[ "$xml" == *'<cputune>'* ]] && return 0
   done
   return 1
 }

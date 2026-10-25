@@ -4,6 +4,7 @@ import io.patterncatalyst.lowlat.measure.LatencyRecorder;
 import io.patterncatalyst.lowlat.measure.RuntimeInfo;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +40,7 @@ public final class Main {
     record Options(Map<String, String> values) {
 
         static Options parse(String[] args) {
-            Map<String, String> values = new java.util.HashMap<>();
+            Map<String, String> values = new HashMap<>();
             for (int i = 0; i < args.length; i++) {
                 String key = args[i];
                 if (!key.startsWith("--") || !OPTIONS.contains(key.substring(2))) {
@@ -73,6 +74,11 @@ public final class Main {
             o = Options.parse(args);
             if (!o.values().containsKey("cpu")) {
                 throw new IllegalArgumentException("--cpu is required (the hot thread is pinned; not CPU 0, the housekeeping CPU)");
+            }
+            // Checked before the run, so a typo does not throw after the measurement has been taken.
+            String env = o.get("env", "");
+            if (!env.isEmpty() && !env.equals("vm")) {
+                throw new IllegalArgumentException("--env: only vm is supported here, got '" + env + "'");
             }
         } catch (IllegalArgumentException e) {
             System.err.println("Main: " + e.getMessage());
@@ -125,6 +131,11 @@ public final class Main {
             System.err.println("Main: " + failure.get());
             System.exit(1);
         }
+        if (load.failure() != null) {
+            // Without the allocator the run has no safepoint load, so it is not the lane the report would claim.
+            System.err.println("Main: the allocating thread failed: " + load.failure());
+            System.exit(1);
+        }
         PeriodicWake.Result outcome = result.get();
         recorder.printSummary();
         System.out.println("samples=" + outcome.samples() + " missed_periods=" + outcome.missedPeriods());
@@ -134,11 +145,7 @@ public final class Main {
             Map<String, Object> runtime = RuntimeInfo.jvm();
             runtime.put("placement", RuntimeInfo.placement(List.of(cpu), true, false));
             runtime.put("counters", RuntimeInfo.counters(Map.of("samples", outcome.samples(), "missed_periods", outcome.missedPeriods())));
-            String envKind = o.get("env", "");
-            if (!envKind.isEmpty()) {
-                if (!envKind.equals("vm")) {
-                    throw new IllegalArgumentException("--env: only vm is supported here, got '" + envKind + "'");
-                }
+            if (!o.get("env", "").isEmpty()) {
                 runtime.put("environment", RuntimeInfo.environment(RuntimeInfo.EnvKind.VM, o.get("guest-profile", null), null, null));
             }
             String notes = "clock=System.nanoTime abs-deadline parkNanos period_us=" + periodNanos / 1_000 + " policy=SCHED_FIFO priority="
@@ -159,6 +166,7 @@ public final class Main {
         private final int cpu;
         private volatile boolean running = true;
         private volatile long blocks;
+        private volatile Throwable failure;
 
         AllocationLoad(int cpu) {
             this.cpu = cpu;
@@ -172,11 +180,24 @@ public final class Main {
             return blocks * BLOCK_BYTES / (1024 * 1024);
         }
 
+        /** Why the thread stopped early (a failed pin, say), or null. */
+        Throwable failure() {
+            return failure;
+        }
+
         @Override
         public void run() {
-            if (cpu >= 0) {
-                Sched.pin(cpu);
+            try {
+                if (cpu >= 0) {
+                    Sched.pin(cpu);
+                }
+                allocate();
+            } catch (RuntimeException e) {
+                failure = e;
             }
+        }
+
+        private void allocate() {
             List<byte[]> keep = new ArrayList<>(RETAINED);
             long n = 0;
             while (running) {

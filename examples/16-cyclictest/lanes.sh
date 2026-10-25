@@ -80,18 +80,3 @@ LANE_FILES=(cyclic-probe guest-run.sh profile.sh timerlat-summary.awk)
 # cyclictest's own CLI, as the reports record it. Quoted in the README; guest-run.sh builds the same arrays.
 NAIVE_ARGS="-D $NAIVE_S -h $HIST_US"
 METHOD_ARGS="-m -p$PRIORITY --policy=fifo -a$MEASURE_CPU -i $INTERVAL_US -D $METHOD_S -h $HIST_US --clock=monotonic"
-
-# run_bg LOG CMD...: run CMD in the background, wait for it, and print its output afterwards. A bash trap runs only
-# after a foreground command ends, so a TERM or INT to the driver would otherwise wait out a 300 s lane; a `wait`
-# returns at once, the trap exits, and the EXIT handler stops the whole tree (_bg_cleanup).
-run_bg() {
-  local log=$1 pid rc=0
-  shift
-  "$@" >"$log" 2>&1 &
-  pid=$!
-  bg_track "$pid"
-  wait "$pid" || rc=$?
-  bg_forget "$pid"
-  cat "$log"
-  return "$rc"
-}

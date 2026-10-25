@@ -142,7 +142,11 @@ deltas for CPUs 2 and 3 (`LOC`, `RES`, and the rest); the Java wake tail against
 ## Hand-rolled constructs, and why
 
 - `pi_mutex.hpp` wraps `pthread_mutexattr_setprotocol(PTHREAD_PRIO_INHERIT)` because `std::mutex` has no way to ask for priority
-  inheritance. The wrapper is RAII and satisfies `Lockable`, so it works with `std::lock_guard`.
+  inheritance. It is the only lock in the example that isn't `std::mutex`. The wrapper is RAII and satisfies `Lockable`, so it
+  works with `std::lock_guard`.
+- `pi-demo` busy-spins on purpose, in two places. The holder burns 1 ms of its own CPU time (`CLOCK_THREAD_CPUTIME_ID`), so a
+  preempted holder still needs its full 1 ms. The medium thread's 20 ms bursts are the load that preempts it. Both run under
+  `timeout -s KILL` in the guest, because a FIFO spinner on the only CPU it may use can starve the shell.
 - The Java lane calls `sched_setscheduler`, `sched_setaffinity` and `gettid` through JNA, because the JDK has no API for a thread's
   scheduling policy or a single thread's affinity. The calls happen once, at setup. The wake loop is plain `LockSupport.parkNanos`.
 - `chrt` runs the line's consumer at FIFO because `io-receive` has no policy option and the epoll variant does its work on one thread.

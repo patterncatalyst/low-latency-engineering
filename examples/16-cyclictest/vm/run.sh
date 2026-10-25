@@ -220,7 +220,8 @@ convert_lane() {
   if [[ -f $d/cpp/cyclic-probe.json ]]; then
     jq --slurpfile pin "$d/vcpupin.json" \
       '.runtime.environment.guest_profile |= (if type == "string" then (split("/") | {snapshot: .[0], profile: .[1], vcpupin: $pin[0]}) else . end)' \
-      "$d/cpp/cyclic-probe.json" >"$d/cpp/cyclic-probe.json.tmp" && mv "$d/cpp/cyclic-probe.json.tmp" "$d/cpp/cyclic-probe.json"
+      "$d/cpp/cyclic-probe.json" >"$d/cpp/cyclic-probe.json.tmp" || die "$lane $(basename "$d"): jq failed on cyclic-probe.json"
+    mv "$d/cpp/cyclic-probe.json.tmp" "$d/cpp/cyclic-probe.json"
   fi
   files=("$d/cyclictest.json")
   [[ ! -f $d/cpp/cyclic-probe.json ]] || files+=("$d/cpp/cyclic-probe.json")

@@ -152,7 +152,7 @@ have() { [[ -f $1 ]]; }
 # ct_file LANE ALT: the cyclictest report of one lane (one thread, one file).
 ct_file() {
   local f
-  f=$(find "$OUT/vm/$1/alt$2/cyclictest" -maxdepth 1 -name 'cyclictest-t*.json' 2>/dev/null | sort | head -n1)
+  f=$(find "$OUT/vm/$1/alt$2/cyclictest" -maxdepth 1 -name 'cyclictest-t*.json' 2>/dev/null | sort | sed -n 1p)
   [[ -n $f ]] || { echo "$OUT/vm/$1/alt$2/cyclictest/cyclictest-t0.json"; return; }
   printf '%s' "$f"
 }

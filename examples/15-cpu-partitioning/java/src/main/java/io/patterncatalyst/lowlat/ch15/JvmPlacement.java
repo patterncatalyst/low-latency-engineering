@@ -5,11 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -108,13 +108,12 @@ public final class JvmPlacement {
         return Files.readString(Path.of("/proc/thread-self/status"));
     }
 
-    private static HotResult spin(String name, int pinTo, long nanos, AtomicBoolean ready) throws IOException {
+    private static HotResult spin(String name, int pinTo, long nanos) throws IOException {
         if (pinTo >= 0) {
             HotThread.pinTo(pinTo);
         }
         String before = threadStatus();
         long tid = Long.parseLong(Path.of("/proc/thread-self").toRealPath().getFileName().toString());
-        ready.set(true);
         long x = 0;
         for (long end = System.nanoTime() + nanos; System.nanoTime() < end; ) {
             x++;
@@ -137,14 +136,10 @@ public final class JvmPlacement {
         List<HotResult> hot = new ArrayList<>();
         List<Thread> threads = new ArrayList<>();
         List<Throwable> failures = new ArrayList<>();
-        AtomicBoolean[] ready = new AtomicBoolean[names.length];
-        for (int i = 0; i < names.length; i++) {
-            AtomicBoolean flag = new AtomicBoolean();
-            ready[i] = flag;
-            String name = names[i];
+        for (String name : names) {
             threads.add(Thread.ofPlatform().name(name).start(() -> {
                 try {
-                    HotResult r = spin(name, pinned ? o.cpu() : -1, o.seconds() * 1_000_000_000L, flag);
+                    HotResult r = spin(name, pinned ? o.cpu() : -1, o.seconds() * 1_000_000_000L);
                     synchronized (hot) {
                         hot.add(r);
                     }
@@ -152,7 +147,6 @@ public final class JvmPlacement {
                     synchronized (failures) {
                         failures.add(t);
                     }
-                    flag.set(true);
                 }
             }));
         }
@@ -182,7 +176,7 @@ public final class JvmPlacement {
             row.put("on_isolated", touched);
             threadRows.add(row);
         }
-        hot.sort((a, b) -> a.name().compareTo(b.name()));
+        hot.sort(Comparator.comparing(HotResult::name));
         List<Map<String, Object>> hotRows = new ArrayList<>();
         BitSet hotCpus = new BitSet();
         for (HotResult r : hot) {

@@ -182,7 +182,7 @@ if ((DRY_RUN)); then
   printf '\n'
 else
   lab_state=unknown
-  command -v virsh >/dev/null 2>&1 && lab_state=$(timeout 10 virsh domstate "$TARGET_VM" 2>/dev/null | head -n1 || echo unknown)
+  command -v virsh >/dev/null 2>&1 && lab_state=$(timeout 10 virsh domstate "$TARGET_VM" 2>/dev/null | sed -n 1p || echo unknown)
   commit=$(git -C "$LOWLAT_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)
   dirty=false
   [[ -z $(git -C "$LOWLAT_ROOT" status --porcelain -- examples/14-preempt-rt scripts examples/_lib examples/common 2>/dev/null) ]] || dirty=true
@@ -276,7 +276,7 @@ run_lane() {
   ((rc == 0)) || { tail -n 20 "$LOGS/guest-$lane-alt$alt-probe.log" >&2; die "the guest probe step failed in lane $lane alternation $alt"; }
   guest_noise_wait "$h_hack"
   guest_noise_wait "$h_cpu"
-  ok "$lane alt$alt: cyclictest $(jq -r '"p99.9 \(.percentiles.p99_9 / 1000 | floor) us, max \(.percentiles.max / 1000 | floor) us"' "$d"/cyclictest/*.json | head -n1)"
+  ok "$lane alt$alt: cyclictest $(jq -r '"p99.9 \(.percentiles.p99_9 / 1000 | floor) us, max \(.percentiles.max / 1000 | floor) us"' "$d"/cyclictest/*.json | sed -n 1p)"
 
   for s in line pi java end; do guest_step "$lane" "$alt" "$s"; done
   guest_fetch "$GUEST_REPO/lane-out/" "$d"

@@ -42,7 +42,8 @@ ROW = re.compile(r"^\d+(\s|$)")
 
 def read_text(path: Path) -> str:
     if path.suffix == ".gz":
-        return gzip.open(path, "rt", encoding="utf-8").read()
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            return f.read()
     return path.read_text(encoding="utf-8")
 
 

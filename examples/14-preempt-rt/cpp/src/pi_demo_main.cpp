@@ -175,6 +175,11 @@ int run(int argc, char** argv) {
   if (p.rounds < 1 || p.rounds > kMaxRounds || p.bursts < 1 || p.burst.count() < 1) {
     throw std::invalid_argument(std::format("--rounds 1..{}, --bursts and --burst-ms at least 1", kMaxRounds));
   }
+  // Each factor alone within the bound first, so worst_case() cannot overflow on a huge --bursts or --burst-ms.
+  if (p.bursts > std::chrono::milliseconds{kMaxTotal}.count() || p.burst > kMaxTotal) {
+    throw std::invalid_argument(std::format("--bursts and --burst-ms must each stay under the {} ms bound",
+                                            std::chrono::milliseconds{kMaxTotal}.count()));
+  }
   if (worst_case(p) > kMaxTotal) {
     throw std::invalid_argument(std::format("rounds x bursts x burst-ms could run {} ms; the bound is {} ms",
                                             worst_case(p).count(), std::chrono::milliseconds{kMaxTotal}.count()));

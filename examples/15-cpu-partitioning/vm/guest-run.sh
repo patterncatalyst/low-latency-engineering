@@ -83,7 +83,7 @@ prepare() {
     printf '[dry-run] test -x %s\n' "$JAVA"
   else
     [[ -x $JAVA ]] || die "no Temurin at $JAVA"
-    [[ $("$JAVA" -version 2>&1 | head -n2 | tr '\n' ' ') == *"Temurin-$TEMURIN_VERSION+"* ]] || die "$JAVA is not Temurin $TEMURIN_VERSION"
+    [[ $("$JAVA" -version 2>&1 | awk 'NR <= 2' | tr '\n' ' ') == *"Temurin-$TEMURIN_VERSION+"* ]] || die "$JAVA is not Temurin $TEMURIN_VERSION"
   fi
   x "$LOWLAT_ROOT/scripts/profile.sh" --out "$VMOUT/profile.json"
   if ((!DRY_RUN)); then
@@ -121,11 +121,12 @@ facts() {
   pid1=$(taskset -cp 1 | sed 's/.*: //')
   default_smp=$(</proc/irq/default_smp_affinity)
   tmp_fstype=$(findmnt -no FSTYPE /var/tmp || echo unknown)
-  ct=$(cyclictest -V 2>&1 | head -n1 || true)
-  stress=$(stress-ng --version 2>&1 | head -n1 || true)
+  # awk 'NR == 1' reads all of the input, so the tool never gets SIGPIPE under pipefail (head exits after one line).
+  ct=$(cyclictest -V 2>&1 | awk 'NR == 1' || true)
+  stress=$(stress-ng --version 2>&1 | awk 'NR == 1' || true)
   jq -n --arg ex "$EXAMPLE" --arg isolated "$isolated" --arg nohz "$nohz" --arg cmdline "$cmdline" --arg preempt "$preempt" \
     --arg tuned "${tuned:-none}" --arg affinity "${affinity:-none}" --arg pid1 "$pid1" --arg smp "$default_smp" --arg tmp "$tmp_fstype" \
-    --arg kernel "$(uname -r)" --arg ct "$ct" --arg stress "$stress" --arg java "$("$JAVA" -version 2>&1 | head -n1)" \
+    --arg kernel "$(uname -r)" --arg ct "$ct" --arg stress "$stress" --arg java "$("$JAVA" -version 2>&1 | awk 'NR == 1')" \
     '{schema: "lowlat-lane-facts/1", example: $ex, kernel_release: $kernel, preempt: $preempt, isolated: $isolated, nohz_full: $nohz,
       cmdline: $cmdline, tuned_profile: $tuned, systemd_cpu_affinity: $affinity, pid1_affinity: $pid1, default_smp_affinity: $smp,
       var_tmp_fstype: $tmp, tools: {cyclictest: $ct, stress_ng: $stress, java: $java}}' >"$VMOUT/facts.json"
@@ -211,7 +212,8 @@ line() {
   bg_forget "$cons_pid"
   ((rc == 0)) || die "the line failed"
   # The Ch12 receiver writes its own example id; in this chapter's results the report belongs to this example.
-  jq --arg e "$EXAMPLE" '.example = $e' "$d/consumer.json" >"$d/consumer.json.tmp" && mv "$d/consumer.json.tmp" "$d/consumer.json"
+  jq --arg e "$EXAMPLE" '.example = $e' "$d/consumer.json" >"$d/consumer.json.tmp" || die "jq failed on consumer.json"
+  mv "$d/consumer.json.tmp" "$d/consumer.json"
   [[ $(jq .count "$d/consumer.json") -gt 0 ]] || die "the receiver recorded no parcels"
 }
 

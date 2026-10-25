@@ -68,6 +68,20 @@ bg_forget() {
   done
   BG_PIDS=("${keep[@]}")
 }
+# run_bg LOG CMD...: run CMD in the background, wait for it, and print its output afterwards. A bash trap runs only after a
+# foreground command ends, so a TERM or INT to the driver would otherwise wait out a 300 s lane; a `wait` returns at once, the
+# trap exits, and the EXIT handler stops the whole tree (_bg_cleanup).
+run_bg() {
+  local log=$1 pid rc=0
+  shift
+  "$@" >"$log" 2>&1 &
+  pid=$!
+  bg_track "$pid"
+  wait "$pid" || rc=$?
+  bg_forget "$pid"
+  cat "$log"
+  return "$rc"
+}
 # The repository is public, so a results directory must not name the machine or its owner.
 # Reports and logs written by third-party tools and by the example binaries carry absolute
 # paths ("report: <absolute path>"), so on exit every verify.sh scrubs its results directory with
@@ -1478,7 +1492,8 @@ guest_noise_wait() {
 # runtime.counters.interrupts: {"LOC": {"2": 1000, "3": 998}, "RES": {...}, "25-virtio0-config": {...}}.
 # Rows are /proc/interrupts rows with a count for every CPU: the named ones (LOC, RES, CAL, TLB, NMI, ...) by their
 # name, a numbered IRQ as NUMBER-LAST-COLUMN. A count that went down dies (the CPU was offlined, or the reads are
-# not from one boot). Returns CMD's status; OUT is written either way.
+# not from one boot). Returns CMD's status; OUT is written either way. Every step checks its own status, so the helper
+# stays correct when a caller runs it on the left of || (bash ignores set -e inside a function called there).
 interrupts_delta() {
   local out=${1:?interrupts_delta OUT CPU... -- CMD...} rc=0 tmp
   local -a cpus=()
@@ -1491,7 +1506,7 @@ interrupts_delta() {
   (($# >= 2)) || die "interrupts_delta: usage: interrupts_delta OUT CPU... -- CMD..."
   shift
   ((${#cpus[@]})) || die "interrupts_delta: name at least one CPU"
-  tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-irq.XXXXXX")
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-irq.XXXXXX") || die "interrupts_delta: mktemp failed"
   lab_ssh cat /proc/interrupts </dev/null >"$tmp/before" || { rm -rf "$tmp"; die "interrupts_delta: cannot read /proc/interrupts in the guest"; }
   guest "$@" || rc=$?
   lab_ssh cat /proc/interrupts </dev/null >"$tmp/after" || { rm -rf "$tmp"; die "interrupts_delta: cannot read /proc/interrupts in the guest"; }
@@ -1528,7 +1543,7 @@ interrupts_delta() {
   jq -Rn 'reduce (inputs | split("\t")) as $r ({}; .[$r[0]][$r[1]] = ($r[2] | tonumber))' <"$tmp/rows.tsv" >"$tmp/out.json" ||
     { rm -rf "$tmp"; die "interrupts_delta: jq failed"; }
   [[ $(jq length "$tmp/out.json") -gt 0 ]] || { rm -rf "$tmp"; die "interrupts_delta: no /proc/interrupts rows for CPUs ${cpus[*]}"; }
-  mv "$tmp/out.json" "$out"
+  mv "$tmp/out.json" "$out" || { rm -rf "$tmp"; die "interrupts_delta: cannot write $out"; }
   rm -rf "$tmp"
   return "$rc"
 }
