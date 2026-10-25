@@ -35,7 +35,8 @@ for lane in "${lanes[@]}"; do
       { echo "$cf has FROM $from_ref, which IMAGES.lock does not list for $ref" >&2; exit 1; }
   done < <(awk '$1 == "FROM" && $2 ~ /@sha256:/ { print $2 }' "$cf")
   echo "== building $ref"
-  docker build -f "$cf" -t "$ref" "$ROOT"
+  # The label lets vm/run.sh refuse an image built from older sources than the tree it runs from.
+  docker build -f "$cf" -t "$ref" --label "org.patterncatalyst.lowlat.inputs=$("$HERE/inputs-hash.sh" "$lane")" "$ROOT"
   id="$(docker image inspect --format '{{.Id}}' "$ref")"
   [[ "$id" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "unexpected image id '$id'" >&2; exit 1; }
   awk -v r="$ref" -v id="$id" '

@@ -63,3 +63,11 @@ started by the Ch13 scripts through `container_run`.
 
 For a production service, Red Hat's `ubi10/openjdk-25-runtime` is the idiomatic Java base. The
 measured lanes don't use it because its JDK build differs from the Temurin the other lanes run.
+
+## Stale images
+
+An image can still be the ID that `IMAGES.lock` names while the sources it was built from have moved
+on. `build-images.sh` stamps each image with the label `org.patterncatalyst.lowlat.inputs`, a sha256
+over the files that image is built from (`inputs-hash.sh` lists them per image), and `vm/run.sh`
+recomputes it from the host tree and refuses an image whose label doesn't match. Rebuild, commit the
+lock, and take the `lab-ready-r04` snapshot again whenever it refuses.

@@ -173,6 +173,7 @@ else
   ok "the guest runs Temurin $TEMURIN_VERSION"
 fi
 LOCK=$DIR/containers/IMAGES.lock
+declare -A IMAGE_LANE=(["$IMAGE_CPP"]=cpp ["$IMAGE_JAVA"]=java ["$IMAGE_PY"]=python)
 for image in "$IMAGE_CPP" "$IMAGE_JAVA" "$IMAGE_PY"; do
   want=$(awk -v ref="$image" '!/^[[:space:]]*(#|$)/ { n = split($1, a, "@"); if (a[1] == ref) { print a[2]; exit } }' "$LOCK")
   [[ $want =~ ^sha256:[0-9a-f]{64}$ ]] || die "$image has no usable digest in IMAGES.lock ('$want'): build the images in the guest (containers/build-images.sh) and commit the lock"
@@ -182,7 +183,13 @@ for image in "$IMAGE_CPP" "$IMAGE_JAVA" "$IMAGE_PY"; do
     have=$(lab_ssh "docker image inspect --format '{{.Id}}' $image" </dev/null 2>/dev/null) || have=missing
     [[ $have == "$want" ]] ||
       die "the guest's $image is $have, IMAGES.lock says $want: rebuild the images in the guest (containers/build-images.sh), commit the lock, and take the lab-ready-r04 snapshot again"
-    ok "$image is $want"
+    # The locked ID proves the snapshot holds the image the lock names, not that it was built from
+    # this tree: compare its build-inputs label with the hash of the sources here.
+    inputs=$("$DIR/containers/inputs-hash.sh" "${IMAGE_LANE[$image]}")
+    label=$(lab_ssh "docker image inspect --format '{{index .Config.Labels \"org.patterncatalyst.lowlat.inputs\"}}' $image" </dev/null 2>/dev/null) || label=missing
+    [[ $label == "$inputs" ]] ||
+      die "the guest's $image was built from other sources (inputs label '$label', this tree $inputs): rebuild the images in the guest (containers/build-images.sh), commit the lock, and take the lab-ready-r04 snapshot again"
+    ok "$image is $want, built from this tree"
   fi
 done
 
