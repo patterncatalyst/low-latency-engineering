@@ -191,6 +191,7 @@ def run(
         "batch_size": BATCH,
         "cpus": [p["cpu"] for p in sorted(placements, key=lambda p: p["camera"])],
         "python": sys.version.split()[0],
+        "compiler": sys.version,
         "gil_enabled": sys._is_gil_enabled(),
         "batch_ns": [batch_ns[c] for c in range(cameras)],
     }

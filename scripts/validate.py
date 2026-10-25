@@ -1078,7 +1078,8 @@ GIL_CONTROL = "gil_reenabled=PYTHON_GIL=1"
 # Ch9 r03 free-threaded counter reports were written before the S3 tightening: the harness recorded
 # the driver's build (build.compiler without "free-threading", build.gil_enabled true) while the
 # worker ran the free-threaded interpreter (its notes say gil_enabled=False). Frozen measurements;
-# the r04 reports (Ch11, Ch12) and Ch10 carry the binary's own identity.
+# counters-report now carries the measuring interpreter's identity from the raw JSON, so a re-run
+# of Ch9 writes it correctly. The r04 reports (Ch11, Ch12) and Ch10 carry the binary's own identity.
 FT_KNOWN_MISLABELLED = (
     "09-eliminating-work/results/*/python/counters-threads-free-threaded-*.json",
 )
