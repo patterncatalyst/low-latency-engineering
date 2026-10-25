@@ -20,7 +20,7 @@ GitHub release; no tarball is built.
 - **r03: complete** (merged in #6, tag `r03.x`). Part 3 (Ch9–10). Step status: `_plans/r03-plan.md`.
 - **r04: complete** (merged in #7, tag `r04.x`). Part 4 (Ch11–13). Step status: `_plans/r04-plan.md`.
 - **r05 (`release/r05`): in progress.** Part 5, first half (Ch14–16): PREEMPT_RT, CPU partitioning and noisy neighbours, measuring jitter with `cyclictest`. Plan: `_plans/r05-plan.md`.
-- Everything after r05 is planned, not started.
+- Everything after r05 is planned, not started. r05 split Part 5 in two (decided 2026-10-25): Ch17–18 move to r06, and every later iteration moved up by one (r06–r12 became r07–r13).
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
@@ -73,15 +73,16 @@ infrastructure plus the chapters that explain it:
 | r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete: merged in #3, tag `r01.x`** |
 | r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline. **Complete: merged in #4, tag `r02.x`** |
 | r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language. **Complete: merged in #6, tag `r03.x`** |
-| r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers. Chapters 11–13, examples 11–13 and figures 11.1–13.3 shipped on the branch. **In progress on `release/r04`** |
-| r05 | Part 5 (Ch14–18): PREEMPT_RT, partitioning, jitter, kernel bypass, latency config as code | VM only; before/after `cyclictest` every chapter |
-| r06 | Part 6a (Ch19–22): channel strategy, gRPC, DDS, Aeron + SBE | Appendix B drafted alongside Ch19 |
-| r07 | Part 6b (Ch23–25): FIX/Artio, WebSockets + Kafka, Modbus + D-Bus | Appendix D (PTP) with Ch21 follow-up |
-| r08 | Part 7 (Ch26–27): low-overhead observability | LGTM via lgtm-docker-stack |
-| r09 | Part 8 (Ch28–31): failure model | Appendix A |
-| r10 | Part 9 (Ch32): the whole line | VM; command latency held under data flood |
-| r11 | Appendices C, E, F; coverage-map audit; manuscript build | Appendix C proves coverage of every reference topic |
-| r12 | Companion decks (100, 101 ×2, 201, appendix decks) | decks last, mined from finished content |
+| r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers. **Complete: merged in #7, tag `r04.x`** |
+| r05 | Part 5, first half (Ch14–16): PREEMPT_RT, partitioning and noisy neighbours, `cyclictest` | VM only; before/after `cyclictest` every chapter. **In progress on `release/r05`** |
+| r06 | Part 5, second half (Ch17–18): kernel bypass, latency config as code | VM only; before/after `cyclictest` every chapter; Ch17 traffic source decided in r06 S0 (r05-plan Q8) |
+| r07 | Part 6a (Ch19–22): channel strategy, gRPC, DDS, Aeron + SBE | Appendix B drafted alongside Ch19 |
+| r08 | Part 6b (Ch23–25): FIX/Artio, WebSockets + Kafka, Modbus + D-Bus | Appendix D (PTP) with Ch21 follow-up |
+| r09 | Part 7 (Ch26–27): low-overhead observability | LGTM via lgtm-docker-stack |
+| r10 | Part 8 (Ch28–31): failure model | Appendix A |
+| r11 | Part 9 (Ch32): the whole line | VM; command latency held under data flood |
+| r12 | Appendices C, E, F; coverage-map audit; manuscript build | Appendix C proves coverage of every reference topic |
+| r13 | Companion decks (100, 101 ×2, 201, appendix decks) | decks last, mined from finished content |
 
 ## Chapter gate (every chapter, every iteration)
 

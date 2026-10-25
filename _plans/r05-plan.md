@@ -4,9 +4,9 @@ render_with_liquid: false
 description: "Relay plan for r05: Part 5, Ch14–16 (PREEMPT_RT, CPU partitioning and noisy neighbours, measuring jitter with cyclictest) in the lowlat KVM guest, C++23 and Java 25. Ch17–18 move to r06. Step status is kept current so a fresh session can resume."
 ---
 
-Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 merged in #7, tag `r04.x`, release published). The Status column is updated as steps land. The open questions in §6 are answered in S2, before any code.
+Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 merged in #7, tag `r04.x`, release published). The Status column is updated as steps land. The open questions in §6 were answered in S2 (2026-10-25), before any code; S2 also folded the S1 probe results (`_plans/dependency-pins.md`, "r05 guest probes") into §0 to §7.
 
-## 0. Facts that shape the plan (read-only probes, 2026-10-25; S0 and S1 re-check them)
+## 0. Facts that shape the plan (read-only probes, 2026-10-25; S0 and S1 re-checked them)
 
 - **RT guest kernel: already built and installed.**
   - `build-rt-kernel.sh` output is in `~/.cache/lowlat/kernel-rt/`. It holds five RPMs `kernel-rt{,-core,-modules,-modules-core,-modules-extra}-7.2.11-200.lowlatrt.fc44.x86_64`, plus `SHA256SUMS` and `BUILDINFO`:
@@ -20,22 +20,25 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
 - **Lab state.**
   - `lowlat-target` is defined and shut off: 4 vCPU (`<vcpu placement='static'>4`), 8 GiB, `host-passthrough` CPU, q35, vsock, no `<cputune>` in the current XML.
   - Snapshots: `lab-ready` (stock, tooled), `lab-ready-rt` (RT kernel, no isolation, no pin), `lab-ready-iso` (RT + `isolcpus=3 nohz_full=3 rcu_nocbs=3` + vCPU 3 pinned to one host CPU + Temurin) and `lab-ready-r04` (stock-unpinned, Docker images).
+  - S1: `lab-ready` and `lab-ready-r04` boot the cloud image's 6.19.10 kernel and have no 7.2.11 stock entry. Only `lab-ready-rt` holds both 7.2.11 entries (stock and `+rt`, RT the default), so every r05 snapshot is built from `lab-ready-rt`.
   - No `lowlat-peer` exists. Other projects' domains (`ebpf-*`, `systems-*`) are shut off and stay untouched.
 - **vCPUs for partitioning.**
   - With 4 vCPUs, the split is housekeeping CPUs 0–1 (kernel threads, IRQs, ssh, simulator, noise) and isolated CPUs 2–3 (receive/decide and the measurement thread).
   - That's enough for one measured pipeline plus `cyclictest` on the isolated set. It's tight for noise plus simulator on the housekeeping pair (Q2).
   - Today `isolate-cpu3.conf` isolates only CPU 3, and `pin-vcpu.sh` pins only one vCPU.
-- **Kernel config** (Fedora's 7.2.11-200.fc44 config; S1 re-reads it in the guest from `/boot/config-*` for both kernels):
-  - `PREEMPT_DYNAMIC=y`, with `PREEMPT_LAZY=y` as the build's default model. So the stock ladder is lazy against full, not voluntary; S1 confirms the modes offered by `/sys/kernel/debug/sched/preempt`.
+- **Kernel config** (Fedora's 7.2.11-200.fc44 config; S1 re-read it in the guest from `/boot/config-*` for both kernels):
+  - `PREEMPT_DYNAMIC=y`, with `PREEMPT_LAZY=y` as the build's default model and no VOLUNTARY or NONE. So the stock ladder is lazy against full, not voluntary. S1: `/sys/kernel/debug/sched/preempt` shows `full (lazy)` on stock, and writing `full` switches it at run time with no reboot. RT shows `(full) lazy` with `PREEMPT_RT=y`.
   - `NO_HZ_FULL=y`, `RCU_NOCB_CPU=y`, `HZ=1000`, `HALTPOLL_CPUIDLE=y`, `XDP_SOCKETS=y`, `VIRTIO_NET=m`.
 - **Guest NIC and AF_XDP** (matters for r06; probed cheaply in r05 S1).
   - The device: one virtio-net device on a passt backend (`<interface type='user'><backend type='passt'/>`). It's QEMU's userspace virtio-net with no vhost and no `<driver queues>`, so it's single-queue.
   - XDP modes:
     - Generic (SKB) XDP works on any netdev.
     - Native XDP is implemented by `virtio_net`, with conditions: guest offloads switched off through `VIRTIO_NET_F_CTRL_GUEST_OFFLOADS`, an MTU limit, and on one queue pair, XDP_TX/REDIRECT fall back to a shared, locked TX queue.
-    - AF_XDP zero-copy on `virtio_net` landed upstream (RX in v6.11, TX in v6.13) and needs the device to offer `VIRTIO_F_RING_RESET` and to negotiate `VIRTIO_F_ACCESS_PLATFORM` (else `virtqueue_dma_dev()` is NULL and the bind fails with -EINVAL). Whether QEMU's userspace device offers them behind passt is unverified; S0 checks the v7.2 source, S1 probes the errno.
+    - AF_XDP zero-copy on `virtio_net` landed upstream (RX in v6.11, TX in v6.13) and needs the device to offer `VIRTIO_F_RING_RESET` and to negotiate `VIRTIO_F_ACCESS_PLATFORM` (else `virtqueue_dma_dev()` is NULL and the bind fails with -EINVAL).
+    - S1 read the feature bits: virtio-net negotiates `VIRTIO_F_RING_RESET` (bit 40) but not `VIRTIO_F_ACCESS_PLATFORM` (bit 33), and virtio-blk is the same. So zero-copy on this NIC needs `iommu_platform=on` on the device, a libvirt domain change that feeds Q8 (r06). The XDP attach and bind probes moved to r06 S0.
+  - The NIC is `enp1s0`, not `eth0` (S1).
   - Traffic sources:
-    - ssh runs over vsock, so an XDP program on `eth0` can't lock us out.
+    - ssh runs over vsock, so an XDP program on `enp1s0` can't lock us out.
     - Guests can't reach each other, so the only external traffic source for the virtio NIC is the host through passt. That's an r06 design decision (§7, Q8).
 - **Host can't run RT work, by rule and in fact.** `ulimit -r` is 0 (no SCHED_FIFO), and host sudo, tuned, sysctl and boot parameters are forbidden. Every r05 number is lane `vm`. There's no host lane and no host-vs-VM comparison in Part 5.
 - **Prior evidence.**
@@ -49,7 +52,12 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
   - `lib.sh` has `lab_ssh`, `guest`, `guest_fetch`, `interleave_env`, `require_quiet_host --lab-idle`, `assert_placement`, `task_ctx_switches` and `scrub_results`.
   - `validate.py vm-runs` checks `*vm-run*` directories for `vm/LABEL` = `vm` and `virt.type` `kvm`.
   - Missing: no cpuidle driver, no dynamic preempt mode, no IRQ affinity summary, no vcpupin record, and no `cyclictest` parser.
-- **Guest tools from cloud-init:** `realtime-tests` (cyclictest, hackbench), `tuned` + `tuned-profiles-cpu-partitioning`, `realtime-setup`, `stress-ng`, `perf`, `kernel-tools`, `numactl`, pinned Temurin 25.0.5. No `rtla`, no libxdp/xdp-tools.
+- **Guest tools from cloud-init:** `realtime-tests` (cyclictest, hackbench), `tuned` + `tuned-profiles-cpu-partitioning`, `realtime-setup`, `perf`, `kernel-tools`, `numactl`. No `rtla`, no libxdp/xdp-tools.
+  - S1 corrected this list: `stress-ng` and `strace` aren't installed in any snapshot, and there's no Temurin under `/opt` in `lab-ready` or `lab-ready-rt`. The guest's `/usr/bin/java` is Fedora's OpenJDK 25.0.4.1. S6 adds `stress-ng`, `strace`, `rtla` (all from F44, versions equal to the pins) and the pinned Temurin 25.0.5 to the r05 snapshots, and the Java lanes call Temurin by path.
+  - `rtla` has no BPF path in the RT build (`Error loading vmlinux BTF: -ESRCH`, no BTF) and falls back to tracefs.
+- **Guest IRQs (S1):** `default_smp_affinity` is `f` and irqbalance isn't installed. virtio-blk has 4 managed request-queue IRQs, one per CPU, so their `smp_affinity` can't be written (`Operation not permitted`). A non-managed virtio-net IRQ moves. blk-mq completes on the submitting CPU's queue, so under isolation, I/O submitted from CPUs 0-1 interrupts only CPUs 0-1.
+- **cyclictest default clock (S1, strace):** without `-c`, v2.11 sleeps on `CLOCK_REALTIME`, although the help text says monotonic. `--clock=monotonic` gives `CLOCK_MONOTONIC`.
+- **cpuidle (S1):** `current_driver` is `none` (governor `menu`) on every kernel. `cpuidle_haltpoll` is built in, but `force` is `N` and the host doesn't set `KVM_HINTS_REALTIME`, so haltpoll doesn't load by default.
 - **Sibling material (cited in For deeper coverage, never ported):** `~/Dev/linux-systems-programming` Ch24 (timers, deadlines, a cyclictest note), Ch35 (virtualization and KVM), Ch40 (low-latency fast path: pinning, busy-poll), Ch32 (cgroups).
 - **UDP ports in use:** 47200–47336. r05 uses 47400–47429.
 - **Release rule:** merged PR + `r05.x` tag + notes-only GitHub release, no tarball. Pages 200 checks after merge.
@@ -70,7 +78,7 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
   - What it doesn't: host-side vCPU preemption (steal), user-space pauses (a JVM safepoint), priority inversion in user code without a PI mutex.
 - **Ch15 (the placement):** isolation of CPUs 2–3 against a shared guest, with noise on the housekeeping CPUs:
   - scheduler isolation (`isolcpus`), the tick (`nohz_full`), RCU callbacks (`rcu_nocbs`);
-  - IRQ affinity (`irqaffinity=` and per-IRQ `smp_affinity`), plus tuned `cpu-partitioning`;
+  - IRQ affinity (`irqaffinity=`, and per-IRQ `smp_affinity` where the IRQ isn't managed), plus tuned `cpu-partitioning`;
   - what isolation doesn't partition: last-level cache, memory bandwidth, and the host underneath;
   - the JVM's own threads as the neighbour inside the process.
 - **Ch16 (the instrument):** how cyclictest measures (absolute `clock_nanosleep` wake against the intended time) and how the method changes the number (naive defaults against a disciplined run). The run also covers:
@@ -79,7 +87,7 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
   - why `Avg` is never quoted;
   - cross-checking against our own probe;
   - attributing a spike to IRQ versus thread latency with `rtla timerlat`;
-  - the guest idle path (`cpuidle-haltpoll`).
+  - the guest idle path (`cpuidle-haltpoll`, which doesn't load by default in this guest).
 
 **Before/after cyclictest in every chapter** (the CLAUDE.md rule), with cyclictest's meaning restated in place, so chapters stand alone:
 - Ch14: `stock-lazy` against `rt` under load.
@@ -117,20 +125,21 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
 - A Python lane: rule 1, per the Languages paragraph above.
 - Kubernetes or containers as the noisy neighbour: r04 covered cgroups. Noise is in-guest `stress-ng`, named in one sentence.
 - Intel CAT/resctrl cache partitioning: KVM doesn't virtualize it on this lab. Named in prose as what the VM can't show.
-- A full PREEMPT_NONE/VOLUNTARY ladder: the 7.2 build offers lazy and full (S1 confirms).
-- Rebuilding the RT kernel on a newer NVR: Q4, hold recommended.
+- A full PREEMPT_NONE/VOLUNTARY ladder: the 7.2 build offers lazy and full (S1 confirmed).
+- Rebuilding the RT kernel on a newer NVR: Q4, held.
+- Building `lab-ready-r05-stock` from `lab-ready`: that snapshot boots 6.19.10, not the 7.2.11 stock kernel.
 
 ## 2. Per chapter
 
 ### Ch14: `examples/14-preempt-rt/` (VM)
 
 - **Lanes:**
-  - `stock-lazy`: snapshot `lab-ready-r05-stock`, the Fedora default mode, recorded.
-  - `stock-full`: same snapshot. In the guest, `echo full > /sys/kernel/debug/sched/preempt` (S1 confirms the knob), or the `preempt=full` boot argument if the runtime switch is absent.
+  - `stock-lazy`: snapshot `lab-ready-r05-stock` (built from `lab-ready-rt` with the stock 7.2.11 BLS entry as default), the Fedora default mode, recorded.
+  - `stock-full`: same snapshot. In the guest, a runtime write of `full` to `/sys/kernel/debug/sched/preempt` (S1 confirmed the knob; no reboot), read back before the lane starts.
   - `rt`: `lab-ready-r05-rt`.
   - All lanes use the same vCPU pins (D3) and no isolation, alternated x3.
 - **Workload:**
-  - (a) cyclictest SCHED_FIFO 95 with `mlockall` on guest CPU 3, 1 ms interval, 300 s, under `hackbench` + `stress-ng --cpu` at SCHED_OTHER on all 4 vCPUs (`timeout`-bounded);
+  - (a) cyclictest SCHED_FIFO 95 with `mlockall` and `--clock=monotonic` on guest CPU 3, 1 ms interval, 300 s, under `hackbench` + `stress-ng --cpu` at SCHED_OTHER on all 4 vCPUs (`timeout`-bounded);
   - (b) the C++ probe `cyclic-probe` on CPU 2 with the same settings (`lowlat-report/1`);
   - (c) the line: simulator → C++ consumer at 10 kHz x 20 s, loopback, consumer at FIFO on CPU 2;
   - (d) a priority-inversion demo on one CPU:
@@ -140,22 +149,22 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
     - variants `plain-mutex` and `pi-mutex` (`pthread_mutexattr_setprotocol(PTHREAD_PRIO_INHERIT)` through a small RAII wrapper; `std::mutex` has no PI, said in prose);
     - the whole demo runs under `timeout -s KILL`.
 - **Java:**
-  - Periodic wake (`LockSupport.parkNanos` to absolute deadlines) on CPU 2.
-  - The hot thread is set FIFO through JNA `sched_setscheduler` (pinned JNA 5.19.1); the rest of the JVM stays SCHED_OTHER.
+  - Periodic wake (`LockSupport.parkNanos` to absolute deadlines) on CPU 2, on the pinned Temurin 25.0.5 called by path (the guest's `/usr/bin/java` is Fedora's OpenJDK).
+  - The hot thread is set FIFO through JNA `sched_setscheduler` (pinned JNA 5.19.1); the rest of the JVM stays SCHED_OTHER. S1 didn't probe this; the S7 smoke asserts the policy with `chrt -p <tid>`.
   - An allocating background thread runs alongside, with `-Xlog:safepoint` counted.
   - Wake lateness p99.9 and safepoint count/total per kernel, observed.
   - Java monitors have no PI: a one-sentence divergence.
 - **Measured:**
   - cyclictest and probe p50/p99/p99.9/max;
   - line end-to-end p50/p99/p99.9;
-  - IRQ kthreads (`irq/*`) count;
+  - IRQ kthreads (`irq/*`) and `ktimers` counts;
   - `ksoftirqd`/threaded softirq evidence;
   - steal ticks;
   - PI wait-time distribution;
   - Java safepoints.
 - **Asserts (provisional; S11 decides):**
   1. exact: `rt` runs `PREEMPT_RT` with `CONFIG_PREEMPT_RT=y`; the stock lanes report the mode their name says.
-  2. exact: `irq/` kthreads > 0 in `rt`, 0 in stock lanes without `threadirqs` (S1 confirms).
+  2. exact: `irq/` kthread counts per snapshot, set in S11. Stock has only the driver-requested threaded handlers (S1: 15, 14 `aerdrv` and 1 `acpi`) and no thread for any virtio IRQ; `rt` has a thread for every device IRQ (S1: 80). `ktimers`: `rt` 4, stock 0.
   3. PI: `pi-mutex` high-priority wait p99 ≤ 1/4 of `plain-mutex` p99 (≥ 10x by construction, stated as such).
   4. cyclictest p99.9 `rt` ≤ 1/2 of `stock-lazy` under load (median of 3): asserted only with ≥2x margin at S11, else observed and explained (host preemption floor).
   5. line: 200,000 parcels, `dropped=0`, `check`, `runtime.environment.kind` = `vm`, guest profile recorded, binary checksums equal across lanes.
@@ -174,8 +183,11 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
 
 - **Lanes:**
   - `shared`: `lab-ready-r05-rt`, noise on all CPUs.
-  - `isolated`: `lab-ready-r05-iso`, guest profile `isolate-cpu23` + the tuned part per D7, noise on CPUs 0–1.
-  - Defect pair inside `isolated`: `irq-steered` against `irq-on-measure-cpu`. The latter writes `smp_affinity` of the virtio-blk IRQ to CPU 3, with disk noise from `stress-ng --hdd` on 0–1.
+  - `isolated`: `lab-ready-r05-iso`: tuned `cpu-partitioning` with `isolated_cores=2-3`, plus `isolcpus=domain,managed_irq,2-3 irqaffinity=0-1` added with grubby (guest profile `isolate-cpu23`). Tuned on its own sets no `isolcpus` (S1), so both are needed. Noise on CPUs 0–1.
+  - Defect pair inside `isolated` (the virtio-blk IRQs are managed, so their `smp_affinity` can't be written):
+    - `irq-steered`: disk I/O (`stress-ng --hdd`) submitted from CPUs 0–1, so its completions interrupt only CPUs 0–1;
+    - `irq-on-measure-cpu`: a thread on CPU 3 doing disk I/O, so its completions interrupt CPU 3.
+  - The `smp_affinity` write demo applies only to non-managed IRQs and is shown on virtio-net; the refused write on a virtio-blk queue IRQ is shown beside it.
   - `cache-noise`: `isolated` with `stress-ng --stream/--cache` on 0–1, observed.
   - Alternated x3.
 - **Workload:**
@@ -195,15 +207,16 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
   - steal.
 - **Asserts (provisional):**
   1. exact: `isolated` has `/sys/devices/system/cpu/isolated` = `2-3` and `nohz_full` = `2-3`; `shared` has both empty.
-  2. exact: LOC interrupts per second on CPU 2 with one busy task: `isolated` ≤ 10, `shared` ≥ 500 (HZ 1000); S1 measures the residual.
+  2. exact: LOC interrupts per second on CPU 2 with one busy task: `isolated` ≤ 10, `shared` ≥ 500 (HZ 1000). S1 measured 0/s on an isolated `nohz_full` CPU against about 1012/s on a busy housekeeping CPU, a margin of hundreds of times.
   3. exact: no noise thread is ever seen on 2–3 in `isolated`; pinned decide thread involuntary switches ≤ 10 `isolated`, ≥ 100 `shared` (Ch7 precedent).
   4. cyclictest p99.9 on CPU 3: `isolated` ≤ 1/2 of `shared` (median of 3).
-  5. exact: virtio-blk interrupts on CPU 3: `irq-steered` = 0; `irq-on-measure-cpu` ≥ 1,000 (S11 sizes it).
+  5. exact: virtio-blk interrupts on CPU 3: `irq-steered` = 0 (I/O from 0–1); `irq-on-measure-cpu` ≥ 1,000 (I/O from a thread on CPU 3; S11 sizes it).
   6. Java exact: `hot-thread-pinned` has exactly one JVM thread on 2–3 and ≤ 10 involuntary switches; `jvm-taskset-isolated` has ≥ 10 JVM threads on 2–3.
   7. line clean as in Ch14.
 - **Observed:**
   - `cache-noise` p99.9 against CPU-only noise (isolation doesn't partition the LLC or memory bandwidth);
   - IRQ defect latency;
+  - the `smp_affinity` write: accepted for the virtio-net IRQ, refused for a managed virtio-blk IRQ (errno recorded);
   - Java `taskset` placement detail.
 - **What the VM can't show:** host isolation (the vCPU pins are pins, not isolation, and SMT siblings still run host work), CAT/MBA, NIC IRQs of real hardware.
 - **Figures:**
@@ -214,24 +227,28 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
 ### Ch16: `examples/16-cyclictest/` (VM)
 
 - **Lanes** (on `lab-ready-r05-iso`, noise on 0–1):
-  - `naive`: `cyclictest` with defaults, SCHED_OTHER, no `-m`, unpinned, 10 s.
-  - `method`: `-m -p95 --policy=fifo -a 3 -i 1000 -h 20000 --histfile`, JSON output, 300 s.
+  - `naive`: `cyclictest` with defaults, SCHED_OTHER, no `-m`, unpinned, 10 s. It keeps the default clock, which is `CLOCK_REALTIME` at v2.11 (S1, strace), and the chapter names that clock.
+  - `method`: `-m -p95 --policy=fifo --clock=monotonic -a 3 -i 1000 -h 20000 --histfile`, JSON output, 300 s.
   - `probe`: our C++ probe with the same parameters, run alongside on CPU 2.
-  - `timerlat`: `rtla timerlat` on CPU 3 for 120 s, with auto-analysis at a threshold S11 sets.
-  - `haltpoll-on` / `haltpoll-off`: the cpuidle driver per S1, observed.
+  - `timerlat`: `rtla timerlat` on CPU 3 for 120 s, with auto-analysis at a threshold S11 sets. rtla uses its tracefs path here because the RT build has no BTF; the README and the chapter say so.
+  - `haltpoll-forced` against `idle-default`, observed only:
+    - `idle-default`: the guest default, `current_driver` = `none`;
+    - `haltpoll-forced`: `cpuidle_haltpoll.force=1` added to the guest command line with grubby after the revert, one reboot, `current_driver` = `haltpoll` checked before the lane starts;
+    - both run cyclictest with `--default-system`, so cyclictest's PM-QoS write to `/dev/cpu_dma_latency` doesn't mask the idle driver.
   - Alternated x3.
 - **Measured:**
   - per-lane distributions;
   - sample and overflow counts;
   - the policy and priority actually in effect (`chrt -p`);
   - timerlat IRQ against thread latency p99;
-  - cpuidle driver and state usage.
+  - cpuidle driver and state usage;
+  - the clock each lane used (from the command line; the S9 smoke confirms it with strace).
 - **Asserts (provisional):**
   1. exact: `method` sample count = duration / interval ± 1% and ≥ 100,000; histogram overflow = 0 (or the run fails with the bucket range shown).
   2. exact: `naive` ran SCHED_OTHER and `method` ran SCHED_FIFO 95 on CPU 3.
   3. cross-check: probe p99 and cyclictest p99 in the same lane within 2x of each other (asserted if the S11 margin holds).
   4. the converter's percentiles from `--histfile` match an independent recomputation (exact).
-- **Observed:** `naive` against `method` (direction stated whatever it is), the timerlat split, haltpoll.
+- **Observed:** `naive` against `method` (direction stated whatever it is), the timerlat split, `haltpoll-forced` against `idle-default`.
 - **What the VM can't show:** SMI detection (`hwlatdetect` is meaningless in a guest), bare-metal idle states.
 - **Figures:**
   - 16.1 `16-what-cyclictest-measures`: the intended-to-actual wake timeline.
@@ -250,11 +267,11 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 |---|---|---|---|---|---|---|
 | S0 | Upstream survey, fact-source rows, r04 bookkeeping | `_plans/dependency-pins.md` ("r05 pins", "Runtime facts for Ch14-16 prose"), `versions.env` (only if a tarball is pinned), `_plans/iteration-plan.md` (r04 complete: #7, `r04.x`), `_plans/r04-plan.md` (S21 done) | – | sonnet (opus validates) | host, read-only | done |
 | S1 | Guest probes (read-only in intent; guest reverted after) | `_plans/dependency-pins.md` ("r05 guest probes") | S0 | opus (MAIN) | VM | done |
-| S2 | Record answers to §6; iteration-plan split and renumber; commit `r05-plan.md`, `r05-chapters.md`, `r05-figures.md` | `_plans/iteration-plan.md`, `_plans/r05-*.md`, `CLAUDE.md` only if a rule changes | S0, S1, user | opus (MAIN) | host | todo |
+| S2 | Record answers to §6; iteration-plan split and renumber; commit `r05-plan.md`, `r05-chapters.md`, `r05-figures.md` | `_plans/iteration-plan.md`, `_plans/r05-*.md`, `CLAUDE.md` only if a rule changes | S0, S1, user | opus (MAIN) | host | done |
 | S3 | Report/profile contract, additive in `lowlat-report/1`; cyclictest converter | `contracts/measurement/latency-report.schema.json`, `contracts/measurement/examples/`, `examples/common/measure-py/**` (`lowlat-report from-cyclictest`), `examples/common/measure-fixtures/`, `scripts/profile.sh`, `scripts/scrub-host-ids.py` | S0 | sonnet | host | todo |
 | S4 | `lib.sh` VM-lane helpers | `examples/_lib/lib.sh`, `examples/_lib/tests/` | S3 | sonnet | host | todo |
 | S5 | Build wiring 14–16 | `examples/CMakeLists.txt`, `examples/1[4-6]-*/cpp/CMakeLists.txt`, `examples/pom.xml`, `examples/1[45]-*/java/pom.xml`, `.github/workflows/ci.yml` | S0 | sonnet | host | todo |
-| S6 | Lab: `isolate-cpu23` profile, tuned profile file, multi-vCPU pin, snapshots, prereq checks | `scripts/lab/guest-profiles/isolate-cpu23.conf`, `scripts/lab/tuned/lowlat-partition/tuned.conf` (if D7), `scripts/lab/pin-vcpu.sh`, `scripts/lab/install-guest-tools.sh`, `scripts/check-prereqs.sh` (`--vm --r05`), `scripts/lab/README.md` | S1, S2, S5 | opus (MAIN) | VM | todo |
+| S6 | Lab: `isolate-cpu23` profile, tuned profile file, multi-vCPU pin, snapshot tooling, snapshots, prereq checks | `scripts/lab/guest-profiles/isolate-cpu23.conf`, `scripts/lab/tuned/lowlat-partition/tuned.conf` (if D7), `scripts/lab/pin-vcpu.sh`, `scripts/lab/install-guest-tools.sh`, `scripts/check-prereqs.sh` (`--vm --r05`), `scripts/lab/README.md` | S1, S2, S5 | opus (MAIN) | VM | todo |
 | S7 | Example 14 + `verify.sh` + `vm/run.sh` + `vm/guest-run.sh` + README | `examples/14-preempt-rt/**` | S4, S5, S6 | sonnet (VM smoke by MAIN) | host code, VM smoke | todo |
 | S8 | Example 15 | `examples/15-cpu-partitioning/**` | S4, S5, S6; VM smoke after S7's | sonnet (VM smoke by MAIN) | host code, VM smoke | todo |
 | S9 | Example 16 | `examples/16-cyclictest/**` | S4, S5, S6; VM smoke after S8's | sonnet (VM smoke by MAIN) | host code, VM smoke | todo |
@@ -323,8 +340,8 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
   - `tuned-adm profile cpu-partitioning` with `isolated_cores=2-3` in the guest, and what `/proc/cmdline` and the BLS entry look like after reboot (grubby/btrfs quirk);
   - the LOC residual on an isolated `nohz_full` CPU with one busy task;
   - an `isolcpus` domain with `taskset -c 2,3` and two busy threads (do they pile up on one CPU?);
-  - Java: whether JNA `sched_setscheduler` on the hot thread works as root in the guest;
-  - r06 pre-probe: attach an XDP_PASS program to `eth0` in generic then native mode (`ip link … xdpgeneric/xdpdrv`), record success or errno, detach. Then an AF_XDP bind with `XDP_ZEROCOPY` and `XDP_COPY` (one-shot C probe), recording errnos. Use guest-only `dnf install xdp-tools libxdp`.
+  - Java: whether JNA `sched_setscheduler` on the hot thread works as root in the guest (not run in S1: it needs the S5 module; moved to the S7 smoke);
+  - r06 pre-probe (not run in S1: the feature bits settled the zero-copy question, and the attach and bind probes moved to r06 S0 on `enp1s0`): attach an XDP_PASS program to `eth0` in generic then native mode (`ip link … xdpgeneric/xdpdrv`), record success or errno, detach. Then an AF_XDP bind with `XDP_ZEROCOPY` and `XDP_COPY` (one-shot C probe), recording errnos. Use guest-only `dnf install xdp-tools libxdp`.
 - Finish: revert to `lab-ready-rt`, then `lab-down.sh`.
 - Acceptance:
   - every probe has a recorded result (value or errno) in `dependency-pins.md`;
@@ -336,7 +353,7 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 - Acceptance:
   - §6 answers in Follow-ups with dates;
   - `iteration-plan.md` shows r05 = Ch14–16 and r06 = Ch17–18, with later rows renumbered (if Q1 is yes);
-  - `r05-chapters.md` (files, `part: "The OS, Isolation & the Network Edge"`, slugs, langs per chapter, the prose bundle in §5) and `r05-figures.md` committed (`docs(r05.x): plan`).
+  - `r05-chapters.md` (files, `part: "The OS, Isolation & the Network Edge"`, slugs, langs per chapter, the prose bundle in §5) and `r05-figures.md` committed (`docs(r05.x): S2 decisions, split and r05 chapter/figure plans`).
 
 **S3 contract**
 - Additive profile fields:
@@ -348,9 +365,12 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
   - `runtime.environment.guest_profile` gains `snapshot`, `profile` and `vcpupin` (written by the host driver from `virsh vcpupin`; the guest can't see it);
   - `runtime.counters` holds the interrupts deltas, `samples`, `overflows` and `safepoints`.
 - `lowlat-report from-cyclictest`: reads cyclictest `--json` and `--histfile`, writes `lowlat-report/1` with percentiles and max, and never writes cyclictest's average. It fails on overflow > 0 unless `--allow-overflow`, recorded in `notes`.
+  - It drops `avg` from the JSON and `# Avg Latencies:` from the histfile, scrubs `sysinfo.nodename` (the guest hostname), and ignores `sysinfo.realtime` (S1: 0 even on PREEMPT_RT; the kernel check uses the profile's preempt model).
+  - It records the clock from `cmdline:` in `runtime.counters` or `notes`, so a report shows whether `--clock=monotonic` was passed.
 - Acceptance:
   - planted fixtures: a histogram with known counts yields the expected p50/p99/p99.9, and a recomputation from the raw buckets matches exactly;
   - a fixture containing `Avg` produces no average field;
+  - a fixture with a `nodename` produces a report without it;
   - an overflow fixture fails;
   - every committed r01–r04 report still passes `check` (RECHECK sweep);
   - `profile.sh | jq .kernel,.cpuidle,.irq` works on the host (unprivileged; fields null where unreadable).
@@ -361,12 +381,13 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
   - `require_quiet_host --lab-run` (host load1 ≤ 2 before every lane; aborts the run otherwise);
   - `guest_noise CPUS SECONDS KIND` (`stress-ng`/`hackbench` under `timeout -s KILL`, `taskset` to CPUS, refuses CPUS that include the isolated set in an `isolated` lane);
   - `interrupts_delta CPU… -- CMD`;
-  - `cyclictest_run OUT ARGS` (always `timeout`, `--json`, `--histfile`, then `from-cyclictest`);
+  - `cyclictest_run OUT ARGS` (always `timeout`, `--json`, `--histfile` and `--clock=monotonic`, then `from-cyclictest`; only the Ch16 `naive` lane opts out of the clock, by an explicit `--default-clock` flag to the helper);
   - `thread_cpus PID` (last-run CPU of every task, sampled);
   - `vcpupin_record`.
 - Acceptance:
   - `examples/_lib/tests/` covers each helper with fake `virsh`/`ssh`/`stress-ng` on PATH;
   - `guest_noise` refuses a missing `timeout`;
+  - `cyclictest_run` adds `--clock=monotonic` unless `--default-clock` is given;
   - shellcheck and `bash -n` pass;
   - no helper calls `sudo` except inside a `lab_ssh` command string, checked by a test that greps the function bodies.
 
@@ -382,17 +403,21 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
   - one wiring test per new target.
 
 **S6 lab** (MAIN; guest and lab-domain config only)
-- `isolate-cpu23.conf`: `PROFILE_ARGS="isolcpus=domain,managed_irq,2-3 nohz_full=2-3 rcu_nocbs=2-3 irqaffinity=0-1"`, documented line by line. The exact `isolcpus` flags are per the S0 rows.
+- `isolate-cpu23.conf`: `PROFILE_ARGS="isolcpus=domain,managed_irq,2-3 irqaffinity=0-1"`, documented line by line and added with grubby. tuned `cpu-partitioning` (`isolated_cores=2-3`) supplies `nohz=on nohz_full=2-3 rcu_nocbs=2-3` and the runtime parts (workqueue and systemd affinity, `default_smp_affinity`), and S1 showed it adds no `isolcpus`. Both sets of arguments coexist in the BLS entry (S1). The exact `isolcpus` flags are per the S0 rows.
 - `pin-vcpu.sh` takes `PIN_MAP="2:<hostA> 3:<hostB>"` (additive; the old single-pin interface still works). The host CPUs are on distinct physical cores, chosen by the documented `/proc/interrupts` method.
 - The tuned profile file (D7) is versioned under `scripts/lab/tuned/`.
+- Snapshot tooling (`install-guest-tools.sh`), in every r05 snapshot:
+  - `stress-ng`, `strace` and `rtla` from F44 (versions equal to the r05 pins: stress-ng 0.22.01-1.fc44, rtla 7.2.11-200.fc44);
+  - the pinned Temurin 25.0.5 under `/opt`, called by path from the Java lanes (the guest's `/usr/bin/java` is Fedora's OpenJDK 25.0.4.1 and stays untouched);
+  - a note in `scripts/lab/README.md` that `rtla` falls back to tracefs because the RT build has no BTF.
 - Snapshots, all with the same pins:
-  - `lab-ready-r05-stock`: from `lab-ready-rt`, stock entry default, no isolation, tools;
+  - `lab-ready-r05-stock`: from `lab-ready-rt`, with the stock `7.2.11-200.fc44` BLS entry made default (`grubby --set-default` takes the `/boot/loader/entries/...` path; the kernel path is rejected), no isolation, tools. Never from `lab-ready`, which boots 6.19.10;
   - `lab-ready-r05-rt`: RT, no isolation;
   - `lab-ready-r05-iso`: RT + `isolate-cpu23` + tuned part.
 - `check-prereqs.sh --vm --r05 {stock|rt|iso}`.
 - Acceptance:
   - `virsh snapshot-list` lists the three snapshots;
-  - `check-prereqs.sh --vm --r05 <x>` passes after reverting to each: kernel, cmdline, `/sys/.../isolated`, vcpupin from `virsh vcpupin`, tools (cyclictest version, rtla, stress-ng, Temurin);
+  - `check-prereqs.sh --vm --r05 <x>` passes after reverting to each: kernel (`stock`: `uname -r` is the 7.2.11-200.fc44 stock build), cmdline, `/sys/.../isolated`, vcpupin from `virsh vcpupin`, tools (cyclictest version, rtla, stress-ng, strace, Temurin by path);
   - reverting to `lab-ready-r04` still yields the unpinned domain;
   - host `profile.sh` unchanged;
   - other domains untouched.
@@ -406,6 +431,7 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 - READMEs state the technique, workload, expected effect, observation surfaces (terminal; Grafana "no panel by design") and licences (rt-tests GPL-2.0, stress-ng GPL-2.0, JNA Apache-2.0/LGPL, tools only, never linked into a hot path).
 - Acceptance:
   - one `SMOKE=1` VM run per example exits 0 (MAIN, serial S7, then S8, then S9);
+  - the S7 smoke carries the JNA probe S1 couldn't run: the Java hot thread's policy is SCHED_FIFO, checked with `chrt -p <tid>`;
   - variant names come only from §2 (`variant-names`);
   - every guest report has `virt.type` `kvm`, the lane's snapshot and a vcpupin record;
   - binary checksums are equal across lanes;
@@ -511,9 +537,11 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 | Host noise from other engineers swamps lanes | host load1 ≤ 2 before every lane (abort); host load and guest steal recorded; alternation by revert; median of 3 |
 | Long saturating guest runs hurt the shared host | load bounded to 4 vCPUs; lanes 300 s; driver aborts on host load; runs scheduled per Q5 |
 | A FIFO spinner or PI demo starves the guest | `timeout -s KILL` on every one (`timeout-guard`); one CPU only; fair server left at default; snapshot revert recovers; ssh over vsock unaffected |
-| tuned `cpu-partitioning` rewrites the guest bootloader in a way grubby on btrfs `/boot` mishandles | S1 probe; D7 fallback: arguments only through `apply-guest-profile.sh`, runtime parts scripted |
-| Managed virtio IRQs refuse `smp_affinity` writes, so the IRQ defect can't be built | S1 probe; fallback to a non-managed IRQ (virtio config, or the RTC) or drop the pair to observed, recorded |
-| `nohz_full` residual tick higher than assumed in a KVM guest | S1 measures the residual; S11 sets the bound |
+| tuned `cpu-partitioning` rewrites the guest bootloader in a way grubby on btrfs `/boot` mishandles | S1 probe was clean (`/proc/cmdline` correct after reboot); `check-prereqs.sh --vm --r05 iso` checks the cmdline every lane; D7 fallback kept: arguments only through `apply-guest-profile.sh`, runtime parts scripted |
+| Managed virtio IRQs refuse `smp_affinity` writes, so the IRQ defect can't be built | S1 confirmed the refusal; the pair now moves the I/O submitter, not the IRQ (blk-mq completes on the submitting CPU's queue); the write demo uses the non-managed virtio-net IRQ |
+| cyclictest's default clock is `CLOCK_REALTIME` at v2.11, not monotonic as the help text says | S1 strace; `cyclictest_run` always passes `--clock=monotonic`; the converter records the clock from `cmdline:` |
+| Java lanes pick up Fedora's OpenJDK at `/usr/bin/java` | Temurin called by path; reports record `java.vm.version`; `check-prereqs.sh` checks the path |
+| `nohz_full` residual tick higher than assumed in a KVM guest | S1 measured 0/s with one busy task; S11 sets the bound |
 | `isolcpus` flags deprecated or changed in 7.2 | S0 source row; profile uses the documented form |
 | cyclictest overflow or too few samples make p99.9 meaningless | histogram range 20 ms; overflow fails the run; ≥ 100,000 samples asserted |
 | cyclictest `Avg` leaks into prose or a figure | converter drops it; `no-avg` check |
@@ -524,7 +552,7 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 | Host identifiers in guest output (guest home path, host CPU numbers in captures) | `scrub_results`; `host-ids`; only the CPU class in prose, host CPU indices only in lab README form |
 | Unsourced runtime facts trigger extra review rounds | S0 rows before prose; §5 bundle; S19 check |
 | Chapters lean on each other (cyclictest explained only in Ch16) | each chapter restates cyclictest in two sentences; grep criterion in S14–16 |
-| Java JNA FIFO call fails or needs root | S1 probe; Java lanes run under guest sudo with the effect asserted (`chrt -p` of the tid) |
+| Java JNA FIFO call fails or needs root | S7 smoke (moved from S1); Java lanes run under guest sudo with the effect asserted (`chrt -p` of the tid) |
 | Results bloat from histograms and traces | gzip raw histfiles; timerlat summaries only; S12 size check |
 
 ## 5. Prose executor bundle (pasted into every S14–S16 prompt)
@@ -554,11 +582,12 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 | D3 | vCPU pins | pin vCPU 2 and 3 to two host CPUs on distinct physical cores, libvirt config only, the same in all r05 snapshots (Q3) |
 | D4 | Snapshots | `lab-ready-r05-stock`, `-rt`, `-iso`; revert before every lane |
 | D5 | Kernel | hold `7.2.11-200.fc44` (stock and RT the same NVR); newer NVR recorded in Holds (Q4) |
-| D6 | Ch14 ladder | `stock-lazy`, `stock-full`, `rt` (S1 confirms the modes) |
-| D7 | Isolation mechanism | kernel args through `isolate-cpu23` + tuned `cpu-partitioning` for runtime parts if the S1 bootloader probe is clean, else args-only plus scripted IRQ/irqbalance/workqueue steps (Q6) |
+| D6 | Ch14 ladder | `stock-lazy`, `stock-full` (runtime debugfs write), `rt` (S1 confirmed the modes) |
+| D7 | Isolation mechanism | tuned `cpu-partitioning` in the guest (`isolated_cores=2-3`; S1 bootloader probe clean, Q6) plus `isolcpus=domain,managed_irq,2-3 irqaffinity=0-1` through `isolate-cpu23` and grubby, since tuned adds no `isolcpus` |
 | D8 | Languages | Ch14 C++ + one observed Java lane (Q7); Ch15 C++ + Java; Ch16 C++; no Python in r05, one sentence each |
-| D9 | Tool sources | rt-tests, rtla, stress-ng from Fedora if they equal the latest upstream; otherwise the pinned upstream tag built in the guest |
-| D10 | cyclictest output | `--json` + `--histfile` → `lowlat-report from-cyclictest`; never `Avg` |
+| D9 | Tool sources | rt-tests, rtla, stress-ng from Fedora if they equal the latest upstream (S0: all equal); otherwise the pinned upstream tag built in the guest. Temurin 25.0.5 by path, never `/usr/bin/java` |
+| D10 | cyclictest output | `--json` + `--histfile` → `lowlat-report from-cyclictest`; never `Avg`; `nodename` scrubbed, `sysinfo.realtime` ignored; every call passes `--clock=monotonic` except Ch16 `naive` |
+| D23 | Ch16 idle pair | `haltpoll-forced` (`cpuidle_haltpoll.force=1`, one reboot after the revert) against `idle-default` (`none`), observed only, both with `--default-system` |
 | D11 | Own probe | C++ `cyclic-probe` cross-check emitting `lowlat-report/1` |
 | D12 | Load | in-guest only, `timeout`-bounded, cpuset-bound |
 | D13 | Durations | 300 s cyclictest lanes at 1 ms; line 10 kHz x 20 s; 3 alternations (Q5) |
@@ -572,7 +601,7 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 | D21 | Spine hook | diverter fire-window jitter (±2 mm at 2.5 m/s = ±0.8 ms) as a labelled `model` input |
 | D22 | Review economy | §5 bundle; one Opus validation per prose step; max 2 repair rounds |
 
-Open questions for the user (answered in S2):
+Open questions for the user (answered 2026-10-25; the answers are in Follow-ups):
 1. **Q1: Split r05?** Recommend yes: r05 = Ch14–16, r06 = Ch17–18, renumbering r06–r12 to r07–r13. Ch17's lab network and new dependency families plus Ch18's dependence on all of Part 5's config make a second iteration cleaner. VM time on a shared host is the binding constraint.
 2. **Q2: Guest vCPUs 4 or 6?** Recommend 4. It keeps every existing snapshot, the Ch13 profile and the host load bounded; 2 housekeeping + 2 isolated is enough for one pipeline plus cyclictest.
 3. **Q3: Pin two vCPUs (2 and 3) to two host CPUs** for the duration of r05 runs (libvirt config in the r05 snapshots only, no host isolation)? Recommend yes, on distinct physical cores chosen by the `/proc/interrupts` method, avoiding CPU 0. Without pins, the RT and isolation lanes measure the host scheduler.
@@ -588,7 +617,8 @@ Open questions for the user (answered in S2):
 ## 7. r06 outline (Ch17–18), planned separately
 
 - **Ch17, kernel bypass:**
-  - Measured: AF_XDP on veth (and on virtio if Q8b is approved), comparing XDP_COPY against zero-copy where S1 found it available against a kernel UDP socket. Mechanism counters are syscalls per packet, wakeups and busy-poll CPU.
+  - Measured: AF_XDP on veth (and on virtio if Q8b is approved), comparing XDP_COPY against zero-copy where it's available against a kernel UDP socket. Mechanism counters are syscalls per packet, wakeups and busy-poll CPU.
+  - S1: the virtio-net device negotiates `VIRTIO_F_RING_RESET` but not `VIRTIO_F_ACCESS_PLATFORM`, so zero-copy on virtio needs `iommu_platform=on` on the device (a libvirt domain change; part of the Q8 decision). The NIC is `enp1s0`. XDP attach and bind probes run in r06 S0.
   - DPDK in the guest: virtio PMD on a dedicated NIC with guest hugepages and `vfio-pci` no-IOMMU or `uio_pci_generic`, labelled illustrative.
   - RDMA conceptual only.
   - Languages: C++ (libxdp/libbpf, DPDK) only. Java has no bypass API (FFM to libxdp is possible and named), OSS Aeron is UDP-only, and Aeron's DPDK transport is paid. Appendix F surveys OpenOnload/ef_vi.
@@ -605,5 +635,7 @@ Open questions for the user (answered in S2):
 
 | Item | Decision |
 |---|---|
-| User decisions, 2026-10-25 | Q1 split: yes, r05 = Ch14-16 and r06 = Ch17-18. Q3 vCPU pins: yes, vCPUs 2 and 3 pinned in the r05 snapshots only. Q6 tuned in the guest: yes, if the S1 bootloader probe is clean, else args only. Q7 Ch14 Java: one observed lane. Q2 (4 vCPUs), Q4 (hold 7.2.11-200.fc44) and Q5 (300 s lanes, abort on host load1 > 2) take the recommended defaults. Q8 is deferred to r06. |
+| User decisions, 2026-10-25 | Q1 split: yes, r05 = Ch14-16 and r06 = Ch17-18. Q3 vCPU pins: yes, vCPUs 2 and 3 pinned in the r05 snapshots only. Q6 tuned in the guest: yes, if the S1 bootloader probe is clean, else args only (S1: clean, so tuned runs in the guest). Q7 Ch14 Java: one observed lane. Q2 (4 vCPUs), Q4 (hold 7.2.11-200.fc44) and Q5 (300 s lanes, abort on host load1 > 2) take the recommended defaults. Q8 is deferred to r06. |
+| S1 consequences, folded in at S2 (2026-10-25) | `lab-ready-r05-stock` from `lab-ready-rt` with the stock 7.2.11 BLS entry default (`lab-ready` boots 6.19.10). Ch14 assert 2: exact `irq/` counts per snapshot (S1: stock 15, RT 80; no stock thread for virtio IRQs) plus `ktimers` RT 4, stock 0. `stock-full` is a runtime debugfs write. Every cyclictest call passes `--clock=monotonic` (v2.11 default is `CLOCK_REALTIME`); Ch16 `naive` keeps the default and names it. Converter drops `avg`, scrubs `nodename`, ignores `sysinfo.realtime`. Ch15 IRQ pair moves the I/O submitter (managed virtio-blk IRQs); the `smp_affinity` demo is on virtio-net. Ch15 `isolated` = tuned `cpu-partitioning` + `isolcpus=domain,managed_irq,2-3 irqaffinity=0-1`. Ch16 haltpoll pair = `haltpoll-forced` against `idle-default`, observed (D23). S6 adds `stress-ng`, `strace`, `rtla` and Temurin 25.0.5 by path. NIC `enp1s0`. r06: zero-copy needs `iommu_platform=on` (Q8). JNA probe moved to the S7 smoke. |
+| Pending: candidate upstream rt-tests report (cyclictest default clock) | v2.11 help text says monotonic is the default, but `used_clock` is never initialised without `-c`, so the timer thread sleeps on `CLOCK_REALTIME` (S0 source row, S1 strace). Needs the user's OK before anything is drafted or filed (`lgtm-issue-reporting`). |
 
