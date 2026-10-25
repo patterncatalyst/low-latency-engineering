@@ -231,7 +231,7 @@ finish_probe() {
 # run_timerlat DIR: rtla timerlat hist on MEASURE_CPU. Collection is BPF first and tracefs when that fails (the RT build
 # has no BTF). It writes a trace file only with -t, which is not passed; the work directory is removed regardless.
 run_timerlat() {
-  local d=$1 work bgpid rc=0 t0 t1 fallback
+  local d=$1 work bgpid rc=0 t0 t1 fallback pid
   step "rtla timerlat hist on cpu $MEASURE_CPU for $TIMERLAT_S s, stop above $TIMERLAT_THRESHOLD_US us"
   if ((DRY_RUN)); then
     printf '[dry-run] sudo timeout -s KILL %s rtla timerlat hist -c %s -d %ss -P f:%s -p %s -T %s -b %s -E %s\n' \
@@ -244,8 +244,10 @@ run_timerlat() {
   (cd "$work" && sudo timeout -s KILL "$((TIMERLAT_S + 30))" rtla timerlat hist -c "$MEASURE_CPU" -d "${TIMERLAT_S}s" -P "f:$PRIORITY" \
     -p "$INTERVAL_US" -T "$TIMERLAT_THRESHOLD_US" -b "$TIMERLAT_BUCKET_US" -E "$TIMERLAT_ENTRIES" >"$work/rtla.out" 2>"$work/rtla.err") &
   bgpid=$!
-  sleep 3
-  sample_sched rtla "$d/sched.json"
+  sleep 1
+  # rtla stops by itself once a sample crosses -T (it prints its auto-analysis and exits), which can happen within the first
+  # seconds in this guest; then there is no process to sample, and that is recorded, not an error.
+  if pid=$(find_pid rtla); then sched_tasks "$pid" >"$d/sched.json"; else echo '[]' >"$d/sched.json"; fi
   wait "$bgpid" || rc=$?
   t1=$(date +%s)
   ((rc != 124 && rc != 137)) || die "rtla was killed by timeout -s KILL after $((TIMERLAT_S + 30)) s"
