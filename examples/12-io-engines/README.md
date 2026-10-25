@@ -56,7 +56,7 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
     the serial receive stage: the validation a real camera frame carries (a checksum, a framing check) that this flat
     wire doesn't have, and the part of the work a single acceptor can't spread over cores. At that rate the acceptor is on
     a CPU for about 80 to 85 percent of its receive window (the run measures it with the thread's CPU time and checks it
-    stays inside a guard band), while the busiest of the four receivers is about 38 percent busy (382 to 384 permille). Push the rate higher and the
+    stays inside a guard band), while the busiest of the four receivers is about 38 percent busy (382 to 384 permille over the nine alternations). Push the rate higher and the
     acceptor overloads: the sockets' buffers fill, parcels drop, and the p99 is a backlog growing for the length of the
     run, not a property of the layout. So the tail ratio is observed, and the exact hand-off counts carry the claim. The
     input is a model, like `DECIDE_NS`, and both are printed in each report's notes. Without the receive-side work both
@@ -234,8 +234,8 @@ What is written by hand, and the reason:
   `Ring` and `BufRing` wrappers are RAII over its calls. Asio's backend can't expose the call counts.
 - **`spin_work` (C++, Java) and the spinning hand-off workers.** The busy-wait stands in for decide work this example
   doesn't build. The workers spin on Ch10's `ClaimLog` so the hand-off is a cache-line transfer and not a futex
-  wake-up. At line rate the acceptor-pool tail came out no worse than thread-per-core's (the p99 ranges overlap: acceptor-pool 91 to 113 us,
-  thread-per-core 98 to 115 us, one measurement per run), so the hand-off cost is small there; the exact hand-off counts are what the example asserts. Neither is advice for general code.
+  wake-up. At line rate the two tails were about the same (the p99 ranges overlap: acceptor-pool 91 to 113 us,
+  thread-per-core 98 to 115 us, one measurement per run; the acceptor was lower in two runs), so the hand-off cost is small there; the exact hand-off counts are what the example asserts. Neither is advice for general code.
 - **`SpinStart` and the start gate.** A futex barrier can wake threads a millisecond apart on an idle core; the spin brings
   them to one instant so the recorded start skew means something. `std::latch` and `CountDownLatch` do the coarse gate.
 - **`EngineCounters` padded to twice `std::hardware_destructive_interference_size`.** Per-thread counters written on every
@@ -409,6 +409,6 @@ alternations.
 | Observed: Quarkus `event-loop` p99 over `virtual-thread` | 0.959x to 1.413x |
 
 Outliers and failures: none. The `io-uring` enter ratio cleared its bound by at least 4.38x and the Quarkus ratio by at
-least 54.28x. The defect's p99 is observed and not asserted: it didn't reach twice its control's, so the evidence is the
+least 54.28x. The defect's p99 is observed and not asserted: at 2.44x to 2.61x it clears the 2x bound but not twice over, so the evidence is the
 blocked-thread warnings and the in-handler maximum. `asio-io-uring`, `recvmmsg`, the layout p99 ratio, the plain-JDK and
 Python lanes and the `strace` summaries are observed and not asserted.

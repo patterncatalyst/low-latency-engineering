@@ -24,12 +24,12 @@ examples/11-stackful-stackless/verify.sh
 
 - The address space per parked wait of a C++ thread is at least 10x a fiber's, and a fiber's is at least 10x the coroutine's counted frame; the Java platform thread's full resident cost is at least 5x a virtual thread's, and Python's thread RSS at least 5x an `asyncio` task's.
 - The coroutine frame is at most 1,024 B with one allocation per frame (exact), and every fiber and coroutine run has all 10,000 tasks armed.
-- A C++ thread hand-off costs at least 0.9 voluntary context switches per round trip, and fibers and coroutines make 0 (exact).
+- A C++ thread hand-off costs at least 0.9 voluntary context switches per round trip, and fibers and coroutines at most 0.001 (exact counts; 0 observed).
 - The round-trip p50 of a thread is at least 5x a fiber's and a coroutine's in C++, and a Java platform thread's at least 2x a virtual thread's (median of 3 alternations).
 - With a 2 ms blocking call, the neighbour fibers' wake-lateness p99 is at least 1 ms; in the `asyncio` twin the fraction of wakes later than 1.5 ms is at least 2x its baseline's, and each blocking call logs exactly one slow-callback warning (exact).
 - The five line variants count 200,000 parcels, drop none and receive every divert command, and every report passes `lowlat-report check`.
 
-All of it held on the host runs `r04-run1..3` (bare-metal host, untuned, commit 4434ed1). The resident-size ratios, the Java switch counts, the semaphore hand-off, the pinning counts, the coroutine allocation elision (HALO) and the line percentiles are observed and not asserted.
+All of it held on the host runs `r04-run1..3` (bare-metal host, untuned, commit 4434ed1). The RSS ratios, the Java switch counts, the semaphore hand-off, the pinning counts, the coroutine allocation elision (HALO) and the line percentiles are observed and not asserted.
 
 ## Chapter and source
 

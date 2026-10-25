@@ -107,7 +107,7 @@ UDP_STRACE=47328
 UDP_PY=47332
 Q_PORT=47336
 
-# ---- provisional bounds (S10 calibrates; a miss is reported, never loosened here) -----------------------------------
+# ---- bounds (set from the calibration runs; a miss is reported, never loosened here) -----------------------------------
 URING_ENTER_PER_EPOLL_MAX_PERMILLE=250       # 1: io_uring_enter per parcel <= 1/4 of epoll's system calls per parcel
 TPC_P99_RATIO_MAX_PERMILLE=500               # 3: thread-per-core p99 <= 1/2 of acceptor-pool p99 (asserted only if CRIT3_ASSERTED)
 CRIT3_ASSERTED=${CRIT3_ASSERTED:-0}          # 1 only when the ratio clears the bound twice over (<= 1/4) in every calibration run

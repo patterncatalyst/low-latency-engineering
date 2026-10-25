@@ -15,7 +15,7 @@ The same decide path runs on the bare-metal host, natively in the lab guest, and
 ## Run
 
 ```bash
-flock -o "$LOCK" env VM=1 examples/13-where-code-runs/verify.sh
+VM=1 examples/13-where-code-runs/verify.sh
 ```
 
 `VM=1` reverts the lab guest to snapshot `lab-ready-r04`, deploys the repository, checks the three images against `containers/IMAGES.lock`, runs six lanes interleaved three times and shuts the guest down. Without `VM=1` only the host lane runs and the script ends non-zero as a partial run, by design. It needs the `lowlat-target` guest, and nothing on the host changes: no sudo, no sysctl, no firewall rule.
@@ -28,9 +28,9 @@ flock -o "$LOCK" env VM=1 examples/13-where-code-runs/verify.sh
 - The consumer p99.9 under the quota is at least 2x the cpuset's (median of 3 alternations).
 - In every lane and alternation: 200,000 parcels, none dropped, the lane's environment record and image digest, and one set of C++ binary checksums across lanes.
 
-All of it held on the runs `r04-run1..3` (commit 4434ed1; bare-metal host, untuned, with the lab guest booted and idle; guest profile `stock-unpinned`, snapshot `lab-ready-r04`; images pinned in `IMAGES.lock`). Host against VM, bridge against host network, emit lateness per lane, steal ticks, the Quarkus p99 under the two limits and the thread counts are observed and not asserted.
+All of it held on the runs `r04-run1..3` (commit 4434ed1; bare-metal host, untuned, with the lab guest booted and idle; guest profile `stock-unpinned`, snapshot `lab-ready-r04`; images pinned in `IMAGES.lock`). Host against VM, bridge against host network, emit lateness per lane, steal ticks, the Quarkus p99 under the two limits and the GC and Quarkus thread counts are observed and not asserted.
 
 ## Chapter and source
 
 - Chapter: [Chapter 13, Where the code runs: bare metal, VMs and containers, and when not to use containers]({{ '/docs/13-where-code-runs/' | relative_url }})
-- Source: [`examples/13-where-code-runs/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/13-where-code-runs), with its `README.md`, the C++, Java and Python directories, the container images and the VM driver and the committed `results/r04-run1..3/`.
+- Source: [`examples/13-where-code-runs/`](https://github.com/{{ site.github_username }}/{{ site.github_repo }}/tree/main/examples/13-where-code-runs), with its `README.md`, the C++, Java and Python directories, the container images, the VM driver and the committed `results/r04-run1..3/`.

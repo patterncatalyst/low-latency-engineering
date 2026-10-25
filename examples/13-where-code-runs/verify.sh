@@ -62,7 +62,7 @@ HERE=$EXAMPLE_DIR
 CPUPROBE_JAR=$HERE/java/target/where-code-runs-java.jar
 LOCK_FILE=$HERE/containers/IMAGES.lock
 
-# ---- provisional bounds (S10 calibrates; a miss is reported, never loosened here) -------------------------------------
+# ---- bounds (set from the calibration runs; a miss is reported, never loosened here) -------------------------------------
 NR_THROTTLED_QUOTA_MIN=1                      # 1: exact, at least one throttled period under --cpus=2
 QUOTA_P999_RATIO_MIN_PERMILLE=2000            # 4: quota p99.9 >= 2x cpuset (asserted only if CRIT4_ASSERTED)
 CRIT4_ASSERTED=${CRIT4_ASSERTED:-1}           # S10: >= 14.2x in every alternation of 3 runs, so asserted (user, 2026-10-25)

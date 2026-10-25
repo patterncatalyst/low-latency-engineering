@@ -5,7 +5,7 @@
 # after all of them have been evaluated. Latency ratios compare variants within THIS run: the variants alternate
 # (A B C A B C A B C) and the criterion is the median of the three per-alternation ratios. Counters labelled "exact"
 # are deterministic and need no median; the start-gate skew is a timing bound, not an exact count. A p50 is never compared
-# across runs. The bounds sit in variables below; they are provisional (S10 calibrates them, see _plans/r04-plan.md).
+# across runs. The bounds sit in variables below; they were set from three quiet-host calibration runs.
 #   1  memory per waiting task, on the quantity that shows the gap: C++ os-thread over fiber on address space per task
 #      (>= 10x); C++ fiber address space per task over the counted coroutine frame bytes (>= 10x); C++ coroutine frame bytes (exact, a
 #      counting promise operator new on frames that escape into a vector) <= 1,024 with one allocation per frame (exact);
@@ -19,8 +19,9 @@
 #      over virtual-thread
 #   5  the blocking call: Python debug mode logs exactly one slow-callback warning per blocking call (exact); C++
 #      --blocking-sleep-in-fiber pushes the neighbours' wake-lateness p99 to >= 1 ms for a 2 ms call (2x by construction).
-#      Observed: Python p99 and its blocking/baseline ratio (asyncio rounds its epoll timeout up to 1 ms, so a baseline p99
-#      already sits near 1 ms), and the fraction of wakes later than 1.5 ms, blocking against baseline.
+#      Python asyncio: the fraction of wakes later than 1.5 ms, blocking over baseline, >= 2x (asserted while
+#      PY_LATE_FRACTION_ASSERTED=1). Observed: Python p99 and its blocking/baseline ratio (asyncio rounds its epoll
+#      timeout up to 1 ms, so a baseline p99 already sits near 1 ms).
 #   6  line, one simulator instance at 10 kHz x 20 s (200,000 parcels) per variant, UDP 47310-47314: count 200,000,
 #      dropped 0, every divert command received. End-to-end percentiles are observed.
 #   7  every report: lowlat-report check, count > 0, dropped = 0, build.flags (C++ and Java), runtime.placement
@@ -84,7 +85,7 @@ CPP_VARIANTS=(os-thread fiber coroutine)
 JAVA_VARIANTS=(platform-thread virtual-thread)
 PY_VARIANTS=(threads asyncio-tasks)
 
-# ---- provisional bounds (S10 calibrates). Ratios are in thousandths. -------------------------------------------------
+# ---- bounds (set from the calibration runs). Ratios are in thousandths. -------------------------------------------------
 FRAME_BYTES_MAX=1024                    # plan 1,024
 CPP_ADDRESS_THREAD_OVER_FIBER_MILLI=10000   # os-thread >= 10x fiber, on address space per task (the plan's 10x; RSS is observed)
 CPP_FIBER_STACK_OVER_FRAME_MILLI=10000  # the fiber's measured address space per task >= 10x the counted coroutine frame bytes

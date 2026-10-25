@@ -292,6 +292,7 @@ median over its 3 alternations.
 | Coroutine frame (bound at most 1,024 B) and allocations, 10,000 tasks (exact) | 208 B, 10,000 |
 | Full resident cost per wait, Java platform / virtual (bound 5x) | ratio 12.61x to 14.28x |
 | Python GIL thread RSS / `asyncio` `tracemalloc` (bound 5x) | 11.72x to 11.73x |
+| Python free-threaded thread RSS / `asyncio` `tracemalloc` (bound 5x) | 148.43x to 148.44x |
 | Tasks armed, fiber and coroutine (exact) | 10,000 of 10,000 |
 | Voluntary switches per round trip, C++ thread (exact) | 2 |
 | Voluntary switches in 1,020,000 round trips, fiber / coroutine (exact) | 0 / 0 |
@@ -299,6 +300,7 @@ median over its 3 alternations.
 | Round-trip p50, platform / virtual (bound 2x), Java | ratio 10.28x to 10.48x (4,115 to 4,175 / 399 to 404 ns) |
 | Neighbours' p99 with a 2 ms blocking call in a fiber (bound 1 ms) | 1,917 to 1,952 us against 52 us without |
 | `asyncio` slow-callback warnings for 50 blocking calls (exact) | 50 |
+| `asyncio` wakes later than 1.5 ms, with / without the blocking call (bound 2x) | 1,822 to 2,199 of 25,000 / 0 |
 | Line runs, five variants | 200,000 parcels counted, none dropped, every divert command received |
 | Reports | 55 pass `lowlat-report check` in each run |
 | Observed: Python `asyncio` p99 with and without the blocking call | 2.05x to 2.19x (1,305 to 1,308 us without) |
@@ -306,5 +308,5 @@ median over its 3 alternations.
 | Observed: coroutine frames that reached `operator new` in the HALO control | 1,000 of 1,000 non-escaping frames |
 
 Outliers and failures: none. The one asserted bound cleared by under 2x is the fiber's blocking-call lateness (1.90x to
-1.94x of the 1 ms bound), which is set by construction since the call lasts 2 ms. Resident-size ratios, Java switch
+1.94x of the 1 ms bound), which is set by construction since the call lasts 2 ms. RSS ratios, Java switch
 counts, the semaphore hand-off, the pinning counts and the line percentiles are observed and not asserted.

@@ -107,8 +107,8 @@ three alternations within the one run.
 
 - The host lane is a bare-metal host, untuned and shared (`powersave`, `balanced`, a desktop session running). `verify.sh` records the
   host's load and busy share across each host alternation in `host/altN/host-quiet.json` and prints them as observed; it
-  never refuses on them. In the committed runs the host consumer p99.9 ranged from 195 to 264 microseconds with a
-  host load1 between 0.97 and 2.45 over the nine alternations, which is what an unquiet host looks like. The host simulators are pinned to the CPUs left after the consumer's core
+  never refuses on them. In the committed runs the host consumer p99.9 had per-run medians of 195 to 264 microseconds (single alternations
+  176 to 573) with a host load1 between 0.97 and 2.45 over the nine alternations, which is what an unquiet host looks like. The host simulators are pinned to the CPUs left after the consumer's core
   (and its SMT sibling) and CPU 0's core, and that mask is recorded beside the load.
 
 - The Quarkus comparison between the quota and the cpuset is confounded and observed only. The open-loop client runs in the
