@@ -168,6 +168,7 @@ int run(int argc, char** argv) {
   p.rt = !opts.contains("--no-rt");
   if (opts.contains("--cpu")) p.cpu = number("--cpu", opts["--cpu"]);
   if (p.rt && p.cpu < 0) throw std::invalid_argument("--cpu is required with RT (not CPU 0, the housekeeping CPU)");
+  if (p.rt && p.cpu == 0) throw std::invalid_argument("--cpu 0 is the housekeeping CPU (sshd runs there); pick another CPU");
   p.rounds = number("--rounds", get("--rounds", "200"));
   p.bursts = number("--bursts", get("--bursts", "5"));
   p.burst = std::chrono::milliseconds{number("--burst-ms", get("--burst-ms", "20"))};

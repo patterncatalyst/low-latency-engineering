@@ -36,7 +36,7 @@ public final class PeriodicWake {
         return Math.max(0L, deadline - now);
     }
 
-    /** Skipped periods, counted by {@link #nextDeadline}. */
+    /** Wakes recorded, and periods skipped inside the run window: samples + missedPeriods = periods in the window. */
     record Result(long samples, long missedPeriods) {
     }
 

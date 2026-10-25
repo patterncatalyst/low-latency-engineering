@@ -7,7 +7,7 @@ tab, plus a sum column with ``--histofall``) and the trailer lines ``# Min Laten
 ``# Avg Latencies:``, ``# Max Latencies:`` and ``# Histogram Overflows:`` with one value per
 thread. A bucket is one unit wide: 1 us, or 1 ns with ``-N``. The counts are loaded into the
 lowlat recorder (value = bucket x unit, in ns), so percentiles come from HdrHistogram like every
-other report (five significant digits, so 1 us buckets stay distinct to about 65 ms).
+other report (five significant digits, so 1 us buckets stay distinct to about 134 ms).
 
 What is deliberately left out:
 
@@ -62,7 +62,7 @@ _POLICIES = (
     ("rr", "rr"),
 )
 LANGUAGE = "cpp"  # cyclictest is C; the schema's language enum has no "c"
-# 1 us buckets stay distinct in HdrHistogram up to about 65 ms with five significant digits
+# 1 us buckets stay distinct in HdrHistogram up to about 134 ms with five significant digits
 # (three, the kit default, merge neighbouring buckets from about 1 ms).
 SIGNIFICANT_DIGITS = 5
 _HIST_ROW = re.compile(r"^\d+(\s|$)")

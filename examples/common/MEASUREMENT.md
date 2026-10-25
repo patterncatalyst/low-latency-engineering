@@ -183,8 +183,8 @@ Record 1,000 values of 1 ms, then one value of 1 s with an expected interval of
   - Percentiles come from the histogram buckets. cyclictest truncates a latency to whole microseconds (whole
     nanoseconds with `-N`), so a bucket value is the bucket's lower edge in ns and the true latency is up to
     1 us higher. The recorder uses five HdrHistogram digits (the kit default is three), which keeps 1 us
-    buckets distinct to about 65 ms and adds under 0.002% above 131 us (a `p99` may read 5000031 for a 5000 us
-    bucket). `-N` buckets stay distinct only to 131 us.
+    buckets distinct to about 134 ms and adds under 0.002% above 131 us (a `p99` may read 5000031 for a 5000 us
+    bucket). `-N` buckets stay distinct only to about 262 us.
   - The average, `sysinfo.nodename`, `sysinfo.realtime` and the raw command line are never written. The
     clock (absent `-c` means `realtime` at v2.11), policy and priority are in `notes`, with the priority
     and policy rules of `process_options` applied (`-p95 --policy=other` runs FIFO 95).
