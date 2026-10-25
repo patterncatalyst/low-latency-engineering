@@ -164,12 +164,13 @@ probe() {
 # four simulator instances on the housekeeping CPUs 0-1, loopback. The simulator starts only when the consumer has printed
 # "released" (it is bound and its start hold is over).
 line() {
-  local expect=$((LINE_RATE * LINE_SECONDS * CAMERAS)) i cons tries
+  # io-receive --expect is per camera (Ch12 lane-cpp.sh passes rate x seconds); the total is for the log line.
+  local per_camera=$((LINE_RATE * LINE_SECONDS)) expect=$((LINE_RATE * LINE_SECONDS * CAMERAS)) i cons tries
   local -a sims=()
   step "guest: the line, $((LINE_RATE * CAMERAS)) Hz x ${LINE_SECONDS} s = $expect parcels, consumer FIFO 90 on CPU $LINE_CPU"
   if ((DRY_RUN)); then
     x sudo env LOWLAT_PROFILE="$LOWLAT_PROFILE" timeout -s KILL $((LINE_SECONDS + 90)) chrt -f 90 "$BIN/io-receive" --variant epoll \
-      --base-port "$UDP_BASE" --expect "$expect" --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --cpus "$LINE_CPU" --report "$OUT/line/consumer.json"
+      --base-port "$UDP_BASE" --expect "$per_camera" --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --cpus "$LINE_CPU" --report "$OUT/line/consumer.json"
     for ((i = 0; i < CAMERAS; i++)); do
       x taskset -c "$HOUSEKEEPING_CPUS" timeout -s KILL $((LINE_SECONDS + 30)) "$BIN/line-simulator" --rate "$LINE_RATE" \
         --duration "$LINE_SECONDS" --dest "127.0.0.1:$((UDP_BASE + i))" --wire flat --quiet
@@ -178,7 +179,7 @@ line() {
   fi
   # shellcheck disable=SC2024 # the log is the guest user's; only the consumer runs as root
   sudo env LOWLAT_PROFILE="$LOWLAT_PROFILE" timeout -s KILL $((LINE_SECONDS + 90)) chrt -f 90 "$BIN/io-receive" --variant epoll \
-    --base-port "$UDP_BASE" --expect "$expect" --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --cpus "$LINE_CPU" \
+    --base-port "$UDP_BASE" --expect "$per_camera" --hold-ms "$HOLD_MS" --decide-ns "$DECIDE_NS" --cpus "$LINE_CPU" \
     --report "$OUT/line/consumer.json" >"$OUT/line/consumer.log" 2>&1 &
   cons=$!
   bg_track "$cons"

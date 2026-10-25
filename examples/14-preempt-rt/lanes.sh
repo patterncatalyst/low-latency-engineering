@@ -44,6 +44,7 @@ _kver=${LAB_STOCK_KERNEL%.fc*}  # 7.2.11-200
 _kdist=${LAB_STOCK_KERNEL##*.}  # fc44
 KERNEL_RELEASE_STOCK="$LAB_STOCK_KERNEL.x86_64"
 KERNEL_RELEASE_RT="$_kver.lowlatrt.$_kdist.x86_64+rt"
+KERNEL_SERIES=$(cut -d. -f1-2 <<<"$LAB_STOCK_KERNEL") # 7.2: what a scrubbed stock release reads
 unset _kver _kdist
 # lane_preempt_mode LANE: what /sys/kernel/debug/sched/preempt shows (S1): the selected mode is the one in parentheses.
 lane_preempt_mode() {

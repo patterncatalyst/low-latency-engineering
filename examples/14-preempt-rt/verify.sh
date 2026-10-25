@@ -237,7 +237,10 @@ evaluate() {
         crit_exact 1 "$lane alt$n CONFIG_PREEMPT_RT=y in /boot/config" "$cfg" true
         irq_want=$IRQ_KTHREADS_RT ktim_want=$KTIMERS_RT
       else
-        crit_exact 1 "$lane alt$n uname -r is the stock build" "$rel" "$KERNEL_RELEASE_STOCK"
+        # The stock build is the same NVR the host runs, so scrub_results cuts its release to major.minor in every
+        # committed file (host-ids). The exact NVR was asserted on the snapshot itself by check-prereqs.sh --vm --r05
+        # stock when build-r05-snapshots.sh took it; here the series, the snapshot and uname -v carry the check.
+        crit_exact 1 "$lane alt$n uname -r is the stock series (scrubbed to major.minor)" "$rel" "$KERNEL_SERIES"
         crit_true 1 "$lane alt$n uname -v says PREEMPT_DYNAMIC and not PREEMPT_RT" "$([[ $ver == *PREEMPT_DYNAMIC* && $ver != *PREEMPT_RT* ]] && echo 1 || echo 0)" "measured '${ver:0:40}'"
         crit_exact 1 "$lane alt$n CONFIG_PREEMPT_RT not set" "$cfg" false
         irq_want=$IRQ_KTHREADS_STOCK ktim_want=$KTIMERS_STOCK
