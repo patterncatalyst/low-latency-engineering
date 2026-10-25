@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 448" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="44" width="840" height="88" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="64" font-size="12" font-weight="700" fill="#1d1d1d">event-loop at 5,000 Hz: a non-blocking timer holds the wait</text>
+<rect x="20" y="138" width="840" height="88" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="158" font-size="12" font-weight="700" fill="#1d1d1d">worker-pool at 5,000 Hz: 10 in flight (5,000 Hz x 2 ms) against 8 workers</text>
+<rect x="20" y="232" width="840" height="88" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="252" font-size="12" font-weight="700" fill="#1d1d1d">virtual-thread at 5,000 Hz: the sleeping thread unmounts</text>
+<rect x="20" y="326" width="840" height="88" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="346" font-size="12" font-weight="700" fill="#1d1d1d">blocking-on-event-loop at 1,850 Hz: the defect, against an event-loop control</text>
+<rect x="40" y="70" width="190" height="52" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="94.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Event-loop threads</text>
+<text x="135.0" y="111.0" font-size="11.5" fill="#555555" text-anchor="middle">4 threads</text>
+<rect x="280" y="70" width="270" height="52" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="415.0" y="94.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Timer callback</text>
+<text x="415.0" y="111.0" font-size="11.5" fill="#555555" text-anchor="middle">no thread waits</text>
+<rect x="600" y="70" width="240" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="720.0" y="94.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99, Java</text>
+<text x="720.0" y="111.0" font-size="11.5" fill="#555555" text-anchor="middle">9.0-10.4 ms</text>
+<rect x="40" y="164" width="190" height="52" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="188.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Worker pool</text>
+<text x="135.0" y="205.0" font-size="11.5" fill="#555555" text-anchor="middle">8 workers, all active</text>
+<rect x="280" y="164" width="270" height="52" rx="9" fill="#f4f4f4" stroke="#888888" stroke-width="1.5"/>
+<text x="415.0" y="188.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Queue builds in front</text>
+<text x="415.0" y="205.0" font-size="11.5" fill="#555555" text-anchor="middle">client in flight up to 5,661-5,677</text>
+<rect x="600" y="164" width="240" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="720.0" y="188.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99, Java</text>
+<text x="720.0" y="205.0" font-size="11.5" fill="#555555" text-anchor="middle">1,453.3-1,455.4 ms</text>
+<rect x="40" y="258" width="190" height="52" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="282.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Carrier threads</text>
+<text x="135.0" y="299.0" font-size="11.5" fill="#555555" text-anchor="middle">4 threads</text>
+<rect x="280" y="258" width="270" height="52" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="415.0" y="282.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Virtual thread sleeps 2 ms</text>
+<text x="415.0" y="299.0" font-size="11.5" fill="#555555" text-anchor="middle">unmounted, carrier freed</text>
+<rect x="600" y="258" width="240" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="720.0" y="282.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99, Java</text>
+<text x="720.0" y="299.0" font-size="11.5" fill="#555555" text-anchor="middle">6.5-8.9 ms</text>
+<rect x="40" y="352" width="190" height="52" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="135.0" y="376.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Event-loop threads</text>
+<text x="135.0" y="393.0" font-size="11.5" fill="#555555" text-anchor="middle">4 threads</text>
+<rect x="280" y="352" width="270" height="52" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="415.0" y="376.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Thread.sleep(2) on the loop</text>
+<text x="415.0" y="393.0" font-size="11.5" fill="#555555" text-anchor="middle">at most 4 requests in a handler</text>
+<rect x="600" y="352" width="240" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="720.0" y="376.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">p99, Java: 8.2-8.5 ms</text>
+<text x="720.0" y="393.0" font-size="11.5" fill="#555555" text-anchor="middle">control 3.3 ms, ratio 2.44-2.61x</text>
+<path d="M230,96 L280,96" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M550,96 L600,96" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,190 L280,190" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M550,190 L600,190" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,284 L280,284" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M550,284 L600,284" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,378 L280,378" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M550,378 L600,378" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Little&#x27;s law: 10 requests in flight do not fit in 8 workers</text>
+<text x="440" y="436" font-size="12" fill="#1d1d1d" text-anchor="middle">Java, Quarkus on loopback: p99 per-run median of 3 alternations, range across 3 runs; the defect ratio is observed.</text>
+</svg>
