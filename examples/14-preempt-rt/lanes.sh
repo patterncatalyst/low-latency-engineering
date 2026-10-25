@@ -12,6 +12,8 @@
 # The lanes alternate stock-lazy, stock-full, rt, three times (interleave_env), each from a freshly reverted snapshot (D4).
 
 EXAMPLE=14-preempt-rt
+# shellcheck source=SCRIPTDIR/../../versions.env
+. "$(dirname "${BASH_SOURCE[0]}")/../../versions.env"
 LANES=(stock-lazy stock-full rt)
 ROUNDS=3
 
@@ -37,8 +39,12 @@ IRQ_KTHREADS_RT=80    # a thread for every device IRQ
 KTIMERS_STOCK=0
 KTIMERS_RT=4          # one per vCPU, SCHED_FIFO 1
 KSOFTIRQD=4           # one per vCPU in both kernels (SCHED_OTHER)
-KERNEL_RELEASE_STOCK='7.2.11-200.fc44.x86_64'
-KERNEL_RELEASE_RT='7.2.11-200.lowlatrt.fc44.x86_64+rt'
+# Built from the pinned SRPM version (versions.env LAB_STOCK_KERNEL) so the release strings live in one place.
+_kver=${LAB_STOCK_KERNEL%.fc*}  # 7.2.11-200
+_kdist=${LAB_STOCK_KERNEL##*.}  # fc44
+KERNEL_RELEASE_STOCK="$LAB_STOCK_KERNEL.x86_64"
+KERNEL_RELEASE_RT="$_kver.lowlatrt.$_kdist.x86_64+rt"
+unset _kver _kdist
 # lane_preempt_mode LANE: what /sys/kernel/debug/sched/preempt shows (S1): the selected mode is the one in parentheses.
 lane_preempt_mode() {
   case $1 in
