@@ -38,11 +38,11 @@ def edge(a, b, **kw):
 
 
 bands = [
-    {"x": 20, "y": 44, "w": 410, "h": 306, "label": "container-cpu-quota: --cpus=2"},
-    {"x": 450, "y": 44, "w": 410, "h": 306, "label": "container-cpuset: --cpuset-cpus=2,3"},
+    {"x": 20, "y": 44, "w": 410, "h": 322, "label": "container-cpu-quota: --cpus=2"},
+    {"x": 450, "y": 44, "w": 410, "h": 322, "label": "container-cpuset: --cpuset-cpus=2,3"},
 ]
 
-lim_q = box(36, 74, 90, 264, "kernel", "Limit", "--cpus=2")
+lim_q = box(36, 74, 90, 280, "kernel", "Limit", "--cpus=2")
 cpp_q = box(
     166,
     74,
@@ -64,9 +64,19 @@ jv_q = box(
     "virtual-thread scheduler 2",
     "GC threads 2",
 )
-qk_q = box(166, 288, 256, 50, "user", "Quarkus service: 2 event loops", "8 worker threads")
+qk_q = box(
+    166,
+    288,
+    256,
+    62,
+    "user",
+    "Quarkus service",
+    "2 event-loop threads running",
+    "8 workers, fixed in",
+    "application.properties",
+)
 
-lim_c = box(466, 74, 90, 264, "kernel", "Limit", "cpuset", "2,3")
+lim_c = box(466, 74, 90, 280, "kernel", "Limit", "cpuset", "2,3")
 cpp_c = box(
     596,
     74,
@@ -88,20 +98,30 @@ jv_c = box(
     "virtual-thread scheduler 2",
     "GC threads 2",
 )
-qk_c = box(596, 288, 256, 50, "user", "Quarkus service: 2 event loops", "8 worker threads")
+qk_c = box(
+    596,
+    288,
+    256,
+    62,
+    "user",
+    "Quarkus service",
+    "2 event-loop threads running",
+    "8 workers, fixed in",
+    "application.properties",
+)
 
 q = [cpp_q, py_q, jv_q, qk_q]
 c = [cpp_c, py_c, jv_c, qk_c]
 nodes = [lim_q, *q, lim_c, *c]
 
-edges = [edge(right(lim_q, (n["y"] + n["h"] / 2 - 74) / 264), left(n)) for n in q]
-edges += [edge(right(lim_c, (n["y"] + n["h"] / 2 - 74) / 264), left(n)) for n in c]
+edges = [edge(right(lim_q, (n["y"] + n["h"] / 2 - 74) / 280), left(n)) for n in q]
+edges += [edge(right(lim_c, (n["y"] + n["h"] / 2 - 74) / 280), left(n)) for n in c]
 
 notes = [
     {
         "x": 440,
         "y": 28,
-        "text": "One container, one limit, and each runtime reads a different count",
+        "text": "One container, one limit: C++, Python and Java read different counts",
         "anchor": "middle",
         "size": 14,
         "bold": True,
@@ -109,7 +129,7 @@ notes = [
     },
     {
         "x": 440,
-        "y": 374,
+        "y": 388,
         "text": (
             "Amber answers ignore the limit. The vm lane, 4 vCPUs and no limit: "
             "C++ 4, Python 4, Java 4."
@@ -117,9 +137,19 @@ notes = [
         "anchor": "middle",
         "size": 12,
     },
+    {
+        "x": 440,
+        "y": 406,
+        "text": (
+            "Quarkus: the 8 workers are set by configuration; event-loop threads "
+            "are counted as running."
+        ),
+        "anchor": "middle",
+        "size": 12,
+    },
 ]
 
-g.emit("13-cpu-count-views", 880, 400, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("13-cpu-count-views", 880, 422, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

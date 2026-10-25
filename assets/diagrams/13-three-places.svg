@@ -12,16 +12,16 @@
 <text x="179.0" y="125.5" font-size="11.5" fill="#555555" text-anchor="middle">on the host, loopback</text>
 <rect x="350" y="74" width="470" height="58" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="585.0" y="93.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">lane host</text>
-<text x="585.0" y="110.5" font-size="11.5" fill="#555555" text-anchor="middle">emit lateness p99 63-65 us</text>
-<text x="585.0" y="125.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer p99 98 us</text>
+<text x="585.0" y="110.5" font-size="11.5" fill="#555555" text-anchor="middle">emit lateness p99 62-64 us</text>
+<text x="585.0" y="125.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer p99 97-98 us</text>
 <rect x="64" y="172" width="270" height="58" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
 <text x="199.0" y="191.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">vm lane</text>
 <text x="199.0" y="208.5" font-size="11.5" fill="#555555" text-anchor="middle">native in the guest, VM exits</text>
 <text x="199.0" y="223.5" font-size="11.5" fill="#555555" text-anchor="middle">steal ticks 0-1 of 8,848-9,886</text>
 <rect x="370" y="172" width="430" height="58" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="585.0" y="191.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">lane vm</text>
-<text x="585.0" y="208.5" font-size="11.5" fill="#555555" text-anchor="middle">emit lateness p99 81-84 us</text>
-<text x="585.0" y="223.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer p99 99-102 us</text>
+<text x="585.0" y="208.5" font-size="11.5" fill="#555555" text-anchor="middle">emit lateness p99 80-83 us</text>
+<text x="585.0" y="223.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer p99 99-101 us</text>
 <rect x="84" y="270" width="270" height="58" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
 <text x="219.0" y="289.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">container-host-net lane</text>
 <text x="219.0" y="306.5" font-size="11.5" fill="#555555" text-anchor="middle">guest network namespace</text>
@@ -29,11 +29,11 @@
 <rect x="390" y="270" width="410" height="58" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="595.0" y="289.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">lane container-host-net</text>
 <text x="595.0" y="306.5" font-size="11.5" fill="#555555" text-anchor="middle">emit lateness p99 81-89 us</text>
-<text x="595.0" y="321.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer p99 101-105 us</text>
+<text x="595.0" y="321.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer p99 101-104 us</text>
 <rect x="84" y="338" width="270" height="58" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
 <text x="219.0" y="357.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">container-bridge lane</text>
-<text x="219.0" y="374.5" font-size="11.5" fill="#555555" text-anchor="middle">veth and bridge to the consumer</text>
-<text x="219.0" y="389.5" font-size="11.5" fill="#555555" text-anchor="middle">seccomp: io_uring_setup EPERM</text>
+<text x="219.0" y="374.5" font-size="11.5" fill="#555555" text-anchor="middle">simulators in the guest,</text>
+<text x="219.0" y="389.5" font-size="11.5" fill="#555555" text-anchor="middle">consumer in the container</text>
 <rect x="390" y="338" width="410" height="58" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="595.0" y="357.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">lane container-bridge</text>
 <text x="595.0" y="374.5" font-size="11.5" fill="#555555" text-anchor="middle">emit lateness p99 85-103 us</text>
@@ -42,6 +42,6 @@
 <path d="M334,201 L370,201" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <path d="M354,299 L390,299" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <path d="M354,367 L390,367" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Each layer adds its own floor; compare lanes inside one run</text>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">Compare lanes inside one run; every value is labelled by lane</text>
 <text x="440" y="446" font-size="12" fill="#1d1d1d" text-anchor="middle">Emit lateness is the simulator&#x27;s jitter floor. 10 kHz x 20 s per lane: per-run median of 3 alternations, range across 3 runs.</text>
 </svg>

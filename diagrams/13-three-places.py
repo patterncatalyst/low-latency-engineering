@@ -47,7 +47,7 @@ host_add = box(
     44, 74, 270, 58, "user", "host lane", "simulators and consumer", "on the host, loopback"
 )
 host_res = box(
-    350, 74, 470, 58, "ink", "lane host", "emit lateness p99 63-65 us", "consumer p99 98 us"
+    350, 74, 470, 58, "ink", "lane host", "emit lateness p99 62-64 us", "consumer p99 97-98 us"
 )
 
 vm_add = box(
@@ -61,7 +61,7 @@ vm_add = box(
     "steal ticks 0-1 of 8,848-9,886",
 )
 vm_res = box(
-    370, 172, 430, 58, "ink", "lane vm", "emit lateness p99 81-84 us", "consumer p99 99-102 us"
+    370, 172, 430, 58, "ink", "lane vm", "emit lateness p99 80-83 us", "consumer p99 99-101 us"
 )
 
 hn_add = box(
@@ -82,7 +82,7 @@ hn_res = box(
     "ink",
     "lane container-host-net",
     "emit lateness p99 81-89 us",
-    "consumer p99 101-105 us",
+    "consumer p99 101-104 us",
 )
 
 br_add = box(
@@ -92,8 +92,8 @@ br_add = box(
     58,
     "user",
     "container-bridge lane",
-    "veth and bridge to the consumer",
-    "seccomp: io_uring_setup EPERM",
+    "simulators in the guest,",
+    "consumer in the container",
 )
 br_res = box(
     390,
@@ -119,7 +119,7 @@ notes = [
     {
         "x": 440,
         "y": 28,
-        "text": "Each layer adds its own floor; compare lanes inside one run",
+        "text": "Compare lanes inside one run; every value is labelled by lane",
         "anchor": "middle",
         "size": 14,
         "bold": True,

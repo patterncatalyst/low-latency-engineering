@@ -70,7 +70,7 @@ bands = [
 
 h1 = box(40, 70, 190, 52, "user", "Event-loop threads", "4 threads")
 m1 = box(280, 70, 270, 52, "sub", "Timer callback", "no thread waits")
-r1 = box(600, 70, 240, 52, "ink", "p99, Java", "9.0-10.4 ms")
+r1 = box(600, 70, 240, 52, "ink", "p99, Java", "9.0-10.3 ms")
 
 h2 = box(40, 164, 190, 52, "user", "Worker pool", "8 workers, all active")
 m2 = box(280, 164, 270, 52, "kernel", "Queue builds in front", "client in flight up to 5,661-5,677")
@@ -84,7 +84,7 @@ h4 = box(40, 352, 190, 52, "user", "Event-loop threads", "4 threads")
 m4 = box(
     280, 352, 270, 52, "accent", "Thread.sleep(2) on the loop", "at most 4 requests in a handler"
 )
-r4 = box(600, 352, 240, 52, "ink", "p99, Java: 8.2-8.5 ms", "control 3.3 ms, ratio 2.44-2.61x")
+r4 = box(600, 352, 240, 52, "ink", "p99, Java: 8.1-8.5 ms", "control 3.3 ms, ratio 2.44-2.61x")
 
 nodes = [h1, m1, r1, h2, m2, r2, h3, m3, r3, h4, m4, r4]
 

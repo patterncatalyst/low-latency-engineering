@@ -62,10 +62,19 @@ res_l = box(
     "recvmmsg 0.573-0.614",
 )
 
-arm = box(470, 78, 170, 50, "kernel", "Multishot recvmsg", "armed once per socket")
-buf = box(660, 78, 170, 50, "sub", "Provided buffer ring", "kernel picks a buffer")
-cq = box(500, 156, 310, 50, "accent", "Completion queue", "one entry per datagram")
-reap = box(500, 234, 310, 50, "user", "Reap every queued entry", "io_uring_enter only to wait")
+arm = box(
+    466,
+    78,
+    186,
+    62,
+    "kernel",
+    "Multishot recvmsg",
+    "stays armed; re-armed",
+    "when the kernel ends it",
+)
+buf = box(672, 78, 158, 62, "sub", "Provided buffer ring", "kernel picks a buffer")
+cq = box(500, 164, 310, 50, "accent", "Completion queue", "one entry per datagram")
+reap = box(500, 240, 310, 50, "user", "Reap every queued entry", "io_uring_enter only to wait")
 res_r = box(
     470,
     312,
@@ -84,7 +93,7 @@ edges = [
     edge(bottom(ep), top(rm), amber=True, label="kernel crossing", lx=52, ly=2),
     edge(bottom(rm, 0.5), top(res_l, 0.5)),
     edge(left(buf), right(arm), dashed=True),
-    edge(bottom(arm, 0.5), top(cq, round((555 - 500) / 310, 4))),
+    edge(bottom(arm, 0.5), top(cq, round((559 - 500) / 310, 4))),
     edge(bottom(cq), top(reap), amber=True, label="io_uring_enter", lx=46, ly=2),
     edge(bottom(reap, 0.5), top(res_r, 0.5)),
 ]
@@ -93,7 +102,10 @@ notes = [
     {
         "x": 440,
         "y": 28,
-        "text": "One io_uring_enter reaps many completions; epoll pays two crossings per parcel",
+        "text": (
+            "One io_uring_enter reaps 14.7-16.2 completions; "
+            "epoll pays a recvmsg per parcel plus epoll_wait"
+        ),
         "anchor": "middle",
         "size": 14,
         "bold": True,

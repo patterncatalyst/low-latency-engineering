@@ -42,7 +42,7 @@ bands = [
     {"x": 450, "y": 44, "w": 410, "h": 358, "label": "Acceptor and pool: one receive thread"},
 ]
 
-cam_l = box(60, 74, 330, 40, "kernel", "Four cameras", "UDP, four sockets")
+cam_l = box(60, 74, 330, 40, "kernel", "Four cameras", "UDP, four ports")
 t = [
     box(36 + 98 * i, 196, 88, 68, "user", f"Thread {i + 1}", "own socket", "own ring")
     for i in range(4)
@@ -55,12 +55,12 @@ res_l = box(
     "ink",
     "Thread-per-core (C++, saturation)",
     "hand-offs per parcel 0, p99 68-69 us (observed)",
-    "busiest receiver 382-384 permille busy",
+    "busiest receiver 384 permille busy",
 )
 
 cam_r = box(520, 74, 250, 40, "kernel", "Four cameras", "UDP datagrams")
 acc = box(520, 134, 250, 44, "user", "Receive thread", "decodes, hands off")
-hand = box(470, 198, 360, 40, "accent", "Hand-off", "Ch10 multi-producer log")
+hand = box(470, 198, 360, 40, "accent", "Hand-off", "one Ch10 log per worker, round robin")
 w = [box(466 + 98 * i, 262, 88, 52, "user", f"Worker {i + 1}", "decides") for i in range(4)]
 res_r = box(
     470,
@@ -69,15 +69,15 @@ res_r = box(
     62,
     "ink",
     "Acceptor and pool (C++, saturation)",
-    "hand-offs per parcel 1, p99 84-91 us (observed)",
-    "acceptor 813-831 permille busy",
+    "hand-offs per parcel 1, p99 84-90 us (observed)",
+    "acceptor 820-822 permille busy",
 )
 
 nodes = [cam_l, *t, res_l, cam_r, acc, hand, *w, res_r]
 
 edges = [edge(bottom(cam_l, round((t[i]["x"] + 44 - 60) / 330, 4)), top(t[i])) for i in range(4)]
-edges[0]["label"] = "SO_REUSEPORT"
-edges[0]["lx"] = 40
+edges[0]["label"] = "one port per camera"
+edges[0]["lx"] = 62
 edges[0]["ly"] = -4
 edges += [
     edge(bottom(cam_r), top(acc)),
@@ -109,7 +109,8 @@ notes = [
         "x": 440,
         "y": 442,
         "text": (
-            "At line rate, 2.5 kHz per camera, p99 is 99-116 us thread-per-core and "
+            "At line rate, 2.5 kHz per camera, one measurement per run, p99 is "
+            "98-115 us thread-per-core and "
             "91-113 us acceptor and pool."
         ),
         "anchor": "middle",

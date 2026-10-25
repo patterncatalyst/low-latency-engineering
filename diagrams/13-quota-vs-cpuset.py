@@ -69,7 +69,8 @@ res_q = box(
     44,
     "ink",
     "Lane container-cpu-quota",
-    "nr_throttled 206-207, throttled 37.8-40.7 s, consumer p99.9 53,412-55,575 us",
+    "nr_throttled 206-207, throttled time 37.8-40.7 s (summed over the guest's 4 CPUs), "
+    "consumer p99.9 53,411-55,574 us",
 )
 
 run_c = [
@@ -82,7 +83,7 @@ res_c = box(
     44,
     "ink",
     "Lane container-cpuset",
-    "nr_throttled 0, throttled 0.0 s, consumer p99.9 2,912-4,067 us",
+    "nr_throttled 0, throttled time 0.0 s, consumer p99.9 2,912-4,067 us",
 )
 
 nodes = [*run_q, *thr_q, res_q, *run_c, res_c]
@@ -93,7 +94,9 @@ notes = [
     {
         "x": 440,
         "y": 28,
-        "text": "A quota stops the whole cgroup at the period edge; a cpuset only shares two CPUs",
+        "text": (
+            "A quota stops the whole cgroup until the period edge; a cpuset only shares two CPUs"
+        ),
         "anchor": "middle",
         "size": 14,
         "bold": True,
@@ -109,9 +112,16 @@ notes = [
         "anchor": "middle",
         "size": 12,
     },
+    {
+        "x": 440,
+        "y": 422,
+        "text": "Percentiles are per-run medians of 3 alternations, range across 3 runs.",
+        "anchor": "middle",
+        "size": 12,
+    },
 ]
 
-g.emit("13-quota-vs-cpuset", 880, 424, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("13-quota-vs-cpuset", 880, 440, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

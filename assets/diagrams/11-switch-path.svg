@@ -1,64 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 446" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 456" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
 <defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
-<rect x="20" y="44" width="840" height="112" rx="12" fill="#fafafa" stroke="#ddd"/>
+<rect x="20" y="44" width="840" height="104" rx="12" fill="#fafafa" stroke="#ddd"/>
 <text x="32" y="64" font-size="12" font-weight="700" fill="#1d1d1d">OS threads: a futex wake and a kernel schedule</text>
-<rect x="20" y="164" width="840" height="112" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="184" font-size="12" font-weight="700" fill="#1d1d1d">Fibers and virtual threads: a context swap in user space</text>
-<rect x="20" y="284" width="840" height="112" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="304" font-size="12" font-weight="700" fill="#1d1d1d">Coroutines: a resume by symmetric transfer</text>
-<rect x="36" y="74" width="130" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="101.0" y="109.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Thread A</text>
-<text x="101.0" y="126.0" font-size="11.5" fill="#555555" text-anchor="middle">futex wake</text>
-<rect x="206" y="74" width="210" height="74" rx="9" fill="#f4f4f4" stroke="#888888" stroke-width="1.5"/>
-<text x="311.0" y="101.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Kernel schedule</text>
-<text x="311.0" y="118.5" font-size="11.5" fill="#555555" text-anchor="middle">voluntary switches per</text>
-<text x="311.0" y="133.5" font-size="11.5" fill="#555555" text-anchor="middle">round trip: 2.000 (C++, Java)</text>
-<rect x="456" y="74" width="130" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="521.0" y="109.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Thread B</text>
-<text x="521.0" y="126.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
-<rect x="626" y="74" width="224" height="74" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="738.0" y="94.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Round-trip p50</text>
-<text x="738.0" y="111.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 3,755-3,777 ns</text>
-<text x="738.0" y="126.0" font-size="11.5" fill="#555555" text-anchor="middle">Python 4,011-4,029 ns</text>
-<text x="738.0" y="141.0" font-size="11.5" fill="#555555" text-anchor="middle">Java 4,115-4,175 ns</text>
-<rect x="36" y="194" width="130" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="101.0" y="229.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Fiber A</text>
-<text x="101.0" y="246.0" font-size="11.5" fill="#555555" text-anchor="middle">yields</text>
-<rect x="206" y="194" width="210" height="74" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
-<text x="311.0" y="221.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Context swap in user space</text>
-<text x="311.0" y="238.5" font-size="11.5" fill="#555555" text-anchor="middle">voluntary switches in</text>
-<text x="311.0" y="253.5" font-size="11.5" fill="#555555" text-anchor="middle">1,020,000 trips: C++ 0, Java 2-6</text>
-<rect x="456" y="194" width="130" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="521.0" y="229.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Fiber B</text>
-<text x="521.0" y="246.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
-<rect x="626" y="194" width="224" height="74" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="738.0" y="221.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Round-trip p50</text>
-<text x="738.0" y="238.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ fiber 205-207 ns</text>
-<text x="738.0" y="253.5" font-size="11.5" fill="#555555" text-anchor="middle">Java virtual thread 399-404 ns</text>
-<rect x="36" y="314" width="130" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="101.0" y="349.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Coroutine A</text>
-<text x="101.0" y="366.0" font-size="11.5" fill="#555555" text-anchor="middle">co_await</text>
-<rect x="206" y="314" width="210" height="74" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
-<text x="311.0" y="341.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Symmetric transfer</text>
-<text x="311.0" y="358.5" font-size="11.5" fill="#555555" text-anchor="middle">voluntary switches in</text>
-<text x="311.0" y="373.5" font-size="11.5" fill="#555555" text-anchor="middle">1,020,000 trips: C++ 0</text>
-<rect x="456" y="314" width="130" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
-<text x="521.0" y="349.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Coroutine B</text>
-<text x="521.0" y="366.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
-<rect x="626" y="314" width="224" height="74" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="738.0" y="341.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Round-trip p50</text>
-<text x="738.0" y="358.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ 7-18 ns</text>
-<text x="738.0" y="373.5" font-size="11.5" fill="#555555" text-anchor="middle">Python asyncio 3,785-3,819 ns</text>
-<path d="M166,111 L206,111" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
-<path d="M416,111 L456,111" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
-<path d="M586,111 L626,111" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M166,231 L206,231" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M416,231 L456,231" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M586,231 L626,231" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M166,351 L206,351" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M416,351 L456,351" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<path d="M586,351 L626,351" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">A switch that stays in user space skips the kernel round trip</text>
-<text x="440" y="418" font-size="12" fill="#1d1d1d" text-anchor="middle">p50 of 1,000,000 round trips in batches of 1,000: per-run median of 3 alternations, range across 3 runs (Python: one measurement per run).</text>
-<text x="440" y="436" font-size="12" fill="#1d1d1d" text-anchor="middle">Thread over fiber in C++: 18.25-18.33x. Platform thread over virtual thread in Java: 10.28-10.48x.</text>
+<rect x="20" y="154" width="840" height="96" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="174" font-size="12" font-weight="700" fill="#1d1d1d">Fibers and virtual threads: a context swap in user space</text>
+<rect x="20" y="256" width="840" height="96" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="276" font-size="12" font-weight="700" fill="#1d1d1d">Coroutines: a resume without a thread switch</text>
+<rect x="20" y="358" width="840" height="52" rx="12" fill="#fafafa" stroke="#ddd"/>
+<rect x="36" y="72" width="130" height="68" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="101.0" y="104.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Thread A</text>
+<text x="101.0" y="121.0" font-size="11.5" fill="#555555" text-anchor="middle">futex wake</text>
+<rect x="206" y="72" width="210" height="68" rx="9" fill="#f4f4f4" stroke="#888888" stroke-width="1.5"/>
+<text x="311.0" y="96.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Kernel schedule</text>
+<text x="311.0" y="113.5" font-size="11.5" fill="#555555" text-anchor="middle">voluntary switches per</text>
+<text x="311.0" y="128.5" font-size="11.5" fill="#555555" text-anchor="middle">round trip: 2.000 (C++, Java)</text>
+<rect x="456" y="72" width="130" height="68" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="521.0" y="104.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Thread B</text>
+<text x="521.0" y="121.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
+<rect x="626" y="72" width="224" height="68" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="738.0" y="89.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Round-trip p50</text>
+<text x="738.0" y="106.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 3,755-3,777 ns</text>
+<text x="738.0" y="121.0" font-size="11.5" fill="#555555" text-anchor="middle">Python 4,011-4,029 ns</text>
+<text x="738.0" y="136.0" font-size="11.5" fill="#555555" text-anchor="middle">Java 4,115-4,175 ns</text>
+<rect x="36" y="182" width="130" height="62" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="101.0" y="211.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Fiber A</text>
+<text x="101.0" y="228.0" font-size="11.5" fill="#555555" text-anchor="middle">yields</text>
+<rect x="206" y="182" width="210" height="62" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="311.0" y="203.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Context swap in user space</text>
+<text x="311.0" y="220.5" font-size="11.5" fill="#555555" text-anchor="middle">voluntary switches in</text>
+<text x="311.0" y="235.5" font-size="11.5" fill="#555555" text-anchor="middle">1,020,000 trips: C++ 0, Java 2-6</text>
+<rect x="456" y="182" width="130" height="62" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="521.0" y="211.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Fiber B</text>
+<text x="521.0" y="228.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
+<rect x="626" y="182" width="224" height="62" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="738.0" y="203.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Round-trip p50</text>
+<text x="738.0" y="220.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ fiber 205-207 ns</text>
+<text x="738.0" y="235.5" font-size="11.5" fill="#555555" text-anchor="middle">Java virtual thread 399-404 ns</text>
+<rect x="36" y="284" width="130" height="62" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="101.0" y="313.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Coroutine A</text>
+<text x="101.0" y="330.0" font-size="11.5" fill="#555555" text-anchor="middle">co_await</text>
+<rect x="206" y="284" width="210" height="62" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="311.0" y="305.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Symmetric transfer</text>
+<text x="311.0" y="322.5" font-size="11.5" fill="#555555" text-anchor="middle">voluntary switches in</text>
+<text x="311.0" y="337.5" font-size="11.5" fill="#555555" text-anchor="middle">1,020,000 trips: C++ 0</text>
+<rect x="456" y="284" width="130" height="62" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="521.0" y="313.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Coroutine B</text>
+<text x="521.0" y="330.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
+<rect x="626" y="284" width="224" height="62" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="738.0" y="313.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Round-trip p50</text>
+<text x="738.0" y="330.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 7-18 ns</text>
+<rect x="36" y="366" width="130" height="36" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="101.0" y="382.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Python task A</text>
+<text x="101.0" y="399.0" font-size="11.5" fill="#555555" text-anchor="middle">awaits</text>
+<rect x="206" y="366" width="210" height="36" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="311.0" y="382.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Through the event loop</text>
+<text x="311.0" y="399.0" font-size="11.5" fill="#555555" text-anchor="middle">epoll_wait(0) per loop pass</text>
+<rect x="456" y="366" width="130" height="36" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="521.0" y="382.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Python task B</text>
+<text x="521.0" y="399.0" font-size="11.5" fill="#555555" text-anchor="middle">resumes</text>
+<rect x="626" y="366" width="224" height="36" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="738.0" y="382.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Python asyncio p50</text>
+<text x="738.0" y="399.0" font-size="11.5" fill="#555555" text-anchor="middle">3,785-3,819 ns</text>
+<path d="M166,106 L206,106" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M416,106 L456,106" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M586,106 L626,106" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M166,213 L206,213" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M416,213 L456,213" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M586,213 L626,213" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M166,315 L206,315" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M416,315 L456,315" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M586,315 L626,315" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M166,384 L206,384" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M416,384 L456,384" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M586,384 L626,384" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">A switch that stays in user space skips the kernel wake and schedule</text>
+<text x="440" y="430" font-size="12" fill="#1d1d1d" text-anchor="middle">p50 of 1,000,000 round trips in batches of 1,000: per-run median of 3 alternations, range across 3 runs (Python: one measurement per run).</text>
+<text x="440" y="446" font-size="12" fill="#1d1d1d" text-anchor="middle">Thread over fiber in C++: 18.25-18.33x. Platform thread over virtual thread in Java: 10.28-10.48x.</text>
 </svg>

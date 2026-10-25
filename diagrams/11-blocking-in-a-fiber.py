@@ -49,7 +49,7 @@ bands = [
         "x": 20,
         "y": 244,
         "w": 840,
-        "h": 170,
+        "h": 182,
         "label": "Python asyncio twin (gil build): 50 tasks, the same blocking call in a coroutine",
     },
 ]
@@ -64,8 +64,8 @@ res1 = box(
     62,
     "ink",
     "Neighbours' wake lateness p99",
-    "no blocking call: 53 us",
-    "2 ms blocking call: 1,918-1,953 us",
+    "no blocking call: 52 us",
+    "2 ms blocking call: 1,917-1,952 us",
 )
 
 loop = box(40, 278, 150, 56, "ghost", "Event-loop thread", "runs every coroutine")
@@ -75,11 +75,11 @@ res2 = box(
     250,
     358,
     300,
-    52,
+    62,
     "ink",
     "Neighbours' wake lateness p99",
-    "no blocking call: 1,306-1,309 us",
-    "2 ms blocking call: 2,673-2,859 us",
+    "no blocking call: 1,305-1,308 us",
+    "2 ms blocking call: 2,672-2,859 us",
 )
 
 nodes = [carrier, blocker, neigh, res1, loop, pyblock, pyneigh, res2]
@@ -105,7 +105,7 @@ notes = [
     },
     {
         "x": 440,
-        "y": 436,
+        "y": 448,
         "text": (
             "Wake lateness p99: per-run median of 3 alternations in C++, one measurement "
             "per run in Python; range across 3 runs."
@@ -115,7 +115,7 @@ notes = [
     },
 ]
 
-g.emit("11-blocking-in-a-fiber", 880, 448, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("11-blocking-in-a-fiber", 880, 460, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

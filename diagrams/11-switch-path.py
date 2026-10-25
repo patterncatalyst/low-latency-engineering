@@ -42,36 +42,43 @@ bands = [
         "x": 20,
         "y": 44,
         "w": 840,
-        "h": 112,
+        "h": 104,
         "label": "OS threads: a futex wake and a kernel schedule",
     },
     {
         "x": 20,
-        "y": 164,
+        "y": 154,
         "w": 840,
-        "h": 112,
+        "h": 96,
         "label": "Fibers and virtual threads: a context swap in user space",
     },
-    {"x": 20, "y": 284, "w": 840, "h": 112, "label": "Coroutines: a resume by symmetric transfer"},
+    {
+        "x": 20,
+        "y": 256,
+        "w": 840,
+        "h": 96,
+        "label": "Coroutines: a resume without a thread switch",
+    },
+    {"x": 20, "y": 358, "w": 840, "h": 52},
 ]
 
-a1 = box(36, 74, 130, 74, "user", "Thread A", "futex wake")
+a1 = box(36, 72, 130, 68, "user", "Thread A", "futex wake")
 m1 = box(
     206,
-    74,
+    72,
     210,
-    74,
+    68,
     "kernel",
     "Kernel schedule",
     "voluntary switches per",
     "round trip: 2.000 (C++, Java)",
 )
-b1 = box(456, 74, 130, 74, "user", "Thread B", "resumes")
+b1 = box(456, 72, 130, 68, "user", "Thread B", "resumes")
 r1 = box(
     626,
-    74,
+    72,
     224,
-    74,
+    68,
     "ink",
     "Round-trip p50",
     "C++ 3,755-3,777 ns",
@@ -79,44 +86,49 @@ r1 = box(
     "Java 4,115-4,175 ns",
 )
 
-a2 = box(36, 194, 130, 74, "user", "Fiber A", "yields")
+a2 = box(36, 182, 130, 62, "user", "Fiber A", "yields")
 m2 = box(
     206,
-    194,
+    182,
     210,
-    74,
+    62,
     "sub",
     "Context swap in user space",
     "voluntary switches in",
     "1,020,000 trips: C++ 0, Java 2-6",
 )
-b2 = box(456, 194, 130, 74, "user", "Fiber B", "resumes")
+b2 = box(456, 182, 130, 62, "user", "Fiber B", "resumes")
 r2 = box(
     626,
-    194,
+    182,
     224,
-    74,
+    62,
     "ink",
     "Round-trip p50",
     "C++ fiber 205-207 ns",
     "Java virtual thread 399-404 ns",
 )
 
-a3 = box(36, 314, 130, 74, "user", "Coroutine A", "co_await")
+a3 = box(36, 284, 130, 62, "user", "Coroutine A", "co_await")
 m3 = box(
     206,
-    314,
+    284,
     210,
-    74,
+    62,
     "accent",
     "Symmetric transfer",
     "voluntary switches in",
     "1,020,000 trips: C++ 0",
 )
-b3 = box(456, 314, 130, 74, "user", "Coroutine B", "resumes")
-r3 = box(626, 314, 224, 74, "ink", "Round-trip p50", "C++ 7-18 ns", "Python asyncio 3,785-3,819 ns")
+b3 = box(456, 284, 130, 62, "user", "Coroutine B", "resumes")
+r3 = box(626, 284, 224, 62, "ink", "Round-trip p50", "C++ 7-18 ns")
 
-nodes = [a1, m1, b1, r1, a2, m2, b2, r2, a3, m3, b3, r3]
+a4 = box(36, 366, 130, 36, "ghost", "Python task A", "awaits")
+m4 = box(206, 366, 210, 36, "ghost", "Through the event loop", "epoll_wait(0) per loop pass")
+b4 = box(456, 366, 130, 36, "ghost", "Python task B", "resumes")
+r4 = box(626, 366, 224, 36, "ink", "Python asyncio p50", "3,785-3,819 ns")
+
+nodes = [a1, m1, b1, r1, a2, m2, b2, r2, a3, m3, b3, r3, a4, m4, b4, r4]
 
 edges = [
     edge(right(a1), left(m1), amber=True),
@@ -128,13 +140,16 @@ edges = [
     edge(right(a3), left(m3)),
     edge(right(m3), left(b3)),
     edge(right(b3), left(r3)),
+    edge(right(a4), left(m4), dashed=True),
+    edge(right(m4), left(b4), dashed=True),
+    edge(right(b4), left(r4)),
 ]
 
 notes = [
     {
         "x": 440,
         "y": 28,
-        "text": "A switch that stays in user space skips the kernel round trip",
+        "text": "A switch that stays in user space skips the kernel wake and schedule",
         "anchor": "middle",
         "size": 14,
         "bold": True,
@@ -142,7 +157,7 @@ notes = [
     },
     {
         "x": 440,
-        "y": 418,
+        "y": 430,
         "text": (
             "p50 of 1,000,000 round trips in batches of 1,000: per-run median of 3 "
             "alternations, range across 3 runs (Python: one measurement per run)."
@@ -152,7 +167,7 @@ notes = [
     },
     {
         "x": 440,
-        "y": 436,
+        "y": 446,
         "text": (
             "Thread over fiber in C++: 18.25-18.33x. Platform thread over virtual "
             "thread in Java: 10.28-10.48x."
@@ -162,7 +177,7 @@ notes = [
     },
 ]
 
-g.emit("11-switch-path", 880, 446, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("11-switch-path", 880, 456, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

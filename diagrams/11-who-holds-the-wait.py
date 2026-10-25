@@ -78,7 +78,7 @@ t_res = box(
     300,
     74,
     "ink",
-    "Per wait: RSS, address space (B)",
+    "Per wait: user RSS, address space (B)",
     "C++ 8,774-8,778, 9,245,449",
     "Python 19,228-19,247, 9,266,672-9,266,776",
     "Java 22,805-22,898, 1,044,486-1,044,591",
@@ -103,7 +103,7 @@ f_res = box(
     300,
     74,
     "ink",
-    "Per wait: RSS, address space (B)",
+    "Per wait: user RSS, address space (B)",
     "C++ 4,106, 69,645",
     "Java 2,870-3,260, 27,262-34,078",
 )
@@ -118,7 +118,7 @@ c_res = box(
     300,
     74,
     "ink",
-    "Per wait: RSS, address space (B)",
+    "Per wait: user RSS, address space (B)",
     "C++ 1,009, 26",
     "Python 2,611-2,614, 2,569",
 )
