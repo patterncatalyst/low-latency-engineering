@@ -174,3 +174,38 @@ def test_every_camera_keeps_its_own_count(mode: str, layout: str) -> None:
     assert result["cameras"] == 3
     assert [len(per_camera) for per_camera in result["batch_ns"]] == [20, 20, 20]
     assert result["stride_bytes"] == counters.STRIDE_BYTES[layout]
+
+
+def test_counters_report_takes_the_build_from_the_raw_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The report's build block is the measuring interpreter's own, from the raw JSON."""
+    from lowlat_locality import cli
+
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"schema": "lowlat-profile/1"}), encoding="utf-8")
+    monkeypatch.setenv("LOWLAT_PROFILE", str(profile))
+    raw = counters.run("pair-padded", "threads", cpus=None, batches=5, cameras=3)
+    compiler = "3.14.9 free-threading build (main) [Clang 23.1.3 ]"
+    raw_path, out = tmp_path / "raw.json", tmp_path / "report.json"
+    raw_path.write_text(json.dumps({**raw, "compiler": compiler, "gil_enabled": False}))
+    assert cli.main(["counters-report", str(raw_path), "--out", str(out)]) == 0
+    report = json.loads(out.read_text(encoding="utf-8"))
+    assert report["build"] == {"compiler": compiler, "gil_enabled": False}
+    assert report["runtime"]["python_build"] == "free-threaded"
+
+
+def test_counters_report_refuses_a_raw_run_with_no_compiler(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from lowlat_locality import cli
+
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"schema": "lowlat-profile/1"}), encoding="utf-8")
+    monkeypatch.setenv("LOWLAT_PROFILE", str(profile))
+    raw = counters.run("pair-padded", "threads", cpus=None, batches=5, cameras=3)
+    del raw["compiler"]
+    raw_path = tmp_path / "raw.json"
+    raw_path.write_text(json.dumps(raw))
+    with pytest.raises(KeyError, match="compiler"):
+        cli.main(["counters-report", str(raw_path), "--out", str(tmp_path / "r.json")])

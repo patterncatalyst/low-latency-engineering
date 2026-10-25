@@ -171,7 +171,7 @@ def run_counters_report(args: argparse.Namespace) -> int:
     # The raw run may come from the other interpreter (verify.sh runs the free-threaded lane under
     # the free-threaded binary and this report step under the normal one), so the build identity
     # is the measuring interpreter's, carried in the raw JSON, never this process's.
-    build = {"compiler": raw.get("compiler", raw["python"]), "gil_enabled": raw["gil_enabled"]}
+    build = {"compiler": raw["compiler"], "gil_enabled": raw["gil_enabled"]}
     recorder.write_report(args.out, notes, build=build, runtime=block)
     recorder.print_summary()
     print(f"report: {args.out}")
