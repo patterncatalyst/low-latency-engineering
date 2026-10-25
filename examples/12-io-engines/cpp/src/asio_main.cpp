@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cerrno>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -26,6 +27,7 @@
 #include <thread>
 #include <span>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #include "lowlat/io/engines.hpp"
@@ -53,7 +55,9 @@ struct CameraSocket {
     socket.open(udp::v4());
     socket.set_option(asio::socket_base::reuse_address{true});
     int on = 1;
-    ::setsockopt(socket.native_handle(), SOL_SOCKET, SO_REUSEPORT, &on, sizeof on);
+    if (::setsockopt(socket.native_handle(), SOL_SOCKET, SO_REUSEPORT, &on, sizeof on) != 0) {
+      throw std::system_error{errno, std::generic_category(), "setsockopt(SO_REUSEPORT)"};
+    }
     socket.set_option(asio::socket_base::receive_buffer_size{4 * 1024 * 1024});
     socket.bind(udp::endpoint{asio::ip::address_v4::loopback(), port});
     state.expect = expect;
@@ -62,6 +66,74 @@ struct CameraSocket {
   udp::endpoint from;
   alignas(8) std::array<std::byte, io::kDatagramBytes> buffer{};
   io::Camera state;
+};
+
+/// The receive path as two coroutines on the one io_context thread: a receive loop per socket and a watchdog.
+/// Nothing here is shared with another thread; `fault` carries a failure out because a detached coroutine's
+/// exception would otherwise be dropped.
+class Ingest {
+ public:
+  Ingest(asio::io_context& io, std::vector<std::unique_ptr<CameraSocket>>& cameras, io::EngineCounters& counters,
+         measure::Recorder& recorder, io::detail::Idle& idle, std::int64_t work_ns)
+      : io_{io}, cameras_{cameras}, counters_{counters}, recorder_{recorder}, idle_{idle}, work_ns_{work_ns} {}
+
+  /// Starts one receive loop per socket and the watchdog; call from the thread that will run the io_context.
+  void start() {
+    for (auto& cam : cameras_) asio::co_spawn(io_, receive(*cam), asio::detached);
+    asio::co_spawn(io_, watch(), asio::detached);
+  }
+
+  /// Rethrows what stopped a coroutine, after io_context::run() returns.
+  void rethrow_fault() const {
+    if (fault_) std::rethrow_exception(fault_);
+  }
+
+ private:
+  [[nodiscard]] bool all_done() const {
+    return std::ranges::all_of(cameras_, [](const auto& c) { return c->state.complete(); });
+  }
+
+  asio::awaitable<void> receive(CameraSocket& cam) {
+    for (;;) {
+      const auto [ec, n] = co_await cam.socket.async_receive_from(asio::buffer(cam.buffer), cam.from,
+                                                                  asio::as_tuple(asio::use_awaitable));
+      if (ec == asio::error::operation_aborted) co_return;
+      if (ec) {
+        fault_ = std::make_exception_ptr(boost::system::system_error{ec});
+        io_.stop();
+        co_return;
+      }
+      idle_.received();
+      if (const auto parcel = io::accept(cam.state, std::span<const std::byte>{cam.buffer.data(), n}, counters_)) {
+        io::decide(*parcel, counters_, recorder_, work_ns_);
+      }
+      if (all_done()) {
+        io_.stop();
+        co_return;
+      }
+    }
+  }
+
+  asio::awaitable<void> watch() {
+    asio::steady_timer tick{co_await asio::this_coro::executor};
+    for (;;) {
+      tick.expires_after(std::chrono::milliseconds{100});
+      const auto [ec] = co_await tick.async_wait(asio::as_tuple(asio::use_awaitable));
+      if (ec) co_return;
+      if (line::g_stop.load(std::memory_order_relaxed) || idle_.expired()) {
+        io_.stop();
+        co_return;
+      }
+    }
+  }
+
+  asio::io_context& io_;
+  std::vector<std::unique_ptr<CameraSocket>>& cameras_;
+  io::EngineCounters& counters_;
+  measure::Recorder& recorder_;
+  io::detail::Idle& idle_;
+  std::int64_t work_ns_;
+  std::exception_ptr fault_;
 };
 
 int run(const lf::Options& o) {
@@ -84,39 +156,7 @@ int run(const lf::Options& o) {
   io::EngineCounters counters;
   measure::Recorder recorder{std::string{kExample}, std::string{kVariant}};
   io::detail::Idle idle{io::LoopConfig{nullptr, idle_ms, 100}};
-  const auto all_done = [&] {
-    return std::ranges::all_of(cameras, [](const auto& c) { return c->state.complete(); });
-  };
-
-  // One receive per socket, re-armed from its own handler.
-  auto receive = [&](auto&& self, CameraSocket& cam) -> void {
-    cam.socket.async_receive_from(asio::buffer(cam.buffer), cam.from, [&, self](boost::system::error_code ec, std::size_t n) {
-      if (ec == asio::error::operation_aborted) return;
-      if (ec) throw boost::system::system_error{ec};
-      idle.received();
-      if (const auto parcel = io::accept(cam.state, std::span<const std::byte>{cam.buffer.data(), n}, counters)) {
-        io::decide(*parcel, counters, recorder, work_ns);
-      }
-      if (all_done()) {
-        io.stop();
-        return;
-      }
-      self(self, cam);
-    });
-  };
-
-  asio::steady_timer tick{io};
-  auto watch = [&](auto&& self) -> void {
-    tick.expires_after(std::chrono::milliseconds{100});
-    tick.async_wait([&, self](boost::system::error_code ec) {
-      if (ec) return;
-      if (line::g_stop.load(std::memory_order_relaxed) || idle.expired()) {
-        io.stop();
-        return;
-      }
-      self(self);
-    });
-  };
+  Ingest ingest{io, cameras, counters, recorder, idle, work_ns};
 
   lf::Gate gate{1, std::chrono::milliseconds{o.number("hold-ms", 0)}};
   std::string failure;
@@ -125,9 +165,9 @@ int run(const lf::Options& o) {
       gate.worker_ready(cpus[0], "asio-io-context");
       counters.start_ns = line::monotonic_ns();
       try {
-        for (auto& cam : cameras) receive(receive, *cam);
-        watch(watch);
+        ingest.start();
         io.run();
+        ingest.rethrow_fault();
       } catch (const std::exception& e) {
         failure = e.what();
       }

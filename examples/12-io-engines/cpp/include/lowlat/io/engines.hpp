@@ -171,6 +171,8 @@ class UringReceiver {
                                                                    unsigned buffers = 1024) {
     auto ring = Ring::create(entries);
     if (!ring) return std::unexpected(ring.error());
+    // A private constructor plus `new`: std::make_unique can't reach a private constructor, and the receiver must not
+    // move once the BufRing is registered on its ring_ (the kernel and the BufRing hold addresses inside it).
     std::unique_ptr<UringReceiver> self{new UringReceiver(std::move(*ring), cameras, buffers)};
     auto bufs = BufRing::create(self->ring_, buffers, kBufferGroup);
     if (!bufs) return std::unexpected(bufs.error());

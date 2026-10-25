@@ -1,7 +1,6 @@
 """`io-py receive`: measure one variant, write raw samples and a sidecar (no lowlat_measure)."""
 
 import argparse
-import sys
 from pathlib import Path
 
 from lowlat_io import python_build, receive
@@ -10,14 +9,12 @@ from lowlat_io.placement import parse_cpus, require_gil_off_if_free_threaded
 
 def _receive(args: argparse.Namespace) -> int:
     if args.variant == "uvloop" and python_build() == "free-threaded":
-        print("io-py: uvloop is measured under the GIL build only", file=sys.stderr)
-        return 2
+        args.parser.error("uvloop is measured under the GIL build only")
     require_gil_off_if_free_threaded()
     threads = receive.threads_for(args.variant)
     cpus = parse_cpus(args.cpus)[:threads] if args.cpus else None
     if cpus is not None and len(cpus) < threads:
-        print(f"io-py: --cpus needs {threads} CPUs for {args.variant}", file=sys.stderr)
-        return 2
+        args.parser.error(f"--cpus needs {threads} CPUs for {args.variant}")
     ports = [args.base_port + i for i in range(receive.CAMERAS)]
     result = receive.run(
         args.variant, ports, args.expect, cpus=cpus, hold_ms=args.hold_ms, idle_ms=args.idle_ms
@@ -47,6 +44,6 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--hold-ms", type=int, default=0, help="hold after placement-ready")
     r.add_argument("--idle-ms", type=int, default=1500)
     r.add_argument("--out", required=True, help="directory for samples.bin and sidecar.json")
-    r.set_defaults(func=_receive)
+    r.set_defaults(func=_receive, parser=r)
     args = parser.parse_args(argv)
     return args.func(args)

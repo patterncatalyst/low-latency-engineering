@@ -191,20 +191,26 @@ def run(
     """
     threads = threads_for(variant)
     pins = cpus if cpus is not None else [-1] * threads
-    cams = [Camera(open_socket(p), expect) for p in ports]
-    result = Run(variant, cams, [Stats() for _ in range(threads)], [c for c in pins if c >= 0])
     gate = Gate(threads, hold_ms, announce=announce)
     start = threading.Barrier(threads)
+    bound = threading.Barrier(threads + 1)  # every worker has bound its sockets
     failures: list[BaseException] = []
+    # Each worker builds its own cameras and stats and publishes them here;
+    # the barrier and the join order the reads.
+    owned: list[list[Camera]] = [[] for _ in range(threads)]
+    stats_by_thread: list[Stats | None] = [None] * threads
 
     def worker(index: int) -> None:
-        stats = result.stats[index]
         try:
+            stats = stats_by_thread[index] = Stats()
+            ports_of = ports[index : index + 1] if variant == "blocking-thread" else ports
+            cams = owned[index] = [Camera(open_socket(p), expect) for p in ports_of]
+            bound.wait()
             gate.worker_ready(pins[index], f"{variant}-{index}")
             start.wait()
             stats.start_ns = time.monotonic_ns()
             if variant == "blocking-thread":
-                _blocking(cams[index], stats, idle_ms)
+                _blocking(cams[0], stats, idle_ms)
             elif variant == "asyncio-datagram":
                 asyncio.run(_serve(cams, stats, idle_ms))
             else:
@@ -213,27 +219,38 @@ def run(
                 uvloop.run(_serve(cams, stats, idle_ms))
         except BaseException as exc:  # reported by the coordinator after join()
             failures.append(exc)
+            bound.abort()
             start.abort()
 
     pool = [
         threading.Thread(target=worker, args=(i,), name=f"{variant}-{i}") for i in range(threads)
     ]
-    result.gil_at_start = gil_enabled()
+    gil_at_start = gil_enabled()
     for t in pool:
         t.start()
-    if on_ready is not None:
-        on_ready(
-            [cam.sock.getsockname()[1] for cam in cams]
-        )  # the sockets are bound; the threads wait at the gate
-    gate.release()
+    try:
+        bound.wait()
+        if on_ready is not None:  # the sockets are bound; the threads wait at the gate
+            on_ready([cam.sock.getsockname()[1] for cams in owned for cam in cams])
+        gate.release()
+    except threading.BrokenBarrierError:
+        pass  # a worker failed before the start; the join below reports it
     for t in pool:
         t.join()
-    result.gil_at_end = gil_enabled()
-    for cam in cams:
+    gil_at_end = gil_enabled()
+    cameras = [cam for cams in owned for cam in cams]
+    for cam in cameras:
         cam.sock.close()
     if failures:
         raise RuntimeError("a receive thread failed") from failures[0]
-    return result
+    return Run(
+        variant,
+        cameras,
+        [s for s in stats_by_thread if s is not None],
+        [c for c in pins if c >= 0],
+        gil_at_start=gil_at_start,
+        gil_at_end=gil_at_end,
+    )
 
 
 def write_raw(result: Run, out: Path, *, expect: int, idle_ms: int) -> None:

@@ -91,6 +91,9 @@ class SpinStart {
   [[nodiscard]] std::int64_t arrive_and_go() noexcept {
     arrived_.fetch_add(1, std::memory_order_acq_rel);
     while (arrived_.load(std::memory_order_acquire) < threads_) {
+#if defined(__x86_64__)
+      __builtin_ia32_pause();  // spin-wait hint: eases the sibling hyperthread and the loop's exit
+#endif
     }
     return line::monotonic_ns();
   }

@@ -114,7 +114,9 @@ time, as in the Ch0 consumer. Each counts every system call it makes in a per-th
 `2 * std::hardware_destructive_interference_size` (the L2 spatial prefetcher pulls line pairs): `epoll_wait`,
 `recvmsg`, `recvmmsg` and `io_uring_enter` calls, completions reaped, multishot re-arms and hand-offs. The counts are exact
 and don't depend on a tracer; `strace -f -c` is the cross-check. The ring is an RAII `Ring` over liburing, with an
-RAII `BufRing` for the provided buffers (`ring.hpp`).
+RAII `BufRing` for the provided buffers (`ring.hpp`). Both are hand-written because liburing is a C API with no upstream
+C++ wrapper; each is a few lines that pair `io_uring_queue_init` with `io_uring_queue_exit` and the buffer-ring setup with its
+free, so no error path leaks a registration.
 
 `io-uring` reaps in two steps. It first walks the completions already in the ring with `io_uring_for_each_cqe`, which makes
 no system call, and only when there is none does it call `io_uring_submit_and_wait_timeout`, which submits any re-armed
@@ -138,6 +140,10 @@ how an ingest tier with one port per feed would run.
 `BOOST_ASIO_DISABLE_EPOLL` as private compile definitions of that one target, so they reach no other. The first alone
 sends file I/O through io_uring and keeps epoll for sockets; both together put sockets on io_uring too (Boost 1.92 docs,
 `overview/implementation`). Asio owns its ring, so the program can't count the calls; the strace summary shows them.
+The receive path is two Asio coroutines started with `co_spawn(io, ..., asio::detached)`: one loop per socket that awaits
+`async_receive_from` with `as_tuple(use_awaitable)`, and a 100 ms watchdog that awaits a timer. Awaiting through `as_tuple` gives
+the error code as a value, so the loop reads as straight-line code, with no handler re-arming itself. Coroutine frames and
+resumption are on the measured path.
 
 Provenance: the raw epoll loop and the pinned-thread start protocol follow `12-asio-strand` of the companion project
 cpp-concurrency-and-parallelism, adapted up to C++23 (`std::print`, `std::expected`, `std::jthread`, concepts). The
@@ -189,8 +195,10 @@ The service counts them in process, with a handler on the `io.vertx.core.impl.Bl
 checks that count against the `has been blocked for` lines of the server log.
 
 `ServiceStats` (`GET /stats`, `POST /stats/reset` after the warm-up) is the exact evidence: requests served, the most
-requests inside a handler at once, the worker pool's active maximum, the distinct worker, event-loop and carrier threads
-seen, and the blocked-thread warnings. The open-loop client copies them into the run's report.
+requests inside a handler at once, the worker pool's active maximum, the distinct worker and event-loop threads seen, the
+carriers in the virtual-thread scheduler's pool, and the blocked-thread warnings. The carrier count is the scheduler's pool
+size (`VirtualThreadSchedulerMXBean.getPoolSize()`, read when `/stats` is rendered, so the request path never touches it), and
+it stays 0 until a virtual thread has served a request. The open-loop client copies them into the run's report.
 
 Provenance: the `@RunOnVirtualThread` pattern and the carrier-thread count come from the companion project
 quarkus-optimization (`quarkus-demo-02-gc-monitoring`, `GcMonitoringResource`), and the Mutiny `Uni` from

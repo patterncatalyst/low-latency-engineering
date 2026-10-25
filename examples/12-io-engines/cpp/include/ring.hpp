@@ -48,7 +48,7 @@ class Ring {
 
 /// A provided-buffer ring registered with a Ring: the kernel picks a free buffer for each
 /// completion and reports its id, so no buffer is committed to a receive in advance. Frees the
-/// registration on destruction; the Ring it was made on must outlive it.
+/// registration on destruction; the Ring it was made on must outlive it and must not move.
 class BufRing {
  public:
   /// `entries` must be a power of two. The error is the errno from io_uring_setup_buf_ring.

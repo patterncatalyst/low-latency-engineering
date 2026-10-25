@@ -252,10 +252,8 @@ final class ReceiveRun {
         int threads = threadsFor(variant);
         SpinStart spin = new SpinStart(threads);
         AtomicReferenceArray<Counters> counters = new AtomicReferenceArray<>(threads);
+        // Each tracker is allocated by the thread that owns it, before its gate, as its Counters is; the join publishes it.
         SeqTracker[] trackers = new SeqTracker[CAMERAS];
-        for (int i = 0; i < CAMERAS; i++) {
-            trackers[i] = new SeqTracker(expect);
-        }
         List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
         List<Thread> pool = new ArrayList<>();
         int rcvbuf = channels[0].getOption(StandardSocketOptions.SO_RCVBUF);
@@ -264,6 +262,9 @@ final class ReceiveRun {
             case "selector" -> pool.add(Thread.ofPlatform().name("selector").unstarted(guard(failures, () -> {
                 Counters c = new Counters();
                 counters.set(0, c);
+                for (int i = 0; i < CAMERAS; i++) {
+                    trackers[i] = new SeqTracker(expect);
+                }
                 try (Placement.Pin pin = gate.workerReady(cpus.get(0), "selector")) {
                     c.startNs = spin.arriveAndGo();
                     selectLoop(channels, trackers, c, decideNs, idleMs);
@@ -275,11 +276,12 @@ final class ReceiveRun {
                     pool.add(Thread.ofVirtual().name("camera-" + i).unstarted(guard(failures, () -> {
                         Counters c = new Counters();
                         counters.set(camera, c);
+                        trackers[camera] = new SeqTracker(expect);
                         // The pin lands on the carrier thread this virtual thread is mounted on.
-                        Placement.Pin pin = gate.workerReady(cpus.get(0), "vt-camera-" + camera);
-                        c.startNs = spin.arriveAndGo();
-                        blockingLoop(channels[camera], trackers[camera], c, decideNs);
-                        pin.close();
+                        try (Placement.Pin pin = gate.workerReady(cpus.get(0), "vt-camera-" + camera)) {
+                            c.startNs = spin.arriveAndGo();
+                            blockingLoop(channels[camera], trackers[camera], c, decideNs);
+                        }
                     })));
                 }
             }
@@ -289,6 +291,7 @@ final class ReceiveRun {
                     pool.add(Thread.ofPlatform().name("core-" + i).unstarted(guard(failures, () -> {
                         Counters c = new Counters();
                         counters.set(camera, c);
+                        trackers[camera] = new SeqTracker(expect);
                         try (Placement.Pin pin = gate.workerReady(cpus.get(camera), "core-" + camera)) {
                             c.startNs = spin.arriveAndGo();
                             blockingLoop(channels[camera], trackers[camera], c, decideNs);
@@ -386,7 +389,7 @@ final class ReceiveRun {
             }
             long lastRx = 0;
             while (!allComplete(trackers)) {
-                int before = (int) c.datagrams;
+                long before = c.datagrams;
                 selector.select(key -> {
                     int camera = (Integer) key.attachment();
                     try {
