@@ -35,6 +35,9 @@ public interface Libc extends Library {
     /** Throws {@link LastErrorException} when the call returns -1. */
     int sched_getscheduler(int pid) throws LastErrorException;
 
+    /** pid 0 is the calling thread; {@code mask} is the kernel's bitmask, 64 CPUs per long. Throws when the call returns -1. */
+    int sched_setaffinity(int pid, int cpusetsize, long[] mask) throws LastErrorException;
+
     /** glibc has had a gettid() wrapper since 2.30. */
     int gettid();
 

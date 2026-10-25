@@ -14,17 +14,29 @@
   <artifactId>preempt-rt-java</artifactId>
   <name>preempt-rt-java (Ch14 periodic wake on a SCHED_FIFO thread through JNA, see ../README.md)</name>
 
+  <properties>
+    <shade.mainClass>io.patterncatalyst.lowlat.ch14.Main</shade.mainClass>
+  </properties>
+
   <dependencies>
     <!-- Version from the parent's dependencyManagement (jna.version). -->
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>measure-java</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
     <finalName>preempt-rt-java</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

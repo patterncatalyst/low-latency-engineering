@@ -30,6 +30,33 @@ class SchedTest {
     }
 
     @Test
+    void pinMovesOnlyTheCallingThread() throws Exception {
+        // The first CPU this test may run on: pinning to it needs no privilege and is a no-op on a one-CPU box.
+        String allowed = Files.readAllLines(Path.of("/proc/self/status")).stream()
+                .filter(l -> l.startsWith("Cpus_allowed_list:")).findFirst().orElseThrow();
+        int cpu = Integer.parseInt(allowed.substring(allowed.indexOf(':') + 1).trim().split("[,-]")[0]);
+        String[] seen = new String[1];
+        Thread t = new Thread(() -> {
+            try {
+                Sched.pin(cpu);
+                seen[0] = Files.readAllLines(Path.of("/proc/thread-self/status")).stream()
+                        .filter(l -> l.startsWith("Cpus_allowed_list:")).findFirst().orElseThrow();
+            } catch (IOException e) {
+                throw new java.io.UncheckedIOException(e);
+            }
+        });
+        t.start();
+        t.join();
+        assertEquals(cpu, Integer.parseInt(seen[0].substring(seen[0].indexOf(':') + 1).trim()));
+    }
+
+    @Test
+    void anOutOfRangeCpuIsRefusedBeforeTheSystemCall() {
+        assertThrows(IllegalArgumentException.class, () -> Sched.pin(-1));
+        assertThrows(IllegalArgumentException.class, () -> Sched.pin(1024));
+    }
+
+    @Test
     void anOutOfRangePriorityIsRefusedBeforeTheSystemCall() {
         assertThrows(IllegalArgumentException.class, () -> Sched.fifo(0));
         assertThrows(IllegalArgumentException.class, () -> Sched.fifo(100));
