@@ -162,12 +162,12 @@ std::expected<std::string, std::string> read_online_cpus(const Paths& paths) {
   return trim(*text);
 }
 
-int io_uring_setup_errno() noexcept {
+std::error_code io_uring_setup_error() noexcept {
   io_uring_params params{};
   const long fd = ::syscall(SYS_io_uring_setup, 8U, &params);
-  if (fd < 0) return errno;
+  if (fd < 0) return {errno, std::generic_category()};
   ::close(static_cast<int>(fd));
-  return 0;
+  return {};
 }
 
 std::string errno_name(int err) {

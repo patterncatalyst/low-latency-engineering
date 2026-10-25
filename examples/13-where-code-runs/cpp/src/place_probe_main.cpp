@@ -100,10 +100,10 @@ json probe() {
   pool["by_hardware_concurrency"] = hardware;
   pool["cgroup_aware"] = aware;
 
-  const int err = place::io_uring_setup_errno();
+  const std::error_code setup = place::io_uring_setup_error();
   json uring;
-  uring["setup_errno"] = err;
-  uring["setup_result"] = place::errno_name(err);
+  uring["setup_errno"] = setup.value();
+  uring["setup_result"] = place::errno_name(setup.value());
 
   out["schema"] = "lowlat-place-probe/1";
   out["example"] = "13-where-code-runs";

@@ -16,7 +16,7 @@
 #      hardware_concurrency() = 4 in both (it is the kernel's online CPU list, which a container does not narrow); the
 #      affinity mask is 4 under the quota and 2 under the cpuset; the cgroup-aware pool size is 2 in both. Python
 #      os.cpu_count() = 4 in both; os.process_cpu_count() = 4 under the quota and 2 under the cpuset and equals the affinity
-#      mask. Java availableProcessors() = 2 in both, and so is the number of virtual-thread carriers that ran.
+#      mask. Java availableProcessors() = 2 in both, and so is the most virtual threads mounted at once under a saturating spin.
 #   3  (exact) io_uring_setup in a container under Docker's default seccomp profile returns EPERM (1), in every container
 #      lane; the same binary in the guest outside a container returns 0. The host's value is observed. Behind CRIT3_ASSERTED.
 #   4  container-cpu-quota consumer p99.9 >= 2x container-cpuset (same run, median of 3). Observed unless it shows twice the
@@ -443,7 +443,7 @@ if ok_lane container-cpu-quota && ok_lane container-cpuset && ok_lane vm; then
       crit_exact "2" "$lane alt$n Python len(os.sched_getaffinity(0)) equals os.process_cpu_count()" "$(val "$py" .python.affinity_count)" "$(val "$py" .python.process_cpu_count)"
       crit_exact "2" "$lane alt$n Java availableProcessors()" "$(val "$jv" .java.available_processors)" "$jcpus"
       crit_exact "2" "$lane alt$n Java virtual-thread scheduler parallelism (VirtualThreadSchedulerMXBean)" "$(val "$jv" .java.virtual_thread_parallelism)" "$jcpus"
-      crit_exact "2" "$lane alt$n Java virtual-thread carriers that ran (a cross-check of the parallelism)" "$(val "$jv" .java.virtual_thread_carriers_observed)" "$jcpus"
+      crit_exact "2" "$lane alt$n Java most virtual threads mounted at once under a saturating spin (a cross-check of the parallelism)" "$(val "$jv" .java.virtual_thread_mounted_max)" "$jcpus"
     done
   done
   for lane in "${LANES[@]}"; do
@@ -458,7 +458,7 @@ if ok_lane container-cpu-quota && ok_lane container-cpuset && ok_lane vm; then
     for n in $(seq 1 "$ROUNDS"); do
       inproc=$(val "$(P "$lane" "$n" quarkus/client.json)" .runtime.counters.carrier_threads)
       procfs=$(val "$(P "$lane" "$n" quarkus/service.json)" .service.carrier_threads)
-      printf '  observed: %s alt%s Quarkus service: Vert.x event loops %s, worker threads %s, virtual-thread carriers %s in process (the service'"'"'s own count); %s counted from /proc in the container, %s\n' \
+      printf '  observed: %s alt%s Quarkus service: Vert.x event loops %s, worker threads %s, carriers in the scheduler pool %s in process (the service'"'"'s own count); %s counted from /proc in the container, %s\n' \
         "$lane" "$n" "$(val "$(P "$lane" "$n" quarkus/service.json)" .service.event_loop_threads)" "$(val "$(P "$lane" "$n" quarkus/service.json)" .service.executor_threads)" \
         "$inproc" "$procfs" "$([[ $inproc == "$procfs" ]] && echo equal || echo different)"
     done

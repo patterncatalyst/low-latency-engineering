@@ -13,6 +13,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 
 namespace lowlat::place {
 
@@ -66,11 +67,12 @@ std::expected<CpuStat, std::string> read_cpu_stat(const Paths& paths = {});
 // file is not namespaced.
 std::expected<std::string, std::string> read_online_cpus(const Paths& paths = {});
 
-// io_uring_setup(8, ...) through the raw system call: 0 when it works, else errno (EPERM under
+// io_uring_setup(8, ...) through the raw system call: a default (zero) error_code when it works, else the errno in the
+// generic category (EPERM under
 // Docker's default seccomp profile, ENOSYS or EPERM when the kernel disables it). The raw call is
 // the point: liburing would report the same errno through one more layer, and this probe must link
 // nothing that could change what the kernel or a seccomp filter answers.
-int io_uring_setup_errno() noexcept;
+std::error_code io_uring_setup_error() noexcept;
 
 // "ok" for 0, else the symbolic name of the errno the probe can meet, else strerror.
 std::string errno_name(int err);

@@ -6,9 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.LockSupport;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import jdk.management.VirtualThreadSchedulerMXBean;
@@ -21,8 +20,8 @@ import tools.jackson.databind.json.JsonMapper;
  * scheduler's parallelism, and the GC thread counts. The JVM reads a container's CPU quota (ceil of
  * quota over period) and its cpuset (through the affinity mask) when it starts, so the same jar prints
  * different numbers in the guest, under {@code --cpus=2} and under {@code --cpuset-cpus=2,3}. The virtual-thread
- * scheduler's parallelism comes from {@code VirtualThreadSchedulerMXBean}; the carriers that ran a spinning load are
- * counted as a cross-check.
+ * scheduler's parallelism comes from {@code VirtualThreadSchedulerMXBean}; the most virtual threads mounted at once under a
+ * spinning load is sampled as a cross-check.
  *
  * <pre>
  *   java -cp where-code-runs-java.jar io.patterncatalyst.lowlat.ch13.CpuProbe [--out FILE]
@@ -44,21 +43,18 @@ public final class CpuProbe {
     }
 
     /**
-     * The number of distinct carrier threads that ran virtual threads, counted by starting more spinning
-     * virtual threads than there are processors. A carrier is a platform thread of the scheduler's pool, which
-     * starts one per unit of parallelism as work arrives, so with enough concurrent work the count is the
-     * scheduler's parallelism. The carrier is named in {@code Thread.toString()} after the {@code @}. This is the
-     * cross-check; the parallelism itself is read from the scheduler's MXBean.
+     * The most virtual threads the scheduler had mounted on carriers at once, sampled from
+     * {@link VirtualThreadSchedulerMXBean#getMountedVirtualThreadCount()} while more spinning virtual threads
+     * than there are processors run. Every carrier is busy with one, so under that load the maximum is the
+     * scheduler's parallelism. This is the cross-check; the parallelism itself is read from the MXBean.
      */
-    public static int observedCarriers(int processors) {
-        Set<String> carriers = ConcurrentHashMap.newKeySet();
+    public static long mountedMax(int processors) {
+        VirtualThreadSchedulerMXBean scheduler = scheduler();
         int tasks = Math.max(8, processors * 4);
+        long max = 0;
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int i = 0; i < tasks; i++) {
                 executor.submit(() -> {
-                    String name = Thread.currentThread().toString();
-                    int at = name.indexOf('@');
-                    carriers.add(at < 0 ? name : name.substring(at + 1));
                     long deadline = System.nanoTime() + SPIN_NANOS;
                     long x = 0;
                     while (System.nanoTime() < deadline) {
@@ -68,8 +64,14 @@ public final class CpuProbe {
                     sink = x;
                 });
             }
+            // The first wave of spinners holds every carrier for the whole spin; sample inside it.
+            long sampleUntil = System.nanoTime() + SPIN_NANOS / 2;
+            while (System.nanoTime() < sampleUntil) {
+                max = Math.max(max, scheduler.getMountedVirtualThreadCount());
+                LockSupport.parkNanos(1_000_000L);
+            }
         }
-        return carriers.size();
+        return max;
     }
 
     private static VirtualThreadSchedulerMXBean scheduler() {
@@ -90,7 +92,7 @@ public final class CpuProbe {
         Map<String, Object> java = new LinkedHashMap<>();
         java.put("available_processors", processors);
         java.put("virtual_thread_parallelism", scheduler().getParallelism());
-        java.put("virtual_thread_carriers_observed", observedCarriers(processors));
+        java.put("virtual_thread_mounted_max", mountedMax(processors));
         java.put("virtual_thread_pool_size_after_spin", scheduler().getPoolSize());
         java.put("parallel_gc_threads", vmOption("ParallelGCThreads"));
         java.put("conc_gc_threads", vmOption("ConcGCThreads"));

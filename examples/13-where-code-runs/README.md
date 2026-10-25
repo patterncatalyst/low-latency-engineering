@@ -61,7 +61,7 @@ one declared output directory. No `--privileged`, no host Docker (decision D7). 
   `cpuset.cpus.effective`, `cpu.stat`, the `io_uring_setup` errno from the raw system call; `std::expected` errors),
   `busy-pool` (`std::jthread` and `stop_token`, a spin start gate, padded counters, an external-linkage sink), and the
   `lowlat_place` library with its tests.
-- `java/`: `CpuProbe` records `availableProcessors()`, the virtual-thread carriers that ran, the GC thread flags.
+- `java/`: `CpuProbe` records `availableProcessors()`, the most virtual threads mounted at once under a spin, the GC thread flags.
 - `place-py/`: `python -m lowlat_place` records `os.cpu_count()`, `os.process_cpu_count()` and the affinity mask. There is no
   latency lane in Python here.
 - `vm/lane-cpp.sh`: one C++ lane in whatever environment it starts in (POSIX sh, so it runs in a ubi-minimal image).
@@ -158,10 +158,13 @@ neighbour shares its cgroup.
   arrive a millisecond late on an idle core.
 - `place-probe` calls `io_uring_setup` through the raw system call, not liburing: the probe must report what the kernel or a
   seccomp filter answers, with nothing linked that could change it.
+- `cgroup_probe` parses the one-line and key-value cgroup v2 files (`cpu.max`, `cpu.stat`, `cpuset.cpus.effective`) by hand.
+  There's no maintained C++ cgroup v2 library, and each file is a line or a list of `key value` pairs that
+  `std::from_chars` reads in a few lines; every parse returns `std::expected` and the tests cover the odd forms.
 - `lane-cpp.sh` is POSIX sh and coreutils only. The images have no `jq`, no Python and no `taskset`.
 - `CpuProbe` reads the virtual-thread scheduler's parallelism from `jdk.management.VirtualThreadSchedulerMXBean` (exact), and
-  counts the carriers that ran a spinning load, from `Thread.toString()`, as a cross-check. The pool size after the spin is
-  recorded and observed only.
+  samples `getMountedVirtualThreadCount()` while a spinning load saturates the carriers, as a cross-check: its maximum is the
+  parallelism. The pool size after the spin is recorded and observed only.
 - The vm lane runs the uv-managed CPython that `examples/.python-version` names, like the other lanes. `vm/guest-run.sh
   prepare` installs it in the guest with `uv python install`.
 

@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <system_error>
 
 namespace lowlat::place {
 namespace fs = std::filesystem;
@@ -191,9 +192,12 @@ TEST_F(FakeCgroup, OnlineCpusIsTheKernelsListNotTheCgroups) {
 
 TEST(IoUringSetup, ReportsZeroOrAnErrnoThePlanNames) {
   // 0 where io_uring works, EPERM under a seccomp filter or io_uring_disabled, ENOSYS where the kernel has none.
-  const int err = io_uring_setup_errno();
-  EXPECT_TRUE(err == 0 || err == EPERM || err == ENOSYS || err == ENOMEM || err == EACCES) << "errno " << err;
-  EXPECT_FALSE(errno_name(err).empty());
+  const std::error_code ec = io_uring_setup_error();
+  EXPECT_TRUE(!ec || ec == std::errc::operation_not_permitted || ec == std::errc::function_not_supported ||
+              ec == std::errc::not_enough_memory || ec == std::errc::permission_denied)
+      << ec.message();
+  EXPECT_EQ(ec.category(), ec ? std::generic_category() : ec.category());
+  EXPECT_FALSE(errno_name(ec.value()).empty());
 }
 
 TEST(ErrnoName, NamesTheErrnosTheProbeMeets) {

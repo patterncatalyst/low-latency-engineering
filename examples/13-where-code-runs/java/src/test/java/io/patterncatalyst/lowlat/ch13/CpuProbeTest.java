@@ -18,10 +18,10 @@ class CpuProbeTest {
     }
 
     @Test
-    void carriersNeverExceedTheProcessorCountAndAreAtLeastOne() {
+    void mountedVirtualThreadsNeverExceedTheProcessorCountAndAreAtLeastOne() {
         int processors = CpuProbe.availableProcessors();
-        int carriers = CpuProbe.observedCarriers(processors);
-        assertTrue(carriers >= 1 && carriers <= processors, "carriers " + carriers + " of " + processors);
+        long mounted = CpuProbe.mountedMax(processors);
+        assertTrue(mounted >= 1 && mounted <= processors, "mounted " + mounted + " of " + processors);
     }
 
     @Test
@@ -47,6 +47,6 @@ class CpuProbeTest {
         CpuProbe.main(new String[] {"--out", file.toString()});
         String text = Files.readString(file);
         assertTrue(text.contains("\"available_processors\""), text);
-        assertTrue(text.contains("\"virtual_thread_carriers_observed\""), text);
+        assertTrue(text.contains("\"virtual_thread_mounted_max\""), text);
     }
 }
