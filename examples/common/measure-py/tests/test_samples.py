@@ -78,6 +78,13 @@ def _bad_build(**build: object) -> dict:
         ([1000], _bad_build(gil_enabled=0), "gil_enabled must be a boolean"),
         ([1000], _bad_build(compiler=""), "build.compiler"),
         ([1000], {**SIDE, "count": 1, "build": {"gil_enabled": False}}, "build.compiler"),
+        # the schema names every field it rejects, not just the first
+        (
+            [1000],
+            {**SIDE, "count": 1, "example": 7, "notes": 5, "build": {"compiler": "x"}},
+            "build.gil_enabled is required",
+        ),
+        ([1000], {**SIDE, "count": 1, "example": 7}, "sidecar example must be a non-empty string"),
         ([1000], {**SIDE, "count": 1, "gil_enabled": True}, "conflicts"),
         ([1000], {**SIDE, "count": 1, "gil_enabled": "false"}, "gil_enabled must be a boolean"),
         # the GIL came back: free-threaded claimed, gil_enabled true

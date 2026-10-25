@@ -24,11 +24,12 @@ from array import array
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator, ValidationError, validators
+
 from lowlat_measure.recorder import HIGHEST_TRACKABLE_NS, Recorder
 
 SAMPLE_BYTES = 8
 _REQUIRED = ("example", "variant", "count", "build")
-_ALLOWED = {*_REQUIRED, "language", "dropped", "notes", "model", "build", "runtime", "gil_enabled"}
 
 
 def read_samples(path: Path) -> array[int]:
@@ -53,53 +54,78 @@ def read_samples(path: Path) -> array[int]:
     return samples
 
 
-def _is_int(value: object) -> bool:
-    return isinstance(value, int) and not isinstance(value, bool)
+def _checker() -> Any:
+    """Draft 2020-12 types, but ``integer`` means an int: not a boolean and not ``1.0``."""
+    return Draft202012Validator.TYPE_CHECKER.redefine(
+        "integer", lambda _checker, value: isinstance(value, int) and not isinstance(value, bool)
+    )
 
 
-def _text(side: dict[str, Any], key: str) -> str:
-    value = side[key]
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"sidecar {key} must be a non-empty string")
-    return value
+_NON_BLANK = {"type": "string", "pattern": r"\S", "description": "a non-empty string"}
+_OBJECT = {"type": "object", "description": "a JSON object"}
+
+#: The sidecar's structure: types, required keys and the allowed top-level keys. The rules that
+#: relate fields (the GIL claims) stay in ``read_sidecar``. A ``description`` ends "must be ...".
+_SIDECAR_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "description": "a JSON object",
+    "required": list(_REQUIRED),
+    "additionalProperties": False,
+    "properties": {
+        "example": _NON_BLANK,
+        "variant": _NON_BLANK,
+        "language": _NON_BLANK,
+        "count": {"type": "integer", "minimum": 1, "description": "an integer of at least 1"},
+        "dropped": {"type": "integer", "minimum": 0, "description": "a non-negative integer"},
+        "notes": {"type": "string", "description": "a string"},
+        "model": _OBJECT,
+        "runtime": _OBJECT,
+        "gil_enabled": {"type": "boolean", "description": "a boolean"},
+        "build": {
+            **_OBJECT,
+            "required": ["compiler", "gil_enabled"],
+            "properties": {
+                "compiler": {
+                    "type": "string",
+                    "pattern": r"\S",
+                    "description": "a non-empty string (the measured process's sys.version)",
+                },
+                "gil_enabled": {
+                    "type": "boolean",
+                    "description": "a boolean written by the measured process",
+                },
+            },
+        },
+    },
+}
+_VALIDATOR = validators.extend(Draft202012Validator, type_checker=_checker())(_SIDECAR_SCHEMA)
+
+
+def _describe(error: ValidationError, path: Path) -> str:
+    """One schema error as a specific sentence naming the field and what it must be."""
+    where = ".".join(str(part) for part in error.absolute_path)
+    if error.validator == "required":
+        missing = [k for k in error.validator_value if k not in error.instance]
+        if not where:
+            return f"{path}: missing {', '.join(missing)}"
+        return f"sidecar {', '.join(f'{where}.{k}' for k in missing)} is required"
+    if error.validator == "additionalProperties":
+        known = error.schema.get("properties", {})
+        return f"{path}: unknown keys {', '.join(sorted(set(error.instance) - set(known)))}"
+    if not where:
+        return f"{path}: the sidecar must be {error.schema['description']}"
+    return f"sidecar {where} must be {error.schema.get('description', error.message)}"
 
 
 def read_sidecar(path: Path) -> dict[str, Any]:
-    """Load and type-check the sidecar; raise ``ValueError`` for anything off."""
+    """Load and check the sidecar; raise ``ValueError`` for anything off."""
     side = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(side, dict):
-        raise ValueError(f"{path}: the sidecar must be a JSON object")
-    missing = [k for k in _REQUIRED if k not in side]
-    if missing:
-        raise ValueError(f"{path}: missing {', '.join(missing)}")
-    unknown = sorted(set(side) - _ALLOWED)
-    if unknown:
-        raise ValueError(f"{path}: unknown keys {', '.join(unknown)}")
-    for key in ("example", "variant"):
-        _text(side, key)
-    if "language" in side:
-        _text(side, "language")
-    if not _is_int(side["count"]) or side["count"] < 1:
-        raise ValueError("sidecar count must be an integer of at least 1")
-    if "dropped" in side and (not _is_int(side["dropped"]) or side["dropped"] < 0):
-        raise ValueError("sidecar dropped must be a non-negative integer")
-    if "notes" in side and not isinstance(side["notes"], str):
-        raise ValueError("sidecar notes must be a string")
-    for key in ("model", "runtime", "build"):
-        if key in side and not isinstance(side[key], dict):
-            raise ValueError(f"sidecar {key} must be a JSON object")
+    errors = sorted(_VALIDATOR.iter_errors(side), key=lambda e: [str(p) for p in e.absolute_path])
+    if errors:
+        raise ValueError("; ".join(_describe(error, path) for error in errors))
     build = side["build"]
-    if not isinstance(build.get("compiler"), str) or not build["compiler"].strip():
-        raise ValueError("sidecar build.compiler (the measured process's sys.version) is required")
-    if not isinstance(build.get("gil_enabled"), bool):
-        raise ValueError(
-            "sidecar build.gil_enabled must be a boolean written by the measured process"
-        )
-    if "gil_enabled" in side:
-        if not isinstance(side["gil_enabled"], bool):
-            raise ValueError("sidecar gil_enabled must be a boolean")
-        if side["gil_enabled"] != build["gil_enabled"]:
-            raise ValueError("sidecar gil_enabled conflicts with build.gil_enabled")
+    if "gil_enabled" in side and side["gil_enabled"] != build["gil_enabled"]:
+        raise ValueError("sidecar gil_enabled conflicts with build.gil_enabled")
     pyb = side.get("runtime", {}).get("python_build")
     if pyb not in ("gil", "free-threaded"):
         raise ValueError("sidecar runtime.python_build ('gil' or 'free-threaded') is required")
