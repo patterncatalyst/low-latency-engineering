@@ -126,7 +126,8 @@ x() {
   fi
 }
 # gx STEP...: one vm/guest-run.sh step in the guest (a failed step stops the run).
-gx() { guest "$GUEST_RUN" "$@" </dev/null; }
+# SMOKE is passed on: guest-run.sh sources lanes.sh, which picks the durations and the line size from it.
+gx() { guest env SMOKE="$SMOKE" "$GUEST_RUN" "$@" </dev/null; }
 
 VM_DOWN=0
 # down_vm: shut the guest down once (scripts/lab/lab-down.sh touches only lowlat-* domains); a failed run included.
