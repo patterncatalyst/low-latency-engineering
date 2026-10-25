@@ -41,7 +41,7 @@ Both counts depend on load. The ratio of epoll's system calls to io_uring's is 2
 
 {% include excalidraw.html file="12-thread-per-core" alt="Two panels. Left, thread-per-core: four cameras send to four ports, one per camera, each with its own socket (SO_REUSEPORT set) owned by one pinned thread with its own ring, so nothing is shared. Right, acceptor and pool: one receive thread decodes and hands each parcel off through one Ch10 log per worker, round robin, to one of four decide workers. Hand-offs per parcel are 0 and 1, exact. At saturation, 52 kHz x 4 cameras with 3,500 ns of modelled receive work, the C++ p99 is 68-69 us thread-per-core and 84-90 us acceptor and pool, a ratio of 0.77-0.82x that is observed and not asserted; the busiest thread-per-core receiver is 384 permille busy and the acceptor 820-822 permille (per-run medians of 3 alternations). At line rate, 2.5 kHz per camera, with one measurement per run, the p99 is 98-115 us thread-per-core and 91-113 us acceptor and pool." caption="Figure 12.2: Shared nothing makes 0 hand-offs per parcel and the acceptor makes 1. At the saturation load the thread-per-core p99, 68-69 us, was 0.77-0.82x the acceptor's, an observed ratio and not a guarantee; at line rate the p99 ranges overlap, 98-115 us against 91-113 us." %}
 
-The other question is how many threads touch a parcel. Thread-per-core gives each camera its own socket and ring on one pinned thread, and the same thread decides: shared nothing. `SO_REUSEPORT` is set on every socket, but it steers nothing here. Each camera has its own port (`base_port + c`), so the sender picks the socket. The acceptor and pool layout has one receive thread that decodes and hands each parcel to one of four decide workers through a Chapter 10 log per worker, round robin.
+Each camera's datagram lands on one core. Thread-per-core decides it there: each camera gets its own socket and ring on one pinned thread, so nothing is shared. `SO_REUSEPORT` is set on every socket, but it steers nothing here. Each camera has its own port (`base_port + c`), so the sender picks the socket. The acceptor and pool layout has one receive thread that decodes and hands each parcel to one of four decide workers through a Chapter 10 log per worker, round robin.
 
 ### Who holds the 2 ms wait
 
@@ -49,7 +49,7 @@ The other question is how many threads touch a parcel. Thread-per-core gives eac
 
 The sort-plan service answers one lookup four ways. On the event loop, a `Uni` (Mutiny's lazy single-value type) completes from a non-blocking timer, so no thread holds the wait. On the worker pool, `Thread.sleep(2)` holds one of 8 workers. On a virtual thread, the same sleep parks the virtual thread and frees its carrier. And `blocking-on-event-loop`, the defect, sleeps on one of the few loop threads.
 
-The JDK parks a virtual thread that finds no datagram on its poller, which is `epoll` on Linux. Virtual threads and reactive code differ in how they're written, not in what's underneath.
+The JDK parks a virtual thread that finds no datagram on its poller, which is `epoll` on Linux. The plain-JDK selector loop waits in the same call: its `strace` shows `epoll_wait` too. A virtual thread is written as blocking code, but it waits on the same readiness mechanism.
 
 ## How the code works
 
@@ -58,6 +58,9 @@ The JDK parks a virtual thread that finds no datagram on its poller, which is `e
 First cut (#A), `run_epoll` in `engines.hpp`; then the completion engine (#B), `UringReceiver`:
 
 ```cpp
+    epoll_event ev{};
+    ev.events = EPOLLIN;
+// ...
     const int n = ::epoll_wait(ep.get(), events.data(), static_cast<int>(events.size()), cfg.tick_ms);
     ++counters.epoll_waits;
 // ...
@@ -80,6 +83,13 @@ First cut (#A), `run_epoll` in `engines.hpp`; then the completion engine (#B), `
         reap(*cqe, handle, counters, idle);
         ++reaped;
       }
+      if (reaped > 0) {
+        io_uring_cq_advance(ring_.get(), reaped);
+        bufs_->advance(static_cast<int>(returned_));
+// ...
+      io_uring_cqe* first = nullptr;
+      const int rc = io_uring_submit_and_wait_timeout(ring_.get(), &first, 1, const_cast<__kernel_timespec*>(&tick), nullptr);
+      ++counters.enters;
 // ...
     if ((cqe.flags & IORING_CQE_F_MORE) == 0) {  // the kernel ended this multishot: arm it again
       ++counters.rearms;
@@ -87,7 +97,7 @@ First cut (#A), `run_epoll` in `engines.hpp`; then the completion engine (#B), `
     }
 ```
 
-In #A every datagram is a system call the program issues. In #B `IOSQE_BUFFER_SELECT` lets the kernel pick the buffer, `io_uring_for_each_cqe` walks the completion ring in user space, and a completion without `IORING_CQE_F_MORE` means the receive ended and must be armed again.
+Boost.Asio's reactor runs this loop for you; it's written out here to count the calls. In #A every datagram is a system call the program issues. In #B `IOSQE_BUFFER_SELECT` lets the kernel pick the buffer, `io_uring_for_each_cqe` walks the completion ring in user space, `bufs_->advance` returns the consumed buffers to the ring after each batch, and a completion without `IORING_CQE_F_MORE` means the receive ended and must be armed again. A multishot ends when the provided ring runs out of buffers. The `io_uring_submit_and_wait_timeout` call is the only system call on this path: it submits any re-armed receive and waits, and only when no completion is queued. In #A, `EPOLLIN` without `EPOLLET` is the level-triggered registration.
 
 The JDK and CPython have no `io_uring` in the standard library, so the other two languages show the readiness idiom only. Python's `receive.py` hands each socket to `asyncio`'s datagram endpoint; Java's `ReceiveRun.java` uses an NIO `Selector`:
 
@@ -115,6 +125,8 @@ The JDK and CPython have no `io_uring` in the standard library, so the other two
                                 break;
                             }
 ```
+
+Python's `asyncio-datagram`, `blocking-thread` (one thread per socket) and `uvloop` variants take the same four-camera feed.
 
 ### Hand-off against shared nothing
 
@@ -144,9 +156,8 @@ First cut (#A), `@Blocking` on a pool fixed at 8 in `application.properties`; th
     public String virtualThread(@RestPath String sscc) throws InterruptedException {
 ```
 
-The bodies are the same `Thread.sleep(SortPlan.WAIT_MS)`. In #A the sleep holds a worker for 2 ms, so 8 workers carry at most 4,000 requests a second. In #B it parks a virtual thread. The defect carries `@NonBlocking` on a method that sleeps. Left at its defaults the loop would log nothing for a 2 ms block (the limit is 2 s), so the `%defect` profile sets `quarkus.vertx.max-event-loop-execute-time` to `1ms`.
+The bodies are the same `Thread.sleep(SortPlan.WAIT_MS)`. In #A the sleep holds a worker for 2 ms, so 8 workers carry at most 4,000 requests a second. In #B it parks a virtual thread. The defect carries `@NonBlocking` on a method that sleeps. Left at its defaults the loop would log nothing for a 2 ms block (the limit is 2 s), so the `%defect` profile sets `quarkus.vertx.max-event-loop-execute-time` to `1ms` and `quarkus.vertx.warning-exception-time` to `10ms`, which is also the checker's period, so it samples each loop 100 times a second.
 
-Python's `asyncio-datagram`, `blocking-thread` (one thread per socket) and `uvloop` variants take the same four-camera feed.
 
 ## Measure
 
@@ -158,7 +169,7 @@ examples/12-io-engines/verify.sh
 
 `ALLOW_BUSY=1` measures on a loaded host; `RECHECK=results/<run-id>` re-evaluates committed reports. A latency ratio is the median of three alternations inside one run, and a p50 is never compared across runs.
 
-Profile for every number below: bare-metal host, untuned: `powersave` governor, `balanced` profile, kernel 7.2; an Intel 8-core, 16-thread CPU; Temurin 25.0.5+8, GCC 16.2, Python 3.14.8 and free-threaded 3.14.9, Quarkus 3.40.1.1. Threads placed on distinct physical cores by `sched_setaffinity`, an experiment control, not isolation; Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers isolation. Ranges span the committed runs `r04-run1` to `r04-run3`.
+Profile for every number below: bare-metal host, untuned: `powersave` governor, `balanced` profile, kernel 7.2; an Intel 8-core, 16-thread CPU; Temurin 25.0.5+8, Clang 22.1.8 on GCC 16.2's libstdc++, Python 3.14.9 (GIL and free-threaded builds), Quarkus 3.40.1.1. Threads placed on distinct physical cores by `sched_setaffinity`, an experiment control, not isolation; Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers isolation. Ranges span the committed runs `r04-run1` to `r04-run3`.
 
 ### System calls per parcel
 
@@ -170,7 +181,7 @@ Four simulators send 60 kHz each for 3 s: 720,000 parcels, dropped 0 in every ru
 | `recvmmsg` | 0.573-0.614 | up to 32 datagrams per call |
 | `io-uring` | 0.062-0.068 | 14.7-16.2 completions per `io_uring_enter` |
 
-The asserted bound is io_uring's enters per parcel at most a quarter of epoll's system calls per parcel; the smallest margin was 4.38x. The tail doesn't follow the counters. The saturation p99 of `io-uring` over `epoll` is 0.81-1.01x, within a factor of 2 and observed only. Fewer crossings freed CPU, and this load doesn't show a tail benefit. `asio-io-uring`, Boost.Asio on its io_uring backend, is in the reports as an observed lane.
+The asserted bound is io_uring's enters per parcel at most a quarter of epoll's system calls per parcel; the smallest margin was 4.38x. The tail doesn't follow the counters. The saturation p99 of `io-uring` over `epoll` is 0.810-1.012x, within a factor of 2 and observed only. Fewer crossings freed CPU: the receive thread was busy 833-842 permille of its window with `io-uring` against 888-890 with `epoll` (per-run medians, observed, under 2x). This load doesn't show a tail benefit. `asio-io-uring`, Boost.Asio on its io_uring backend, is in the reports as an observed lane.
 
 ### Hand-offs and the layout
 
@@ -180,17 +191,17 @@ The saturation p99 was 68-69 us for thread-per-core and 84-90 us for the accepto
 
 ### The service
 
-The open-loop client sends request `i` at `start + i / 5,000` Hz whatever happened to the earlier ones and measures from that intended time. By Little's law, 5,000 Hz x 2 ms is 10 requests in flight against 8 workers.
+The open-loop client sends request `i` at `start + i / 5,000` s whatever happened to the earlier ones and measures from that intended time. By Little's law, 5,000 Hz x 2 ms is 10 requests in flight against 8 workers.
 
 | Quarkus at 5 kHz | p99 | evidence |
 |---|---|---|
 | `event-loop` | 9.0-10.3 ms | 4 loop threads, 0 workers |
-| `worker-pool` | 1,453.3-1,455.4 ms | 8 workers, all active |
+| `worker-pool` | 1,453-1,455 ms | 8 workers, all active |
 | `virtual-thread` | 6.5-8.9 ms | 4 carriers, 0 workers |
 
-The asserted ratio is `worker-pool` over `virtual-thread`: 162.85-223.10x against a bound of 3x. Eight workers drain 4,000 requests a second against 5,000 offered, so the queue grows for the run, and the client held 5,661-5,677 requests in flight at the peak (per-run median). That p99 is a backlog, not a service time. `event-loop` against `virtual-thread` is 0.96-1.41x, observed, and the order changes between runs.
+The asserted ratio is `worker-pool` over `virtual-thread`: 162.85-223.10x against a bound of 3x. Eight workers drain 4,000 requests a second against 5,000 offered, so the queue grows for the run, and the client held 5,661-5,677 requests in flight at the peak (per-run median). That p99 is a backlog, not a service time. `event-loop` against `virtual-thread` is 0.959-1.413x, observed, and the order changes between runs.
 
-The defect runs at 1,850 Hz, because four loops each blocked for 2 ms carry at most 2 kHz. Its p99 is 8.1-8.5 ms against 3.3 ms for the event-loop control at the same rate: 2.44-2.61x, observed (the 2x bound isn't cleared twice over). The exact evidence is elsewhere. Vert.x logged about 1,000 blocked-thread warnings in the measured run (990-1,030, varying), and at most 4 requests were inside a handler at once, one per loop. The control had 13-16.
+The defect runs at 1,850 Hz, because four loops each blocked for 2 ms carry at most 2 kHz. Its p99 is 8.1-8.5 ms against 3.3 ms for the event-loop control at the same rate: 2.44-2.61x, observed (the 2x bound isn't cleared twice over). The exact evidence is in the counters: Vert.x logged about 1,000 blocked-thread warnings in the measured run (990-1,030 across the nine alternations), and at most 4 requests were inside a handler at once, one per loop. The control had 13-16 (across alternations).
 
 ### Python
 
@@ -204,18 +215,18 @@ Four cameras at 2.5 kHz for 20 s: every C++ engine, every plain-JDK variant and 
 
 The in-program counters and `strace -f -c` agree. For `epoll`, `strace` counted 39,966, 39,813 and 32,277 `epoll_wait` calls and 40,000 `recvmsg` calls for 40,000 parcels, the same numbers the program printed; `recvmmsg` matched too. For `io-uring`, `strace` counted 15,198, 28,358 and 39,343 `io_uring_enter` calls against 15,200, 28,359 and 39,343 in the program, a difference of 0-2.
 
-The load differs from saturation. These runs send 2.5 kHz x 4 cameras for 4 s, and the tracer slows the thread. `epoll` made 1.807-1.999 system calls per parcel there, and `io-uring` made 0.380, 0.709 and 0.984 `io_uring_enter` calls per parcel against 0.062-0.068 at saturation. The saving belongs to a load that queues completions, which is why the counters carry the load beside them.
+The load differs from saturation. These runs send 2.5 kHz x 4 cameras for 4 s, and the tracer adds work to every call. `epoll` made 1.807-1.999 system calls per parcel there, and `io-uring` made 0.380, 0.709 and 0.984 `io_uring_enter` calls per parcel against 0.062-0.068 at saturation. The saving belongs to a load that queues completions, which is why the counters carry the load beside them.
 
-The Java `virtual-thread-blocking` run shows the poller: 7,813, 8,370 and 9,047 `epoll_wait` calls and 7,998-8,000 `recvfrom` calls for 4,000 parcels, and in run 1 half of the `recvfrom` calls failed before the virtual thread parked. The Python `blocking-thread` made 1 `recvfrom` per parcel and no `epoll_wait`; `uvloop` made about 2 `recvmsg` calls per parcel.
+The Java `virtual-thread-blocking` run shows the poller: 7,813, 8,370 and 9,047 `epoll_wait` calls and 7,998-8,000 `recvfrom` calls for 4,000 parcels, and in every run half of them (3,998-4,000) returned no datagram, after which the virtual thread parked. The Python `blocking-thread` made 1 `recvfrom` per parcel and no `epoll_wait`; `uvloop` made about 2 `recvmsg` calls per parcel.
 
 On the client side, the `worker-pool` run's own lateness p99 (how far past its schedule the client sent) was 12.4-13.5 ms, against a request p99 of 1,453 ms. The queue wasn't in the client's schedule. The server's counters place it: the workers' active maximum was 8, equal to the pool, and the handler maximum 8, while about 5,660 requests waited. The `event-loop` run had a lateness p99 of 11-163 us.
 
 ## What you learned
 
 - Readiness asks the kernel which socket is ready, and the program takes the data; completion arms a receive once and reaps results. At saturation epoll makes 1.379-1.417 system calls per parcel and io_uring 0.062-0.068.
-- The saving depends on load, and the p99 didn't follow at this load (0.81-1.01x).
+- The saving depends on load, and the p99 didn't follow at this load (0.810-1.012x).
 - Thread-per-core makes 0 hand-offs per parcel against 1; its saturation p99 was 0.77-0.82x the acceptor's, observed.
-- When lambda x W exceeds the worker pool, the queue forms at the pool: 162.85-223.10x the virtual-thread p99. An event loop is fine until something blocks it.
+- When arrival rate times wait (Little's law) exceeds the worker pool, the queue forms at the pool: 162.85-223.10x the virtual-thread p99. An event loop is fine until something blocks it.
 - The JDK parks a virtual thread on `epoll`, and neither the JDK nor CPython has an `io_uring` lane.
 
 The next chapter, *Where the code runs: bare metal, VMs and containers, and when not to use containers* (Part 4), moves the same service between a host, a virtual machine and a container.
@@ -223,11 +234,11 @@ The next chapter, *Where the code runs: bare metal, VMs and containers, and when
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), for hiding latency with asynchronous I/O.
-- Tanenbaum, *Modern Operating Systems*, for I/O software and interrupts; Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for the threads under a pool.
+- Tanenbaum and Bos, *Modern Operating Systems* (Pearson), for I/O software and interrupts; Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for the threads under a pool.
 - Evans and Gough, *Optimizing Cloud Native Java* (O'Reilly), and Andrist and Sehr, *C++ High Performance* (Packt), for the JVM and C++ sides.
 - Companion sites: [cpp-concurrency-and-parallelism, async runtimes and event loops](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/12-async-runtimes-and-event-loops/); [linux-systems-programming 09, event loops with `epoll`](https://patterncatalyst.github.io/linux-systems-programming/docs/09-event-loops-epoll-inotify/), [10, `io_uring`](https://patterncatalyst.github.io/linux-systems-programming/docs/10-io-uring/) and [55, Boost.Asio](https://patterncatalyst.github.io/linux-systems-programming/docs/55-boost-asio/); [quarkus-optimization](https://patterncatalyst.github.io/quarkus-optimization/).
-- [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), for the hand-off log, and Chapter 13, *Where the code runs: bare metal, VMs and containers, and when not to use containers* (Part 4).
+- [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), for the hand-off log, and [Chapter 13, *Where the code runs: bare metal, VMs and containers, and when not to use containers*]({{ '/docs/13-where-code-runs/' | relative_url }}) (Part 4).
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts io_uring enters per parcel at most a quarter of epoll's system calls per parcel, 0 and 1 hand-offs per parcel, dropped 0 and the acceptor's busy share in a guard band, the Quarkus worker-pool p99 at least 3x the virtual-thread p99, the blocked-thread warnings and at most one request per loop thread in the defect, the line counts, the Quarkus pool counters, the start gates and the report contents. Observed only: `asio-io-uring`, the `io-uring` tail against `epoll`, the layout p99 ratio, the defect against its control, `event-loop` against `virtual-thread`, the plain-JDK and Python lanes, and the `strace` summaries. It held on `r04-run1` to `r04-run3`, bare-metal and untuned, at commit cd4a269.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts io_uring enters per parcel at most a quarter of epoll's system calls per parcel, 0 and 1 hand-offs per parcel, dropped 0 and the acceptor's busy share in a guard band, the Quarkus worker-pool p99 at least 3x the virtual-thread p99, the blocked-thread warnings and at most one request per loop thread in the defect, the line counts, the Quarkus pool counters, the start gates and the report contents. Observed only: `asio-io-uring`, `recvmmsg`'s calls per parcel, the line percentiles, the `io-uring` tail against `epoll`, the layout p99 ratio, the defect against its control, `event-loop` against `virtual-thread`, the plain-JDK and Python lanes, and the `strace` summaries. It held on `r04-run1` to `r04-run3`, bare-metal and untuned, at commit 4434ed1.*

@@ -105,7 +105,7 @@ f_res = box(
     "ink",
     "Per wait: user RSS, address space (B)",
     "C++ 4,106, 69,645",
-    "Java 2,870-3,260, 27,262-34,078",
+    "Java 2,870-3,260, not per task*",
 )
 
 c_hold = box(40, 314, 170, 74, "user", "Coroutine", "C++ awaitable,", "Python asyncio task")
@@ -119,7 +119,7 @@ c_res = box(
     74,
     "ink",
     "Per wait: user RSS, address space (B)",
-    "C++ 1,009, 26",
+    "C++ 1,009, not per task*",
     "Python 2,611-2,614, 2,569",
 )
 
@@ -153,9 +153,19 @@ notes = [
         "anchor": "middle",
         "size": 12,
     },
+    {
+        "x": 440,
+        "y": 438,
+        "text": (
+            "* address space grew in steps (Java carrier arenas) or not at all (C++ frames in "
+            "already-mapped heap)"
+        ),
+        "anchor": "middle",
+        "size": 12,
+    },
 ]
 
-g.emit("11-who-holds-the-wait", 880, 446, bands=bands, nodes=nodes, edges=edges, notes=notes)
+g.emit("11-who-holds-the-wait", 880, 458, bands=bands, nodes=nodes, edges=edges, notes=notes)
 
 if __name__ == "__main__":
     import json

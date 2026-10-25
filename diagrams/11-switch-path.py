@@ -95,7 +95,7 @@ m2 = box(
     "sub",
     "Context swap in user space",
     "voluntary switches in",
-    "1,020,000 trips: C++ 0, Java 2-6",
+    "1,020,000 trips: C++ 0, Java 1-6",
 )
 b2 = box(456, 182, 130, 62, "user", "Fiber B", "resumes")
 r2 = box(

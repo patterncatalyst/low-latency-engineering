@@ -69,7 +69,7 @@ res_q = box(
     44,
     "ink",
     "Lane container-cpu-quota",
-    "nr_throttled 206-207, throttled time 37.8-40.7 s (summed over the guest's 4 CPUs), "
+    "nr_throttled 206-207, throttled time 37.7-40.6 s (summed over the guest's 4 CPUs), "
     "consumer p99.9 53,411-55,574 us",
 )
 
