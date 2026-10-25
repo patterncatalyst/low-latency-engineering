@@ -19,9 +19,9 @@ By the end of this chapter you can:
 
 The controller PC under the conveyor runs the decide service beside the tunnel. In the hub's VM farm the same service is one tenant among many, and in a pod it's a container inside a VM that someone else sized. The binary doesn't change. The floor under it and the CPUs its runtime believes it has do.
 
-A parcel has 480 ms from scan to divert ([Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }})), and a stall charges every parcel behind it ([Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*]({{ '/docs/03-coordinated-omission/' | relative_url }})).
+A parcel has 480 ms from scan to divert, the time the belt takes to carry it from the scanner to the diverter, and a stall charges every parcel behind it: the belt keeps delivering while the consumer is stalled, so each parcel that queues behind the stall is late too.
 
-The consumer is [Chapter 12's]({{ '/docs/12-io-engines/' | relative_url }}) `epoll` receiver, and the load is the Chapter 2 line: four simulators as four cameras at 2.5 kHz each, 10 kHz together, for 20 s. The code is in `examples/13-where-code-runs/`; its `README.md` covers how to drive it.
+The consumer is an `epoll` receiver, one pinned thread that waits for readiness on the cameras' UDP sockets and decides each parcel where it lands. The load is the sortation line: four simulators as four cameras at 2.5 kHz each, 10 kHz together, for 20 s. The code is in `examples/13-where-code-runs/`; its `README.md` covers how to drive it.
 
 ## Diagram
 
@@ -49,7 +49,7 @@ A decide pool starts by asking how many CPUs it has, and each runtime answers di
 
 ### Seccomp and io_uring
 
-Docker's default seccomp profile denies by default and lists no `io_uring_setup`, `io_uring_enter` or `io_uring_register`; that has held since Engine 25.0. A container that probes io_uring gets `EPERM`, and Chapter 12's io_uring engine can't start there.
+Docker's default seccomp profile denies by default and lists no `io_uring_setup`, `io_uring_enter` or `io_uring_register`; that has held since Engine 25.0. A container that probes io_uring gets `EPERM`, and an io_uring receive engine can't start there.
 
 ## How the code works
 
@@ -181,7 +181,7 @@ Every lane and alternation received 200,000 parcels and dropped none (exact). La
 
 All of this is observed. On the host the emit-lateness range sits below the others in these three runs, but the host and the guest run separate kernels (both 7.2) on separate clocks, so the host against the VM is printed and not compared as a claim. The container lanes are measured against `vm`, the same guest. `container-host-net` and `vm` overlap on emit lateness (81-89 and 80-83 us) and on the consumer p99 (101-104 and 99-101 us).
 
-What this guest can't show: a production hypervisor (it's a single-host KVM guest with passt networking, unpinned vCPUs and no tuning), dedicated or isolated host cores (Part 5), or SR-IOV and passthrough NICs; the bridge lane crosses a software veth and bridge inside the guest. So the container figures are container-in-VM costs, not container-on-bare-metal costs.
+What this guest can't show: a production hypervisor (it's a single-host KVM guest with passt networking, unpinned vCPUs and no tuning), dedicated or isolated host cores, or SR-IOV and passthrough NICs; the bridge lane crosses a software veth and bridge inside the guest. So the container figures are container-in-VM costs, not container-on-bare-metal costs.
 
 ### The network namespace
 
@@ -196,9 +196,9 @@ The counters are exact. Under `--cpus=2`, `nr_throttled` was 206-207 and `thrott
 | `container-cpu-quota` | 4,730-4,923 us | 50,462-51,642 us | 53,411-55,574 us |
 | `container-cpuset` | 60 us | 2,085-3,043 us | 2,912-4,067 us |
 
-Asserted: the quota lane's p99.9 is at least 2x the cpuset lane's, as the median of the three per-alternation ratios. It was 18.91x, 13.16x and 18.34x, so the smallest margin over the 2x bound is 6.58x. In every run the quota lane's p50 was in milliseconds against 60 us. The cpuset lane isn't clean: up to nine runnable threads share two CPUs, and its p99 of 2.0-3.0 ms is what time-slicing looks like. A cpuset removes the stall but not the contention; isolation is Part 5's subject.
+Asserted: the quota lane's p99.9 is at least 2x the cpuset lane's, as the median of the three per-alternation ratios. It was 18.91x, 13.16x and 18.34x, so the smallest margin over the 2x bound is 6.58x. In every run the quota lane's p50 was in milliseconds against 60 us. The cpuset lane isn't clean: up to nine runnable threads share two CPUs, and its p99 of 2.0-3.0 ms is what time-slicing looks like. A cpuset removes the stall but not the contention. Keeping every other thread off the consumer's CPUs is CPU isolation, which this chapter doesn't cover.
 
-The Chapter 12 Quarkus service also ran under both limits. Its p99 was 4.1, 5.0 and 5.9 ms under the quota against 3.7, 10.1 and 12.4 ms under the cpuset. The order flips between runs and the client shares the guest's CPUs, so no claim.
+The Quarkus sort-plan service, an HTTP lookup that holds each request on a virtual thread while it waits on a dependency, also ran under both limits. Its p99 was 4.1, 5.0 and 5.9 ms under the quota against 3.7, 10.1 and 12.4 ms under the cpuset. The order flips between runs and the client shares the guest's CPUs, so no claim.
 
 ### What each runtime thinks it has
 
@@ -221,7 +221,7 @@ These are exact counts, identical in all nine alternations. The Quarkus service 
 
 The hot path, scan to divert, doesn't belong in a container under a CPU quota: the quota stops the whole group, so a busy neighbour in the cgroup becomes a 50 ms stall for the consumer. It doesn't belong where the I/O engine is filtered either: a default-seccomp container can't use io_uring. If the decide path must live in one, give it `--network host` or a cpuset, size pools from the cgroup, and expect the cpuset lane's contention; a bridge adds a hop that, here, cost 2 to 39 us at p99.
 
-The control plane, telemetry and analytics are fine in containers; they tolerate a stall. In a Kubernetes pod a container's `cpu.max` comes from its CPU limit, and the kubelet's CPU Manager `static` policy gives each container in a Guaranteed pod that requests whole CPUs exclusive CPUs, which is the cpuset case managed for you. Chapter 18, *Latency config as code: CI/CD, deployment, and rollouts gated on a latency and jitter SLO*, gates that rollout on the SLO rather than a health check.
+The control plane, telemetry and analytics are fine in containers; they tolerate a stall. In a Kubernetes pod a container's `cpu.max` comes from its CPU limit, and the kubelet's CPU Manager `static` policy gives each container in a Guaranteed pod that requests whole CPUs exclusive CPUs, which is the cpuset case managed for you.
 
 ## Cross-check
 
@@ -236,8 +236,6 @@ Steal ticks are the cross-check on the VM's floor. The `vm` lane showed 0-1 tick
 - `hardware_concurrency()` said 4 under both limits, `os.process_cpu_count()` followed only the cpuset, and Java followed both.
 - Docker's default seccomp returned `EPERM` for `io_uring_setup` in every container lane.
 
-The next chapter, *PREEMPT_RT: what real-time Linux does and doesn't promise*, opens Part 5, where real-time scheduling and isolation begin.
-
 ## For deeper coverage
 
 - Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for `hardware_concurrency()` and thread pools; Bobrov, *Grokking Concurrency* (Manning), for the concepts behind them.
@@ -247,6 +245,8 @@ The next chapter, *PREEMPT_RT: what real-time Linux does and doesn't promise*, o
 - Ibryam and Huß, *Kubernetes Patterns* (O'Reilly), for resource requests, limits and QoS classes; Rice, *Container Security* (O'Reilly), for namespaces, cgroups and seccomp.
 - Companion sites: [cpp-concurrency-and-parallelism, Chapter 32, Concurrency in Containers](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/32-concurrency-in-containers/); linux-systems-programming, [32 Namespaces and cgroups](https://patterncatalyst.github.io/linux-systems-programming/docs/32-namespaces-and-cgroups/), [34 Our programs in containers](https://patterncatalyst.github.io/linux-systems-programming/docs/34-our-programs-in-containers/) and [35 Virtualization and KVM](https://patterncatalyst.github.io/linux-systems-programming/docs/35-virtualization-and-kvm/); [quarkus-optimization](https://patterncatalyst.github.io/quarkus-optimization/) for JVM container ergonomics in depth; [cpp-container-optimization-tutorial](https://patterncatalyst.github.io/cpp-container-optimization-tutorial/).
 - [Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core*]({{ '/docs/12-io-engines/' | relative_url }}), for the consumer, and Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5), for isolation.
+- [Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }}), for the scan-to-divert budget, and [Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*]({{ '/docs/03-coordinated-omission/' | relative_url }}), for why a stall charges every parcel behind it.
+- Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise* (Part 5), on real-time scheduling, and Chapter 18, *Latency config as code: CI/CD, deployment, and rollouts gated on a latency and jitter SLO* (Part 5), for gating a rollout on the SLO rather than a health check.
 
 ---
 

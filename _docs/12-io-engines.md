@@ -19,9 +19,9 @@ By the end of this chapter you can:
 
 The hub concentrator takes the four tunnel cameras' UDP feeds, one socket each. For every datagram, something has to tell a thread there's work: a readiness event ("this socket has data, come and get it") or a completion ("this receive finished, here's the data"). The choice sets how many times the thread crosses into the kernel per parcel, and the thread count sets how many times a parcel changes cores before it's decided.
 
-One tier up, the sort-plan service waits 2 ms on the warehouse management system for every scan. At 5 kHz that's 10 waits at once (Chapter 2, [*Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }})). [Chapter 11, *Stackful vs stackless: threads and fibers vs event loops and coroutines*]({{ '/docs/11-stackful-stackless/' | relative_url }}), asked who holds a wait. This chapter asks what wakes the holder, and how many holders there should be.
+One tier up, the sort-plan service waits 2 ms on the warehouse management system for every scan. At 5 kHz that's 10 waits at once: by Little's law, the number in flight is the arrival rate times the time each one waits. Something holds each wait, a thread or virtual thread blocked in the call or a callback that an event loop runs when the answer comes. This chapter asks what wakes the holder, and how many holders there should be.
 
-The code is in `examples/12-io-engines/`. Its `README.md` covers what it does and how to drive it. HTTP/1.1 on loopback in the service lane is a harness, not a transport recommendation; Part 6 covers transports.
+The code is in `examples/12-io-engines/`. Its `README.md` covers what it does and how to drive it. HTTP/1.1 on loopback in the service lane is a harness, not a transport recommendation.
 
 ## Diagram
 
@@ -41,7 +41,7 @@ Both counts depend on load. The ratio of epoll's system calls to io_uring's is 2
 
 {% include excalidraw.html file="12-thread-per-core" alt="Two panels. Left, thread-per-core: four cameras send to four ports, one per camera, each with its own socket (SO_REUSEPORT set) owned by one pinned thread with its own ring, so nothing is shared. Right, acceptor and pool: one receive thread decodes and hands each parcel off through one Ch10 log per worker, round robin, to one of four decide workers. Hand-offs per parcel are 0 and 1, exact. At saturation, 52 kHz x 4 cameras with 3,500 ns of modelled receive work, the C++ p99 is 68-69 us thread-per-core and 84-90 us acceptor and pool, a ratio of 0.77-0.82x that is observed and not asserted; the busiest thread-per-core receiver is 384 permille busy and the acceptor 820-822 permille (per-run medians of 3 alternations). At line rate, 2.5 kHz per camera, with one measurement per run, the p99 is 98-115 us thread-per-core and 91-113 us acceptor and pool." caption="Figure 12.2: Shared nothing makes 0 hand-offs per parcel and the acceptor makes 1. At the saturation load the thread-per-core p99, 68-69 us, was 0.77-0.82x the acceptor's, an observed ratio and not a guarantee; at line rate the p99 ranges overlap, 98-115 us against 91-113 us." %}
 
-Each camera's datagram lands on one core. Thread-per-core decides it there: each camera gets its own socket and ring on one pinned thread, so nothing is shared. `SO_REUSEPORT` is set on every socket, but it steers nothing here. Each camera has its own port (`base_port + c`), so the sender picks the socket. The acceptor and pool layout has one receive thread that decodes and hands each parcel to one of four decide workers through a Chapter 10 log per worker, round robin.
+Each camera's datagram lands on one core. Thread-per-core decides it there: each camera gets its own socket and ring on one pinned thread, so nothing is shared. `SO_REUSEPORT` is set on every socket, but it steers nothing here. Each camera has its own port (`base_port + c`), so the sender picks the socket. The acceptor and pool layout has one receive thread that decodes and hands each parcel to one of four decide workers, round robin, through one lock-free log per worker: a ring the receive thread writes and the worker spins on. The hand-off's cost is the cache lines that move between the two cores and the worker's wake from its spin.
 
 ### Who holds the 2 ms wait
 
@@ -168,7 +168,7 @@ examples/12-io-engines/verify.sh
 
 `ALLOW_BUSY=1` measures on a loaded host; `RECHECK=results/<run-id>` re-evaluates committed reports. A latency ratio is the median of three alternations inside one run, and a p50 is never compared across runs.
 
-Profile for every number below: bare-metal host, untuned: `powersave` governor, `balanced` profile, kernel 7.2; an Intel 8-core, 16-thread CPU; Temurin 25.0.5+8, Clang 22.1.8 on GCC 16.2's libstdc++, Python 3.14.9 (GIL and free-threaded builds), Quarkus 3.40.1.1. Threads placed on distinct physical cores by `sched_setaffinity`, an experiment control, not isolation; Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers isolation. Ranges span the committed runs `r04-run1` to `r04-run3`.
+Profile for every number below: bare-metal host, untuned: `powersave` governor, `balanced` profile, kernel 7.2; an Intel 8-core, 16-thread CPU; Temurin 25.0.5+8, Clang 22.1.8 on GCC 16.2's libstdc++, Python 3.14.9 (GIL and free-threaded builds), Quarkus 3.40.1.1. Threads placed on distinct physical cores by `sched_setaffinity`, an experiment control, not isolation. Ranges span the committed runs `r04-run1` to `r04-run3`.
 
 ### System calls per parcel
 
@@ -200,7 +200,7 @@ The open-loop client sends request `i` at `start + i / 5,000` s whatever happene
 
 The asserted ratio is `worker-pool` over `virtual-thread`: 162.85-223.10x against a bound of 3x. Eight workers drain 4,000 requests a second against 5,000 offered, so the queue grows for the run, and the client held 5,661-5,677 requests in flight at the peak (per-run median). That p99 is a backlog, not a service time. `event-loop` against `virtual-thread` is 0.96-1.41x, observed, and the order changes between runs.
 
-The defect runs at 1,850 Hz, because four loops each blocked for 2 ms carry at most 2 kHz. Its p99 is 8.1-8.5 ms against 3.3 ms for the event-loop control at the same rate: 2.44-2.61x, observed (the 2x bound isn't cleared twice over). The exact evidence is in the counters: Vert.x logged about 1,000 blocked-thread warnings in the measured run (990-1,030 across the nine alternations), and at most 4 requests were inside a handler at once, one per loop. The control had 13-16 (across alternations).
+The defect runs at 1,850 Hz, because four loops each blocked for 2 ms carry at most 2 kHz. Its p99 is 8.1-8.5 ms against 3.3 ms for the event-loop control at the same rate: 2.44-2.61x. That's above the 2x bound, but the margin over it is under 2x, so the ratio is printed as observed rather than asserted. The exact evidence is in the counters: Vert.x logged about 1,000 blocked-thread warnings in the measured run (990-1,030 across the nine alternations), and at most 4 requests were inside a handler at once, one per loop. The control had 13-16 (across alternations).
 
 ### Python
 
@@ -228,15 +228,15 @@ On the client side, the `worker-pool` run's own lateness p99 (how far past its s
 - When arrival rate times wait (Little's law) exceeds the worker pool, the queue forms at the pool: 162.85-223.10x the virtual-thread p99. An event loop is fine until something blocks it.
 - The JDK parks a virtual thread on `epoll`, and neither the JDK nor CPython has an `io_uring` lane.
 
-The next chapter, *Where the code runs: bare metal, VMs and containers, and when not to use containers* (Part 4), moves the same service between a host, a virtual machine and a container.
-
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), for hiding latency with asynchronous I/O.
 - Tanenbaum and Bos, *Modern Operating Systems* (Pearson), for I/O software and interrupts; Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for the threads under a pool.
 - Evans and Gough, *Optimizing Cloud Native Java* (O'Reilly), and Andrist and Sehr, *C++ High Performance* (Packt), for the JVM and C++ sides.
 - Companion sites: [cpp-concurrency-and-parallelism, async runtimes and event loops](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/12-async-runtimes-and-event-loops/); [linux-systems-programming 09, event loops with `epoll`](https://patterncatalyst.github.io/linux-systems-programming/docs/09-event-loops-epoll-inotify/), [10, `io_uring`](https://patterncatalyst.github.io/linux-systems-programming/docs/10-io-uring/) and [55, Boost.Asio](https://patterncatalyst.github.io/linux-systems-programming/docs/55-boost-asio/); [quarkus-optimization](https://patterncatalyst.github.io/quarkus-optimization/).
+- [Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }}), for Little's law, and [Chapter 11, *Stackful vs stackless: threads and fibers vs event loops and coroutines*]({{ '/docs/11-stackful-stackless/' | relative_url }}), for what each model keeps while it waits.
 - [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), for the hand-off log, and [Chapter 13, *Where the code runs: bare metal, VMs and containers, and when not to use containers*]({{ '/docs/13-where-code-runs/' | relative_url }}) (Part 4).
+- Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5), for isolation, and Part 6, *Transports by Latency Budget*, for transports.
 
 ---
 

@@ -17,11 +17,11 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-Every scan on the sortation line triggers a sort-plan lookup at the warehouse management system (WMS), and the answer takes about 2 ms. At 10 kHz that's 20 lookups in flight (Little's law, [Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }})). At a hub taking 100,000 scans a second from a WMS that answers in 20 ms, it's 2,000. Something has to hold each of those waits.
+Every scan on the sortation line triggers a sort-plan lookup at the warehouse management system (WMS), and the answer takes about 2 ms. At 10 kHz that's 20 lookups in flight: by Little's law, the number in flight is the arrival rate times the time each one waits. At a hub taking 100,000 scans a second from a WMS that answers in 20 ms, it's 2,000. Something has to hold each of those waits.
 
 A parcel has 480 ms from scan to divert (1.2 m at 2.5 m/s), so the lookup fits many times over. What matters is memory per wait, the cost of each hand-off, and what a blocking call does to its neighbours.
 
-[Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), coordinated the threads; this chapter asks what they are. [Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core*]({{ '/docs/12-io-engines/' | relative_url }}), covers the engine under an event loop.
+How an event loop learns that a socket has data is out of scope here. In this chapter the loop is only the scheduler that resumes its coroutines.
 
 The code is in `examples/11-stackful-stackless/`; its `README.md` covers how to drive it.
 
@@ -174,7 +174,7 @@ Run from the repository root:
 examples/11-stackful-stackless/verify.sh
 ```
 
-Profile for every number below: bare-metal host, an 8-core, 16-thread Intel CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Boost 1.92.0, Python 3.14.9 (GIL and free-threaded builds). Threads sit on distinct physical cores other than CPU 0, placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. The parked and line runs' lookup threads float. Ranges span the committed runs `r04-run1` to `r04-run3`.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Boost 1.92.0, Python 3.14.9 (GIL and free-threaded builds). Threads sit on distinct physical cores other than CPU 0, placed with `sched_setaffinity`: an experiment control, not isolation. The parked and line runs' lookup threads float. Ranges span the committed runs `r04-run1` to `r04-run3`.
 
 ### Ten thousand parked waits
 
@@ -216,7 +216,7 @@ Java's virtual threads show what still pins. JFR's `jdk.VirtualThreadPinned` (th
 
 ### Python, both builds
 
-A parked thread's RSS is 19,228-19,247 B on the GIL build and 254,263-254,271 B free-threaded (observed, cause not isolated), against 2,611-2,614 B and 2,052 B for an asyncio task. The measured process imports no `lowlat_measure`: its `pyhdrh` extension doesn't declare free-threading support, so importing it would turn the GIL back on. `tasks-py measure` asserts the GIL stayed off from the imports to the end, which it did in every run. Appendix E, *Free-threaded Python vs the GIL*, treats the build in full.
+A parked thread's RSS is 19,228-19,247 B on the GIL build and 254,263-254,271 B free-threaded (observed, cause not isolated), against 2,611-2,614 B and 2,052 B for an asyncio task. The measured process imports no `lowlat_measure`: its `pyhdrh` extension doesn't declare free-threading support, so importing it would turn the GIL back on. `tasks-py measure` asserts the GIL stayed off from the imports to the end, which it did in every run.
 
 ### The line
 
@@ -236,8 +236,6 @@ The `/proc` switch counts explain the histogram: a thread round trip is 2 volunt
 - After JEP 491 a `synchronized` block no longer pins a virtual thread; a native frame still does.
 - On the line all variants fit 480 ms, so the choice is memory per wait and the cost of each hand-off.
 
-The next chapter, *I/O engines* (Part 4), asks how a thread learns that data has arrived.
-
 ## For deeper coverage
 
 - Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for threads and coroutines.
@@ -247,7 +245,9 @@ The next chapter, *I/O engines* (Part 4), asks how a thread learns that data has
 - Evans and Gough, *Optimizing Cloud Native Java* (O'Reilly), for the JVM side.
 - Ghosh, *Building Low Latency Applications with C++* (Packt), and Enberg, *Latency* (Manning).
 - Companion sites cpp-concurrency-and-parallelism, [Chapter 11, *Coroutines in Depth*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/11-coroutines-in-depth/), [Chapter 12, *Async Runtimes and Event Loops*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/12-async-runtimes-and-event-loops/) and [Chapter 13, *Fibers and Stackful Coroutines*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/13-fibers-and-stackful-coroutines/), and linux-systems-programming, [*Event loops: epoll and inotify*](https://patterncatalyst.github.io/linux-systems-programming/docs/09-event-loops-epoll-inotify/).
+- [Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }}), for Little's law.
 - [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), for the MPSC hand-off and memory orders.
+- [Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core*]({{ '/docs/12-io-engines/' | relative_url }}), for the engine under an event loop, and Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5), for isolation.
 - Appendix E, *Free-threaded Python vs the GIL*.
 
 ---
