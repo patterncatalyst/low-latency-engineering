@@ -124,7 +124,8 @@ idle_wait() {
 haltpoll_arm() {
   local idx args default
   # The RT entry by its grubby index: on Fedora Cloud's btrfs /boot, grubby rejects kernel paths.
-  idx=$(sudo grubby --info=ALL | awk -F'[="]' '/^index=/ { i = $2 } /^kernel=.*lowlatrt/ { print i; exit }')
+  # awk reads all of grubby's output (no early exit), so grubby never gets SIGPIPE under pipefail.
+  idx=$(sudo grubby --info=ALL | awk -F'[="]' '/^index=/ { i = $2 } /^kernel=.*lowlatrt/ && !found { print i; found = 1 }')
   [[ $idx =~ ^[0-9]+$ ]] || die "no PREEMPT_RT boot entry found"
   default=$(sudo grubby --default-index)
   [[ $default == "$idx" ]] || die "the RT entry ($idx) is not the default boot entry ($default); the reboot would not use it"
