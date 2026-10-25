@@ -68,6 +68,7 @@ target_compile_features(lowlat_flat_parcel_v1 INTERFACE cxx_std_23)
 
 add_subdirectory(common/proto-smoke)
 add_subdirectory(common/measure-cpp)
+add_subdirectory(common/cyclic-probe)
 add_subdirectory(common/line-simulator)
 
 # Chapter examples: every NN-<topic>/cpp directory with a CMakeLists.txt is

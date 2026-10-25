@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.patterncatalyst.lowlat</groupId>
+    <artifactId>lowlat-examples</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>cpu-partitioning-java</artifactId>
+  <name>cpu-partitioning-java (Ch15 thread placement under CPU isolation, see ../README.md)</name>
+
+  <dependencies>
+    <!-- Ch7's affinity idiom (OpenHFT Java-Thread-Affinity 2026.2, managed by the chronicle-bom import in the parent). -->
+    <dependency>
+      <groupId>net.openhft</groupId>
+      <artifactId>affinity</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>cpu-partitioning-java</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- JNA loads its native stub with System.load; JDK 25 warns about that unless native access is granted. -->
+          <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

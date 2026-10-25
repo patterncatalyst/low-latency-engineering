@@ -133,6 +133,8 @@ jobs:
         run: ~/.cache/lowlat/prefix/bin/protoc --version
 
   # C++: the kits, the line simulator, the consumers and every chapter's C++ example.
+  # Chapters 14 to 16 add common/cyclic-probe, pi-demo, placement-probe and the method test. Their ctest cases run
+  # without root, SCHED_FIFO or KVM (SCHED_OTHER, no mlockall); the FIFO runs belong to the lab VM.
   cpp:
     needs: [changes, protobuf]
     if: needs.changes.outputs.run == 'true'
@@ -220,7 +222,7 @@ jobs:
           uv run ruff check . ../scripts ../diagrams
           uv run ruff format --check . ../scripts ../diagrams
 
-  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-13, and the standalone
+  # Java: the aggregator builds every module (kits, simulator consumer, chapters 1-15, and the standalone
   # Ch12 Quarkus module with its @QuarkusTest smoke test) and runs the tests,
   # including the 05 AOT-cache smoke test (a child JVM trains a cache, then runs with -XX:AOTMode=on).
   # The JDK is the Temurin tarball pinned in versions.env (TEMURIN_URL, SHA-checked), the same
