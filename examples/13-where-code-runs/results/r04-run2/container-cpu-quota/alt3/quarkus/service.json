@@ -1,0 +1,31 @@
+{
+  "schema": "lowlat-place-probe/1",
+  "example": "13-where-code-runs",
+  "language": "java-service",
+  "service": {
+    "event_loop_threads": 2,
+    "executor_threads": 8,
+    "carrier_threads": 3
+  },
+  "runtime": {
+    "environment": {
+      "kind": "container",
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "container": {
+        "runtime": "docker",
+        "image": "lowlat/place-java:r04",
+        "image_digest": "sha256:da6684ca44f28935abe38ea3907a42f78197f64851962a008e36c4c52b488cc7",
+        "network": "host",
+        "cpu_quota": "2",
+        "cpuset": null,
+        "seccomp": "default"
+      },
+      "cgroup": {
+        "cpu_max": "200000 100000",
+        "cpuset_effective": "0-3",
+        "nr_throttled": 2,
+        "throttled_usec": 29303
+      }
+    }
+  }
+}

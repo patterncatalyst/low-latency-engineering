@@ -1,0 +1,42 @@
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ------------------
+ 69.85    0.026415        3773         7           futex
+ 29.35    0.011099           0     39343           io_uring_enter
+  0.21    0.000081           2        33           mmap
+  0.08    0.000031           3         8           mprotect
+  0.06    0.000023           1        12           munmap
+  0.06    0.000023           2         9           sched_yield
+  0.06    0.000021           1        11           openat
+  0.04    0.000016           0        17           close
+  0.03    0.000011           2         4           write
+  0.03    0.000011           2         4           socket
+  0.02    0.000008           0        11           read
+  0.02    0.000007           0         8           setsockopt
+  0.02    0.000007           3         2           io_uring_setup
+  0.02    0.000006           0         7           fstat
+  0.02    0.000006           6         1           sched_setaffinity
+  0.02    0.000006           3         2           io_uring_register
+  0.01    0.000005           1         4           bind
+  0.01    0.000005           2         2           clock_gettime
+  0.01    0.000005           5         1         1 clock_nanosleep
+  0.01    0.000004           0         5           rt_sigprocmask
+  0.01    0.000004           1         4           getsockopt
+  0.01    0.000003           1         2           pread64
+  0.01    0.000003           0         4           getsockname
+  0.01    0.000003           3         1           restart_syscall
+  0.01    0.000003           1         2           rseq
+  0.01    0.000002           2         1           getpid
+  0.01    0.000002           2         1           set_tid_address
+  0.01    0.000002           1         2           set_robust_list
+  0.00    0.000001           0         4           brk
+  0.00    0.000001           0         2           madvise
+  0.00    0.000001           1         1           arch_prctl
+  0.00    0.000001           1         1           gettid
+  0.00    0.000001           1         1           prlimit64
+  0.00    0.000001           1         1           getrandom
+  0.00    0.000000           0         3           rt_sigaction
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           clone3
+------ ----------- ----------- --------- --------- ------------------
+100.00    0.037818           0     39524         2 total

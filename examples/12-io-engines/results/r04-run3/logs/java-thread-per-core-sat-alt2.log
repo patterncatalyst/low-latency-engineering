@@ -1,0 +1,14 @@
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+pinned pid=72799 tid=73017 cpu=2 role=core-1
+pinned pid=72799 tid=73018 cpu=3 role=core-2
+pinned pid=72799 tid=73016 cpu=1 role=core-0
+pinned pid=72799 tid=73019 cpu=4 role=core-3
+placement-ready
+released
+receive: thread-per-core parcels 240000 dropped 0 datagrams 240000 receive calls 240000 select calls 0 start skew 149279 ns
+12-io-engines              java   thread-per-core        240000        0       58.0       62.4       67.3      186.1     2061.3
+report: <repo>/examples/12-io-engines/results/r04-run3/java/thread-per-core-sat-alt2.json
+   60000 dropped=     0 p50=     42.9us p90=     52.7us p99=     53.6us p99.9=     67.2us max=    1078.3us
+line-simulator           cpp  emit-lateness    count=    60000 dropped=     0 p50=     44.3us p90=     51.9us p99=     52.9us p99.9=     64.8us max=    1210.4us

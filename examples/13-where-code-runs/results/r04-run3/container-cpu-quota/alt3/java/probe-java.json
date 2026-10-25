@@ -1,0 +1,41 @@
+{
+  "schema": "lowlat-place-probe/1",
+  "example": "13-where-code-runs",
+  "language": "java",
+  "java": {
+    "available_processors": 2,
+    "virtual_thread_parallelism": 2,
+    "virtual_thread_mounted_max": 2,
+    "virtual_thread_pool_size_after_spin": 2,
+    "parallel_gc_threads": 2,
+    "conc_gc_threads": 1,
+    "collectors": [
+      "G1 Young Generation",
+      "G1 Concurrent GC",
+      "G1 Old Generation"
+    ],
+    "max_heap_bytes": 2078277632,
+    "version": "25.0.5+8-LTS"
+  },
+  "runtime": {
+    "environment": {
+      "kind": "container",
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "container": {
+        "runtime": "docker",
+        "image": "lowlat/place-java:r04",
+        "image_digest": "sha256:da6684ca44f28935abe38ea3907a42f78197f64851962a008e36c4c52b488cc7",
+        "network": "bridge",
+        "cpu_quota": "2",
+        "cpuset": null,
+        "seccomp": "default"
+      },
+      "cgroup": {
+        "cpu_max": "200000 100000",
+        "cpuset_effective": "0-3",
+        "nr_throttled": 1,
+        "throttled_usec": 1310
+      }
+    }
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "11-stackful-stackless",
+  "language" : "java",
+  "variant" : "virtual-thread",
+  "unit" : "ns",
+  "count" : 200000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 2069503,
+    "p90" : 2125823,
+    "p99" : 2172927,
+    "p99_9" : 2555903,
+    "max" : 5058559
+  },
+  "hdr_histogram" : "HISTFAAAAhR4nDVQQWsTQRSeefNmsmuSTbNr0jRNtbTRHGxjxfbgxYIHD9KTiAeP4sHe/QmxB09SpYQQREIQCTlJKDkUFPEQgvQgQTyUEnoSWUooIpKD+M2uzuzsvPe9733vvSnVXgRCUEvES/27Jczba/3XYnMSA0/fSxJ0642azh1vhDd2K838JP3cHZiQj9Qv6tOIWmqgxtSkjuzJmnz08O69XblPb1vUbejhb3V8Imvbvc2z9U7lsDT2DzI/Sp+23m19u9outoKvM3tew2t7oddON1Njt5M40F/4pe7qRmqQ/u5+MEf6lCfqo2qqAfXUZ6eWrS+Ehf3g7PKo3M3Xgz/+q9wwNTF1fch7usk7HFKPpjKUJ3TqDJ2faodGsi+n8hkNZUs+efzg/s21O9X1anVlKb9YLPnlUnFp5ULZ5Bc93yl4Xqpg2D933jOGDc+kmJhZMBE+IsEGNgt4MIRJwjaIaLAEWaoihRfDFS9Gis0UpJg0Ryoq+uMkAGobssKkYr5iAwVOAociucCNsCraIRVRLS44LuFG6dZEGaulbTOaoi6sywlbJwolLD2BjW6zuARcQhzZOZiYJRPrg5DmuShueQgEFPc5Txm4CxRE6bOUBiLoIvKTUUVBG/BiW9MqeIqu4GSBJekasEt0/X8/y9gKEqt4ulzUgq2Y5FmMZqva0V0kKKrEo+FReB76GsFlyrLV/AvW6GfV",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-XX:+AlwaysPreTouch -Xms1g -Xmx1g -XX:+UseG1GC --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-25T13:16:46Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "vendor" : "Intel",
+      "model" : "Intel 8-core/16-thread CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15",
+      "caches" : {
+        "l1d" : {
+          "size_bytes" : 49152,
+          "line_bytes" : 64
+        },
+        "l1i" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l2" : {
+          "size_bytes" : 1310720,
+          "line_bytes" : 64
+        },
+        "l3" : {
+          "size_bytes" : 25165824,
+          "line_bytes" : 64
+        }
+      },
+      "topology" : [ {
+        "cpu" : 0,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 1,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 2,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 3,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 4,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 5,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 6,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 7,
+        "core_id" : 7,
+        "package_id" : 0
+      }, {
+        "cpu" : 8,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 9,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 10,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 11,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 12,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 13,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 14,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 15,
+        "core_id" : 7,
+        "package_id" : 0
+      } ]
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3311322,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "container" : "none"
+    },
+    "cgroup" : {
+      "cpu_max" : "max 100000",
+      "cpuset_effective" : null,
+      "nr_throttled" : 0,
+      "throttled_usec" : 0
+    },
+    "load" : {
+      "load1" : 1.92,
+      "load5" : 3.01,
+      "load15" : 14.17,
+      "running" : 2
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf" : "7.2",
+      "valgrind" : "3.27.1",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "line; expect=200000; received=200000; decided=200000; exception_lane=2997; divert_received=200000; lookup_wait_ms=2; model=virtual-thread",
+  "runtime" : {
+    "gc" : {
+      "collectors" : [ "G1 Young Generation", "G1 Concurrent GC", "G1 Old Generation" ],
+      "heap_bytes" : 1073741824,
+      "flags" : [ "-XX:+AlwaysPreTouch", "-Xms1g", "-Xmx1g", "-XX:+UseG1GC" ]
+    },
+    "placement" : {
+      "cpus" : [ 1 ],
+      "distinct_cores" : true,
+      "smt_siblings" : false
+    },
+    "counters" : {
+      "decided" : 200000,
+      "divert_received" : 200000,
+      "dropped" : 0,
+      "received" : 200000,
+      "start_skew_ns" : 0,
+      "tasks_started" : 200000
+    }
+  }
+}

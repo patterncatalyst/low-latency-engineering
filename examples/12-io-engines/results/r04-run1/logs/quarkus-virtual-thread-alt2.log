@@ -1,0 +1,6 @@
+client: virtual-thread at 5000 Hz for 5 s (warm-up 3 s); Little's law: 5000 Hz x 2 ms = 10.0 in flight, worker pool 8
+12-io-engines              java   virtual-thread          25000        0     2162.7     2838.5    10731.5    27639.8    38567.9
+12-io-engines              java   client-lateness         25000        0        0.1        0.3      386.0    18333.7    23117.8
+client: sent 25000 completed 25000 errors 0 max in flight 148 (Little's law 10.0) late starts over 1 ms 230
+service: service_requests 25000 service_in_handler_max 85 worker_active_max 0 worker_threads_seen 0 event_loop_threads_seen 0 carrier_threads 4 blocked_thread_warnings 0 blocked_thread_warnings_in_run 0
+report: <repo>/examples/12-io-engines/results/r04-run1/quarkus/virtual-thread-alt2.json

@@ -1,0 +1,219 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "12-io-engines",
+  "language" : "java",
+  "variant" : "blocking-on-event-loop",
+  "unit" : "ns",
+  "count" : 9250,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 2252799,
+    "p90" : 4028415,
+    "p99" : 6205439,
+    "p99_9" : 7606271,
+    "max" : 9347071
+  },
+  "hdr_histogram" : "HISTFAAAA614nD1UMYhdRRSdue/+u/PH+cPz5fny+Px81rhIEFxkWcISRFOEEEMKsZAFLdJosRDYQoJlEAkiIoKQSiSFRUobJdgIIVhaiFjZ21qn8pw7Gx//vzd//r33nHvOnbf5/NtzIdg7oV3d2TNief2Nxw/D2/+2jX9+jbqSTla5lu3Fvf0394+u3bh86+jqlePrH773/ien9+MP8fYD+UZ+jz/Hv+J38r18Lc/in/FZfIKdp/GX+Dfuv8U/4uP4Y3wUP4v348P4IH6BxLuP4j08voynX8W7xx9/enpyLx6fnNy+ce3dm4c3r95668r+5UsHR68d7G0PDg/nVy9ud+dxs700jXu7Uz9oHfthnNbTVOq0Xvdl2pRhM/UpV1zDNMzDMORh2h3Hqa81WcH2XPoR9ymPecjTMNSc+5LNUi1jysH6opP1KZWiZchpGExLzaWOpYxj1lRyGctU8zD0fSq1rOcCqKkWv021x2dT+3HcTnvjZj1OFTTWfZ3TupbUz3NKw1xL7mvPWn1NY4G4GYg5WykhiYK/JpBJUq2kYprVcsEyWSigasHwt2VVqymUkqVqlpBVsgk2wV3EFFfBN6mZZF9wG9UQkywFEwZ3IohQUeYHPAWXBsQLItQSAiQwEvGdBhZjAAINZRRbTEOAgheiFMmGKC+PWOZwK6GKAYvULBOkY+FgwBImMYMfAGPkuuw92KKyeCIeEYSckIecjnzAP4gnkETQHdGFiG+yA/wIGjze196L13J4Y7OeG/gbAN5N8ihl6y4IhAAwrWHj7Ehl0Qqhf0ejXtb05bNzGYWtACSgkstBHVw6NkxBxeiK0hTyMFcStemAAwhkM++UsO4OqCxIBDIynHo0xnjSG2trALE4YFoaMZtKXbOPxp4pwh2XqbUKPp05fR8R2qk+T6TjTWb4mBjig+Iw7DT7BFEBcoFpYJ9zCpl0jNZRAfEJWQiHR5uTZGmuLaoE5w9vk/qVfBKgYijq7HIW6y35mAkPQrZGUuERppLsaGCz12nKknXbb+Jw2twPOuHjRx98lsjTdVE3IPhBSDg+7XSc6YA19lgcZ4muF+JSd2sHghXg2kLPYN2r5wVdWxDs8HptFsgOel+2PzsasmxzRZXk/8HlPRXBiwGKN6V8z2e+jTIQnx8JWXnj5/lrxRiA8LsjjrXSHfURxwsecHjRa+fYSyfzChKZhyVSF55Lvrid9yLYJeGlsubL8oLIBTknLwqZX5DX5SW5Ix/JB/JTlP8ASSpRZw==",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xms256m -Xmx1g -XX:+ExitOnOutOfMemoryError",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-25T12:56:33Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "vendor" : "Intel",
+      "model" : "Intel 8-core/16-thread CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15",
+      "caches" : {
+        "l1d" : {
+          "size_bytes" : 49152,
+          "line_bytes" : 64
+        },
+        "l1i" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l2" : {
+          "size_bytes" : 1310720,
+          "line_bytes" : 64
+        },
+        "l3" : {
+          "size_bytes" : 25165824,
+          "line_bytes" : 64
+        }
+      },
+      "topology" : [ {
+        "cpu" : 0,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 1,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 2,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 3,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 4,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 5,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 6,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 7,
+        "core_id" : 7,
+        "package_id" : 0
+      }, {
+        "cpu" : 8,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 9,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 10,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 11,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 12,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 13,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 14,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 15,
+        "core_id" : 7,
+        "package_id" : 0
+      } ]
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3279325,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "container" : "none"
+    },
+    "cgroup" : {
+      "cpu_max" : "max 100000",
+      "cpuset_effective" : null,
+      "nr_throttled" : 0,
+      "throttled_usec" : 0
+    },
+    "load" : {
+      "load1" : 1.95,
+      "load5" : 60.9,
+      "load15" : 47.34,
+      "running" : 2
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf" : "7.2",
+      "valgrind" : "3.27.1",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "service; variant=blocking-on-event-loop; open loop; rate_hz=1850; seconds=5; warmup_seconds=3; HTTP/1.1 on loopback; latency from the intended send time",
+  "model" : {
+    "lambda_hz" : 1850,
+    "service_time_ms" : 2.0,
+    "littles_law_in_flight" : 3.7,
+    "worker_pool_threads" : 8
+  },
+  "runtime" : {
+    "counters" : {
+      "blocked_thread_warnings" : 1687,
+      "blocked_thread_warnings_in_run" : 1004,
+      "carrier_threads" : 0,
+      "completed" : 9250,
+      "errors" : 0,
+      "event_loop_threads_seen" : 4,
+      "late_starts_over_1ms" : 10,
+      "max_in_flight" : 15,
+      "sent" : 9250,
+      "service_in_handler_max" : 4,
+      "service_requests" : 9250,
+      "worker_active_max" : 0,
+      "worker_pool_threads" : 8,
+      "worker_threads_seen" : 0
+    }
+  }
+}

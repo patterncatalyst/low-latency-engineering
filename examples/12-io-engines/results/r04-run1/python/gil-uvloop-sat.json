@@ -1,0 +1,233 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "12-io-engines",
+  "language": "python",
+  "variant": "uvloop",
+  "unit": "ns",
+  "count": 24000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 60223,
+    "p90": 81215,
+    "p99": 97471,
+    "p99_9": 240511,
+    "max": 443647
+  },
+  "hdr_histogram": "HISTFAAAA5p4nC1UXWgdRRTO+XbuZDqO0+12XK/b6zXGS4w1hmsaY5AYY0xDGmKNEkOoIcZYax6KQqhBa5FQArUFRVuwpZRYipYqxWoJUkQkiA21D30QFSnSBykiMQ8qPhQfxG9v3Dt35nznb79zzjKl+SMb6+rU4bq1J/r/FIr91Qsn6x75Y03x5zb8vg4/CA4IPhIcFVwUPIHPaudR4ADwgHoLeAWv42XcgoPAh4J7sAXYoBCaR07LqhzHFXwZrUZvFm4Ujutr+mz9sr6qrxe+LpwqrKgV9bc6rz5Wn6qv6LMUnYjmomu4hAWsyAmsypJ8Lr/IVfmE/x/lN/mXGRdxBt/gUHQdy7hMeRFn6X8MN+Qv+Ufm8av8RM9LclkuMG5J3pYzckrekTdmd+4a7d4zMNzT3T840Nc1sL2/vXew2trd095V7WhqbmtqbWqoFJvK5VDJ4srmYmNqG4pJKc3KJVcKxVD0LlgfnG1K49SncXAmi6kKibPeOR97V4q11bHLvPWxdcYGm6bGG218Envlc0dNRBUfb53N97QhSdOScd7FicviLFDywfvYJQzgcrEzsdZWGUKjvRc4pYmMhdHKWmhPhWFmR62yuei0oopBPK0T8lJGx4ltaO7semhobGSwo7fa1tva1lJpbMk2J1kSymnJJ8UkTnXCUm3CxF4nDNSK2bRTrNGXK/075uUDOS+L8j2n8oX8LMvynVxhtxeIFmXfAs3zcpLKQ4Sn5T22f477fjnM3zHZuXff7H4Z2z0xJ5PDA1xPjQ9OT4+N7Ng7OrVrZk5mZmemXpp+dU72TE1MTu4eHh+fGNk+OjTU19fT3d7T11mptnQ0N3ZWGtqLpVDOEhd7G1KXBMO+aeXZXGUVuw6yNmLYo8iIAqAUlFjkMkWBUZpAgTut0EIkOlI8LdXUFrQBCoiMobdOFIfrQshS7YLJX2BNEgIHw3dzXhwuKVjDwalMW8exhWASn7KlJi4mmpCfRv5J+Jhj0oazgVXOcDbWWHJRqqAQgRxqvDhSMtJQ5FojSKPL+bGAHOWUWUxt6VqFORTGE2txSrF0ZmdKrtw5Qn0u5kXVMGusVS+5fgNBgTvtN1NYM9GiCrgzF2/D87gVm/AattK2CY/jPrwrWI+NDGJ8PQ4KnbbiWdzNDI/hDjyN23lpvEjTvXgUD/J+eIH+7wu+zT3XI4/GXbhJPYMjOZcnmQv3U9iCdXgYzzHoHHAxyu+f/wATiKsX",
+  "build": {
+    "compiler": "3.14.9 (main, Oct 21 2026, 17:48:02) [Clang 23.1.3 ]",
+    "gil_enabled": true
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-25T12:56:33Z",
+    "host_label": "bare-metal-host",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 8-core/16-thread CPU",
+      "sockets": 1,
+      "cores_per_socket": 8,
+      "threads_per_core": 2,
+      "logical_cpus": 16,
+      "smt_active": true,
+      "online": "0-15",
+      "caches": {
+        "l1d": {
+          "size_bytes": 49152,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 1310720,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 25165824,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 6,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 7,
+          "core_id": 7,
+          "package_id": 0
+        },
+        {
+          "cpu": 8,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 9,
+          "core_id": 1,
+          "package_id": 0
+        },
+        {
+          "cpu": 10,
+          "core_id": 2,
+          "package_id": 0
+        },
+        {
+          "cpu": 11,
+          "core_id": 3,
+          "package_id": 0
+        },
+        {
+          "cpu": 12,
+          "core_id": 4,
+          "package_id": 0
+        },
+        {
+          "cpu": 13,
+          "core_id": 5,
+          "package_id": 0
+        },
+        {
+          "cpu": 14,
+          "core_id": 6,
+          "package_id": 0
+        },
+        {
+          "cpu": 15,
+          "core_id": 7,
+          "package_id": 0
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": "intel_pstate",
+      "governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "intel_pstate_no_turbo": false,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": 800000,
+      "cpu0_max_khz": 4600000
+    },
+    "tuned": "balanced",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "tsc",
+      "available_clocksource": [
+        "tsc",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3279325,
+      "cpu_affinity": "0-15",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "none",
+      "container": "none"
+    },
+    "cgroup": {
+      "cpu_max": "max 100000",
+      "cpuset_effective": null,
+      "nr_throttled": 0,
+      "throttled_usec": 0
+    },
+    "load": {
+      "load1": 1.95,
+      "load5": 60.9,
+      "load15": 47.34,
+      "running": 2
+    },
+    "memory": {
+      "mem_total_kb": 65545544,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.8",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": "3.27.1",
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "receive; cameras=4; expect_per_camera=6000; flat wire; variant=uvloop; threads=1; idle_ms=1500; gil_at_start=true; gil_at_end=true; no stdlib io_uring; latency is time.monotonic_ns at the end of the decide step minus the intended emit time",
+  "runtime": {
+    "python_build": "gil",
+    "counters": {
+      "parcels": 24000,
+      "datagrams": 24000,
+      "malformed": 0,
+      "dropped": 0,
+      "callbacks_or_recv_calls": 24000,
+      "start_skew_ns": 0,
+      "threads": 1
+    },
+    "placement": {
+      "cpus": [
+        1
+      ],
+      "distinct_cores": true,
+      "smt_siblings": false
+    }
+  }
+}

@@ -1,0 +1,11 @@
+pinned pid=67776 tid=67780 cpu=2 role=receiver-1
+pinned pid=67776 tid=67781 cpu=3 role=receiver-2
+pinned pid=67776 tid=67782 cpu=4 role=receiver-3
+pinned pid=67776 tid=67779 cpu=1 role=receiver-0
+placement-ready
+released
+receive: thread-per-core parcels 624000 dropped 0 syscalls 158673 (epoll_wait 0 recvmsg 0 recvmmsg 0 io_uring_enter 158673) cqes 624000 handoffs 0 start skew 15187 ns
+12-io-engines            cpp  thread-per-core  count=   624000 dropped=     0 p50=     46.9us p90=     66.6us p99=     71.2us p99.9=   1006.6us max=    2930.7us
+report: <repo>/examples/12-io-engines/results/r04-run3/cpp/thread-per-core-sat-alt2.json
+.9=     76.4us max=     229.8us
+line-simulator           cpp  emit-lateness    count=   156000 dropped=     0 p50=     28.3us p90=     52.2us p99=     53.1us p99.9=     70.4us max=     251.9us

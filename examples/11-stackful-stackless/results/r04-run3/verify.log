@@ -1,0 +1,221 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+━━ building C++ (release preset) tasks-bench tasks-line tasks-test line-simulator
+[0/2] Re-checking globbed directories...
+[1/35] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[2/32] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
+[3/30] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[4/26] Generating CXX dyndep file 11-stackful-stackless/cpp/CMakeFiles/lowlat_tasks.dir/CXX.dd
+[5/21] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[6/20] Generating CXX dyndep file 11-stackful-stackless/cpp/CMakeFiles/tasks-bench.dir/CXX.dd
+[7/19] Generating CXX dyndep file 11-stackful-stackless/cpp/CMakeFiles/tasks-line.dir/CXX.dd
+[8/18] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[9/12] Generating CXX dyndep file 11-stackful-stackless/cpp/CMakeFiles/tasks-test.dir/CXX.dd
+━━ building Java module 11-stackful-stackless/java
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+# WARNING: Unable to get Instrumentation. Dynamic Attach failed. You may add this JAR as -javaagent manually, or supply -Djdk.attach.allowAttachSelf
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:~/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+━━ syncing the Python workspace
+━━ unit tests: C++ (GoogleTest), Python under the GIL and under the free-threaded build; Java ran during the package step
+✓ C++, Java and Python (both builds) unit tests pass
+✓ pinned threads use CPUs 1,2 (distinct physical cores, idle when chosen)
+━━ C++ parked: os-thread, 10000 tasks on a 1000 ms timer
+✓ placement: 0 threads of cpp-parked-os-thread run on the CPUs they were pinned to
+━━ C++ parked: fiber, 10000 tasks on a 1000 ms timer
+✓ placement: 1 threads of cpp-parked-fiber run on the CPUs they were pinned to
+━━ C++ parked: coroutine, 10000 tasks on a 1000 ms timer
+✓ placement: 1 threads of cpp-parked-coroutine run on the CPUs they were pinned to
+━━ Java parked: platform-thread, 10000 tasks on a 1000 ms timer
+✓ placement: 0 threads of java-parked-platform-thread run on the CPUs they were pinned to
+━━ Java parked: virtual-thread, 10000 tasks on a 1000 ms timer
+✓ placement: 0 threads of java-parked-virtual-thread run on the CPUs they were pinned to
+━━ Python parked-threads in the gil build
+✓ placement: 0 threads of python-gil-parked-threads run on the CPUs they were pinned to
+━━ Python parked-asyncio-tasks in the gil build
+✓ placement: 1 threads of python-gil-parked-asyncio-tasks run on the CPUs they were pinned to
+━━ Python pingpong-threads in the gil build
+✓ placement: 2 threads of python-gil-pingpong-threads run on the CPUs they were pinned to
+━━ Python pingpong-asyncio-tasks in the gil build
+✓ placement: 1 threads of python-gil-pingpong-asyncio-tasks run on the CPUs they were pinned to
+━━ Python parked-threads in the free-threaded build
+✓ placement: 0 threads of python-free-threaded-parked-threads run on the CPUs they were pinned to
+━━ Python parked-asyncio-tasks in the free-threaded build
+✓ placement: 1 threads of python-free-threaded-parked-asyncio-tasks run on the CPUs they were pinned to
+━━ Python pingpong-threads in the free-threaded build
+✓ placement: 2 threads of python-free-threaded-pingpong-threads run on the CPUs they were pinned to
+━━ Python pingpong-asyncio-tasks in the free-threaded build
+✓ placement: 1 threads of python-free-threaded-pingpong-asyncio-tasks run on the CPUs they were pinned to
+━━ Python neighbours-asyncio-tasks in the gil build
+✓ placement: 1 threads of python-gil-neighbours-asyncio-tasks run on the CPUs they were pinned to
+━━ Python neighbours-asyncio-tasks-blocking in the gil build
+✓ placement: 1 threads of python-gil-neighbours-asyncio-tasks-blocking run on the CPUs they were pinned to
+━━ Python neighbours-asyncio-tasks-blocking-debug in the gil build
+✓ placement: 1 threads of python-gil-neighbours-asyncio-tasks-blocking-debug run on the CPUs they were pinned to
+━━ C++ ping-pong: os-thread (alternation 1), 1000000 round trips
+✓ placement: 2 threads of cpp-pingpong-os-thread-alt1 run on the CPUs they were pinned to
+━━ C++ ping-pong: fiber (alternation 1), 1000000 round trips
+✓ placement: 1 threads of cpp-pingpong-fiber-alt1 run on the CPUs they were pinned to
+━━ C++ ping-pong: coroutine (alternation 1), 1000000 round trips
+✓ placement: 1 threads of cpp-pingpong-coroutine-alt1 run on the CPUs they were pinned to
+━━ C++ ping-pong: os-thread (alternation 2), 1000000 round trips
+✓ placement: 2 threads of cpp-pingpong-os-thread-alt2 run on the CPUs they were pinned to
+━━ C++ ping-pong: fiber (alternation 2), 1000000 round trips
+✓ placement: 1 threads of cpp-pingpong-fiber-alt2 run on the CPUs they were pinned to
+━━ C++ ping-pong: coroutine (alternation 2), 1000000 round trips
+✓ placement: 1 threads of cpp-pingpong-coroutine-alt2 run on the CPUs they were pinned to
+━━ C++ ping-pong: os-thread (alternation 3), 1000000 round trips
+✓ placement: 2 threads of cpp-pingpong-os-thread-alt3 run on the CPUs they were pinned to
+━━ C++ ping-pong: fiber (alternation 3), 1000000 round trips
+✓ placement: 1 threads of cpp-pingpong-fiber-alt3 run on the CPUs they were pinned to
+━━ C++ ping-pong: coroutine (alternation 3), 1000000 round trips
+✓ placement: 1 threads of cpp-pingpong-coroutine-alt3 run on the CPUs they were pinned to
+━━ C++ ping-pong: os-thread on std::binary_semaphore (observed)
+✓ placement: 2 threads of cpp-pingpong-os-thread-semaphore run on the CPUs they were pinned to
+━━ Java ping-pong: platform-thread (alternation 1), 1000000 round trips
+✓ placement: 2 threads of java-pingpong-platform-thread-alt1 run on the CPUs they were pinned to
+━━ Java ping-pong: virtual-thread (alternation 1), 1000000 round trips
+✓ placement: 2 threads of java-pingpong-virtual-thread-alt1 run on the CPUs they were pinned to
+━━ Java ping-pong: platform-thread (alternation 2), 1000000 round trips
+✓ placement: 2 threads of java-pingpong-platform-thread-alt2 run on the CPUs they were pinned to
+━━ Java ping-pong: virtual-thread (alternation 2), 1000000 round trips
+✓ placement: 2 threads of java-pingpong-virtual-thread-alt2 run on the CPUs they were pinned to
+━━ Java ping-pong: platform-thread (alternation 3), 1000000 round trips
+✓ placement: 2 threads of java-pingpong-platform-thread-alt3 run on the CPUs they were pinned to
+━━ Java ping-pong: virtual-thread (alternation 3), 1000000 round trips
+✓ placement: 2 threads of java-pingpong-virtual-thread-alt3 run on the CPUs they were pinned to
+━━ C++ neighbours: fiber (alternation 1), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-fiber-alt1 run on the CPUs they were pinned to
+━━ C++ neighbours: fiber-blocking (alternation 1), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-fiber-blocking-alt1 run on the CPUs they were pinned to
+━━ C++ neighbours: coroutine (alternation 1), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-coroutine-alt1 run on the CPUs they were pinned to
+━━ C++ neighbours: os-thread (alternation 1), 1000 tasks on 2 ms timers
+✓ placement: 0 threads of cpp-neighbours-os-thread-alt1 run on the CPUs they were pinned to
+━━ C++ neighbours: fiber (alternation 2), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-fiber-alt2 run on the CPUs they were pinned to
+━━ C++ neighbours: fiber-blocking (alternation 2), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-fiber-blocking-alt2 run on the CPUs they were pinned to
+━━ C++ neighbours: coroutine (alternation 2), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-coroutine-alt2 run on the CPUs they were pinned to
+━━ C++ neighbours: os-thread (alternation 2), 1000 tasks on 2 ms timers
+✓ placement: 0 threads of cpp-neighbours-os-thread-alt2 run on the CPUs they were pinned to
+━━ C++ neighbours: fiber (alternation 3), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-fiber-alt3 run on the CPUs they were pinned to
+━━ C++ neighbours: fiber-blocking (alternation 3), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-fiber-blocking-alt3 run on the CPUs they were pinned to
+━━ C++ neighbours: coroutine (alternation 3), 1000 tasks on 2 ms timers
+✓ placement: 1 threads of cpp-neighbours-coroutine-alt3 run on the CPUs they were pinned to
+━━ C++ neighbours: os-thread (alternation 3), 1000 tasks on 2 ms timers
+✓ placement: 0 threads of cpp-neighbours-os-thread-alt3 run on the CPUs they were pinned to
+━━ Java: what pins a virtual thread (JFR jdk.VirtualThreadPinned, synchronized block against a native frame)
+━━ line: cpp / os-thread, one simulator instance at 10000 Hz x 20 s, UDP 47310
+✓ placement: 1 threads of cpp-line-os-thread run on the CPUs they were pinned to
+━━ line: cpp / fiber, one simulator instance at 10000 Hz x 20 s, UDP 47311
+✓ placement: 2 threads of cpp-line-fiber run on the CPUs they were pinned to
+━━ line: cpp / coroutine, one simulator instance at 10000 Hz x 20 s, UDP 47312
+✓ placement: 2 threads of cpp-line-coroutine run on the CPUs they were pinned to
+━━ line: java / platform-thread, one simulator instance at 10000 Hz x 20 s, UDP 47313
+✓ placement: 1 threads of java-line-platform-thread run on the CPUs they were pinned to
+━━ line: java / virtual-thread, one simulator instance at 10000 Hz x 20 s, UDP 47314
+✓ placement: 1 threads of java-line-virtual-thread run on the CPUs they were pinned to
+━━ reports: schema, histogram decode, percentile recompute
+✓ 7 55 reports validate (profile embedded: bare-metal-host)
+━━ criterion 1: memory per waiting task, on the quantity that shows the gap
+✓ 1 C++ address space per task, os-thread over fiber (VmSize growth over 10000 tasks): measured 132.75x (9245449 over 69645), bound >= 10.00x, margin 13.28x
+✓ 1 C++ fiber address space per task (measured VmSize growth) over the counted coroutine frame bytes: measured 334.83x (69645 over 208), bound >= 10.00x, margin 33.48x
+✓ 1 C++ coroutine: frame bytes per parked task (exact, counting promise operator new, frames that escape): measured 208, bound <= 1024, margin 4.92x
+✓ 1 C++ coroutine: frame allocations (exact), one per frame of 10000: measured 10000, bound == 10000 (exact)
+  observed: HALO on a coroutine that does not escape: 1000 of 1000 frames reached operator new (208 bytes per escaping frame)
+✓ 1 Java full resident cost per task (RSS + page tables + kernel stack, both sides the same), platform-thread over virtual-thread: measured 13.34x (41204 over 3088), bound >= 5.00x, margin 2.67x
+  observed: Java VmSize growth per task, platform-thread 1044591 B, virtual-thread 27262 B (not a per-task cost for a virtual thread: it grows in steps of about 64 MiB, likely malloc arenas of new carrier threads, and is 0 at small task counts)
+✓ 1 Python gil build: thread RSS bytes per task over asyncio task bytes (measured by tracemalloc, not exact): measured 11.72x (19237 over 1641), bound >= 5.00x, margin 2.34x
+  observed: Python gil build, asyncio RSS bytes per task 2612, tracemalloc bytes per task 1641, thread RSS bytes per task 19237
+✓ 1 Python free-threaded build: thread RSS bytes per task over asyncio task bytes (measured by tracemalloc, not exact): measured 148.43x (254266 over 1713), bound >= 5.00x, margin 29.69x
+  observed: Python free-threaded build, asyncio RSS bytes per task 2052, tracemalloc bytes per task 1713, thread RSS bytes per task 254266
+━━ criterion 2: parked tasks armed when the memory was read; RSS observed
+✓ 2 cpp-parked-fiber: tasks that had reached their wait when the memory was read (exact): measured 10000, bound == 10000 (exact)
+✓ 2 cpp-parked-coroutine: tasks that had reached their wait when the memory was read (exact): measured 10000, bound == 10000 (exact)
+  by construction (a latch or barrier opens only when all arrive, so these cannot differ; not a criterion): tasks armed 10000 of 10000 in the 7 other parked runs
+  observed: RSS per task, C++ os-thread over fiber 8774 B / 4106 B = 2.14x, fiber over coroutine 4106 B / 1009 B = 4.07x (plan 10x)
+  observed: RSS per task, Java platform-thread over virtual-thread 22816 B / 3073 B = 7.42x; platform-thread RSS over virtual-thread heap 22816 B / 2063 B = 11.06x (plan 10x)
+  observed: C++ os-thread: RSS 8774 B, RSS + page tables + kernel stack 29356 B, address space 9245449 B per task; wake lateness p50 / p99 / p99.9 / max in ns: 14671871 / 25378815 / 25821183 / 25870335
+  observed: C++ fiber: RSS 4106 B, RSS + page tables + kernel stack 4242 B, address space 69645 B per task; wake lateness p50 / p99 / p99.9 / max in ns: 5152767 / 7577599 / 7618559 / 7622655
+  observed: C++ coroutine: RSS 1009 B, RSS + page tables + kernel stack 1010 B, address space 26 B per task; wake lateness p50 / p99 / p99.9 / max in ns: 1944575 / 2940927 / 2961407 / 2963455
+  observed: Java platform-thread: RSS 22816 B, heap 276 B, address space 1044591 B, RSS + page tables + kernel stack 41204 B per task; wake lateness p50 / p99 / p99.9 / max in ns: 37126143 / 94568447 / 95551487 / 95682559
+  observed: Java virtual-thread: RSS 3073 B, heap 2063 B, address space 27262 B, RSS + page tables + kernel stack 3088 B per task; wake lateness p50 / p99 / p99.9 / max in ns: 12124159 / 16646143 / 16711679 / 16719871
+  observed: Python gil build, threads: RSS 19237 B per task, address space 9266776 B per task
+  observed: Python gil build, asyncio-tasks: RSS 2612 B per task, address space 2569 B per task
+  observed: Python free-threaded build, threads: RSS 254266 B per task, address space 46106970 B per task
+  observed: Python free-threaded build, asyncio-tasks: RSS 2052 B per task, address space 0 B per task
+━━ criterion 3: voluntary context switches per round trip (exact counts)
+✓ 3 C++ os-thread: voluntary switches per round trip in thousandths, the lowest of 3 alternations (1999 1999 1999) (exact counts): measured 1999, bound >= 900, margin 2.22x
+✓ 3 C++ fiber: voluntary switches per round trip in millionths, the highest of 3 alternations (exact counts): measured 0, bound <= 1000, margin infx
+✓ 3 C++ coroutine: voluntary switches per round trip in millionths, the highest of 3 alternations (exact counts): measured 0, bound <= 1000, margin infx
+  observed: C++ os-thread on std::binary_semaphore: 181 voluntary switches over 1020000 round trips (the semaphore spins before it sleeps); p50 170 ns per round trip
+  observed: Java platform-thread: 2039608 voluntary switches over 1020000 round trips
+  observed: Java virtual-thread: 3 voluntary switches over 1020000 round trips
+━━ criterion 4: round-trip p50, same run, median of 3 alternations
+✓ 4 C++ round-trip p50: measured 18.25x (os-thread over fiber, per alternation: 18599 18246 18043 thousandths), bound >= 5.00x, margin 3.65x
+✓ 4 C++ round-trip p50: measured 208.72x (os-thread over coroutine, per alternation: 208722 944250 186750 thousandths), bound >= 5.00x, margin 41.74x
+✓ 4 Java round-trip p50: measured 10.28x (platform-thread over virtual-thread, per alternation: 10182 10284 10496 thousandths), bound >= 2.00x, margin 5.14x
+  C++ os-thread round trip p50 / p99 / p99.9 / max in ns, alternation 1: 3757 / 4061 / 4771 / 5063
+  C++ fiber round trip p50 / p99 / p99.9 / max in ns, alternation 1: 202 / 220 / 233 / 233
+  C++ coroutine round trip p50 / p99 / p99.9 / max in ns, alternation 1: 18 / 31 / 35 / 38
+  Java platform-thread round trip p50 / p99 / p99.9 / max in ns, alternation 1: 4175 / 5115 / 5967 / 11367
+  Java virtual-thread round trip p50 / p99 / p99.9 / max in ns, alternation 1: 410 / 734 / 1309 / 1976
+  observed: Python gil build, threads round trip p50 / p99 / p99.9 / max in ns: 4029 / 4747 / 6763 / 10767
+  observed: Python gil build, asyncio-tasks round trip p50 / p99 / p99.9 / max in ns: 3807 / 4359 / 7339 / 7371
+  observed: Python free-threaded build, threads round trip p50 / p99 / p99.9 / max in ns: 4077 / 5115 / 5315 / 5375
+  observed: Python free-threaded build, asyncio-tasks round trip p50 / p99 / p99.9 / max in ns: 4159 / 4495 / 6159 / 6163
+━━ criterion 5: a blocking call in a fiber or a coroutine, and the neighbours
+✓ 5 C++ fiber with --blocking-sleep-in-fiber (a 2 ms std::this_thread::sleep_for): neighbours' wake lateness p99 in ns, the lowest of 3 alternations (1952767 1937407 1958911); 2x by construction: measured 1937407, bound >= 1000000, margin 1.94x [margin under 2x: value reported, bound unchanged]
+  C++ fiber without the blocking call, wake lateness p99 in ns per alternation: 52799 52863 52799
+  C++ neighbours fiber wake lateness p50 / p99 / p99.9 / max in ns, alternation 1: 25583 / 52799 / 343807 / 761855
+  C++ neighbours fiber-blocking wake lateness p50 / p99 / p99.9 / max in ns, alternation 1: 29087 / 1952767 / 2101247 / 2244607
+  C++ neighbours coroutine wake lateness p50 / p99 / p99.9 / max in ns, alternation 1: 1836 / 5403 / 13775 / 132607
+  C++ neighbours os-thread wake lateness p50 / p99 / p99.9 / max in ns, alternation 1: 49599 / 63391 / 2011135 / 2510847
+  observed: Python asyncio wake lateness p50 / p99 / p99.9 / max in ns, without the blocking call: 590847 / 1305599 / 1413119 / 1446911; with it: 648191 / 2672639 / 3094527 / 3276799
+  observed: Python asyncio p99 with the blocking call over the baseline in the same run: 2672639 ns / 1305599 ns = 2.05x. asyncio rounds its epoll timeout up to a whole millisecond, so the baseline p99 already sits at or over 1 ms and p99 >= 1 ms does not separate the two.
+✓ 5 Python asyncio: fraction of wakes later than 1.5 ms, blocking over baseline (1822 of 25000 against 0 of 25000): measured 1822.00x (same run), bound >= 2.00x, margin 911.00x
+✓ 5 Python asyncio debug mode (slow_callback_duration 1 ms): 'Executing ... took N seconds' warnings against blocking calls (exact): measured 50, bound == 50 (exact)
+✓ 5 cpp-neighbours-coroutine-alt1: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-coroutine-alt2: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-coroutine-alt3: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-fiber-alt1: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-fiber-alt2: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-fiber-alt3: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-fiber-blocking-alt1: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-fiber-blocking-alt2: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-fiber-blocking-alt3: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-os-thread-alt1: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-os-thread-alt2: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 cpp-neighbours-os-thread-alt3: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 python-gil-neighbours-asyncio-tasks-blocking-debug: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 python-gil-neighbours-asyncio-tasks-blocking: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+✓ 5 python-gil-neighbours-asyncio-tasks: tasks that started after their first deadline (exact): measured 0, bound == 0 (exact)
+  observed: Java jdk.VirtualThreadPinned events (threshold 0) for 100 virtual threads blocking 5 ms: in a synchronized block 0 (JEP 491), in a native frame 100
+━━ criterion 6: the line
+✓ 6 cpp-line-os-thread: count 200000 (bound == 200000), dropped 0 (exact 0), divert commands received 200000 (exact 200000)
+  cpp-line-os-thread end-to-end p50 / p99 / p99.9 / max in ns (observed): 2123775 / 2156543 / 2306047 / 5681151; divert command p99 23391 ns; tasks started 200000
+✓ 6 cpp-line-fiber: count 200000 (bound == 200000), dropped 0 (exact 0), divert commands received 200000 (exact 200000)
+  cpp-line-fiber end-to-end p50 / p99 / p99.9 / max in ns (observed): 2072575 / 2160639 / 2846719 / 5132287; divert command p99 19823 ns; tasks started 200000
+✓ 6 cpp-line-coroutine: count 200000 (bound == 200000), dropped 0 (exact 0), divert commands received 200000 (exact 200000)
+  cpp-line-coroutine end-to-end p50 / p99 / p99.9 / max in ns (observed): 2066431 / 2096127 / 2228223 / 4907007; divert command p99 19775 ns; tasks started 200000
+✓ 6 java-line-platform-thread: count 200000 (bound == 200000), dropped 0 (exact 0), divert commands received 200000 (exact 200000)
+  java-line-platform-thread end-to-end p50 / p99 / p99.9 / max in ns (observed): 2168831 / 2916351 / 3608575 / 4159487; divert command p99 61471 ns; tasks started 200000
+✓ 6 java-line-virtual-thread: count 200000 (bound == 200000), dropped 0 (exact 0), divert commands received 200000 (exact 200000)
+  java-line-virtual-thread end-to-end p50 / p99 / p99.9 / max in ns (observed): 2069503 / 2170879 / 2301951 / 4628479; divert command p99 27743 ns; tasks started 200000
+━━ criterion 7: every report carries count, dropped = 0, build.flags, placement, python_build; the gates' skew; the round trips
+✓ 7 55 reports: count > 0, dropped = 0, build.flags (C++ and Java) and runtime.python_build (Python) present
+✓ 7 every pinned run records runtime.placement (distinct_cores true, smt_siblings false)
+✓ 7 start gate skew under 1000000 ns in every run that records it (a timing bound); C++ os-thread ping-pong 5101 ns, Java platform-thread 110907 ns
+  observed: start-gate skew of the single-carrier virtual-thread ping-pong, ns per alternation: 259620 670945 651988 (one carrier serializes the two threads, so it is not bounded)
+✓ 7 Python free-threaded build: the GIL stayed off from the imports to the end in every measurement
+✓ 7 every ping-pong served exactly the configured round trips with the payload intact (exact)
+✓ 11-stackful-stackless: every criterion holds; results in <repo>/examples/11-stackful-stackless/results/r04-run3
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2 load1=1.88

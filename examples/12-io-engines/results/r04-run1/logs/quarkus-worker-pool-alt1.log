@@ -1,0 +1,6 @@
+client: worker-pool at 5000 Hz for 5 s (warm-up 3 s); Little's law: 5000 Hz x 2 ms = 10.0 in flight, worker pool 8
+12-io-engines              java   worker-pool             25000        0   737148.9  1321205.8  1455423.5  1469055.0  1471152.1
+12-io-engines              java   client-lateness         25000        0        0.1        0.3     9707.5    27279.4    31621.1
+client: sent 25000 completed 25000 errors 0 max in flight 5667 (Little's law 10.0) late starts over 1 ms 522
+service: service_requests 25000 service_in_handler_max 8 worker_active_max 8 worker_threads_seen 8 event_loop_threads_seen 0 carrier_threads 0 blocked_thread_warnings 0 blocked_thread_warnings_in_run 0
+report: <repo>/examples/12-io-engines/results/r04-run1/quarkus/worker-pool-alt1.json

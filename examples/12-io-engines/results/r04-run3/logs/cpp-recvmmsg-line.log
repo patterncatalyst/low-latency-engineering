@@ -1,0 +1,8 @@
+pinned pid=69071 tid=69075 cpu=1 role=receiver-0
+placement-ready
+released
+receive: recvmmsg parcels 200000 dropped 0 syscalls 399947 (epoll_wait 199951 recvmsg 0 recvmmsg 199996 io_uring_enter 0) cqes 0 handoffs 0 start skew 0 ns
+12-io-engines            cpp  recvmmsg         count=   200000 dropped=     0 p50=     60.9us p90=     81.6us p99=     92.6us p99.9=    105.2us max=     834.6us
+report: <repo>/examples/12-io-engines/results/r04-run3/cpp/recvmmsg-line.json
+us p99=     61.4us p99.9=     65.9us max=     152.4us
+line-simulator           cpp  emit-lateness    count=    50000 dropped=     0 p50=     52.1us p90=     60.9us p99=     63.8us p99.9=     68.4us max=     141.4us

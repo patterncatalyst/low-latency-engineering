@@ -35,9 +35,8 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
                  build.flags (the -gc-pause reports derived from a JFR are exempt)
   hw-source      every report with runtime.hw_counters names a non-empty `source`
   placement      every report with runtime.placement has a non-empty `cpus` list; every
-                 report of chapters 9-10 under results/r03-* or later carries runtime.placement
-                 (pinned threads), except the unpinned single-thread store-cost benchmarks
-                 named in UNPINNED_BENCHMARKS
+                 report of chapters 9 on under results/r03-* or later carries runtime.placement
+                 (pinned threads), except the reports UNPINNED_REPORTS lists as unpinned by design
   no-raw-tool-output
                  no cachegrind.out.* file, jcstress HTML report or *.bin.gz is tracked
                  (the JSON summary and the jcstress text summary are the evidence)
@@ -74,7 +73,7 @@ import tomllib
 import xml.dom.minidom
 import xml.parsers.expat
 from collections.abc import Callable, Iterator
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 try:
     import yaml
@@ -594,23 +593,43 @@ def check_hw_source(root: Path) -> None:
     print(f"hw-source: {n} report(s) with hw_counters")
 
 
-# Chapters whose r03-and-later reports come from pinned threads, and the two kinds of report in
-# them that are deliberately unpinned: the single-thread store-cost benchmarks (Google Benchmark
-# and JMH measure one thread, so there is nothing to place).
+# Chapters whose r03-and-later reports come from pinned threads, and the reports in them that are
+# deliberately unpinned. Each entry is a glob matched from the right of the path below the run
+# directory (Path.match), so "lateness.json" matches any lane's lateness.json.
 PINNED_FROM_CHAPTER = 9
 PINNED_FROM_RUN = 3
-UNPINNED_BENCHMARKS = {
-    "10-lockfree-waitfree": {
+UNPINNED_REPORTS = {
+    # Ch10: the single-thread store-cost benchmarks (Google Benchmark and JMH measure one thread, so
+    # there is nothing to place).
+    "10-lockfree-waitfree": (
         "cpp-seq-cst.json",
         "cpp-release-acquire.json",
         "java-seq-cst.json",
         "java-release-acquire.json",
-    },
-    # Ch13: the line simulator's emit-lateness report and the Quarkus client's report come from
+    ),
+    # Ch11: the OS-thread and platform/virtual-thread memory and neighbour runs leave placement to
+    # the kernel scheduler by design (10,000 OS threads can't share the pinned cores), and the
+    # virtual-thread pinning run counts JFR events, not latency.
+    "11-stackful-stackless": (
+        "cpp-parked-os-thread.json",
+        "cpp-neighbours-os-thread-alt*.json",
+        "java-parked-*.json",
+        "java-pinning-virtual-thread.json",
+        "python/python-*-parked-threads.json",
+    ),
+    # Ch12: the Quarkus reports are written by the open-loop client, a load generator; the service
+    # is confined to four cores with taskset but its threads are not individually pinned.
+    "12-io-engines": ("quarkus/*.json",),
+    # Ch13: the line simulator's emit-lateness report and the Quarkus client's reports come from
     # unpinned programs by design (the simulators and the open-loop client are load generators,
     # not pinned experiment threads).
-    "13-where-code-runs": {"lateness.json", "client.json"},
+    "13-where-code-runs": ("lateness.json", "client.json", "client-lateness.json"),
 }
+
+
+def unpinned_by_design(parts: list[str]) -> bool:
+    below_run = PurePosixPath(*parts[3:])
+    return any(below_run.match(pat) for pat in UNPINNED_REPORTS.get(parts[0], ()))
 
 
 def check_placement(root: Path) -> None:
@@ -627,7 +646,7 @@ def check_placement(root: Path) -> None:
         chapter = parts[0][:2]
         if not (m and int(m.group(1)) >= PINNED_FROM_RUN and chapter.isdigit()):
             continue
-        if int(chapter) < PINNED_FROM_CHAPTER or path.name in UNPINNED_BENCHMARKS.get(parts[0], ()):
+        if int(chapter) < PINNED_FROM_CHAPTER or unpinned_by_design(parts):
             continue
         pinned += 1
         fail("placement", f"{relto(root, path)}: pinned-example report has no runtime.placement")
@@ -1034,6 +1053,8 @@ def self_test() -> int:
     r10 = "examples/10-lockfree-waitfree/results/r03-run1/java/java-x.json"
     h = "examples/09-eliminating-work/results/r03-run1/cpp/x.json"
     u = "examples/10-lockfree-waitfree/results/r03-run1/cpp/cpp-seq-cst.json"
+    uq = "examples/12-io-engines/results/r04-run1/quarkus/event-loop-alt1.json"
+    pq = "examples/12-io-engines/results/r04-run1/cpp/epoll-sat-alt1.json"
 
     def prof(perf: str, valgrind: str) -> dict:
         return {"schema": "lowlat-profile/1", "tools": {"perf": perf, "valgrind": valgrind}}
@@ -1111,6 +1132,20 @@ def self_test() -> int:
             check_placement,
             False,
             "",
+        ),
+        (
+            "placement unpinned-by-design glob (Ch12 Quarkus client)",
+            {uq: GOOD_REPORT},
+            check_placement,
+            False,
+            "",
+        ),
+        (
+            "placement glob does not cover a pinned lane",
+            {pq: GOOD_REPORT},
+            check_placement,
+            False,
+            "no runtime.placement",
         ),
         (
             "placement good",

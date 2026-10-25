@@ -1,0 +1,8 @@
+pinned pid=3770834 tid=3770837 cpu=1 role=receiver-0
+placement-ready
+released
+receive: epoll parcels 720000 dropped 0 syscalls 1032653 (epoll_wait 312653 recvmsg 720000 recvmmsg 0 io_uring_enter 0) cqes 0 handoffs 0 start skew 0 ns
+12-io-engines            cpp  epoll            count=   720000 dropped=     0 p50=     56.0us p90=     72.4us p99=    103.2us p99.9=   1187.8us max=    1480.7us
+report: <repo>/examples/12-io-engines/results/r04-run2/cpp/epoll-sat-alt3.json
+8us p99=     52.8us p99.9=     93.2us max=     246.8us
+line-simulator           cpp  emit-lateness    count=   180000 dropped=     0 p50=     29.8us p90=     52.5us p99=     53.5us p99.9=     69.0us max=     211.6us
