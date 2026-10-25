@@ -203,6 +203,10 @@ example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 #                must be <= LAB_RUN_LOAD1 (default 2). Call it before every lane. The load1 is
 #                written to the file named by LAB_RUN_LOAD1_FILE (one number) and, when RUN_START_JSON
 #                is set, merged into it as "host_load1", before the check, so a refused lane keeps its evidence.
+#                A busy host is given LAB_RUN_SETTLE seconds (default 300) to settle, re-read every LAB_RUN_POLL
+#                seconds (default 10): the guest's own previous lane shows up in the host's 1-minute load average
+#                for about a minute after it ends. The run is refused only if load1 is still above the bound then;
+#                the load1 recorded is the one the lane started at, and LAB_RUN_WAITED_S holds the wait.
 # ALLOW_BUSY=1 skips the check in all forms (with --lab-idle it records "unchecked (ALLOW_BUSY)"; --lab-run
 # still records the load1 but does not abort).
 require_quiet_host() {
@@ -255,9 +259,18 @@ require_quiet_host() {
 
 # _quiet_lab_run: the --lab-run check of require_quiet_host (host load1 against LAB_RUN_LOAD1).
 _quiet_lab_run() {
-  local load1 max=${LAB_RUN_LOAD1:-2}
-  load1=$(awk '{print $1}' "${LOWLAT_LOADAVG:-/proc/loadavg}") || die "--lab-run: cannot read the host load average"
-  [[ $load1 =~ ^[0-9]+([.][0-9]+)?$ ]] || die "--lab-run: unreadable host load1 '$load1'"
+  local load1 max=${LAB_RUN_LOAD1:-2} settle=${LAB_RUN_SETTLE:-300} poll=${LAB_RUN_POLL:-10} waited=0
+  [[ $settle =~ ^[0-9]+$ && $poll =~ ^[1-9][0-9]*$ ]] || die "--lab-run: LAB_RUN_SETTLE and LAB_RUN_POLL must be whole seconds"
+  while :; do
+    load1=$(awk '{print $1}' "${LOWLAT_LOADAVG:-/proc/loadavg}") || die "--lab-run: cannot read the host load average"
+    [[ $load1 =~ ^[0-9]+([.][0-9]+)?$ ]] || die "--lab-run: unreadable host load1 '$load1'"
+    [[ ${ALLOW_BUSY:-0} == 1 ]] && break
+    awk -v l="$load1" -v m="$max" 'BEGIN { exit !(l <= m) }' && break
+    ((waited + poll <= settle)) || break
+    sleep "$poll"
+    waited=$((waited + poll))
+  done
+  export LAB_RUN_WAITED_S=$waited
   [[ -z ${LAB_RUN_LOAD1_FILE:-} ]] || printf '%s\n' "$load1" >"$LAB_RUN_LOAD1_FILE"
   if [[ -n ${RUN_START_JSON:-} ]]; then
     [[ -s $RUN_START_JSON ]] || printf '{}\n' >"$RUN_START_JSON"
@@ -266,7 +279,7 @@ _quiet_lab_run() {
   fi
   [[ ${ALLOW_BUSY:-0} == 1 ]] && return 0
   awk -v l="$load1" -v m="$max" 'BEGIN { exit !(l <= m) }' ||
-    die "--lab-run: the host is busy (load1 $load1 > $max); wait for it to settle, or set ALLOW_BUSY=1 (and the numbers are labelled noisy)"
+    die "--lab-run: the host is busy (load1 $load1 > $max after waiting ${waited} s); wait for it to settle, or set ALLOW_BUSY=1 (and the numbers are labelled noisy)"
 }
 
 # _run_start_record STATE LOAD1: export LOWLAT_LAB_VM and merge lab_vm (and the guest load1) into

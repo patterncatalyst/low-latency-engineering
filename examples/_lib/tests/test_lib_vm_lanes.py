@@ -246,7 +246,8 @@ def test_lab_run_aborts_above_the_threshold_but_keeps_the_evidence(
     env: dict[str, str], tmp_path: Path
 ) -> None:
     out = tmp_path / "load1.txt"
-    e = {**env, "LOWLAT_LOADAVG": loadavg(tmp_path, "2.01"), "LAB_RUN_LOAD1_FILE": str(out)}
+    e = {**env, "LOWLAT_LOADAVG": loadavg(tmp_path, "2.01"), "LAB_RUN_LOAD1_FILE": str(out),
+         "LAB_RUN_SETTLE": "0"}  # fmt: skip
     run = sh("require_quiet_host --lab-run", e)
     assert run.returncode != 0
     assert "host is busy" in run.stderr
@@ -255,6 +256,33 @@ def test_lab_run_aborts_above_the_threshold_but_keeps_the_evidence(
     assert sh("require_quiet_host --lab-run", {**e, "LAB_RUN_LOAD1": "3"}).returncode == 0
     assert sh("require_quiet_host --lab-run", {**e, "ALLOW_BUSY": "1"}).returncode == 0
     assert sh("require_quiet_host --lab-run extra", e).returncode != 0
+
+
+def test_lab_run_waits_for_a_busy_host_to_settle(env: dict[str, str], tmp_path: Path) -> None:
+    # The guest's previous lane lingers in the host's 1-minute load average; the gate re-reads it
+    # and starts the lane once it is back under the bound, recording the load1 it started at.
+    f = Path(loadavg(tmp_path, "2.75"))
+    out = tmp_path / "load1.txt"
+    e = {**env, "LOWLAT_LOADAVG": str(f), "LAB_RUN_LOAD1_FILE": str(out), "LAB_RUN_SETTLE": "5",
+         "LAB_RUN_POLL": "1"}  # fmt: skip
+    settle = f"(sleep 1.5; echo '1.40 0.5 0.4 1/300 1' > {f}) &"
+    script = f"{settle}\nrequire_quiet_host --lab-run\necho waited=$LAB_RUN_WAITED_S"
+    run = sh(script, e)
+    assert run.returncode == 0, run.stderr
+    assert out.read_text().strip() == "1.40"
+    assert "waited=2" in run.stdout
+
+
+def test_lab_run_gives_up_after_the_settle_window(env: dict[str, str], tmp_path: Path) -> None:
+    e = {
+        **env,
+        "LOWLAT_LOADAVG": loadavg(tmp_path, "3.10"),
+        "LAB_RUN_SETTLE": "2",
+        "LAB_RUN_POLL": "1",
+    }
+    run = sh("require_quiet_host --lab-run", e)
+    assert run.returncode != 0
+    assert "after waiting 2 s" in run.stderr
 
 
 # ---- guest_noise -----------------------------------------------------------------------------
