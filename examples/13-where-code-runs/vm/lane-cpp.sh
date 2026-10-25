@@ -2,7 +2,7 @@
 # lane-cpp.sh - one C++ lane run: the same script on the host, in the guest and inside a container.
 #
 #   lane-cpp.sh --bin DIR --out DIR [--mode full|consumer|sims] [--consumer-cpu N] [--pool] [--pool-workers N]
-#               [--rate HZ] [--seconds S] [--base-port P] [--dest HOST] [--decide-ns N] [--hold-ms N] [--bind ADDR]
+#               [--rate HZ] [--seconds S] [--base-port P] [--dest HOST] [--decide-ns N] [--hold-ms N] [--bind ADDR] [--sim-cpus LIST]
 #
 # It runs only POSIX sh, coreutils and the four binaries in --bin (line-simulator, io-receive,
 # place-probe, busy-pool), because it runs in a ubi-minimal image that has no jq, no taskset and no
@@ -19,7 +19,7 @@
 # pool.json (with --pool), and one .log per process. Exit status is non-zero if any process failed.
 set -eu
 
-BIN='' OUT='' MODE=full CPU='' POOL=0 POOL_WORKERS='' RATE=2500 SECS=20 BASE=47340 DEST=127.0.0.1 DECIDE_NS=3000 HOLD_MS=500 BIND=''
+BIN='' OUT='' MODE=full CPU='' POOL=0 POOL_WORKERS='' RATE=2500 SECS=20 BASE=47340 DEST=127.0.0.1 DECIDE_NS=3000 HOLD_MS=500 BIND='' SIM_CPUS=''
 CAMERAS=4
 
 usage() {
@@ -41,6 +41,7 @@ while [ $# -gt 0 ]; do
     --decide-ns) DECIDE_NS=${2:?}; shift 2 ;;
     --hold-ms) HOLD_MS=${2:?}; shift 2 ;;
     --bind) BIND=${2:?}; shift 2 ;;
+    --sim-cpus) SIM_CPUS=${2:?}; shift 2 ;;
     *) usage ;;
   esac
 done
@@ -119,14 +120,17 @@ if [ "$MODE" != sims ]; then
 fi
 
 if [ "$MODE" != consumer ]; then
+  # --sim-cpus (host and guest, where taskset exists) keeps the load generators off the consumer's core.
+  sim_prefix=''
+  [ -z "$SIM_CPUS" ] || sim_prefix="taskset -c $SIM_CPUS"
   sim_pids=''
   i=0
   while [ "$i" -lt "$CAMERAS" ]; do
     if [ "$i" -eq 0 ]; then
-      "$BIN/line-simulator" --rate "$RATE" --duration "$SECS" --dest "$DEST:$((BASE + i))" --wire flat --quiet \
+      $sim_prefix "$BIN/line-simulator" --rate "$RATE" --duration "$SECS" --dest "$DEST:$((BASE + i))" --wire flat --quiet \
         --report "$OUT/lateness.json" >"$OUT/sim$i.log" 2>&1 &
     else
-      "$BIN/line-simulator" --rate "$RATE" --duration "$SECS" --dest "$DEST:$((BASE + i))" --wire flat --quiet \
+      $sim_prefix "$BIN/line-simulator" --rate "$RATE" --duration "$SECS" --dest "$DEST:$((BASE + i))" --wire flat --quiet \
         >"$OUT/sim$i.log" 2>&1 &
     fi
     sim_pids="$sim_pids $!"

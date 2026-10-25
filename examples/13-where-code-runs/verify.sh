@@ -265,6 +265,7 @@ expected_files() {
   if [[ $lane == container-bridge ]]; then echo cpp/binaries-consumer.txt cpp/binaries-sims.txt; else echo cpp/binaries-full.txt; fi
   if lane_has_pool "$lane"; then echo cpp/pool.json quarkus/client.json quarkus/service.json; fi
   if [[ $lane == host ]]; then
+    echo host-quiet.json
     [[ $RUN_MODE != vm ]] || echo guest-idle.json # a host-only run has no guest to watch
   else
     echo steal.json
@@ -454,9 +455,13 @@ if ok_lane container-cpu-quota && ok_lane container-cpuset && ok_lane vm; then
       "$(val "$(P "$lane" 1 java/probe-java.json)" .java.virtual_thread_pool_size_after_spin)" "$(val "$(P "$lane" 1 cpp/probe-cpp.json)" .libc.glibc)"
   done
   for lane in container-cpu-quota container-cpuset; do
-    printf '  observed: %s alt1 Quarkus service sized itself to Vert.x event loops %s, worker threads %s, virtual-thread carriers %s (counted from the JVM'"'"'s threads in the container)\n' "$lane" \
-      "$(val "$(P "$lane" 1 quarkus/service.json)" .service.event_loop_threads)" "$(val "$(P "$lane" 1 quarkus/service.json)" .service.executor_threads)" \
-      "$(val "$(P "$lane" 1 quarkus/service.json)" .service.carrier_threads)"
+    for n in $(seq 1 "$ROUNDS"); do
+      inproc=$(val "$(P "$lane" "$n" quarkus/client.json)" .runtime.counters.carrier_threads)
+      procfs=$(val "$(P "$lane" "$n" quarkus/service.json)" .service.carrier_threads)
+      printf '  observed: %s alt%s Quarkus service: Vert.x event loops %s, worker threads %s, virtual-thread carriers %s in process (the service'"'"'s own count); %s counted from /proc in the container, %s\n' \
+        "$lane" "$n" "$(val "$(P "$lane" "$n" quarkus/service.json)" .service.event_loop_threads)" "$(val "$(P "$lane" "$n" quarkus/service.json)" .service.executor_threads)" \
+        "$inproc" "$procfs" "$([[ $inproc == "$procfs" ]] && echo equal || echo different)"
+    done
   done
 fi
 
@@ -496,6 +501,21 @@ lane_median() {
   for n in $(seq 1 "$ROUNDS"); do vals+=("$(val "$(P "$lane" "$n" "$rel")" ".percentiles.$key")"); done
   median_ns "${vals[@]}"
 }
+if ok_lane host; then
+  step "observed: how quiet the host was (an untuned shared laptop; recorded, never a reason to refuse)"
+  for n in $(seq 1 "$ROUNDS"); do
+    hq=$(P host "$n" host-quiet.json)
+    printf '  observed: host alt%s load1 %s before, %s after; host busy %s/1000 across the lane; consumer on CPU %s, simulators on CPUs %s\n' "$n" \
+      "$(val "$hq" .load1_before)" "$(val "$hq" .load1_after)" "$(val_or_null "$hq" .busy_permille)" "$(val "$hq" .consumer_cpu)" "$(val_or_null "$hq" .simulator_cpus)"
+    sims=$(val_or_null "$hq" .simulator_cpus)
+    cpu=$(val "$hq" .consumer_cpu)
+    if [[ $sims == null || -z $sims ]]; then
+      printf '  observed: host alt%s simulators were unpinned (no CPU left beside the consumer'"'"'s core)\n' "$n"
+    else
+      crit_exact "5" "host alt$n the simulators' mask leaves out the consumer's CPU $cpu" "$([[ ,$sims, == *,"$cpu",* ]] && echo included || echo excluded)" excluded
+    fi
+  done
+fi
 step "observed: the lanes side by side (D9: on this laptop's KVM, in this run, lane-labelled; host against VM is not asserted)"
 for lane in "${LANES[@]}"; do
   ok_lane "$lane" || continue

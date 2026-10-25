@@ -43,7 +43,7 @@ the ones where a runtime sizes its pools from a machine it doesn't have.
 
 | Lane | Where | Network | Limit |
 |---|---|---|---|
-| `host` | bare metal, lab VM booted and idle | loopback | none |
+| `host` | bare metal: an untuned shared laptop, lab VM booted and idle | loopback | none |
 | `vm` | native in the guest (stock kernel, 4 vCPU, unpinned) | loopback | none |
 | `container-host-net` | Docker in the guest | `--network host` | none |
 | `container-bridge` | Docker in the guest; simulators in the guest | bridge, veth | none |
@@ -104,6 +104,12 @@ three alternations within the one run.
    across all lanes.
 
 ## Reading the numbers
+
+- The host lane is an untuned shared laptop (`powersave`, `balanced`, a desktop session running). `verify.sh` records the
+  host's load and busy share across each host alternation in `host/altN/host-quiet.json` and prints them as observed; it
+  never refuses on them. The first real run's host consumer p99.9 was 911, 1532 and 408 microseconds with a host load1 of
+  1.94, which is what an unquiet host looks like. The host simulators are pinned to the CPUs left after the consumer's core
+  (and its SMT sibling) and CPU 0's core, and that mask is recorded beside the load.
 
 - The Quarkus comparison between the quota and the cpuset is confounded and observed only. The open-loop client runs in the
   guest on CPUs 0 and 1, and the quota container is free to use those CPUs too, while the cpuset container can't.

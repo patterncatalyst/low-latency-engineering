@@ -135,14 +135,32 @@ EXAMPLE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # host_lane_run ALT: the host lane, one alternation, into $OUT/host/altN. Needs OUT (the results directory), HOST_BIN (the four C++
 # binaries), HOST_CPU (the consumer's CPU), CPUPROBE_JAR, LOWLAT_PROFILE (the host profile) and LOWLAT_SCRATCH.
 host_lane_run() {
-  local alt=$1 d=$OUT/host/alt$1 envf
+  local alt=$1 d=$OUT/host/alt$1 envf sim_cpus='' cpu sib b0 t0 b1 t1 l0 l1
+  local -A excluded=()
   mkdir -p "$d/cpp" "$d/python" "$d/java"
   envf=$LOWLAT_SCRATCH/host-env.json
   env_json_host "$envf"
   set_lane_args
-  step "host lane, alternation $alt: simulators and consumer on the host (consumer on CPU $HOST_CPU)"
-  "$EXAMPLE_DIR/vm/lane-cpp.sh" --bin "$HOST_BIN" --out "$d/cpp" --mode full --consumer-cpu "$HOST_CPU" "${LANE_ARGS[@]}" ||
+  # The four simulators run on the CPUs left after the consumer's core (its SMT sibling included) and CPU 0's core, so a
+  # load generator never preempts the thread under test. Fewer than one CPU left: they stay unpinned and the list is empty.
+  for cpu in 0 "$HOST_CPU"; do
+    while read -r sib; do excluded[$sib]=1; done < <(_cpu_expand "$(<"$_SYS_CPU/cpu$cpu/topology/thread_siblings_list")")
+  done
+  while read -r cpu; do [[ -n ${excluded[$cpu]:-} ]] || sim_cpus+="${sim_cpus:+,}$cpu"; done < <(_allowed_cpus)
+  local -a sim_args=()
+  [[ -z $sim_cpus ]] || sim_args=(--sim-cpus "$sim_cpus")
+  step "host lane, alternation $alt: simulators and consumer on the host (consumer on CPU $HOST_CPU, simulators on ${sim_cpus:-any CPU})"
+  read -r l0 _ < /proc/loadavg
+  read -r b0 t0 < <(busy_ticks)
+  "$EXAMPLE_DIR/vm/lane-cpp.sh" --bin "$HOST_BIN" --out "$d/cpp" --mode full --consumer-cpu "$HOST_CPU" "${sim_args[@]}" "${LANE_ARGS[@]}" ||
     die "the host lane failed (alternation $alt)"
+  read -r l1 _ < /proc/loadavg
+  read -r b1 t1 < <(busy_ticks)
+  # How busy the host was across the lane, recorded and never a reason to refuse: the host is an untuned shared laptop.
+  jq -n --arg ex "$EXAMPLE" --argjson l0 "$l0" --argjson l1 "$l1" --argjson b $((b1 - b0)) --argjson t $((t1 - t0)) \
+    --argjson consumer "$HOST_CPU" --arg sims "$sim_cpus" \
+    '{schema: "lowlat-host-quiet/1", example: $ex, load1_before: $l0, load1_after: $l1, busy_ticks: $b, total_ticks: $t,
+      busy_permille: (if $t > 0 then (1000 * $b / $t | floor) else null end), consumer_cpu: $consumer, simulator_cpus: $sims}' >"$d/host-quiet.json"
   uvrun python -m lowlat_place --out "$d/python/probe-python.json"
   java -cp "$CPUPROBE_JAR" "$CPUPROBE_CLASS" --out "$d/java/probe-java.json"
   relabel_example "$d/cpp/consumer.json"

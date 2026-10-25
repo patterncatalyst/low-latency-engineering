@@ -7,8 +7,9 @@
 # open-loop client in the guest touches it when it is done), then counts the JVM's threads by name from
 # /proc and writes OUT_FILE: how many Vert.x event loops, Quarkus worker ("executor-thread") and
 # virtual-thread carrier threads the JVM sized itself to under this container's limit. Kernel thread names are cut to
-# 15 characters, hence the prefixes. Carriers are the workers of the virtual-thread scheduler, the first ForkJoinPool
-# the JDK creates ("ForkJoinPool-1-worker-N"); the common pool is "ForkJoinPool.commonPool-worker-N" and is not counted. Stops the JVM and exits 0.
+# 15 characters, hence the prefixes. Carriers are the workers of the virtual-thread scheduler's ForkJoinPool
+# ("ForkJoinPool-N-worker-M"), whose comm is cut to "ForkJoinPool-N-"; the common pool ("ForkJoinPool.commonPool-worker-M",
+# comm "ForkJoinPool.co") has a dot where the digit is and is not counted. The pool's number is not assumed to be 1. Stops the JVM and exits 0.
 # Runs under POSIX sh and coreutils only (ubi-minimal has no jq).
 set -eu
 stop=${1:?STOP_FILE}
@@ -34,7 +35,7 @@ for t in /proc/"$jpid"/task/*; do
   case $name in
     vert.x-eventloo*) loops=$((loops + 1)) ;;
     executor-thread*) workers=$((workers + 1)) ;;
-    ForkJoinPool-1-w*) carriers=$((carriers + 1)) ;;
+    ForkJoinPool-[0-9]*) carriers=$((carriers + 1)) ;;
   esac
 done
 printf '{\n  "schema": "lowlat-place-probe/1",\n  "example": "13-where-code-runs",\n  "language": "java-service",\n  "service": {\n    "event_loop_threads": %s,\n    "executor_threads": %s,\n    "carrier_threads": %s\n  }\n}\n' \
