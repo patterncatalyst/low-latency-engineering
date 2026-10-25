@@ -1006,6 +1006,12 @@ def test_interleave_env_runs_lanes_in_abc_order_with_the_alternation_number(
     ]
 
 
+def test_interleave_env_survives_a_lane_that_reads_stdin(env: dict[str, str]) -> None:
+    # ssh into the guest reads stdin; it must not swallow the rest of the lane order
+    run = sh('run_lane() { cat >/dev/null; echo "$1:$2"; }\ninterleave_env 2 host vm', env)
+    assert run.stdout.split() == ["host:1", "vm:1", "host:2", "vm:2"]
+
+
 def test_interleave_env_stops_at_a_failing_lane_and_checks_its_input(env: dict[str, str]) -> None:
     run = sh(
         'run_lane() { echo "$1:$2"; [[ $1 != vm ]] || return 5; }\n'

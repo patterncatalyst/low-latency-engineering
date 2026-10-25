@@ -1261,10 +1261,12 @@ interleave_env() {
   done
   declare -F run_lane >/dev/null || die "interleave_env: define run_lane LANE ALT first"
   lanes=$#
-  while IFS= read -r lane; do
+  # The order is read on fd 3, not stdin: a lane that reads stdin (ssh into the guest does) would
+  # otherwise swallow the rest of the order and the loop would end after the first lane.
+  while IFS= read -r lane <&3; do
     run_lane "$lane" $((i / lanes + 1)) || return $?
     i=$((i + 1))
-  done < <(interleave "$n" "$@")
+  done 3< <(interleave "$n" "$@")
 }
 
 # strace_summary OUT -- CMD...: run CMD under `strace -f -c` (syscall counts and time, children
