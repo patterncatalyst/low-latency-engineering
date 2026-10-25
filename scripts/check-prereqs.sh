@@ -9,6 +9,7 @@
 #   scripts/check-prereqs.sh          # host checks
 #   scripts/check-prereqs.sh --vm     # checks inside the lowlat-target guest (r04: stock kernel)
 #   scripts/check-prereqs.sh --vm --rt   # the same guest on the PREEMPT_RT kernel (r02/r03)
+#   scripts/check-prereqs.sh --vm --r05 {stock|rt|iso}   # r05: one of lab-ready-r05-stock / -rt / -iso
 #   scripts/check-prereqs.sh -h
 set -euo pipefail
 
@@ -33,7 +34,7 @@ N_PASS=0; N_WARN=0; N_FAIL=0
 
 usage() {
   cat <<'USAGE'
-Usage: check-prereqs.sh [--vm [--rt]] [-h|--help]
+Usage: check-prereqs.sh [--vm [--rt | --r05 stock|rt|iso]] [-h|--help]
 
   (no flag)   check the host: OS, C++23 toolchain, CMake, JDK 25, Maven,
               Python 3.14, uv, pinned protoc, Docker Engine, KVM/libvirt,
@@ -47,6 +48,13 @@ Usage: check-prereqs.sh [--vm [--rt]] [-h|--help]
               digests, io_uring_disabled and the vPMU recorded, vcpupin state
   --rt        with --vm: check the PREEMPT_RT guest instead (lab-ready-rt/-iso): RT kernel
               required; isolation and vcpupin state (info only); no r04 checks
+  --r05 LANE  with --vm: check the guest for one r05 snapshot (stock = lab-ready-r05-stock,
+              rt = lab-ready-r05-rt, iso = lab-ready-r05-iso): expected kernel (stock 7.2.11 or
+              PREEMPT_RT), the lane's kernel arguments, /sys/devices/system/cpu/isolated and
+              nohz_full (2-3 for iso, empty otherwise), vCPU 2 and 3 pinned to host CPUs 12 and 13
+              (virsh vcpupin), cyclictest, rtla (equal to the stock kernel NVR), stress-ng, strace,
+              Temurin by path, and the active tuned profile (cpu-partitioning for iso,
+              virtual-guest otherwise)
   -h, --help  show this help
 
 Output is one PASS/WARN/FAIL line per check; WARN and FAIL lines carry an
@@ -532,8 +540,148 @@ check_vm_records() {
   fi
 }
 
+# ---- r05: the three lane snapshots (lab-ready-r05-stock / -rt / -iso) -----------------------------
+
+# r05_has <cmdline> <arg>: true when the whole argument is on the command line.
+r05_has() { [[ " $1 " == *" $2 "* ]]; }
+
+check_vm_r05_kernel() {
+  local lane="$1" kr kv cfg rt_rel
+  kr="$(vm uname -r || true)"
+  kv="$(vm uname -v || true)"
+  if [[ "$lane" == stock ]]; then
+    if [[ "$kr" == "$LAB_STOCK_KERNEL.x86_64" && "$kv" != *PREEMPT_RT* ]]; then
+      record PASS "guest stock kernel" "$kr, no PREEMPT_RT"
+    else
+      record FAIL "guest stock kernel" "running ${kr:-?} (${kv:-?}), want $LAB_STOCK_KERNEL.x86_64 without PREEMPT_RT" "revert to snapshot lab-ready-r05-stock (scripts/lab/revert-vm.sh $LAB_VM lab-ready-r05-stock)"
+    fi
+  else
+    rt_rel="${LAB_STOCK_KERNEL/.fc/.lowlatrt.fc}"
+    # shellcheck disable=SC2016 # $(uname -r) must expand in the guest
+    cfg="$(vm 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
+    if [[ "$kr" == "$rt_rel".x86_64* && "$kv" == *PREEMPT_RT* && "$cfg" == CONFIG_PREEMPT_RT=y ]]; then
+      record PASS "guest RT kernel" "$kr, PREEMPT_RT in uname -v and the config"
+    else
+      record FAIL "guest RT kernel" "running ${kr:-?} (${kv:-?}), want $rt_rel.x86_64* with PREEMPT_RT" "revert to snapshot lab-ready-r05-$lane (scripts/lab/revert-vm.sh $LAB_VM lab-ready-r05-$lane)"
+    fi
+  fi
+}
+
+check_vm_r05_cmdline() {
+  local lane="$1" cmd a bad="" want
+  cmd="$(vm cat /proc/cmdline || true)"
+  if [[ -z "$cmd" ]]; then
+    record FAIL "guest cmdline" "cannot read /proc/cmdline"
+    return
+  fi
+  if [[ "$lane" == iso ]]; then
+    for want in isolcpus=domain,managed_irq,2-3 irqaffinity=0-1 nohz_full=2-3 rcu_nocbs=2-3; do
+      r05_has "$cmd" "$want" || bad+="$want "
+    done
+    if [[ -z "$bad" ]]; then
+      record PASS "guest cmdline (iso)" "isolcpus=domain,managed_irq,2-3 irqaffinity=0-1 nohz_full=2-3 rcu_nocbs=2-3"
+    else
+      record FAIL "guest cmdline (iso)" "missing: ${bad% }" "scripts/lab/apply-guest-tuned.sh and scripts/lab/apply-guest-profile.sh isolate-cpu23, or revert to lab-ready-r05-iso"
+    fi
+  else
+    for a in $cmd; do
+      case "$a" in isolcpus | isolcpus=* | nohz_full | nohz_full=* | rcu_nocbs | rcu_nocbs=* | irqaffinity | irqaffinity=*) bad+="$a " ;; esac
+    done
+    if [[ -z "$bad" ]]; then
+      record PASS "guest no isolation" "no isolcpus, nohz_full, rcu_nocbs or irqaffinity on the cmdline"
+    else
+      record FAIL "guest no isolation" "cmdline has: ${bad% }" "revert to lab-ready-r05-$lane"
+    fi
+  fi
+}
+
+# check_vm_r05_cpuset <lane> <file> <label>: the sysfs CPU list is 2-3 (iso) or empty.
+check_vm_r05_cpuset() {
+  local lane="$1" file="$2" label="$3" got want=""
+  [[ "$lane" == iso ]] && want="2-3"
+  got="$(vm "cat /sys/devices/system/cpu/$file" || true)"
+  [[ "$got" == "(null)" ]] && got=""
+  if [[ "$got" == "$want" ]]; then
+    record PASS "guest $label" "${got:-empty}"
+  else
+    record FAIL "guest $label" "'${got}', want '${want:-empty}'" "revert to lab-ready-r05-$lane"
+  fi
+}
+
+# vCPU 2 -> host CPU 12 and vCPU 3 -> host CPU 13, from the live domain (virsh vcpupin).
+check_vm_r05_pins() {
+  local out p2 p3
+  out="$(virsh -c qemu:///system vcpupin "$LAB_VM" 2>/dev/null || true)"
+  p2="$(awk '$1 == 2 { print $2 }' <<<"$out")"
+  p3="$(awk '$1 == 3 { print $2 }' <<<"$out")"
+  if [[ "$p2" == 12 && "$p3" == 13 ]]; then
+    record PASS "guest vcpupin" "vCPU 2 -> host CPU 12, vCPU 3 -> host CPU 13"
+  else
+    record FAIL "guest vcpupin" "vCPU 2 -> ${p2:-?}, vCPU 3 -> ${p3:-?}" "PIN_MAP=r05 scripts/lab/pin-vcpu.sh, or revert to a lab-ready-r05-* snapshot"
+  fi
+}
+
+check_vm_r05_tools() {
+  local rtv ctv sng out java="/opt/temurin-$TEMURIN_VERSION/bin/java"
+  ctv="$(vm "rpm -q --qf '%{VERSION}' realtime-tests" || true)"
+  if [[ "$ctv" == "$LAB_RT_TESTS_VERSION" ]] && vm 'command -v cyclictest' >/dev/null; then
+    record PASS "guest: cyclictest" "realtime-tests $ctv"
+  else
+    record FAIL "guest: cyclictest" "realtime-tests ${ctv:-missing}, pinned $LAB_RT_TESTS_VERSION" "scripts/lab/install-guest-tools.sh $LAB_VM, or revert to a lab-ready-r05-* snapshot"
+  fi
+  rtv="$(vm "rpm -q --qf '%{VERSION}-%{RELEASE}' rtla" || true)"
+  if [[ "$rtv" == "$LAB_STOCK_KERNEL" ]]; then
+    record PASS "guest: rtla" "$rtv (equals LAB_STOCK_KERNEL)"
+  else
+    record FAIL "guest: rtla" "rtla ${rtv:-missing}, want $LAB_STOCK_KERNEL" "scripts/lab/install-guest-tools.sh $LAB_VM"
+  fi
+  sng="$(vm "rpm -q --qf '%{VERSION}' stress-ng" || true)"
+  if [[ "$sng" == "$LAB_STRESS_NG_VERSION" ]]; then
+    record PASS "guest: stress-ng" "$sng"
+  else
+    record FAIL "guest: stress-ng" "stress-ng ${sng:-missing}, pinned $LAB_STRESS_NG_VERSION" "scripts/lab/install-guest-tools.sh $LAB_VM"
+  fi
+  vm_need strace strace
+  out="$(vm "$java -version 2>&1" || true)"
+  if [[ "$out" == *"\"$TEMURIN_VERSION\""* && "$out" == *Temurin* ]]; then
+    record PASS "guest: Temurin $TEMURIN_VERSION" "$java"
+  else
+    record FAIL "guest: Temurin $TEMURIN_VERSION" "$java: ${out:-not found}" "scripts/lab/install-guest-tools.sh $LAB_VM"
+  fi
+}
+
+check_vm_r05_tuned() {
+  local lane="$1" t want=virtual-guest
+  [[ "$lane" == iso ]] && want=cpu-partitioning
+  t="$(vm 'tuned-adm active' || true)"
+  if [[ "$t" == *": $want" ]]; then
+    record PASS "guest tuned" "$want"
+  else
+    record FAIL "guest tuned" "${t:-tuned-adm active printed nothing}, want $want" "scripts/lab/apply-guest-tuned.sh$([[ "$lane" == iso ]] || echo ' --remove'), or revert to lab-ready-r05-$lane"
+  fi
+}
+
+# run_vm_r05 <lane>: everything the r05 lane snapshot promises, after run_vm has checked that the
+# guest is running and reachable.
+run_vm_r05() {
+  local lane="$1" ready
+  check_vm_r05_kernel "$lane"
+  check_vm_r05_cmdline "$lane"
+  check_vm_r05_cpuset "$lane" isolated "isolated CPUs"
+  check_vm_r05_cpuset "$lane" nohz_full "nohz_full CPUs"
+  check_vm_r05_pins
+  check_vm_r05_tools
+  check_vm_r05_tuned "$lane"
+  ready="$(vm head -n1 /var/log/lab-ready || true)"
+  if [[ "$ready" == *ok* ]]; then
+    record PASS "guest lab-ready" "$ready"
+  else
+    record FAIL "guest lab-ready" "${ready:-/var/log/lab-ready missing}" "wait for cloud-init, or re-provision: scripts/lab/provision-vm.sh $LAB_VM"
+  fi
+}
+
 run_vm() {
-  local state uv rt ready rt_mode="${1:-stock}"
+  local state uv rt ready rt_mode="${1:-stock}" r05_lane="${2:-}"
   printf 'Lab guest prerequisites (%s)\n' "$LAB_VM"
   if ! have virsh; then
     record FAIL "guest reachable" "virsh not found" "sudo dnf install libvirt-client"
@@ -550,6 +698,10 @@ run_vm() {
   fi
   record PASS "guest ssh" "$LAB_VM reachable"
 
+  if [[ -n "$r05_lane" ]]; then
+    run_vm_r05 "$r05_lane"
+    return
+  fi
   if [[ "$rt_mode" == rt ]]; then
     uv="$(vm uname -v || true)"
     # Mainline PREEMPT_RT has no /sys/kernel/realtime (that file came from the
@@ -604,11 +756,15 @@ run_vm() {
 }
 
 main() {
-  local mode=host vm_mode=stock
+  local mode=host vm_mode=stock r05_lane=""
   while (($#)); do
     case "$1" in
       --vm) mode=vm ;;
       --rt) vm_mode=rt ;;
+      --r05)
+        r05_lane="${2:-}"
+        case "$r05_lane" in stock | rt | iso) shift ;; *) echo "--r05 needs stock, rt or iso" >&2; usage >&2; exit 2 ;; esac
+        ;;
       -h|--help) usage; exit 0 ;;
       *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -617,7 +773,10 @@ main() {
   if [[ "$vm_mode" == rt && "$mode" != vm ]]; then
     echo "--rt only applies with --vm" >&2; usage >&2; exit 2
   fi
-  if [[ "$mode" == vm ]]; then run_vm "$vm_mode"; else run_host; fi
+  if [[ -n "$r05_lane" && ( "$mode" != vm || "$vm_mode" == rt ) ]]; then
+    echo "--r05 needs --vm and doesn't combine with --rt" >&2; usage >&2; exit 2
+  fi
+  if [[ "$mode" == vm ]]; then run_vm "$vm_mode" "$r05_lane"; else run_host; fi
   printf '\nSummary: %d PASS, %d WARN, %d FAIL\n' "$N_PASS" "$N_WARN" "$N_FAIL"
   ((N_FAIL == 0))
 }

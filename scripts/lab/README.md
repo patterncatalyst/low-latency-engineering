@@ -80,6 +80,9 @@ snapshots are passed as the second argument:
 | `lab-ready-rt` | PREEMPT_RT kernel, no isolation, no pin |
 | `lab-ready-iso` | RT kernel + `isolate-cpu3` + vcpupin + Temurin |
 | `lab-ready-r04` | the `stock-unpinned` "ordinary VM" (r04, D8): stock kernel, 4 vCPU unpinned, no isolation, Temurin, `strace`, `perf`, `stress-ng`, Docker with the Ch13 images |
+| `lab-ready-r05-stock` | the pinned stock kernel (7.2.11) as the default entry, `stock-r05`, tuned `virtual-guest`, r05 pins, tools incl. `rtla` (r05, D4) |
+| `lab-ready-r05-rt` | PREEMPT_RT kernel, no isolation, r05 pins, tools (r05) |
+| `lab-ready-r05-iso` | RT kernel + tuned `cpu-partitioning` + `isolate-cpu23`, r05 pins, tools (r05) |
 
 ## Sizing
 
@@ -239,3 +242,59 @@ stopped Docker service, on a user outside the `docker` group, and on any image w
 `examples/13-where-code-runs/containers/IMAGES.lock`; it records the Docker Engine version, the
 active tuned profile, `kernel.io_uring_disabled` and whether the guest has a virtual PMU
 (`perf stat -e cycles:u true`). `--vm --rt` is the PREEMPT_RT variant.
+
+## The r05 lanes (`lab-ready-r05-stock`, `-rt`, `-iso`)
+
+Chapters 14 to 16 compare a stock kernel, a PREEMPT_RT kernel and an isolated RT guest, each from its own
+snapshot, with the same two measurement CPUs (guest CPUs 2 and 3) in every lane. Revert before every lane.
+
+**Pins: `PIN_MAP`.** `PIN_MAP=r05 scripts/lab/pin-vcpu.sh` pins vCPU 2 to host CPU 12 and vCPU 3 to host
+CPU 13 (the same as `PIN_MAP="2:12 3:13"`, vCPU:hostCPU pairs). It is additive: `PIN_VCPU`/`PIN_HOST_CPU` and
+`--remove` work as before, every pair is validated, and `PIN_MAP` wins when both are set. The two host CPUs
+are on distinct physical cores, picked from the quietest cores in `/proc/interrupts` (re-checked
+2026-10-25: core 5, CPUs 5 and 13, quietest; core 4, CPUs 4 and 12, second). CPU 0 is avoided, and the
+siblings 4 and 5 still run host work, so this is a pin, not host isolation. The pins are libvirt domain
+configuration and a snapshot captures the domain XML, so the three r05 snapshots carry them and every
+older snapshot (`lab-ready-r04` included) reverts to an unpinned domain.
+
+**Isolation, in two parts.** `guest-profiles/isolate-cpu23.conf` holds `isolcpus=domain,managed_irq,2-3
+irqaffinity=0-1` (documented line by line) and goes on the RT boot entry with `apply-guest-profile.sh
+isolate-cpu23`. `nohz_full=2-3` and `rcu_nocbs=2-3` come from tuned's `cpu-partitioning` profile, not from the
+profile file: `tuned/cpu-partitioning-variables.conf` (`isolated_cores=2-3`) is versioned here and
+`scripts/lab/apply-guest-tuned.sh [--remove] [vm]` copies it to the guest's `/etc/tuned/`, runs
+`tuned-adm profile cpu-partitioning` (`--remove`: back to `virtual-guest`), reboots, and checks `/proc/cmdline`
+for `nohz_full=2-3 rcu_nocbs=2-3`, `tuned-adm active` and systemd's `CPUAffinity` (`0 1`). tuned adds no
+`isolcpus`, so without the profile `/sys/devices/system/cpu/isolated` stays empty. Both sets of arguments
+coexist on the entry. `guest-profiles/stock-r05.conf` strips `isolcpus nohz_full rcu_nocbs irqaffinity` from
+the stock entry. Both scripts are idempotent and skip the reboot when the guest already matches.
+
+**Stock entry as default.** `lab-ready` boots the cloud image's 6.19 kernel and has no 7.2.11 stock entry, so
+the stock lane starts from `lab-ready-rt`. `build-r05-snapshots.sh` makes the stock entry the default by its BLS
+id with `grub2-set-default`, the method `install-rt-kernel.sh` uses (grubby's `--set-default` silently does
+nothing on the btrfs `/boot` unless it gets the `/boot/loader/entries/` path), then runs `apply-guest-profile.sh
+stock-r05`.
+
+**Tools.** `install-guest-tools.sh` also installs `rtla`. It is a subpackage of the kernel SRPM, so the script
+fails unless its version-release equals `LAB_STOCK_KERNEL`. `cyclictest` is `realtime-tests`
+(`LAB_RT_TESTS_VERSION`), `stress-ng` is `LAB_STRESS_NG_VERSION` (both in `versions.env`). The guest's
+`/usr/bin/java` is Fedora's OpenJDK until `install-guest-tools.sh` makes the pinned Temurin the selected one;
+the Java lanes call `/opt/temurin-<version>/bin/java` by path. The RT build has no BTF, so `rtla` can't load
+its BPF path and falls back to tracefs.
+
+**Building the snapshots.** One driver, run once from the host (it takes minutes and reboots the guest several
+times):
+
+```bash
+scripts/lab/build-r05-snapshots.sh
+```
+
+It reverts to `lab-ready-rt`, installs the tools, applies `PIN_MAP=r05`, verifies and takes `lab-ready-r05-rt`;
+builds `-stock` and `-iso` from that snapshot; then checks that `lab-ready-r04` still reverts to a domain with
+no `<cputune>` and that each r05 snapshot's XML (`virsh snapshot-dumpxml`) has both `vcpupin` elements. It
+prints `virsh list --all` before and after, ends on `lab-ready-r05-rt`, and shuts the guest down. It acts on
+the one `lowlat-*` domain only.
+
+```bash
+scripts/lab/revert-vm.sh lowlat-target lab-ready-r05-iso
+scripts/check-prereqs.sh --vm --r05 iso      # or stock, rt: kernel, cmdline, isolated/nohz_full, vcpupin, tools, tuned
+```
