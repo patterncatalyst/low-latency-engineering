@@ -18,10 +18,9 @@ GitHub release; no tarball is built.
   Claim log: `_plans/reconciliation-plan.md`.
 - **r02: complete** (merged in #4, tag `r02.x`). Part 2 (Ch5–8). Step status: `_plans/r02-plan.md`.
 - **r03: complete** (merged in #6, tag `r03.x`). Part 3 (Ch9–10). Step status: `_plans/r03-plan.md`.
-- **r04 (`release/r04`): in progress.** Part 4 (Ch11–13): chapters, examples 11–13 (measured as `r04-run1..3` at
-  commit 4434ed1) and figures 11.1–13.3 are written and wired into the site; checks and validation remain. Step status:
-  `_plans/r04-plan.md`. Claim log: `_plans/reconciliation-plan.md`.
-- Everything after r04 is planned, not started.
+- **r04: complete** (merged in #7, tag `r04.x`). Part 4 (Ch11–13). Step status: `_plans/r04-plan.md`.
+- **r05 (`release/r05`): in progress.** Part 5, first half (Ch14–16): PREEMPT_RT, CPU partitioning and noisy neighbours, measuring jitter with `cyclictest`. Plan: `_plans/r05-plan.md`.
+- Everything after r05 is planned, not started.
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
