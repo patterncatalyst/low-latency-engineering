@@ -223,7 +223,7 @@ plan_lane() {
   guest_step "$lane" "$alt" idle-wait 180
   printf '[dry-run] guest_fetch %s/lane-out/profile.json <results>/%s/alt%s/profile.json; vcpupin_record <results>/%s/alt%s/vcpupin.json\n' "$GUEST_REPO" "$lane" "$alt" "$lane" "$alt"
   printf '[dry-run] guest_noise 0-3 %s hackbench; guest_noise 0-3 %s cpu   (NOISE_SHARED_LANE=1: the load is on every vCPU)\n' "$((CT_SECONDS + 20))" "$((CT_SECONDS + 20))"
-  printf '[dry-run] cyclictest_run --allow-overflow <results>/%s/alt%s/cyclictest -q -m -p 95 -a %s -t 1 -i %s -D %s -h %s  (in the background; GUEST_PROFILE=%s)\n' \
+  printf '[dry-run] cyclictest_run <results>/%s/alt%s/cyclictest -q -m -p 95 -a %s -t 1 -i %s -D %s -h %s  (in the background; GUEST_PROFILE=%s)\n' \
     "$lane" "$alt" "$CT_CPU" "$INTERVAL_US" "$CT_SECONDS" "$CT_HIST_US" "$(lane_guest_profile "$lane")"
   printf '[dry-run] interrupts_delta <results>/%s/alt%s/interrupts.json 0 1 2 3 -- guest-run.sh probe\n' "$lane" "$alt"
   guest_step "$lane" "$alt" probe
@@ -264,7 +264,7 @@ run_lane() {
   export GUEST_PROFILE
   GUEST_PROFILE=$(lane_guest_profile "$lane")
   export CYCLICTEST_VARIANT=cyclictest CYCLICTEST_TIMEOUT=$((CT_SECONDS + 60))
-  cyclictest_run --allow-overflow "$d/cyclictest" -q -m -p 95 -a "$CT_CPU" -t 1 -i "$INTERVAL_US" -D "$CT_SECONDS" -h "$CT_HIST_US" \
+  cyclictest_run "$d/cyclictest" -q -m -p 95 -a "$CT_CPU" -t 1 -i "$INTERVAL_US" -D "$CT_SECONDS" -h "$CT_HIST_US" \
     >"$LOGS/cyclictest-$lane-alt$alt.log" 2>&1 &
   ct=$!
   bg_track "$ct"

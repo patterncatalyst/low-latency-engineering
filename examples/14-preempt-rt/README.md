@@ -120,8 +120,8 @@ Counters first, then latency. Everything marked exact is a count the kernel or t
 - Compare lanes only inside one run. The guest is scheduled by an untuned, shared host; its steal ticks are printed beside each lane
   and `host_load1` is recorded per lane.
 - cyclictest truncates a latency to whole microseconds and doesn't write an average; the converter reads the percentiles from the
-  histogram buckets. Samples beyond the histogram range (10 ms) are counted in `runtime.counters.overflows`, and the tail
-  percentiles are then upper bounds.
+  histogram buckets. The histogram covers 20 ms, and a sample beyond it fails the lane, because the tail percentiles would
+  then be upper bounds rather than measurements.
 - cyclictest and the probe run on different CPUs in the same window, so their percentiles agree in shape, not sample for sample.
 - A late wake that skips a period records one late sample, not one per missed wake (both tools do this), so the sample count can
   fall short of duration over interval. The probe reports `missed_periods` and the criterion checks that the two add up.
