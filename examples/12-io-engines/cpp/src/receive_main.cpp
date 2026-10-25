@@ -32,6 +32,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <thread>
 #include <vector>
 
@@ -75,10 +76,10 @@ Plan plan_for(const std::string& variant) {
   throw std::invalid_argument("--variant: epoll | recvmmsg | io-uring | thread-per-core | acceptor-pool");
 }
 
-/// io_uring_queue_init on a throwaway ring: the errno, or 0.
-int uring_probe() {
+/// io_uring_queue_init on a throwaway ring: the error, or an empty std::error_code.
+std::error_code uring_probe() {
   auto ring = io::Ring::create(8);
-  return ring ? 0 : ring.error();
+  return ring ? std::error_code{} : std::error_code{ring.error(), std::generic_category()};
 }
 
 struct Shared {
@@ -109,8 +110,8 @@ int run(const lf::Options& o) {
     cpus.resize(plan.threads());
   }
   if (plan.engine == Engine::uring) {
-    if (const int err = uring_probe(); err != 0) {
-      std::println("io-receive: io_uring unavailable here (errno {}: {}); skipped", err, std::strerror(err));
+    if (const std::error_code ec = uring_probe()) {
+      std::println("io-receive: io_uring unavailable here (errno {}: {}); skipped", ec.value(), ec.message());
       return kSkipCode;
     }
   }
@@ -276,9 +277,10 @@ int main(int argc, char** argv) {
   try {
     const lf::Options o{argc, argv, 1, {"probe-uring"}};
     if (o.flag("probe-uring")) {
-      const int err = uring_probe();
-      std::println("io_uring_setup errno {}{}", err, err == 0 ? "" : std::format(" ({})", std::strerror(err)));
-      return err == 0 ? EXIT_SUCCESS : (err == EPERM || err == ENOSYS) ? kSkipCode : EXIT_FAILURE;
+      const std::error_code ec = uring_probe();
+      std::println("io_uring_setup errno {}{}", ec.value(), ec ? std::format(" ({})", ec.message()) : "");
+      if (!ec) return EXIT_SUCCESS;
+      return (ec == std::errc::operation_not_permitted || ec == std::errc::function_not_supported) ? kSkipCode : EXIT_FAILURE;
     }
     return run(o);
   } catch (const std::exception& e) {
