@@ -1195,7 +1195,7 @@ container_run() (
         throttled_usec) [[ $rest_of =~ ^[0-9]+$ ]] && us=$rest_of || block_ok=0 ;;
         cpu.max) [[ $rest_of =~ ^(max|[0-9]+)\ [0-9]+$ ]] && cm=$rest_of || block_ok=0 ;;
         cpuset.cpus.effective) [[ -z $rest_of || $rest_of =~ ^[0-9]+([-,][0-9]+)*$ ]] && cs=$rest_of || block_ok=0 ;;
-        *) [[ $line =~ ^[a-z_]+\ [0-9]+$ ]] || block_ok=0 ;;
+        *) [[ $line =~ ^[a-z_][a-z0-9_.]*\ [0-9]+$ ]] || block_ok=0 ;;
       esac
       ((block_ok)) || break
     done <"$tmp/block.txt"

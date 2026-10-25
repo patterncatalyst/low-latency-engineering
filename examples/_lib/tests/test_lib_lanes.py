@@ -64,7 +64,7 @@ case $cmd in
         case $FAKE_BLOCK in
           garbage) echo "nr_throttled many" ;;
           *)
-            printf 'usage_usec 99\nnr_periods 100\n'
+            printf 'usage_usec 99\nnr_periods 100\ncore_sched.force_idle_usec 0\n'
             nr=7
             [[ $FAKE_BLOCK != negative ]] || nr=-1
             echo "nr_throttled $nr"
