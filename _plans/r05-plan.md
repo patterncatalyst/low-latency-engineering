@@ -273,7 +273,7 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 | S5 | Build wiring 14–16 | `examples/CMakeLists.txt`, `examples/1[4-6]-*/cpp/CMakeLists.txt`, `examples/pom.xml`, `examples/1[45]-*/java/pom.xml`, `.github/workflows/ci.yml` | S0 | sonnet | host | done |
 | S6 | Lab: `isolate-cpu23` profile, tuned profile file, multi-vCPU pin, snapshot tooling, snapshots, prereq checks | `scripts/lab/guest-profiles/isolate-cpu23.conf`, `scripts/lab/tuned/lowlat-partition/tuned.conf` (if D7), `scripts/lab/pin-vcpu.sh`, `scripts/lab/install-guest-tools.sh`, `scripts/check-prereqs.sh` (`--vm --r05`), `scripts/lab/README.md` | S1, S2, S5 | opus (MAIN) | VM | done |
 | S7 | Example 14 + `verify.sh` + `vm/run.sh` + `vm/guest-run.sh` + README | `examples/14-preempt-rt/**` | S4, S5, S6 | sonnet (VM smoke by MAIN) | host code, VM smoke | done |
-| S8 | Example 15 | `examples/15-cpu-partitioning/**` | S4, S5, S6; VM smoke after S7's | sonnet (VM smoke by MAIN) | host code, VM smoke | todo |
+| S8 | Example 15 | `examples/15-cpu-partitioning/**` | S4, S5, S6; VM smoke after S7's | sonnet (VM smoke by MAIN) | host code, VM smoke | done |
 | S9 | Example 16 | `examples/16-cyclictest/**` | S4, S5, S6; VM smoke after S8's | sonnet (VM smoke by MAIN) | host code, VM smoke | todo |
 | S10 | Idiom review before calibration | all r05 code | S7–S9 | opus + sonnet fixes | host | todo |
 | S11 | Calibration gate: 3 dry runs each into `results/latest`; margin table; user decides asserted vs observed | READMEs, Follow-ups | S10 | opus (MAIN) | VM | todo |
