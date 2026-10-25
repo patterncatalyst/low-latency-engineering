@@ -33,7 +33,7 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
   - XDP modes:
     - Generic (SKB) XDP works on any netdev.
     - Native XDP is implemented by `virtio_net`, with conditions: guest offloads switched off through `VIRTIO_NET_F_CTRL_GUEST_OFFLOADS`, an MTU limit, and on one queue pair, XDP_TX/REDIRECT fall back to a shared, locked TX queue.
-    - AF_XDP zero-copy on `virtio_net` landed upstream (RX in v6.11, TX in v6.13) and needs the device to offer `VIRTIO_F_RING_RESET`. Whether QEMU's userspace device offers it behind passt is unverified; S0 checks the v7.2 source, S1 probes the errno.
+    - AF_XDP zero-copy on `virtio_net` landed upstream (RX in v6.11, TX in v6.13) and needs the device to offer `VIRTIO_F_RING_RESET` and to negotiate `VIRTIO_F_ACCESS_PLATFORM` (else `virtqueue_dma_dev()` is NULL and the bind fails with -EINVAL). Whether QEMU's userspace device offers them behind passt is unverified; S0 checks the v7.2 source, S1 probes the errno.
   - Traffic sources:
     - ssh runs over vsock, so an XDP program on `eth0` can't lock us out.
     - Guests can't reach each other, so the only external traffic source for the virtio NIC is the host through passt. That's an r06 design decision (§7, Q8).
