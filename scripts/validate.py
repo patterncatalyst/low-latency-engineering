@@ -66,8 +66,8 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
                  seccomp=unconfined or `privileged: true` in a tracked *.sh/*.bash, extensionless
                  shell-shebang file, *.tmpl, *.py, YAML file (compose, workflows), Makefile or
                  Containerfile, outside NO_PRIVILEGED_ALLOW (container_run's
-                 refusal tests only); comment lines and a test's
-                 `... not in out` assertion are skipped
+                 refusal tests and one Ch13 absence assertion, by file); comment
+                 lines are skipped
   ft-reports     a report that is a free-threaded lane (build.compiler says "free-threading", any
                  case; runtime.python_build "free-threaded"; or "free-threaded" in its file or
                  variant name) has all three: a free-threading build.compiler, python_build
@@ -1068,12 +1068,15 @@ def check_image_pins(root: Path) -> None:
 # ---------------------------------------------------------------- no privileged containers
 # Tracked scripts, compose files, Containerfiles, workflows and Python helpers. A (path, pattern
 # name) entry here is an explicit, reviewed exception. The only ones: container_run's refusal tests
-# feed it each forbidden option and assert it exits non-zero without calling docker.
+# feed it each forbidden option and assert it exits non-zero without calling docker, and the Ch13
+# script test asserts the generated command carries no --privileged.
 _LANES_TEST = "examples/_lib/tests/test_lib_lanes.py"
+_PLACE_PY_TEST = "examples/13-where-code-runs/place-py/tests/test_scripts.py"
 NO_PRIVILEGED_ALLOW: set[tuple[str, str]] = {
     (_LANES_TEST, "--privileged"),
     (_LANES_TEST, "--cap-add=ALL"),
     (_LANES_TEST, "seccomp=unconfined"),
+    (_PLACE_PY_TEST, "--privileged"),
 }
 PRIVILEGED = {
     "--privileged": re.compile(r"--privileged\b"),
@@ -1085,8 +1088,6 @@ PRIVILEGED = {
 
 CAP_ADD = re.compile(r"\bcap_add:\s*(.*)$", re.I)
 CAP_ITEM = re.compile(r"^\s*-\s*['\"]?(\w+)['\"]?\s*$")
-# A line that asserts the pattern is absent (a test's `assert "--privileged" not in out`).
-NEGATED_LINE = re.compile(r"\bnot\s+in\b|\bassertNotIn\b")
 PRIVILEGED_SELF = {"scripts/validate.py"}  # holds the rule table itself
 
 
@@ -1124,11 +1125,7 @@ def check_no_privileged(root: Path) -> None:
         ):
             if line.lstrip().startswith("#"):
                 continue
-            hits = [
-                label
-                for label, rx in PRIVILEGED.items()
-                if rx.search(line) and not NEGATED_LINE.search(line)
-            ]
+            hits = [label for label, rx in PRIVILEGED.items() if rx.search(line)]
             # compose: `cap_add: [ALL]` or a following `- ALL` list item
             cap = CAP_ADD.search(line)
             item = CAP_ITEM.match(line)
@@ -2768,9 +2765,8 @@ def self_test() -> int:
             "scripts/helper.py:1: --privileged",
         ),
         (
-            "no-privileged python assertion and cap_add other items pass",
+            "no-privileged cap_add other items and binary files pass",
             {
-                "t/test_x.py": 'assert "--privileged" not in out\n',
                 "compose.yaml": "services:\n  a:\n    cap_add:\n      - NET_RAW\n    user: x\n",
                 "bin/data": "\x7fELF--privileged",
             },
