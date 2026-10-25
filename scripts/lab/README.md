@@ -215,7 +215,7 @@ the pinned one is installed first.
 scripts/lab/revert-vm.sh lowlat-target lab-ready                        # 1
 scripts/lab/lab-up.sh                                                   # 2
 scripts/lab/pin-vcpu.sh --remove                                        # 3: removes any <cputune>
-scripts/lab/install-guest-tools.sh                                      # 4: Temurin, stress-ng, strace, perf
+scripts/lab/install-guest-tools.sh                                      # 4: Temurin, uv, stress-ng, strace, perf
 source versions.env                                                     # 5: the pinned stock kernel, in the guest only
 scripts/lab/lab-ssh.sh lowlat-target "sudo dnf -y install kernel-$LAB_STOCK_KERNEL kernel-core-$LAB_STOCK_KERNEL kernel-modules-$LAB_STOCK_KERNEL"
 scripts/lab/apply-guest-profile.sh stock-unpinned                       # 6: reboots into it, verifies

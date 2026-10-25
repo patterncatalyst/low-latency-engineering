@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# install-guest-tools.sh - install the pinned Temurin JDK, stress-ng, strace and perf into the lab guest.
+# install-guest-tools.sh - install the pinned Temurin JDK, the pinned uv, stress-ng, strace and perf into
+# the lab guest.
 #
 #   ./install-guest-tools.sh [vm]        # default lowlat-target
 #
@@ -8,7 +9,10 @@
 # guest and unpacked to /opt/temurin-<TEMURIN_VERSION>. It is made the guest's java and javac by
 # `alternatives` (so non-login ssh commands see it) and JAVA_HOME/PATH via /etc/profile.d.
 # Fedora's java-25-openjdk stays installed but is no longer selected. stress-ng, strace and perf
-# come from dnf, only when absent.
+# come from dnf, only when absent. uv: the upstream musl tarball named by UV_VERSION / UV_SHA256 in
+# versions.env, checked the same way and installed as /usr/local/bin/uv and uvx (ahead of Fedora's
+# packaged uv on PATH), so the guest's `uv python install` sees the CPython that
+# examples/.python-version pins.
 # Idempotent. Guest-only: nothing on the host changes. cloud-init does the same for a rebuilt guest.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -54,6 +58,29 @@ gssh "set -e
     sudo alternatives --set \$t $JDK_DIR/bin/\$t
   done
   printf 'export JAVA_HOME=$JDK_DIR\\nexport PATH=\$JAVA_HOME/bin:\$PATH\\n' | sudo tee /etc/profile.d/temurin.sh >/dev/null"
+
+step "uv $UV_VERSION"
+uv_tgz="$DL/uv-$UV_VERSION-x86_64-unknown-linux-musl.tar.gz"
+if [[ ! -f "$uv_tgz" || "$(sha256_of "$uv_tgz")" != "$UV_SHA256" ]]; then
+  curl -fL --retry 3 -o "$uv_tgz.part" \
+    "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-unknown-linux-musl.tar.gz"
+  mv "$uv_tgz.part" "$uv_tgz"
+fi
+[[ "$(sha256_of "$uv_tgz")" = "$UV_SHA256" ]] || die "sha256 mismatch for $uv_tgz"
+if [[ "$(gssh '/usr/local/bin/uv --version 2>/dev/null' || true)" == "uv $UV_VERSION"* ]]; then
+  ok "uv $UV_VERSION already in the guest"
+else
+  scp -q "${SSH_OPTS[@]}" "$uv_tgz" "$DEST:uv.tar.gz"
+  # shellcheck disable=SC2029  # expands on the client by design
+  gssh "set -e
+    echo '$UV_SHA256  uv.tar.gz' | sha256sum --quiet -c -
+    tar -xzf uv.tar.gz
+    sudo install -m 0755 uv-x86_64-unknown-linux-musl/uv uv-x86_64-unknown-linux-musl/uvx /usr/local/bin/
+    rm -rf uv.tar.gz uv-x86_64-unknown-linux-musl"
+fi
+uvv="$(gssh 'command -v uv && uv --version')"
+[[ "$uvv" == /usr/local/bin/uv*"uv $UV_VERSION"* ]] || die "guest uv on PATH is not /usr/local/bin/uv $UV_VERSION: $uvv"
+ok "guest uv: $(tail -n1 <<<"$uvv")"
 
 step "stress-ng, strace, perf"
 gssh 'for p in stress-ng strace perf; do rpm -q "$p" >/dev/null 2>&1 || sudo dnf -y -q install "$p"; done'

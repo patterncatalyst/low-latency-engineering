@@ -374,6 +374,18 @@ check_vm_java() {
   fi
 }
 
+# The guest's uv must be the pinned one (versions.env): Fedora's packaged uv can lag the CPython
+# that examples/.python-version pins, and Ch13's vm lane installs that CPython with it.
+check_vm_uv() {
+  local out
+  out="$(vm 'command -v uv && uv --version' 2>/dev/null || true)"
+  if [[ "$out" == *"uv $UV_VERSION"* ]]; then
+    record PASS "guest: uv $UV_VERSION" "$(head -n1 <<<"$out")"
+  else
+    record FAIL "guest: uv $UV_VERSION" "uv is ${out:-missing}" "scripts/lab/install-guest-tools.sh $LAB_VM (or revert to snapshot lab-ready-r04)"
+  fi
+}
+
 # Informational: isolation (guest cmdline) and vcpupin (libvirt) state. Neither is required,
 # so absence is a WARN with the command that applies it.
 check_vm_isolation() {
@@ -556,6 +568,7 @@ run_vm() {
   check_vm_java
   vm_need stress-ng stress-ng
   if [[ "$rt_mode" == stock ]]; then
+    check_vm_uv
     vm_need strace strace
     vm_need perf perf
   fi
