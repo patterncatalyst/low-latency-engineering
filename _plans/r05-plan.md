@@ -605,5 +605,5 @@ Open questions for the user (answered in S2):
 
 | Item | Decision |
 |---|---|
-| (filled as steps land) | |
+| User decisions, 2026-10-25 | Q1 split: yes, r05 = Ch14-16 and r06 = Ch17-18. Q3 vCPU pins: yes, vCPUs 2 and 3 pinned in the r05 snapshots only. Q6 tuned in the guest: yes, if the S1 bootloader probe is clean, else args only. Q7 Ch14 Java: one observed lane. Q2 (4 vCPUs), Q4 (hold 7.2.11-200.fc44) and Q5 (300 s lanes, abort on host load1 > 2) take the recommended defaults. Q8 is deferred to r06. |
 
