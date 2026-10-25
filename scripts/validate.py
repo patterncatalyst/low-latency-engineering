@@ -665,7 +665,11 @@ def check_tool_versions(root: Path) -> None:
         for tool, rx in TOOL_VERSION.items():
             # null is profile.sh's record of a tool that isn't installed (the lab guest has no
             # valgrind); any string must be a clean version
-            if tool in tools and tools[tool] is not None and not (isinstance(tools[tool], str) and rx.fullmatch(tools[tool])):
+            if (
+                tool in tools
+                and tools[tool] is not None
+                and not (isinstance(tools[tool], str) and rx.fullmatch(tools[tool]))
+            ):
                 fail("tool-versions", f"{where}: tools.{tool} is {tools[tool]!r}, not {rx.pattern}")
 
     for path in walk(root / "examples", "*.json"):
