@@ -337,14 +337,14 @@ With C2's default loop unrolling, adjacent volatile stores in the JMH loop share
 - A seqlock's writer never waits: p99 205.5-231.0x lower in C++, 34.5-37.1x in Java, 0 torn snapshots.
 - A monotonic sequence avoids ABA and reclamation; the GIL build hides a race the free-threaded build shows.
 
-The next chapter, *Stackful vs stackless: threads and fibers vs event loops and coroutines* (Part 4), asks what runs the threads these structures coordinate.
+The next chapter, [*Stackful vs stackless: threads and fibers vs event loops and coroutines*]({{ '/docs/11-stackful-stackless/' | relative_url }}), asks what runs the threads these structures coordinate.
 
 ## For deeper coverage
 
 - Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for atomics and memory orders.
-- Enberg, *Latency* (Manning), as further reading.
+- Enberg, *Latency* (Manning).
 - [Chapter 7, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity*]({{ '/docs/07-offheap-lockfree/' | relative_url }}), for SPSC rings and padding, and [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), for false sharing.
-- Chapter 11, *Stackful vs stackless: threads and fibers vs event loops and coroutines*, and Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core* (Part 4).
+- [Chapter 11, *Stackful vs stackless: threads and fibers vs event loops and coroutines*]({{ '/docs/11-stackful-stackless/' | relative_url }}), and [Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core*]({{ '/docs/12-io-engines/' | relative_url }}).
 - Appendix E, *Free-threaded Python vs the GIL*.
 
 ---

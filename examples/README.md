@@ -25,6 +25,27 @@ examples/
 Python workspace convention: every package is a `*-py` directory
 (`common/*-py` today); adding one needs no change to the root file.
 
+## Examples
+
+| Directory | Chapter |
+|---|---|
+| `00-prerequisites/` | Chapter 0, Setup: toolchains, the VM lab and the line simulator |
+| `01-latency-distribution/` | Chapter 1, Latency vs bandwidth: latency is a distribution |
+| `02-littles-amdahl/` | Chapter 2, Modelling with Little's Law and Amdahl's Law |
+| `03-coordinated-omission/` | Chapter 3, Measuring correctly: clocks, percentiles and coordinated omission |
+| `04-benchmark-harnesses/` | Chapter 4, Benchmark harnesses: Google Benchmark, pyperf and JMH |
+| `05-jvm-costs/` | Chapter 5, What the JVM costs: allocation, escape analysis, JIT warmup vs AOT |
+| `06-gc-tails/` | Chapter 6, GC for tails: Generational ZGC and Shenandoah |
+| `07-offheap-lockfree/` | Chapter 7, Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity |
+| `08-zero-copy-flat/` | Chapter 8, Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison |
+| `09-eliminating-work/` | Chapter 9, Eliminating work: allocation, cache locality, false sharing |
+| `10-lockfree-waitfree/` | Chapter 10, Lock-free and wait-free synchronization |
+| `11-stackful-stackless/` | Chapter 11, Stackful vs stackless: threads and fibers vs event loops and coroutines |
+| `12-io-engines/` | Chapter 12, I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core |
+| `13-where-code-runs/` | Chapter 13, Where the code runs: bare metal, VMs and containers, and when not to use containers |
+
+Each directory's `verify.sh` runs the example. Example 13's full run needs `VM=1` and the `lowlat-target` guest; see its README.
+
 ## Build
 
 First, once per machine (builds the pinned protoc into `~/.cache/lowlat/prefix`;

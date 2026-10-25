@@ -48,14 +48,15 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
     asserted for every saturation run). The rates are variables at the top of `verify.sh`. `DECIDE_NS` (3 us) is the
     decide work this example doesn't build (the tracker lookup and the divert command's encode), modelled as a busy-wait
     per parcel. Without it one receive thread has a capacity the four simulators can't exceed, and nothing saturates. The
-    three single-thread engines run at 60 kHz per camera: 240 kHz offered, 3 us of decide work each, so the thread is
-    about 72 percent busy.
+    three single-thread engines run at 60 kHz per camera: 240 kHz offered, 3 us of decide work each, so the decide work
+    alone takes 72 percent of the thread. With the receive path, the thread was on a CPU for 833 to 842 permille of its
+    window with `io-uring`, 861 to 865 with `recvmmsg` and 888 to 890 with `epoll` (per-run medians, `r04-run1..3`).
   - **The layout pair.** `thread-per-core` and `acceptor-pool` run at 52 kHz per camera (208 kHz offered) with
     `RECEIVE_NS_LAYOUT` (3.5 us) of modelled receive-side work per datagram, done by whichever thread received it. That's
     the serial receive stage: the validation a real camera frame carries (a checksum, a framing check) that this flat
     wire doesn't have, and the part of the work a single acceptor can't spread over cores. At that rate the acceptor is on
     a CPU for about 80 to 85 percent of its receive window (the run measures it with the thread's CPU time and checks it
-    stays inside a guard band), while each of the four receivers is about 40 percent busy. Push the rate higher and the
+    stays inside a guard band), while the busiest of the four receivers is about 38 percent busy (382 to 384 permille). Push the rate higher and the
     acceptor overloads: the sockets' buffers fill, parcels drop, and the p99 is a backlog growing for the length of the
     run, not a property of the layout. So the tail ratio is observed, and the exact hand-off counts carry the claim. The
     input is a model, like `DECIDE_NS`, and both are printed in each report's notes. Without the receive-side work both
@@ -66,7 +67,7 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
   client (plain JDK: virtual threads and `java.net.http.HttpClient`) sends request `i` at `start + i / rate` whatever
   happened to the earlier ones, and measures from that intended time. It runs 3 s of warm-up and then `Q_SECONDS` of
   measurement at `Q_RATE` (5 kHz): the Little's-law in-flight number, `Q_RATE x 2 ms` = 10 against a pool of 8, is printed and
-  recorded in the report's `model` block. The plan's example was 12 kHz against 16; a JDK HTTP/1.1 client and a four-core
+  recorded in the report's `model` block. The first sizing was 12 kHz against a pool of 16; a JDK HTTP/1.1 client and a four-core
   Quarkus service on this host fall behind in every variant above about 6 kHz, the pool or not, so the pool shrank to 8 and
   the rate to 5 kHz to keep `lambda x W` above it. The defect variant runs at `DEFECT_RATE` (1.85 kHz): four event loops each
   blocked for 2 ms carry at most 2 kHz, so it is driven below that and the queue it shows is the loop's, not the client's. The `event-loop` variant runs at the same rate in every alternation as the control for it. The client records its own lateness (a second report, variant `client-lateness`) and counts the
@@ -233,8 +234,8 @@ What is written by hand, and the reason:
   `Ring` and `BufRing` wrappers are RAII over its calls. Asio's backend can't expose the call counts.
 - **`spin_work` (C++, Java) and the spinning hand-off workers.** The busy-wait stands in for decide work this example
   doesn't build. The workers spin on Ch10's `ClaimLog` so the hand-off is a cache-line transfer and not a futex
-  wake-up. At line rate the acceptor-pool tail came out no worse than thread-per-core's (p99 97 against 106 us in one run), so
-  the hand-off cost is small there; the exact hand-off counts are what the example asserts. Neither is advice for general code.
+  wake-up. At line rate the acceptor-pool tail came out no worse than thread-per-core's (the p99 ranges overlap: acceptor-pool 91 to 113 us,
+  thread-per-core 98 to 115 us, one measurement per run), so the hand-off cost is small there; the exact hand-off counts are what the example asserts. Neither is advice for general code.
 - **`SpinStart` and the start gate.** A futex barrier can wake threads a millisecond apart on an idle core; the spin brings
   them to one instant so the recorded start skew means something. `std::latch` and `CountDownLatch` do the coarse gate.
 - **`EngineCounters` padded to twice `std::hardware_destructive_interference_size`.** Per-thread counters written on every
@@ -306,20 +307,20 @@ Reports land in `results/latest/`: `cpp/<variant>-sat-alt<N>.json`, `cpp/<varian
 
 `verify.sh` evaluates every criterion, prints its measured value, bound and margin, and exits non-zero if any failed.
 Latency ratios compare variants within one run, alternating A B C A B C A B C and taking the median of the three
-per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. All bounds are
-provisional until the S10 calibration (`_plans/r04-plan.md`).
+per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. The bounds
+were set from quiet-host dry runs before the measured runs.
 
 1. **System calls per parcel at saturation, C++.** `io-uring`'s `io_uring_enter` calls per parcel are at most 1/4 of
    `epoll`'s system calls per parcel (`epoll_wait` + `recvmsg`). Both counts are read in the program, but the ratio
    depends on how many completions queue up behind each other, so it's a property of the load, not a constant. At 240 kHz
-   `epoll` makes about 1.4 calls per parcel (level-triggered wake-ups find several sockets ready, so the plan's "at least
-   2" doesn't hold) and `io-uring` about 0.06. `recvmmsg`'s calls per parcel and the CQEs per enter are printed, with the
+   `epoll` makes about 1.4 calls per parcel (level-triggered wake-ups find several sockets ready, so an expectation of at least 2
+   doesn't hold) and `io-uring` about 0.06. `recvmmsg`'s calls per parcel and the CQEs per enter are printed, with the
    margin under 1 call per parcel, and not bounded.
 2. **Hand-offs per parcel (exact).** `thread-per-core` 0, `acceptor-pool` 1.
 3. **The layout pair at a loaded acceptor.** At 52 kHz per camera with the modelled receive-side work, `dropped` is 0
    for both layouts in every alternation (exact), and the acceptor's CPU share of its receive window sits inside a
    750 to 900 per-thousand guard band (the workload check). The p99 ratio, `thread-per-core` over `acceptor-pool`, median of 3,
-   is observed: the plan's bound of 1/2 is asserted only when the ratio clears it twice over in every calibration run.
+   is observed: the bound of 1/2 is asserted only when the ratio clears it twice over in every calibration run.
    The hand-off cost at line rate is observed too.
 4. **Quarkus at 5 kHz x 2 ms > 8.** `worker-pool` p99 is at least 3x `virtual-thread` p99, median of 3. `event-loop`
    against `virtual-thread` is observed.
@@ -382,6 +383,32 @@ Example 12 also builds on example 10's `lowlat::lockfree` library (the multi-pro
 
 ## Verification status
 
-Unverified until S11. The code builds, its unit tests pass and `verify.sh` completes on a quiet host, but no run is committed
-yet. The recorded runs and the calibration of the bounds come with S10 and S11 (`_plans/r04-plan.md`); until then every
-bound above is provisional and this section carries no measured numbers.
+Behavioural. `verify.sh` asserts the nine criteria above, and all of them held on the host runs `r04-run1..3` (bare-metal
+host, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8, Clang 22.1.8,
+Quarkus 3.40.1.1, Python 3.14.9 in both builds; lab VM down; commit 4434ed1; load average at most 2 at each start). The
+free-threaded runs kept the GIL off. Ranges over the three runs; a ratio is the range of each run's median over its 3
+alternations.
+
+| Quantity | Range |
+|---|---|
+| System calls per parcel at saturation, `epoll` / `recvmmsg` / `io-uring` enters | 1.379 to 1.417 / 0.573 to 0.614 / 0.062 to 0.068 |
+| `io_uring_enter` per parcel against `epoll` system calls per parcel (bound at most 1/4) | smallest margin 4.38x |
+| Completions per `io_uring_enter` | 14.7 to 16.2 |
+| Saturation runs | 720,000 parcels each, none dropped |
+| Hand-offs per parcel, `thread-per-core` / `acceptor-pool` (exact) | 0 / 1 |
+| Acceptor on a CPU for (guard band 750 to 900 permille) | 820 to 822 permille |
+| Quarkus p99 at 5 kHz, `worker-pool` / `virtual-thread` (bound 3x) | ratio 162.85x to 223.10x (1,453.3 to 1,455.4 ms / 6.5 to 8.9 ms) |
+| `worker-pool` threads, active maximum, handlers in flight (exact) | 8, 8, 8 in all 9 alternations |
+| Defect at 1,850 Hz, handlers in flight at most the 4 loop threads (exact) | 4; 990 to 1,030 blocked-thread warnings |
+| Line runs, every C++, plain-JDK and Python variant | 200,000 parcels counted, none dropped |
+| Reports | 84 pass `lowlat-report check` in each run |
+| Observed: receiver on a CPU for, `io-uring` / `recvmmsg` / `epoll` (permille) | 833 to 842 / 861 to 865 / 888 to 890 |
+| Observed: saturation p99, `thread-per-core` / `acceptor-pool` | 68 to 69 / 84 to 90 us, ratio 0.77x to 0.82x |
+| Observed: line p99, `thread-per-core` / `acceptor-pool` | 98 to 115 / 91 to 113 us |
+| Observed: defect p99 against its control | 2.44x to 2.61x (8.1 to 8.5 ms against 3.3 ms) |
+| Observed: Quarkus `event-loop` p99 over `virtual-thread` | 0.959x to 1.413x |
+
+Outliers and failures: none. The `io-uring` enter ratio cleared its bound by at least 4.38x and the Quarkus ratio by at
+least 54.28x. The defect's p99 is observed and not asserted: it didn't reach twice its control's, so the evidence is the
+blocked-thread warnings and the in-handler maximum. `asio-io-uring`, `recvmmsg`, the layout p99 ratio, the plain-JDK and
+Python lanes and the `strace` summaries are observed and not asserted.

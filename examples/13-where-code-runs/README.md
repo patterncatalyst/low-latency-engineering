@@ -43,7 +43,7 @@ the ones where a runtime sizes its pools from a machine it doesn't have.
 
 | Lane | Where | Network | Limit |
 |---|---|---|---|
-| `host` | bare metal: an untuned shared laptop, lab VM booted and idle | loopback | none |
+| `host` | bare metal: the host, untuned and shared, lab VM booted and idle | loopback | none |
 | `vm` | native in the guest (stock kernel, 4 vCPU, unpinned) | loopback | none |
 | `container-host-net` | Docker in the guest | `--network host` | none |
 | `container-bridge` | Docker in the guest; simulators in the guest | bridge, veth | none |
@@ -105,10 +105,10 @@ three alternations within the one run.
 
 ## Reading the numbers
 
-- The host lane is an untuned shared laptop (`powersave`, `balanced`, a desktop session running). `verify.sh` records the
+- The host lane is a bare-metal host, untuned and shared (`powersave`, `balanced`, a desktop session running). `verify.sh` records the
   host's load and busy share across each host alternation in `host/altN/host-quiet.json` and prints them as observed; it
-  never refuses on them. The first real run's host consumer p99.9 was 911, 1532 and 408 microseconds with a host load1 of
-  1.94, which is what an unquiet host looks like. The host simulators are pinned to the CPUs left after the consumer's core
+  never refuses on them. In the committed runs the host consumer p99.9 ranged from 195 to 264 microseconds with a
+  host load1 between 0.97 and 2.45 over the nine alternations, which is what an unquiet host looks like. The host simulators are pinned to the CPUs left after the consumer's core
   (and its SMT sibling) and CPU 0's core, and that mask is recorded beside the load.
 
 - The Quarkus comparison between the quota and the cpuset is confounded and observed only. The open-loop client runs in the
@@ -129,7 +129,7 @@ threads, Vert.x event loops, carriers).
 
 ## D9: what these comparisons are
 
-Every number is labelled with its lane and means "on this laptop's KVM, in this run". The host and the guest don't share a
+Every number is labelled with its lane and means "on this machine's KVM, in this run". The host and the guest don't share a
 kernel, a CPU model view or a clock, so host against VM is printed and never asserted. Container costs are measured
 against the VM-native lane in the same guest, so they're container-in-VM costs, not container-on-bare-metal costs. The host
 lane runs with the lab VM booted and idle, and the guest's busy share across it is recorded.
@@ -139,7 +139,7 @@ lane runs with the lab VM booted and idle, and the guest's busy share across it 
 - A production hypervisor: this is a desktop KVM guest with passt networking, unpinned vCPUs and no tuning.
 - Dedicated or isolated host cores. Isolation is Part 5; here the guest's 4 vCPUs are scheduled by the host like any process.
 - SR-IOV or passthrough NICs. The bridge lane crosses a software veth and a software bridge inside the guest.
-- A quiet host. The laptop is untuned and shared, so the jitter floor includes whatever the host does.
+- A quiet host. The host is untuned and shared, so the jitter floor includes whatever the host does.
 
 ## When not to use a container
 
@@ -177,7 +177,7 @@ neighbour shares its cgroup.
 | Quarkus | per `examples/12-io-engines/quarkus/pom.xml` | Apache-2.0 | the Java container's service |
 | Temurin (Eclipse Adoptium) | 25.0.5+8 | GPLv2 + Classpath Exception | the JDK in the host, guest and Java image |
 | UBI 10 base images | per `containers/IMAGES.lock` | UBI EULA, free to redistribute | all three images |
-| Docker Engine | the guest's, recorded in its profile | Apache-2.0 | containers, in the guest only |
+| Docker Engine | 29.9.2, in snapshot `lab-ready-r04` (the lab's setup record) | Apache-2.0 | containers, in the guest only |
 | protobuf | per `versions.env` | BSD-3-Clause | the wire contract, linked into the simulator and `io-receive` |
 | abseil | 20250512.1 | Apache-2.0 | protobuf's dependency |
 | CPython | 3.14.9 | PSF-2.0 | the Python lanes (uv-managed, python-build-standalone) |
@@ -192,8 +192,31 @@ table. Grafana: no panel by design (Part 7 covers observability); the numbers he
 
 ## Verification status
 
-Unverified until S11. The code builds, its unit tests pass, the host lane runs at full size and the evaluation was exercised
-on a synthetic results directory built from host reports, but no VM or container lane has run, and no run is committed yet.
-The images need rebuilding in the guest (`containers/build-images.sh`) and `IMAGES.lock` updating before the first full run.
-The recorded runs and the calibration of the bounds come with S10 and S11 (`_plans/r04-plan.md`); until then every bound
-above is provisional and this section carries no measured numbers.
+Behavioural. `verify.sh` asserts the five criteria above, and all of them held on `r04-run1..3` (commit 4434ed1, results
+committed in cd4a269; load average at most 2 at each start). Host lane: bare metal, untuned (governor `powersave`, tuned
+`balanced`, kernel 7.2), the lab VM booted and idle. VM lane: guest profile `stock-unpinned`, snapshot `lab-ready-r04`,
+4 vCPU unpinned, kernel 7.2, tuned `virtual-guest`, `virt: kvm`, each run restored from the snapshot. Container lanes:
+`place-cpp:r04@sha256:007fe524247d…`, `place-java:r04@sha256:da6684ca44f2…` and `place-py:r04@sha256:276c666a6165…` (full
+digests in `containers/IMAGES.lock`) on UBI 10.2 `ubi-minimal`, Docker's default seccomp profile, Docker Engine 29.9.2.
+Every lane ran the same four C++ binaries. Latency figures are each run's median over its 3 alternations, truncated to
+microseconds as `verify.log` prints them, and compare lanes only within one interleaved run.
+
+| Quantity | Range |
+|---|---|
+| `nr_throttled` under `--cpus=2` / `--cpuset-cpus=2,3` (exact) | 206 to 207 / 0 |
+| `throttled_usec`, quota (summed over 4 vCPUs) / cpuset (exact) | 37.7 to 40.6 s / 0 |
+| `hardware_concurrency()` in the VM, quota, cpuset (exact) | 4, 4, 4 |
+| `os.process_cpu_count()` in the VM, quota, cpuset (exact) | 4, 4, 2 |
+| `availableProcessors()` in the VM, quota, cpuset (exact) | 4, 2, 2 |
+| `io_uring_setup` in a container, 36 probes (exact) | `EPERM` in all; 0 in the 9 VM probes |
+| Consumer p99.9, quota / cpuset (bound 2x) | ratio 13.16x to 18.91x (53,411 to 55,574 us / 2,912 to 4,067 us); smallest margin 6.58x |
+| Every lane and alternation | 200,000 parcels counted, none dropped, environment record and image digest match, one set of binary checksums |
+| Reports | 48 pass `lowlat-report check` in each run |
+| Observed: emit lateness p99, host / VM / container-host-net / container-bridge | 62 to 64 / 80 to 83 / 81 to 89 / 85 to 103 us |
+| Observed: consumer p99, host / VM / container-host-net / container-bridge | 97 to 98 / 99 to 101 / 101 to 104 / 105 to 140 us |
+| Observed: consumer p99.9, host / VM / container-host-net / container-bridge | 195 to 264 / 145 to 161 / 142 to 153 / 167 to 211 us |
+| Observed: VM steal ticks (10 ms each) over 9 alternations | 0 to 1 of 8,848 to 9,886 |
+
+Outliers and failures: none. The host and VM figures come from different kernels, clocks and CPUs and are printed side by
+side, never compared as a claim; the bridge against host-network gap is under 2x in every run (1.39x, 1.04x and 1.03x).
+The Quarkus p99 under the two limits changed order between runs and is observed only.

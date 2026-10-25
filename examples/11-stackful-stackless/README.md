@@ -101,7 +101,7 @@ cores pulls adjacent line pairs.
 
 `std::binary_semaphore` isn't the `os-thread` hand-off. libstdc++'s semaphore spins and yields briefly before it waits on a
 futex, so two pinned threads handing a turn back and forth can complete a round trip without either entering the kernel;
-the `verify.sh` runs so far counted between 91 and 395 voluntary switches in 1,020,000 round trips (observed, and it varies; S11 records the committed figure). A `std::condition_variable` goes straight to the futex, so
+`r04-run1..3` counted 266, 164 and 181 voluntary switches in 1,020,000 round trips (observed, and it varies). A `std::condition_variable` goes straight to the futex, so
 each hand-off is a sleep and a wake, which is the mechanism the chapter is about. The semaphore run is kept as an observed
 result.
 
@@ -190,8 +190,7 @@ Reports land in `results/latest/`: `cpp-<workload>-<variant>[-alt<N>].json`, `ja
 
 `verify.sh` evaluates every criterion, prints each measured value beside its bound and margin, and exits non-zero on any miss.
 Latency ratios compare variants within one run, alternating A B C A B C A B C and taking the median of the three
-per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. The bounds are
-provisional and sit in variables at the top of `verify.sh`; calibration (S10, see `_plans/r04-plan.md`) decides which stay asserted.
+per-alternation ratios; a p50 is never compared across runs. Counters marked exact are deterministic. The bounds sit in variables at the top of `verify.sh`, set from quiet-host dry runs before the measured runs.
 
 1. **Memory per waiting task, on the quantity that shows the gap.** C++ `os-thread` over `fiber` on address space per task
    (`VmSize` growth over the 10,000 tasks) at least 10x; C++ fiber address space per task (measured `VmSize` growth, about 68 KiB) over the counted coroutine frame
@@ -206,7 +205,7 @@ provisional and sit in variables at the top of `verify.sh`; calibration (S10, se
 2. **Parked tasks armed, and RSS observed.** For the C++ `fiber` and `coroutine` variants, the number of tasks that had reached
    their wait when the memory was read equals 10,000 (exact). In the other parked runs the start gate opens only when every task
    has arrived, so the count can't differ and `verify.sh` doesn't count it as a criterion. RSS ratios are printed, not asserted,
-   and the plan's 10x is printed beside them. A parked thread's resident cost is a touched stack page or two plus its thread
+   and a 10x reference is printed beside them. A parked thread's resident cost is a touched stack page or two plus its thread
    block, and a fiber's is one touched stack page, so resident memory separates them by 2x to 4x. What differs by orders of
    magnitude is address space (about 9 MB for a thread, 68 KiB for a fiber, 26 bytes for a coroutine) and the kernel's side of a
    thread (page tables and a 16 KiB kernel stack: 29 KiB in all against 4 KiB for the fiber).
@@ -281,5 +280,31 @@ Each adapted file says so in its first lines.
 
 ## Verification status
 
-Unverified until S11. `verify.sh` has run end to end on the host and its bounds hold; the committed measurement runs
-(`r04-run1..3`) are S11 and the margins of the bounds are S10's to calibrate (`_plans/r04-plan.md`).
+Behavioural. `verify.sh` asserts the seven criteria above, and all of them held on the host runs `r04-run1..3` (bare-metal
+host, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8, Clang 22.1.8,
+Python 3.14.9 in both builds; lab VM down; commit 4434ed1; load average at most 2 at each start). The free-threaded
+measurements kept the GIL off from imports to the end. Ranges over the three runs; a ratio is the range of each run's
+median over its 3 alternations.
+
+| Quantity | Range |
+|---|---|
+| Address space per parked wait, C++ thread / fiber (bound 10x) | 9,245,449 B / 69,645 B, ratio 132.75x |
+| Coroutine frame (bound at most 1,024 B) and allocations, 10,000 tasks (exact) | 208 B, 10,000 |
+| Full resident cost per wait, Java platform / virtual (bound 5x) | ratio 12.61x to 14.28x |
+| Python GIL thread RSS / `asyncio` `tracemalloc` (bound 5x) | 11.72x to 11.73x |
+| Tasks armed, fiber and coroutine (exact) | 10,000 of 10,000 |
+| Voluntary switches per round trip, C++ thread (exact) | 2 |
+| Voluntary switches in 1,020,000 round trips, fiber / coroutine (exact) | 0 / 0 |
+| Round-trip p50, thread / fiber (bound 5x), C++ | ratio 18.25x to 18.33x (3,755 to 3,777 / 205 to 207 ns) |
+| Round-trip p50, platform / virtual (bound 2x), Java | ratio 10.28x to 10.48x (4,115 to 4,175 / 399 to 404 ns) |
+| Neighbours' p99 with a 2 ms blocking call in a fiber (bound 1 ms) | 1,917 to 1,952 us against 52 us without |
+| `asyncio` slow-callback warnings for 50 blocking calls (exact) | 50 |
+| Line runs, five variants | 200,000 parcels counted, none dropped, every divert command received |
+| Reports | 55 pass `lowlat-report check` in each run |
+| Observed: Python `asyncio` p99 with and without the blocking call | 2.05x to 2.19x (1,305 to 1,308 us without) |
+| Observed: `jdk.VirtualThreadPinned` events, `synchronized` / native frame | 0 / 100 of 100 |
+| Observed: coroutine frames that reached `operator new` in the HALO control | 1,000 of 1,000 non-escaping frames |
+
+Outliers and failures: none. The one asserted bound cleared by under 2x is the fiber's blocking-call lateness (1.90x to
+1.94x of the 1 ms bound), which is set by construction since the call lasts 2 ms. Resident-size ratios, Java switch
+counts, the semaphore hand-off, the pinning counts and the line percentiles are observed and not asserted.
