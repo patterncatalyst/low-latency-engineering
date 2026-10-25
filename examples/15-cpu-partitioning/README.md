@@ -98,7 +98,12 @@ Counters first, then latency. The bounds below are **provisional** until the S11
 3. **(exact)** No `stress-ng` or `hackbench` thread is ever seen on CPUs 2-3 in `isolated` or `cache-noise`. The decide
    thread's involuntary context switches over 20 s beside the noise: `isolated` at most 10, `shared` at least 100 (the
    example 07 precedent).
-4. cyclictest p99.9 on CPU 3: `isolated` at most half of `shared`, the median of 3 alternations.
+4. (observed) cyclictest p99.9 on CPU 3, `isolated` against `shared`. In this VM the isolated CPU sits idle between wakes,
+   and an idle vCPU halts to the host, so every wake waits for the host to run the vCPU thread again. In `shared` the noise
+   on CPU 3 keeps the vCPU running, so its wakes don't take that path. The S8 smoke put the same CPU at p99.9 507 us idle
+   against 33 us when a `SCHED_IDLE` spinner kept it from halting. Isolation removes the scheduler's work from the CPU, which
+   the counters in 2 and 3 show. It can't keep the host from descheduling an idle vCPU, so the latency is observed, never
+   asserted (`P999_ASSERTED=1` asserts it).
 5. **(exact)** virtio-blk request-queue interrupts on CPU 3 beside the disk I/O: `irq-steered` is 0, `irq-on-measure-cpu` at
    least 1,000.
 6. **(exact)** Java: `hot-thread-pinned` has exactly one JVM thread on CPUs 2-3 and at most 10 involuntary switches;

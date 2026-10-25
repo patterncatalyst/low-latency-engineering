@@ -33,7 +33,10 @@
 #   SMOKE=1 RESULTS_DIR=DIR     short lanes, one alternation, a check of this script (nothing enforced)
 #   RESULTS_DIR=DIR             where reports go (default results/latest)
 #   SKIP_BUILD=1                reuse existing builds
-#   P999_ASSERTED=0|1           (default 1) criterion 4 asserted; 0 observes it
+#   P999_ASSERTED=0|1           (default 0, user decision 2026-10-25) criterion 4 observed; 1 asserts it.
+#                               In this VM an idle isolated vCPU halts to the host between wakes, so isolated
+#                               cyclictest is worse than shared (S8 smoke: p99.9 507 us idle against 33 us with
+#                               the vCPU kept busy, same CPU); the chapter teaches that, the counters carry the asserts.
 #   LOC_ASSERTED, IRQ_ASSERTED  likewise for criteria 2 and 5
 # A plain ./verify.sh has nothing to run: the effect exists only in the guest, so it prints how to run one and exits 2.
 #
@@ -65,7 +68,7 @@ HOT_THREADS_ON_ISOLATED=1                     # 6
 HOT_SWITCHES_MAX=10
 JVM_THREADS_ON_ISOLATED_MIN=10
 SAMPLES_MIN_PERMILLE=980                      # 8: of CT_SECONDS * 1000 samples at 1 ms
-P999_ASSERTED=${P999_ASSERTED:-1}
+P999_ASSERTED=${P999_ASSERTED:-0}
 LOC_ASSERTED=${LOC_ASSERTED:-1}
 IRQ_ASSERTED=${IRQ_ASSERTED:-1}
 
@@ -321,7 +324,7 @@ if gate "$P999_ASSERTED"; then
     row 4 "cyclictest p99.9 shared / isolated (median of $ROUNDS alternation(s))" "$(margin "$ratio" 1000)x" ">= $(margin "$P999_RATIO_MIN_PERMILLE" 1000)x" "$(margin "$ratio" "$P999_RATIO_MIN_PERMILLE")x" MISS
   fi
 else
-  observed 4 "cyclictest p99.9, shared against isolated (median of $ROUNDS alternation(s))" "$((sh_p / 1000)) us against $((is_p / 1000)) us, $(margin "$ratio" 1000)x (observed: P999_ASSERTED=0)"
+  observed 4 "cyclictest p99.9, shared against isolated (median of $ROUNDS alternation(s))" "$((sh_p / 1000)) us against $((is_p / 1000)) us, $(margin "$ratio" 1000)x (observed: an idle isolated vCPU halts to the host between wakes)"
 fi
 cn_p=$(lane_median cache-noise "cyclictest/cache-noise-t0.json" .percentiles.p99_9)
 observed 4 "cache noise (--stream, --cache on CPUs $HOUSEKEEPING_SET) against CPU noise, p99.9, isolated snapshot (median of $ROUNDS alternation(s))" "$((cn_p / 1000)) us against $((is_p / 1000)) us; isolation doesn't partition the last-level cache or memory bandwidth"
