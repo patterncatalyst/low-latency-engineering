@@ -19,7 +19,7 @@ By the end of this chapter you can:
 
 The controller PC under the conveyor runs the decide service beside the tunnel. In the hub's VM farm the same service is one tenant among many, and in a pod it's a container inside a VM that someone else sized. The binary doesn't change. The floor under it and the CPUs its runtime believes it has do.
 
-A parcel has 480 ms from scan to divert ([Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }})), and a stall charges every parcel behind it ([Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*]({{ '/docs/03-coordinated-omission/' | relative_url }})). 
+A parcel has 480 ms from scan to divert ([Chapter 2, *Modelling with Little's Law and Amdahl's Law*]({{ '/docs/02-littles-amdahl/' | relative_url }})), and a stall charges every parcel behind it ([Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*]({{ '/docs/03-coordinated-omission/' | relative_url }})).
 
 The consumer is [Chapter 12's]({{ '/docs/12-io-engines/' | relative_url }}) `epoll` receiver, and the load is the Chapter 2 line: four simulators as four cameras at 2.5 kHz each, 10 kHz together, for 20 s. The code is in `examples/13-where-code-runs/`; its `README.md` covers how to drive it.
 
@@ -127,7 +127,7 @@ The cpuset lane (#B):
 
 ### The seccomp probe
 
-`place-probe` calls `io_uring_setup` as a raw system call, not through liburing.
+`place-probe` calls `io_uring_setup` as a raw system call, not through liburing, so the answer is the kernel's or the seccomp filter's with nothing linked in between.
 
 ```cpp
 std::error_code io_uring_setup_error() noexcept {
@@ -166,11 +166,11 @@ lowlat/place-java:r04@sha256:da6684ca44f28935abe38ea3907a42f78197f64851962a008e3
 lowlat/place-py:r04@sha256:276c666a61652b183d9a452608531d76d8686d2a54e2ec50fc53cbe3a9deed31
 ```
 
-The binaries were built once in the UBI 10 image; one set of checksums across all six lanes is asserted. Ranges span the committed runs `r04-run1` to `r04-run3`.
+The four C++ binaries were built once in the UBI 10 image; one set of checksums across all six lanes is asserted. Ranges span the committed runs `r04-run1` to `r04-run3`.
 
 ### Three places
 
-Every lane and alternation received 200,000 parcels and dropped none (exact).  Latency is measured from the intended emit time, so the simulator's emit lateness is part of every consumer figure and is the floor under it.
+Every lane and alternation received 200,000 parcels and dropped none (exact). Latency is measured from the intended emit time, so the simulator's emit lateness is part of every consumer figure and is the floor under it.
 
 | Lane | Emit lateness p99 | Consumer p99 | Consumer p99.9 |
 |---|---|---|---|
@@ -179,7 +179,7 @@ Every lane and alternation received 200,000 parcels and dropped none (exact).  L
 | `container-host-net` | 81-89 us | 101-104 us | 142-153 us |
 | `container-bridge` | 85-103 us | 105-140 us | 167-211 us |
 
-All of this is observed. On the host the emit-lateness range sits below the others in these three runs,: the host and the guest run separate kernels (both 7.2) on separate clocks, so the host against the VM is printed and not compared as a claim. The container lanes are measured against `vm`, the same guest. `container-host-net` and `vm` overlap on emit lateness (81-89 and 80-83 us) and on the consumer p99 (101-104 and 99-101 us).
+All of this is observed. On the host the emit-lateness range sits below the others in these three runs, but the host and the guest run separate kernels (both 7.2) on separate clocks, so the host against the VM is printed and not compared as a claim. The container lanes are measured against `vm`, the same guest. `container-host-net` and `vm` overlap on emit lateness (81-89 and 80-83 us) and on the consumer p99 (101-104 and 99-101 us).
 
 What this guest can't show: a production hypervisor (it's a single-host KVM guest with passt networking, unpinned vCPUs and no tuning), dedicated or isolated host cores (Part 5), or SR-IOV and passthrough NICs; the bridge lane crosses a software veth and bridge inside the guest. So the container figures are container-in-VM costs, not container-on-bare-metal costs.
 
@@ -236,7 +236,7 @@ Steal ticks are the cross-check on the VM's floor. The `vm` lane showed 0-1 tick
 - `hardware_concurrency()` said 4 under both limits, `os.process_cpu_count()` followed only the cpuset, and Java followed both.
 - Docker's default seccomp returned `EPERM` for `io_uring_setup` in every container lane.
 
-The next chapter, *PREEMPT_RT: what real-time Linux does and doesn't promise* opens Part 5, where real-time scheduling and isolation begin.
+The next chapter, *PREEMPT_RT: what real-time Linux does and doesn't promise*, opens Part 5, where real-time scheduling and isolation begin.
 
 ## For deeper coverage
 
@@ -250,4 +250,4 @@ The next chapter, *PREEMPT_RT: what real-time Linux does and doesn't promise* op
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts the cgroup counters (`nr_throttled` and `throttled_usec` at least 1 under `--cpus=2` and 0 under `--cpuset-cpus=2,3`), the CPU counts each runtime reports, `EPERM` from `io_uring_setup` in every container lane and success in the VM lane, a consumer p99.9 under the quota of at least 2x the cpuset's, and, for every lane and alternation, 200,000 parcels, 0 dropped, the lane's environment record, the image digest and one set of binary checksums across lanes. Observed only: host against VM, bridge against host network, emit lateness per lane, steal ticks, the Quarkus p99 under the two limits the GC thread counts and the Quarkus thread counts. It held on `r04-run1` to `r04-run3` at commit 4434ed1 (results committed in cd4a269). Host: bare metal, untuned, the VM booted and idle. VM: `stock-unpinned`, snapshot `lab-ready-r04`. Containers: `place-cpp:r04@sha256:007fe524247d…`, `place-java:r04@sha256:da6684ca44f2…`, `place-py:r04@sha256:276c666a6165…`, full digests above.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts the cgroup counters (`nr_throttled` and `throttled_usec` at least 1 under `--cpus=2` and 0 under `--cpuset-cpus=2,3`), the CPU counts each runtime reports, `EPERM` from `io_uring_setup` in every container lane and success in the VM lane, a consumer p99.9 under the quota of at least 2x the cpuset's, and, for every lane and alternation, 200,000 parcels, 0 dropped, the lane's environment record, the image digest and one set of binary checksums across lanes. Observed only: host against VM, bridge against host network, emit lateness per lane, steal ticks, the Quarkus p99 under the two limits, the GC thread counts and the Quarkus thread counts. It held on `r04-run1` to `r04-run3` at commit 4434ed1 (results committed in cd4a269). Host: bare metal, untuned, the VM booted and idle. VM: `stock-unpinned`, snapshot `lab-ready-r04`. Containers: `place-cpp:r04@sha256:007fe524247d…`, `place-java:r04@sha256:da6684ca44f2…`, `place-py:r04@sha256:276c666a6165…`, full digests above.*
