@@ -22,9 +22,6 @@ def _measure(args: argparse.Namespace) -> int:
     gil_at_start = gil_enabled()
     cpus = parse_cpus(args.cpus) if args.cpus else []
     variant = args.variant
-    if variant not in workloads.VARIANTS:
-        print(f"tasks-py: --variant: {' | '.join(workloads.VARIANTS)}", file=sys.stderr)
-        return 2
     asyncio_variant = variant == "asyncio-tasks"
     if args.workload == "parked":
         run = (
@@ -41,15 +38,13 @@ def _measure(args: argparse.Namespace) -> int:
             )
         else:
             if cpus and len(cpus) < 2:
-                print("tasks-py: --cpus needs 2 CPUs for threads", file=sys.stderr)
-                return 2
+                args.parser.error("--cpus needs 2 CPUs for threads")
             run = workloads.pingpong_threads(
                 args.rounds, args.batch, cpus=cpus[:2] or None, hold_ms=args.hold_ms
             )
     else:  # neighbours
         if not asyncio_variant:
-            print("tasks-py: neighbours is measured for asyncio-tasks only", file=sys.stderr)
-            return 2
+            args.parser.error("neighbours is measured for asyncio-tasks only")
         run = workloads.neighbours_asyncio(
             args.tasks,
             args.iterations,
@@ -78,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     m = sub.add_parser("measure", help="run a workload; write raw samples and a sidecar")
     m.add_argument("workload", choices=["parked", "pingpong", "neighbours"])
-    m.add_argument("--variant", required=True)
+    m.add_argument("--variant", choices=workloads.VARIANTS, required=True)
     m.add_argument("--tasks", type=int, default=10_000)
     m.add_argument("--wait-ms", type=int, default=1000)
     m.add_argument("--rounds", type=int, default=1_000_000)
@@ -102,6 +97,6 @@ def main(argv: list[str] | None = None) -> int:
         "--hold-ms", type=int, default=0, help="hold after placement-ready, for a script's check"
     )
     m.add_argument("--out", required=True, help="directory for samples.bin and sidecar.json")
-    m.set_defaults(func=_measure)
+    m.set_defaults(func=_measure, parser=m)
     args = parser.parse_args(argv)
     return args.func(args)

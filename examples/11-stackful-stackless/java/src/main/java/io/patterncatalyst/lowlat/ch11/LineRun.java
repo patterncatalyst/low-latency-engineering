@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import net.openhft.affinity.Affinity;
@@ -49,9 +49,9 @@ final class LineRun {
         private final ExecutorService tasks;
         private final CommandChannel commands;
         private final ReentrantLock completing = new ReentrantLock();
-        final AtomicLong started = new AtomicLong();
-        final AtomicLong decided = new AtomicLong();
-        final AtomicLong exceptionLane = new AtomicLong();
+        long started; // the receive thread writes it; main reads it after rx.join()
+        final LongAdder decided = new LongAdder();
+        final LongAdder exceptionLane = new LongAdder();
         private volatile Throwable failure;
 
         LookupHandler(ExecutorService tasks, CommandChannel commands) {
@@ -61,7 +61,7 @@ final class LineRun {
 
         @Override
         public void onParcel(ParcelEvent event, Completion done) {
-            started.incrementAndGet();
+            started++;
             long seq = event.getSeq();
             long intendedNs = event.getIntendedEmitNs();
             long encoderTick = event.getEncoderTick();
@@ -73,7 +73,7 @@ final class LineRun {
                     Lane lane = confidence < MIN_CONFIDENCE_PERMILLE ? Lane.LANE_EXCEPTION
                             : Lane.forNumber(Lane.LANE_1_VALUE + Lanes.laneOf(barcode));
                     if (lane == Lane.LANE_EXCEPTION) {
-                        exceptionLane.incrementAndGet();
+                        exceptionLane.increment();
                     }
                     DivertCommand command = DivertCommand.newBuilder().setSeq(seq).setLane(lane)
                             .setDeadlineEncoderTick(encoderTick + DIVERT_DISTANCE_TICKS).setDecidedNs(System.nanoTime()).build();
@@ -86,7 +86,7 @@ final class LineRun {
                     } finally {
                         completing.unlock();
                     }
-                    decided.incrementAndGet();
+                    decided.increment();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (IOException e) {
@@ -149,22 +149,22 @@ final class LineRun {
         long dropped = receiver.dropped();
         pass.endToEnd().addDropped(dropped);
         System.out.printf("line: received %d of %d, dropped %d, decided %d, divert commands received %d%n", receiver.received(), expect,
-                dropped, handler.decided.get(), pass.diverter().received());
+                dropped, handler.decided.sum(), pass.diverter().received());
         pass.endToEnd().printSummary();
         if (report == null) {
             return;
         }
         List<Integer> pinned = cpu >= 0 ? List.of(cpu) : List.of();
         Map<String, Object> placement = Placement.placement(pinned);
-        String notes = "line; expect=" + expect + "; received=" + receiver.received() + "; decided=" + handler.decided.get()
-                + "; exception_lane=" + handler.exceptionLane.get() + "; divert_received=" + pass.diverter().received() + "; lookup_wait_ms="
+        String notes = "line; expect=" + expect + "; received=" + receiver.received() + "; decided=" + handler.decided.sum()
+                + "; exception_lane=" + handler.exceptionLane.sum() + "; divert_received=" + pass.diverter().received() + "; lookup_wait_ms="
                 + LOOKUP_WAIT_MS + "; model=" + kind.variant;
         Map<String, Object> runtime = RuntimeInfo.jvm();
         if (!placement.isEmpty()) {
             runtime.put("placement", placement);
         }
         runtime.put("counters", RuntimeInfo.counters(Map.of("received", receiver.received(), "dropped", dropped, "decided",
-                handler.decided.get(), "tasks_started", handler.started.get(), "divert_received", pass.diverter().received(),
+                handler.decided.sum(), "tasks_started", handler.started, "divert_received", pass.diverter().received(),
                 "start_skew_ns", pass.gate().startSkewNs())));
         pass.endToEnd().writeReport(report, notes, null, runtime);
         System.out.println("report: " + report);
@@ -215,7 +215,7 @@ final class LineRun {
             }
             rx.join();
             long deadline = System.nanoTime() + 5_000_000_000L;
-            while (diverter.received() < handler.decided.get() && System.nanoTime() < deadline) {
+            while (diverter.received() < handler.decided.sum() && System.nanoTime() < deadline) {
                 LockSupport.parkNanos(1_000_000);
             }
             if (failure[0] != null) {

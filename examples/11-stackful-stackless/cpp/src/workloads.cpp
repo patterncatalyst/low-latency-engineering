@@ -45,7 +45,8 @@ Clock::time_point at(std::int64_t ns) { return Clock::time_point{std::chrono::na
 std::int64_t positive(std::int64_t v) noexcept { return v < 1 ? 1 : v; }
 std::int64_t ns_of(auto d) { return std::chrono::duration_cast<std::chrono::nanoseconds>(d).count(); }
 
-constexpr std::size_t kLine = std::hardware_destructive_interference_size;
+// 2 x the destructive-interference size: the L2 spatial prefetcher on recent Intel cores pulls adjacent line pairs.
+constexpr std::size_t kLine = 2 * std::hardware_destructive_interference_size;
 
 CtxSwitches since(const CtxSwitches& start) {
   const CtxSwitches now = thread_ctx_switches();

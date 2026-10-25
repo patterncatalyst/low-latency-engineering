@@ -34,6 +34,7 @@
 #include <filesystem>
 #include <format>
 #include <mutex>
+#include <new>
 #include <print>
 #include <string>
 #include <string_view>
@@ -64,6 +65,8 @@ constexpr std::string_view kExample = "11-stackful-stackless";
 constexpr auto kLookupWait = 2ms;                      // the WMS sort-plan lookup
 constexpr std::uint32_t kMinConfidencePermille = 500;  // below this the read goes to the exception lane
 constexpr std::uint64_t kDivertDistanceTicks = 1'200;  // 1.2 m at the simulator's 1000 pulses per metre
+// 2 x the destructive-interference size: the L2 spatial prefetcher on recent Intel cores pulls adjacent line pairs.
+constexpr std::size_t kPad = 2 * std::hardware_destructive_interference_size;
 
 /// One scan on its way to a lookup task.
 struct Scan {
@@ -86,7 +89,7 @@ struct Scan {
 static_assert(std::is_trivially_copyable_v<Scan>);
 
 /// The decision after the wait: lane lookup, divert command out on the command socket. Thread-safe.
-class Decider {
+class alignas(kPad) Decider {
  public:
   explicit Decider(int command_port) : commands_{command_port} {}
 
@@ -139,7 +142,7 @@ class ThreadHandler {
 
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
     if (done_ == nullptr) done_ = &done;
-    spawned_.fetch_add(1, std::memory_order_relaxed);
+    ++spawned_;
     reap();
     // A thread per lookup. Completion is single-writer, so the threads take turns at it under a mutex.
     lookups_.emplace_back(this, Scan::of(ev));
@@ -151,14 +154,15 @@ class ThreadHandler {
   }
 
   void drain(line::Completion&) { lookups_.clear(); }  // joins every lookup still in flight
-  [[nodiscard]] std::uint64_t spawned() const { return spawned_.load(std::memory_order_relaxed); }
+  [[nodiscard]] std::uint64_t spawned() const { return spawned_; }
 
  private:
   Decider* decider_;
   cpu_set_t allowed_{};
   line::Completion* done_ = nullptr;
-  std::mutex mutex_;
-  std::atomic<std::uint64_t> spawned_{0};
+  alignas(kPad) std::mutex mutex_;
+  // Written by the receive thread only and read after it joins. Own pair of lines: the lookups touch what is next to it.
+  alignas(kPad) std::uint64_t spawned_ = 0;
 
   struct Lookup {
     std::atomic<bool> done{false};
@@ -205,7 +209,7 @@ class FiberHandler {
 
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
     if (done_ == nullptr) done_ = &done;  // published to the executor by the channel push
-    spawned_.fetch_add(1, std::memory_order_relaxed);
+    ++spawned_;
     channel_.push(Scan::of(ev));
   }
 
@@ -213,14 +217,15 @@ class FiberHandler {
     channel_.close();
     executor_.join();  // the join publishes the executor's completions to the receive thread
   }
-  [[nodiscard]] std::uint64_t spawned() const { return spawned_.load(std::memory_order_relaxed); }
+  [[nodiscard]] std::uint64_t spawned() const { return spawned_; }
 
  private:
   Decider* decider_;
   line::Completion* done_ = nullptr;
   boost::fibers::buffered_channel<Scan> channel_{1U << 14};
   std::jthread executor_;
-  std::atomic<std::uint64_t> spawned_{0};
+  // Written by the receive thread only and read after it joins. Own pair of lines: the lookups touch what is next to it.
+  alignas(kPad) std::uint64_t spawned_ = 0;
 };
 
 // ---- coroutine ------------------------------------------------------------------------------------------------------------
@@ -238,7 +243,7 @@ class CoroutineHandler {
 
   void operator()(const line::v1::ParcelEvent& ev, line::Completion& done) {
     if (done_ == nullptr) done_ = &done;
-    spawned_.fetch_add(1, std::memory_order_relaxed);
+    ++spawned_;
     outstanding_.fetch_add(1, std::memory_order_acq_rel);
     asio::co_spawn(ctx_, lookup(Scan::of(ev)), asio::detached);
   }
@@ -248,7 +253,7 @@ class CoroutineHandler {
     guard_.reset();
     executor_.join();
   }
-  [[nodiscard]] std::uint64_t spawned() const { return spawned_.load(std::memory_order_relaxed); }
+  [[nodiscard]] std::uint64_t spawned() const { return spawned_; }
 
  private:
   asio::awaitable<void> lookup(Scan scan) {
@@ -265,7 +270,8 @@ class CoroutineHandler {
   asio::executor_work_guard<asio::io_context::executor_type> guard_;
   std::jthread executor_;
   std::atomic<std::uint64_t> outstanding_{0};
-  std::atomic<std::uint64_t> spawned_{0};
+  // Written by the receive thread only and read after it joins. Own pair of lines: the lookups touch what is next to it.
+  alignas(kPad) std::uint64_t spawned_ = 0;
 };
 
 // ---- the run -----------------------------------------------------------------------------------------------------------------

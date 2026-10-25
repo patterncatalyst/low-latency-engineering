@@ -11,7 +11,7 @@ import java.nio.channels.DatagramChannel;
  * Adapted from example 10.
  *
  * The command path: divert commands leave the tracker on their own UDP socket, to the diverter's own
- * address. It shares nothing with the data path (the cameras' sockets and the {@link Mailbox}), so a
+ * address. It shares nothing with the data path (the scan socket and the hand-off to the lookup tasks), so a
  * flood of scans cannot queue ahead of a command and a slow command listener cannot back up the scans.
  */
 final class CommandChannel implements AutoCloseable {

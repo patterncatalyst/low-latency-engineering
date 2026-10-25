@@ -22,8 +22,9 @@
 namespace lowlat::tasks {
 
 /// Coroutine frame allocations made through a Task promise. Exact for the frames it sees; a frame the
-/// compiler elides (HALO) never reaches it. Padded so a counter on another thread never shares its line.
-struct alignas(std::hardware_destructive_interference_size) FrameCounter {
+/// compiler elides (HALO) never reaches it. Padded so a counter on another thread never shares its line, to
+/// 2 x the destructive-interference size because the L2 spatial prefetcher on recent Intel cores pulls adjacent line pairs.
+struct alignas(2 * std::hardware_destructive_interference_size) FrameCounter {
   std::atomic<std::uint64_t> allocations{0};
   std::atomic<std::uint64_t> frees{0};
   std::atomic<std::uint64_t> bytes{0};
@@ -58,9 +59,9 @@ struct PromiseBase {
     g_frames.last_bytes.store(n, std::memory_order_relaxed);
     return ::operator new(n);
   }
-  static void operator delete(void* p, std::size_t) noexcept {
+  static void operator delete(void* p, std::size_t n) noexcept {
     g_frames.frees.fetch_add(1, std::memory_order_relaxed);
-    ::operator delete(p);
+    ::operator delete(p, n);
   }
 
   std::suspend_always initial_suspend() const noexcept { return {}; }
@@ -152,8 +153,9 @@ inline Task<void> Promise<void>::get_return_object() noexcept {
 }
 }  // namespace detail
 
-/// A value on its own cache line, for a slot two coroutines or threads hand back and forth.
-struct alignas(std::hardware_destructive_interference_size) PaddedSlot {
+/// A value on its own pair of cache lines (2 x the destructive-interference size, because the L2 spatial prefetcher on
+/// recent Intel cores pulls adjacent line pairs), for a slot two coroutines or threads hand back and forth.
+struct alignas(2 * std::hardware_destructive_interference_size) PaddedSlot {
   std::uint64_t v = 0;
 };
 

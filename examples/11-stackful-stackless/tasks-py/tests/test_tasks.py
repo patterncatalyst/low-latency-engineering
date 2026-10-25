@@ -139,5 +139,6 @@ def test_gil_process_converts_the_samples(tmp_path: Path, lowlat_profile: Path) 
 
 
 def test_cli_rejects_an_unknown_variant(tmp_path: Path) -> None:
-    rc = cli_main(["measure", "parked", "--variant", "greenlets", "--out", str(tmp_path)])
-    assert rc == 2
+    with pytest.raises(SystemExit) as exit_info:
+        cli_main(["measure", "parked", "--variant", "greenlets", "--out", str(tmp_path)])
+    assert exit_info.value.code == 2

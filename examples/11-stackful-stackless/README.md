@@ -96,7 +96,8 @@ destroys 1,000 coroutines in one function and reports how many reached `operator
 depends on the compiler, and `verify.sh` doesn't assert it.
 
 Every bench loop ends in an external-linkage sink or a checked sum (`sink.cpp`), and every shared slot and counter is
-`alignas(std::hardware_destructive_interference_size)`.
+`alignas(2 * std::hardware_destructive_interference_size)`, twice the line because the L2 spatial prefetcher on recent Intel
+cores pulls adjacent line pairs.
 
 `std::binary_semaphore` isn't the `os-thread` hand-off. libstdc++'s semaphore spins and yields briefly before it waits on a
 futex, so two pinned threads handing a turn back and forth can complete a round trip without either entering the kernel;
