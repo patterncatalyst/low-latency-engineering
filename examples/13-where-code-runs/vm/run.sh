@@ -227,10 +227,15 @@ if ((DRY_RUN)); then
 else
   gx "$GUEST_RUN" idle-wait 180
   # load1 decays slowly after the preparation; poll until it is under the limit, then record it in this shell.
-  for ((i = 0; i < 18; i++)); do
+  # Up to 6 minutes: a freshly reverted guest can run its own timers (dnf makecache, for one) for a while.
+  for ((i = 0; i < 36; i++)); do
     (require_quiet_host --lab-idle) >/dev/null 2>&1 && break
     sleep 10
   done
+  if ! (require_quiet_host --lab-idle) >/dev/null 2>&1; then
+    echo "the guest's busiest processes:" >&2
+    guest 'ps -eo pcpu,etime,comm --sort=-pcpu | head -6' </dev/null >&2 || true
+  fi
   require_quiet_host --lab-idle
   capture_profile "$OUT"
   # The consumer's CPU on the host: a physical core other than CPU 0 (an experiment control, not isolation).
