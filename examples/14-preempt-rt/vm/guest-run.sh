@@ -88,7 +88,8 @@ tag_env() {
 }
 
 # preempt_mode: the scheduler's preemption-mode knob; the selected mode is the one in parentheses.
-preempt_mode() { sudo cat /sys/kernel/debug/sched/preempt; }
+# debugfs prints the modes with a trailing space ('full (lazy) '); strip it before comparing.
+preempt_mode() { sudo cat /sys/kernel/debug/sched/preempt | sed 's/[[:space:]]*$//'; }
 
 steal_ticks() { awk '/^cpu / {print $9, $2 + $3 + $4 + $5 + $6 + $7 + $8 + $9}' /proc/stat; }
 busy_ticks() { awk '/^cpu / {print $2 + $3 + $4 + $7 + $8, $2 + $3 + $4 + $5 + $6 + $7 + $8 + $9}' /proc/stat; }

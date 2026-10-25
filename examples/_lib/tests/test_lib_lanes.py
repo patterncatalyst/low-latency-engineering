@@ -1006,6 +1006,17 @@ def test_interleave_env_runs_lanes_in_abc_order_with_the_alternation_number(
     ]
 
 
+def test_interleave_env_stops_at_a_failed_step_inside_a_lane(env: dict[str, str]) -> None:
+    # set -e must hold inside run_lane: a failing command stops the run, the rest of the lane and
+    # the later lanes never run.
+    lane = 'run_lane() { echo "start $1"; false; echo "after $1"; }'
+    run = sh(f"set -e\n{lane}\ninterleave_env 2 host vm", env)
+    assert run.returncode != 0
+    assert "start host" in run.stdout
+    assert "after host" not in run.stdout
+    assert "start vm" not in run.stdout
+
+
 def test_interleave_env_survives_a_lane_that_reads_stdin(env: dict[str, str]) -> None:
     # ssh into the guest reads stdin; it must not swallow the rest of the lane order
     run = sh('run_lane() { cat >/dev/null; echo "$1:$2"; }\ninterleave_env 2 host vm', env)

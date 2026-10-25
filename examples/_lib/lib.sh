@@ -1296,8 +1296,13 @@ interleave_env() {
   lanes=$#
   # The order is read on fd 3, not stdin: a lane that reads stdin (ssh into the guest does) would
   # otherwise swallow the rest of the order and the loop would end after the first lane.
+  # run_lane is called on its own, never on the left of || or &&: bash ignores set -e for every
+  # command inside a function called there, so a failed step inside a lane would not stop the run.
+  local rc
   while IFS= read -r lane <&3; do
-    run_lane "$lane" $((i / lanes + 1)) || return $?
+    run_lane "$lane" $((i / lanes + 1))
+    rc=$? # reached with a non-zero rc only when the caller runs without set -e
+    ((rc == 0)) || return "$rc"
     i=$((i + 1))
   done 3< <(interleave "$n" "$@")
 }
