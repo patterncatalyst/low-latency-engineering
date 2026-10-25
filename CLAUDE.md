@@ -144,7 +144,7 @@ talks. Pull and re-point; cross-link; don't rewrite.
 Future Projects shared standard: _docs/ canonical -> build-manuscript.py ->
 Markua; code included from files; paired SVG+excalidraw; spine hook -> diagram
 -> concept -> how the code works -> measure -> cross-check -> what you learned
--> verification status; 1,900-2,500 words prose. Conventional Commits, scopes
+-> verification status; about 2,000-2,500 words of prose (1,900 minimum, no hard upper limit). Conventional Commits, scopes
 §N / demo-NN / rNN.x. An iteration ships as its merged PR plus the rNN.x tag
 and a GitHub release; no tarball or other artifact is built. Each iteration is
 its own release/rNN branch and PR, branched from an updated main, squash-merged

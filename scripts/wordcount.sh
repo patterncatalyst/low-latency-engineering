@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# wordcount.sh - prose word count per chapter; exit 1 when a chapter is outside
-# 1,900-2,500 words. Counts exactly as _plans/r01-chapters.md specifies: the text
+# wordcount.sh - prose word count per chapter; exit 1 when a chapter is under 1,900
+# words. The target is about 2,000-2,500; above 2,500 is reported, never a failure (there's
+# no hard upper limit). Counts exactly as _plans/r01-chapters.md specifies: the text
 # after the front matter, without fenced code, include tags ({% ... %}) and table
 # rows. Overview pages (front matter `overview: true`) are skipped.
 #
@@ -10,7 +11,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MIN=${WORDCOUNT_MIN:-1900}
-MAX=${WORDCOUNT_MAX:-2500}
+TARGET_MAX=${WORDCOUNT_TARGET_MAX:-2500}
 
 if (($#)); then files=("$@"); else files=("$ROOT"/_docs/*.md); fi
 
@@ -33,9 +34,11 @@ text = '\n'.join(line for line in text.splitlines() if not line.lstrip().startsw
 print(len(re.findall(r"[A-Za-z0-9][\w'.-]*", text)))
 PY
   )
-  if ((n < MIN || n > MAX)); then
-    status="OUTSIDE ${MIN}-${MAX}"
+  if ((n < MIN)); then
+    status="UNDER ${MIN}"
     fail=1
+  elif ((n > TARGET_MAX)); then
+    status="ok (over the ${TARGET_MAX} target)"
   else
     status=ok
   fi
