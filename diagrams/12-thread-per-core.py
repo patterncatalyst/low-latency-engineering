@@ -60,7 +60,7 @@ res_l = box(
 
 cam_r = box(520, 74, 250, 40, "kernel", "Four cameras", "UDP datagrams")
 acc = box(520, 134, 250, 44, "user", "Receive thread", "decodes, hands off")
-hand = box(470, 198, 360, 40, "accent", "Hand-off", "one Ch10 log per worker, round robin")
+hand = box(470, 198, 360, 40, "accent", "Hand-off", "one lock-free log per worker, round robin")
 w = [box(466 + 98 * i, 262, 88, 52, "user", f"Worker {i + 1}", "decides") for i in range(4)]
 res_r = box(
     470,
