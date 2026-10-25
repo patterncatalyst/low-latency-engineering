@@ -324,3 +324,25 @@ def test_interrupted_runs_write_no_json_and_leave_no_temp_dir(
     # valgrind's own vgdb pipes may remain after a hard kill; the helper's lowlat-* dir must not.
     leftovers = list(tmpdir.glob("lowlat-*"))
     assert not leftovers, leftovers
+
+
+def test_exit_cleanup_kills_the_whole_descendant_tree(tmp_path: Path) -> None:
+    """A grandchild started through a launcher must not survive the script."""
+    pidfile = tmp_path / "grandchild.pid"
+    script = (
+        f"bash -c 'sleep 300 & echo $! > \"{pidfile}\"; wait' &\n"
+        f'while [ ! -s "{pidfile}" ]; do sleep 0.05; done\n'
+        "exit 0\n"
+    )
+    done = sh(script, env={"LOWLAT_KILL_GRACE": "2"})
+    assert done.returncode == 0, done.stderr
+    pid = int(pidfile.read_text().strip())
+    deadline = time.time() + 5
+    while time.time() < deadline and Path(f"/proc/{pid}").exists():
+        status = Path(f"/proc/{pid}/status")
+        if status.exists() and "\nState:\tZ" in status.read_text():
+            break
+        time.sleep(0.1)
+    state = Path(f"/proc/{pid}/status")
+    zombie = state.exists() and "\nState:\tZ" in state.read_text()
+    assert not state.exists() or zombie, "the grandchild outlived the script"

@@ -48,7 +48,7 @@ Readiness is detected by polling `ss` for the bound socket.
 otherwise refuses to measure while a `lowlat-*` VM is up. The host smoke test
 then runs while the guest competes for the CPUs, so its numbers are noisy.
 
-It runs `scripts/check-prereqs.sh --vm`, deploys `examples/` and `scripts/` with
+It runs `scripts/check-prereqs.sh --vm --rt` (the PREEMPT_RT guest; plain `--vm` checks the stock r04 guest), deploys `examples/` and `scripts/` with
 `scripts/lab/deploy-to-vm.sh`, then through `scripts/lab/lab-ssh.sh lowlat-target`
 runs `cyclictest -m -p95 -D60 -q` (via `sudo` inside the guest, which has
 passwordless sudo; the host is untouched) and the guest's `scripts/profile.sh`.

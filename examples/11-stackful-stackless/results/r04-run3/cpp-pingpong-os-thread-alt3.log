@@ -1,0 +1,15 @@
+pinned pid=3844062 tid=3844066 cpu=1 role=ping
+pinned pid=3844062 tid=3844065 cpu=2 role=pong
+placement-ready
+released
+11-stackful-stackless    cpp  os-thread        count=     1000 dropped=     0 p50=      3.7us p90=      3.9us p99=      4.0us p99.9=      4.4us max=       4.5us
+counter ctx_involuntary_a=1
+counter ctx_involuntary_b=2
+counter ctx_voluntary_a=1019971
+counter ctx_voluntary_b=1019993
+counter payload_mismatch=0
+counter round_trips=1000000
+counter round_trips_served=1020000
+counter start_skew_ns=60001
+counter warmup_round_trips=20000
+report: <repo>/examples/11-stackful-stackless/results/r04-run3/cpp-pingpong-os-thread-alt3.json

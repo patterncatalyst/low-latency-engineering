@@ -155,6 +155,13 @@ the two `footprint-*.json` and the machine profile. View them with:
 uv run --project examples lowlat-report show examples/08-zero-copy-flat/results/latest/java-*.json
 ```
 
+The Python tests regenerate the committed `r02` reports and compare them with the files in `results/`. The
+committed histograms were compressed by zlib-ng, and a stock zlib (the uv-managed 3.14.9 ships 1.3.2) writes
+different bytes for the same data. So the tests always assert that the decoded histograms and every other field
+match, and assert byte identity only when `zlib.ZLIB_RUNTIME_VERSION` says zlib-ng. Under another zlib that one
+assertion is skipped, and the skip reason names both versions. The golden-bytes step in `verify.sh` compares
+decoded records, so it doesn't depend on the zlib.
+
 ## Expected effect and criteria
 
 `verify.sh` evaluates every criterion, prints a check mark or a cross for each, and exits non-zero if any

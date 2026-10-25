@@ -1,0 +1,198 @@
+{
+  "schema": "lowlat-report/1",
+  "example": "13-where-code-runs",
+  "language": "java",
+  "variant": "virtual-thread",
+  "unit": "ns",
+  "count": 15000,
+  "dropped": 0,
+  "percentiles": {
+    "p50": 2195455,
+    "p90": 2664447,
+    "p99": 5128191,
+    "p99_9": 19398655,
+    "max": 24805375
+  },
+  "hdr_histogram": "HISTFAAAA514nD1RTYgcRRSuevW65m1tp3ecnW17x8k4zk6GdRwnk2Z3MMmS3dOisCf1kIRN8AdRQdCD6EVEZIUgEhZz8SAiEkLw4MGTiEQRCetFRCQHEckpBxEMnnIQyfeqJ1Z3var3973vvWrvXVo0JvnMVMvNTovr9uSrT83m7crw97eWjWeRRtg6vW+/szftgf3D/mc/oMv0K31PP9BfdOD23cf8IX/Jf7p/3IH7l951t+gOfUPX6HPIq3SB9vFdoCuwXKev6QZ9RBfpC+i/2cu0B98e9Jv2jr1h9+iWvW6v2Nv2F/u7vWp/wr5mf0bt5954/el37Ctvvf3aMy+d3t3ZPvvYuHxyd6Pslp1hkTea7SwrUqm3U0kzaWRYqa/vvm8/sRft+a210bh/arQ2WC1P7GyX08lkujpd2zm1dWIyGQ7KXrc/bPcHg7Xx4+VwdaO3UZaD8bA77Y7GnW456k5Hq6NBt9VsDlpN6fXzvMBqDYq8VeSSd1r9TqdVFHm7Vy+CtNO8oSvNirxoiGSSZRyC1DnFJykHhhrYEzTvfeZFpNNrIrCeCnZTAiwSoEia1tOQAitt14UbAoUzpKI55IY6NpYAsSHADuLFkAgejUTRcXoTPDOuWOTJsyHDiCHGySbVU1PIB08BdywO3kPGEMI2uCHBqw9AlABQ0ZmqEPVTQDzQWCN8DAZWMIRIlIxFcakBKMbHQhSrGFaiMR4e/b2J2Kyla1GSY3IaKiZoKjNIiKKyQ0XncWEfk9UJjjOMyDnRHK5pKxG3Ig1A/MqJEhzasrvnUqQEh090TNXQKM7ifxinhHQm3ikESjmuZmR0ACbiaUvOm9imkhG4XEUSgQlTUAbzAIj4Gn1PIAU9uDh/rVBTO9qOk6txpKyNqy8aY+dm9l5Roh3SDkiTI2XCbFUo+aRqRHVWLUFBZRxboZgrUXPV05jZo8aJKScj+lSYemQJmziqOKBn4HmnUzA8h4JzkUISJw5ernp8E6dofPXIGEyC8SqTGmaC633AjBWTaigoDIxD6uaVODb8jmbdQM7R/bRCy9CO434E3nP0PGCO0CVLx2gdOQ/AMU9LkIewH6Rn6WTUjs/KbtJReBgWw0fpIVoA8AIgFuGd40dwQxDREwhfxvmwagkQFoB+mCA0dJHP0HsWZF6lN+E7Ri8A71FSzivAOwlCPxK9DNMSPhfT55GnpZQWTJvYy6i5DtNhyCU6A/kirfM89KcQfBeVynLU",
+  "build": {
+    "compiler": "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags": "-Xms256m -Xmx1g -XX:+ExitOnOutOfMemoryError",
+    "gil_enabled": null
+  },
+  "profile": {
+    "schema": "lowlat-profile/1",
+    "captured_at": "2026-10-25T13:08:01Z",
+    "host_label": "lowlat-target.lab",
+    "cpu": {
+      "vendor": "Intel",
+      "model": "Intel 4-core/4-thread CPU",
+      "sockets": 4,
+      "cores_per_socket": 1,
+      "threads_per_core": 1,
+      "logical_cpus": 4,
+      "smt_active": false,
+      "online": "0-3",
+      "caches": {
+        "l1d": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l1i": {
+          "size_bytes": 32768,
+          "line_bytes": 64
+        },
+        "l2": {
+          "size_bytes": 4194304,
+          "line_bytes": 64
+        },
+        "l3": {
+          "size_bytes": 16777216,
+          "line_bytes": 64
+        }
+      },
+      "topology": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0
+        },
+        {
+          "cpu": 1,
+          "core_id": 0,
+          "package_id": 1
+        },
+        {
+          "cpu": 2,
+          "core_id": 0,
+          "package_id": 2
+        },
+        {
+          "cpu": 3,
+          "core_id": 0,
+          "package_id": 3
+        }
+      ]
+    },
+    "power": {
+      "scaling_driver": null,
+      "governor": null,
+      "energy_performance_preference": null,
+      "intel_pstate_no_turbo": null,
+      "cpufreq_boost": null,
+      "cpu0_min_khz": null,
+      "cpu0_max_khz": null
+    },
+    "tuned": "virtual-guest",
+    "kernel": {
+      "release": "7.2",
+      "version": "PREEMPT_DYNAMIC",
+      "preempt_model": "PREEMPT_DYNAMIC",
+      "realtime": false,
+      "sys_kernel_realtime": null,
+      "cmdline": null,
+      "isolcpus": null,
+      "nohz_full": null,
+      "rcu_nocbs": null,
+      "irqaffinity": null,
+      "sys_isolated": null,
+      "sys_nohz_full": null
+    },
+    "clock": {
+      "current_clocksource": "kvm-clock",
+      "available_clocksource": [
+        "kvm-clock",
+        "acpi_pm"
+      ]
+    },
+    "process": {
+      "pid": 3265,
+      "cpu_affinity": "0-3",
+      "sched_policy": "SCHED_OTHER"
+    },
+    "virt": {
+      "type": "kvm",
+      "container": "none"
+    },
+    "cgroup": {
+      "cpu_max": "max 100000",
+      "cpuset_effective": null,
+      "nr_throttled": 0,
+      "throttled_usec": 0
+    },
+    "load": {
+      "load1": 0.34,
+      "load5": 0.08,
+      "load15": 0.03,
+      "running": 1
+    },
+    "memory": {
+      "mem_total_kb": 8117540,
+      "hugepages_total": 0,
+      "hugepages_free": 0,
+      "hugepagesize_kb": 2048,
+      "transparent_hugepage": "madvise",
+      "thp_enabled": "madvise",
+      "thp_defrag": "madvise",
+      "thp_shmem_enabled": "never"
+    },
+    "lab": {
+      "running_domains": []
+    },
+    "tools": {
+      "gcc": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java": "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full": "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3": "Python 3.14.3",
+      "cmake": "cmake version 4.3.0",
+      "perf": "7.2",
+      "valgrind": null,
+      "perf_event_paranoid": 2,
+      "memlock_kb": "8192"
+    }
+  },
+  "notes": "service; variant=virtual-thread; open loop; rate_hz=3000; seconds=5; warmup_seconds=3; HTTP/1.1 on loopback; latency from the intended send time",
+  "model": {
+    "lambda_hz": 3000,
+    "service_time_ms": 2.0,
+    "littles_law_in_flight": 6.0,
+    "worker_pool_threads": 8
+  },
+  "runtime": {
+    "counters": {
+      "blocked_thread_warnings": 0,
+      "blocked_thread_warnings_in_run": 0,
+      "carrier_threads": 2,
+      "completed": 15000,
+      "errors": 0,
+      "event_loop_threads_seen": 0,
+      "late_starts_over_1ms": 68,
+      "max_in_flight": 69,
+      "sent": 15000,
+      "service_in_handler_max": 69,
+      "service_requests": 15000,
+      "worker_active_max": 0,
+      "worker_pool_threads": 8,
+      "worker_threads_seen": 0
+    },
+    "environment": {
+      "kind": "container",
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "container": {
+        "runtime": "docker",
+        "image": "lowlat/place-java:r04",
+        "image_digest": "sha256:da6684ca44f28935abe38ea3907a42f78197f64851962a008e36c4c52b488cc7",
+        "network": "host",
+        "cpu_quota": "2",
+        "cpuset": null,
+        "seccomp": "default"
+      },
+      "cgroup": {
+        "cpu_max": "200000 100000",
+        "cpuset_effective": "0-3",
+        "nr_throttled": 1,
+        "throttled_usec": 216
+      }
+    }
+  }
+}

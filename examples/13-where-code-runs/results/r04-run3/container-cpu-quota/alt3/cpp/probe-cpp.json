@@ -1,0 +1,62 @@
+{
+  "cgroup": {
+    "cpu_max": "200000 100000",
+    "cpu_stat": {
+      "burst_usec": 0,
+      "core_sched.force_idle_usec": 0,
+      "nice_usec": 0,
+      "nr_bursts": 0,
+      "nr_periods": 2,
+      "nr_throttled": 0,
+      "system_usec": 12796,
+      "throttled_usec": 0,
+      "usage_usec": 141276,
+      "user_usec": 128480
+    },
+    "cpuset_count": 4,
+    "cpuset_effective": "0-3",
+    "quota_cpus": 2
+  },
+  "cpus": {
+    "affinity_count": 4,
+    "hardware_concurrency": 4,
+    "online": "0-3",
+    "online_count": 4
+  },
+  "errors": [],
+  "example": "13-where-code-runs",
+  "io_uring": {
+    "setup_errno": 1,
+    "setup_result": "EPERM"
+  },
+  "language": "cpp",
+  "libc": {
+    "glibc": "2.39"
+  },
+  "pool_size": {
+    "by_hardware_concurrency": 4,
+    "cgroup_aware": 2
+  },
+  "schema": "lowlat-place-probe/1",
+  "runtime": {
+    "environment": {
+      "kind": "container",
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "container": {
+        "runtime": "docker",
+        "image": "lowlat/place-cpp:r04",
+        "image_digest": "sha256:007fe524247daaa80220d5cc80b3222ba51a4bef347e7f058dafd1c6c9fde05f",
+        "network": "bridge",
+        "cpu_quota": "2",
+        "cpuset": null,
+        "seccomp": "default"
+      },
+      "cgroup": {
+        "cpu_max": "200000 100000",
+        "cpuset_effective": "0-3",
+        "nr_throttled": 207,
+        "throttled_usec": 40623167
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+pinned pid=70702 tid=70703 cpu=1 role=receiver-0
+placement-ready
+released
+receive: io-uring parcels 40000 dropped 0 syscalls 39343 (epoll_wait 0 recvmsg 0 recvmmsg 0 io_uring_enter 39343) cqes 40000 handoffs 0 start skew 0 ns
+12-io-engines            cpp  io-uring         count=    40000 dropped=     0 p50=     64.5us p90=     84.5us p99=     99.4us p99.9=    158.2us max=     658.4us
+report: <repo>/examples/12-io-engines/results/r04-run3/cpp/io-uring-strace.json
+.3us p99=     61.6us p99.9=     66.6us max=     128.3us
+line-simulator           cpp  emit-lateness    count=    10000 dropped=     0 p50=     51.9us p90=     59.6us p99=     61.5us p99.9=     68.4us max=     124.9us

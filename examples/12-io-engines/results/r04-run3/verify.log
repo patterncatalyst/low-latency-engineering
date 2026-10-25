@@ -1,0 +1,331 @@
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+✓ layout: pinned threads on CPUs 1,2,3,4,5; load generators on 6,7,14,15; service on 4 of the pinned cores
+━━ building C++ (release preset) io-receive io-receive-asio io-test line-simulator
+[0/2] Re-checking globbed directories...
+[1/37] Generating CXX dyndep file common/line-simulator/CMakeFiles/lowlat_line.dir/CXX.dd
+[2/33] Generating CXX dyndep file common/line-simulator/CMakeFiles/line-simulator.dir/CXX.dd
+[3/32] Generating CXX dyndep file 12-io-engines/cpp/CMakeFiles/lowlat_io.dir/CXX.dd
+[4/29] Generating CXX dyndep file 10-lockfree-waitfree/cpp/CMakeFiles/lowlat_lockfree.dir/CXX.dd
+[5/27] Generating CXX dyndep file common/measure-cpp/CMakeFiles/lowlat_measure.dir/CXX.dd
+[6/24] Generating CXX dyndep file CMakeFiles/lowlat_proto.dir/CXX.dd
+[7/20] Generating CXX dyndep file common/line-simulator/consumers/cpp/CMakeFiles/lowlat_line_consumer.dir/CXX.dd
+[8/18] Generating CXX dyndep file 12-io-engines/cpp/CMakeFiles/io-receive.dir/CXX.dd
+[9/16] Generating CXX dyndep file 12-io-engines/cpp/CMakeFiles/io-receive-asio.dir/CXX.dd
+[10/14] Generating CXX dyndep file 12-io-engines/cpp/CMakeFiles/io-test.dir/CXX.dd
+━━ building Java module 12-io-engines/java
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/usr/share/maven/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+# WARNING: Unable to get Instrumentation. Dynamic Attach failed. You may add this JAR as -javaagent manually, or supply -Djdk.attach.allowAttachSelf
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:~/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:~/.m2/repository/net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+━━ building the Quarkus service on the plain JVM (fast-jar), with its @QuarkusTests
+━━ syncing the Python workspace
+━━ unit tests: C++ (GoogleTest), Python under the GIL and under the free-threaded build; Java and Quarkus ran during the build
+✓ C++, Java, Quarkus and Python (both builds) unit tests pass
+✓ io_uring available here (io_uring_setup errno 0)
+━━ C++ saturation: epoll at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 1)
+✓ placement: 1 pinned threads of cpp-epoll-sat-alt1 run on the CPUs they were pinned to
+━━ C++ saturation: recvmmsg at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 1)
+✓ placement: 1 pinned threads of cpp-recvmmsg-sat-alt1 run on the CPUs they were pinned to
+━━ C++ saturation: io-uring at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 1)
+✓ placement: 1 pinned threads of cpp-io-uring-sat-alt1 run on the CPUs they were pinned to
+━━ C++ saturation: thread-per-core at 52000 Hz x 4 cameras, 3500 ns of modelled receive work (alternation 1)
+✓ placement: 4 pinned threads of cpp-thread-per-core-sat-alt1 run on the CPUs they were pinned to
+━━ C++ saturation: acceptor-pool at 52000 Hz x 4 cameras, 3500 ns of modelled receive work (alternation 1)
+✓ placement: 5 pinned threads of cpp-acceptor-pool-sat-alt1 run on the CPUs they were pinned to
+━━ C++ saturation: epoll at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 2)
+✓ placement: 1 pinned threads of cpp-epoll-sat-alt2 run on the CPUs they were pinned to
+━━ C++ saturation: recvmmsg at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 2)
+✓ placement: 1 pinned threads of cpp-recvmmsg-sat-alt2 run on the CPUs they were pinned to
+━━ C++ saturation: io-uring at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 2)
+✓ placement: 1 pinned threads of cpp-io-uring-sat-alt2 run on the CPUs they were pinned to
+━━ C++ saturation: thread-per-core at 52000 Hz x 4 cameras, 3500 ns of modelled receive work (alternation 2)
+✓ placement: 4 pinned threads of cpp-thread-per-core-sat-alt2 run on the CPUs they were pinned to
+━━ C++ saturation: acceptor-pool at 52000 Hz x 4 cameras, 3500 ns of modelled receive work (alternation 2)
+✓ placement: 5 pinned threads of cpp-acceptor-pool-sat-alt2 run on the CPUs they were pinned to
+━━ C++ saturation: epoll at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 3)
+✓ placement: 1 pinned threads of cpp-epoll-sat-alt3 run on the CPUs they were pinned to
+━━ C++ saturation: recvmmsg at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 3)
+✓ placement: 1 pinned threads of cpp-recvmmsg-sat-alt3 run on the CPUs they were pinned to
+━━ C++ saturation: io-uring at 60000 Hz x 4 cameras, 0 ns of modelled receive work (alternation 3)
+✓ placement: 1 pinned threads of cpp-io-uring-sat-alt3 run on the CPUs they were pinned to
+━━ C++ saturation: thread-per-core at 52000 Hz x 4 cameras, 3500 ns of modelled receive work (alternation 3)
+✓ placement: 4 pinned threads of cpp-thread-per-core-sat-alt3 run on the CPUs they were pinned to
+━━ C++ saturation: acceptor-pool at 52000 Hz x 4 cameras, 3500 ns of modelled receive work (alternation 3)
+✓ placement: 5 pinned threads of cpp-acceptor-pool-sat-alt3 run on the CPUs they were pinned to
+━━ C++ saturation: asio-io-uring (observed)
+✓ placement: 1 pinned threads of cpp-asio-io-uring-sat run on the CPUs they were pinned to
+━━ C++ line: epoll, 4 simulator instances at 2500 Hz x 20 s, UDP 47320-47323
+✓ placement: 1 pinned threads of cpp-epoll-line run on the CPUs they were pinned to
+━━ C++ line: recvmmsg, 4 simulator instances at 2500 Hz x 20 s, UDP 47320-47323
+✓ placement: 1 pinned threads of cpp-recvmmsg-line run on the CPUs they were pinned to
+━━ C++ line: io-uring, 4 simulator instances at 2500 Hz x 20 s, UDP 47320-47323
+✓ placement: 1 pinned threads of cpp-io-uring-line run on the CPUs they were pinned to
+━━ C++ line: thread-per-core, 4 simulator instances at 2500 Hz x 20 s, UDP 47320-47323
+✓ placement: 4 pinned threads of cpp-thread-per-core-line run on the CPUs they were pinned to
+━━ C++ line: acceptor-pool, 4 simulator instances at 2500 Hz x 20 s, UDP 47320-47323
+✓ placement: 5 pinned threads of cpp-acceptor-pool-line run on the CPUs they were pinned to
+━━ C++ line: asio-io-uring, 4 simulator instances at 2500 Hz x 20 s, UDP 47320-47323
+✓ placement: 1 pinned threads of cpp-asio-io-uring-line run on the CPUs they were pinned to
+━━ C++ strace -f -c cross-check: epoll at 2500 Hz x 4 s
+✓ placement: 1 pinned threads of cpp-epoll-strace run on the CPUs they were pinned to
+━━ C++ strace -f -c cross-check: recvmmsg at 2500 Hz x 4 s
+✓ placement: 1 pinned threads of cpp-recvmmsg-strace run on the CPUs they were pinned to
+━━ C++ strace -f -c cross-check: io-uring at 2500 Hz x 4 s
+✓ placement: 1 pinned threads of cpp-io-uring-strace run on the CPUs they were pinned to
+━━ C++ strace -f -c cross-check: asio-io-uring at 2500 Hz x 4 s
+✓ placement: 1 pinned threads of cpp-asio-io-uring-strace run on the CPUs they were pinned to
+━━ Java saturation: selector at 20000 Hz x 4 cameras (alternation 1)
+✓ placement: 1 pinned threads of java-selector-sat-alt1 run on the CPUs they were pinned to
+━━ Java saturation: virtual-thread-blocking at 20000 Hz x 4 cameras (alternation 1)
+✓ placement: 4 pinned threads of java-virtual-thread-blocking-sat-alt1 run on the CPUs they were pinned to
+━━ Java saturation: thread-per-core at 20000 Hz x 4 cameras (alternation 1)
+✓ placement: 4 pinned threads of java-thread-per-core-sat-alt1 run on the CPUs they were pinned to
+━━ Java saturation: selector at 20000 Hz x 4 cameras (alternation 2)
+✓ placement: 1 pinned threads of java-selector-sat-alt2 run on the CPUs they were pinned to
+━━ Java saturation: virtual-thread-blocking at 20000 Hz x 4 cameras (alternation 2)
+✓ placement: 4 pinned threads of java-virtual-thread-blocking-sat-alt2 run on the CPUs they were pinned to
+━━ Java saturation: thread-per-core at 20000 Hz x 4 cameras (alternation 2)
+✓ placement: 4 pinned threads of java-thread-per-core-sat-alt2 run on the CPUs they were pinned to
+━━ Java saturation: selector at 20000 Hz x 4 cameras (alternation 3)
+✓ placement: 1 pinned threads of java-selector-sat-alt3 run on the CPUs they were pinned to
+━━ Java saturation: virtual-thread-blocking at 20000 Hz x 4 cameras (alternation 3)
+✓ placement: 4 pinned threads of java-virtual-thread-blocking-sat-alt3 run on the CPUs they were pinned to
+━━ Java saturation: thread-per-core at 20000 Hz x 4 cameras (alternation 3)
+✓ placement: 4 pinned threads of java-thread-per-core-sat-alt3 run on the CPUs they were pinned to
+━━ Java line: selector, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 1 pinned threads of java-selector-line run on the CPUs they were pinned to
+━━ Java line: virtual-thread-blocking, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 4 pinned threads of java-virtual-thread-blocking-line run on the CPUs they were pinned to
+━━ Java line: thread-per-core, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 4 pinned threads of java-thread-per-core-line run on the CPUs they were pinned to
+━━ Java strace -f -c cross-check: selector at 250 Hz x 4 s, no warm-up pass
+✓ placement: 1 pinned threads of java-selector-strace run on the CPUs they were pinned to
+━━ Java strace -f -c cross-check: virtual-thread-blocking at 250 Hz x 4 s, no warm-up pass
+✓ placement: 4 pinned threads of java-virtual-thread-blocking-strace run on the CPUs they were pinned to
+━━ Python line: asyncio-datagram in the gil build, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 1 pinned threads of python-gil-asyncio-datagram-line run on the CPUs they were pinned to
+━━ Python saturation (observed): asyncio-datagram in the gil build at 2000 Hz x 4 cameras
+✓ placement: 1 pinned threads of python-gil-asyncio-datagram-sat run on the CPUs they were pinned to
+━━ Python line: blocking-thread in the gil build, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 4 pinned threads of python-gil-blocking-thread-line run on the CPUs they were pinned to
+━━ Python saturation (observed): blocking-thread in the gil build at 2000 Hz x 4 cameras
+✓ placement: 4 pinned threads of python-gil-blocking-thread-sat run on the CPUs they were pinned to
+━━ Python line: uvloop in the gil build, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 1 pinned threads of python-gil-uvloop-line run on the CPUs they were pinned to
+━━ Python saturation (observed): uvloop in the gil build at 2000 Hz x 4 cameras
+✓ placement: 1 pinned threads of python-gil-uvloop-sat run on the CPUs they were pinned to
+━━ Python line: asyncio-datagram in the free-threaded build, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 1 pinned threads of python-free-threaded-asyncio-datagram-line run on the CPUs they were pinned to
+━━ Python saturation (observed): asyncio-datagram in the free-threaded build at 2000 Hz x 4 cameras
+✓ placement: 1 pinned threads of python-free-threaded-asyncio-datagram-sat run on the CPUs they were pinned to
+━━ Python line: blocking-thread in the free-threaded build, 4 simulator instances at 2500 Hz x 20 s
+✓ placement: 4 pinned threads of python-free-threaded-blocking-thread-line run on the CPUs they were pinned to
+━━ Python saturation (observed): blocking-thread in the free-threaded build at 2000 Hz x 4 cameras
+✓ placement: 4 pinned threads of python-free-threaded-blocking-thread-sat run on the CPUs they were pinned to
+━━ Python strace -f -c cross-check: asyncio-datagram in the gil build at 2500 Hz x 4 s
+✓ placement: 1 pinned threads of python-gil-asyncio-datagram-strace run on the CPUs they were pinned to
+━━ Python strace -f -c cross-check: blocking-thread in the gil build at 2500 Hz x 4 s
+✓ placement: 4 pinned threads of python-gil-blocking-thread-strace run on the CPUs they were pinned to
+━━ Python strace -f -c cross-check: uvloop in the gil build at 2500 Hz x 4 s
+✓ placement: 1 pinned threads of python-gil-uvloop-strace run on the CPUs they were pinned to
+━━ Python strace -f -c cross-check: blocking-thread in the free-threaded build at 2500 Hz x 4 s
+✓ placement: 4 pinned threads of python-free-threaded-blocking-thread-strace run on the CPUs they were pinned to
+━━ Quarkus service: event-loop at 5000 Hz (alternation 1): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: worker-pool at 5000 Hz (alternation 1): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: virtual-thread at 5000 Hz (alternation 1): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: blocking-on-event-loop at 1850 Hz (alternation 1): 1850 Hz x 2 ms = 3 in flight against a pool of 8
+━━ Quarkus service: event-loop-ctl at 1850 Hz (alternation 1): 1850 Hz x 2 ms = 3 in flight against a pool of 8
+━━ Quarkus service: event-loop at 5000 Hz (alternation 2): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: worker-pool at 5000 Hz (alternation 2): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: virtual-thread at 5000 Hz (alternation 2): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: blocking-on-event-loop at 1850 Hz (alternation 2): 1850 Hz x 2 ms = 3 in flight against a pool of 8
+━━ Quarkus service: event-loop-ctl at 1850 Hz (alternation 2): 1850 Hz x 2 ms = 3 in flight against a pool of 8
+━━ Quarkus service: event-loop at 5000 Hz (alternation 3): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: worker-pool at 5000 Hz (alternation 3): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: virtual-thread at 5000 Hz (alternation 3): 5000 Hz x 2 ms = 10 in flight against a pool of 8
+━━ Quarkus service: blocking-on-event-loop at 1850 Hz (alternation 3): 1850 Hz x 2 ms = 3 in flight against a pool of 8
+━━ Quarkus service: event-loop-ctl at 1850 Hz (alternation 3): 1850 Hz x 2 ms = 3 in flight against a pool of 8
+━━ reports: schema, histogram decode, percentile recompute
+✓ 7 84 reports validate (profile embedded: bare-metal-host)
+━━ completeness: every variant x alternation report is present, and every lane ran
+✓ every expected report is present
+━━ saturation runs carried their load: count == rate x seconds x cameras and dropped == 0, before any ratio is taken
+✓ sat cpp/acceptor-pool-sat-alt1.json: count 624000 (bound == 624000), dropped 0 (exact 0)
+✓ sat cpp/acceptor-pool-sat-alt2.json: count 624000 (bound == 624000), dropped 0 (exact 0)
+✓ sat cpp/acceptor-pool-sat-alt3.json: count 624000 (bound == 624000), dropped 0 (exact 0)
+✓ sat cpp/asio-io-uring-sat.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/epoll-sat-alt1.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/epoll-sat-alt2.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/epoll-sat-alt3.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/io-uring-sat-alt1.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/io-uring-sat-alt2.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/io-uring-sat-alt3.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/recvmmsg-sat-alt1.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/recvmmsg-sat-alt2.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/recvmmsg-sat-alt3.json: count 720000 (bound == 720000), dropped 0 (exact 0)
+✓ sat cpp/thread-per-core-sat-alt1.json: count 624000 (bound == 624000), dropped 0 (exact 0)
+✓ sat cpp/thread-per-core-sat-alt2.json: count 624000 (bound == 624000), dropped 0 (exact 0)
+✓ sat cpp/thread-per-core-sat-alt3.json: count 624000 (bound == 624000), dropped 0 (exact 0)
+✓ sat java/selector-sat-alt1.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/selector-sat-alt2.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/selector-sat-alt3.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/thread-per-core-sat-alt1.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/thread-per-core-sat-alt2.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/thread-per-core-sat-alt3.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/virtual-thread-blocking-sat-alt1.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/virtual-thread-blocking-sat-alt2.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat java/virtual-thread-blocking-sat-alt3.json: count 240000 (bound == 240000), dropped 0 (exact 0)
+✓ sat python/free-threaded-asyncio-datagram-sat.json: count 24000 (bound == 24000), dropped 0 (exact 0)
+✓ sat python/free-threaded-blocking-thread-sat.json: count 24000 (bound == 24000), dropped 0 (exact 0)
+✓ sat python/gil-asyncio-datagram-sat.json: count 24000 (bound == 24000), dropped 0 (exact 0)
+✓ sat python/gil-blocking-thread-sat.json: count 24000 (bound == 24000), dropped 0 (exact 0)
+✓ sat python/gil-uvloop-sat.json: count 24000 (bound == 24000), dropped 0 (exact 0)
+━━ criterion 1: system calls per parcel at saturation, C++ (program counters, load-dependent)
+✓ 1 alt1: io_uring_enter per parcel 52/1000 <= 250/1000 x epoll's system calls per parcel 1464/1000 (counters read in the program, so exact for this run, but the ratio depends on how many completions queue up at this load; margin 6.91x)
+  observed: alt1 recvmmsg makes 442282 system calls for 720000 parcels, 614/1000 per parcel (1 per parcel would be 1000; margin 1.63x, load-dependent)
+  observed (exact): alt1 CQEs per io_uring_enter 18.87; epoll_wait per parcel 464/1000, recvmsg per parcel 1000/1000
+✓ 1 alt2: io_uring_enter per parcel 69/1000 <= 250/1000 x epoll's system calls per parcel 1402/1000 (counters read in the program, so exact for this run, but the ratio depends on how many completions queue up at this load; margin 5.03x)
+  observed: alt2 recvmmsg makes 442140 system calls for 720000 parcels, 614/1000 per parcel (1 per parcel would be 1000; margin 1.63x, load-dependent)
+  observed (exact): alt2 CQEs per io_uring_enter 14.34; epoll_wait per parcel 402/1000, recvmsg per parcel 1000/1000
+✓ 1 alt3: io_uring_enter per parcel 67/1000 <= 250/1000 x epoll's system calls per parcel 1313/1000 (counters read in the program, so exact for this run, but the ratio depends on how many completions queue up at this load; margin 4.83x)
+  observed: alt3 recvmmsg makes 547376 system calls for 720000 parcels, 760/1000 per parcel (1 per parcel would be 1000; margin 1.32x, load-dependent)
+  observed (exact): alt3 CQEs per io_uring_enter 14.70; epoll_wait per parcel 313/1000, recvmsg per parcel 1000/1000
+━━ criterion 2: cross-thread hand-offs per parcel (exact)
+✓ 2 thread-per-core alt1: parcels decided (the zero below is about something): measured 624000, bound >= 1, margin 624000.00x
+✓ 2 thread-per-core alt1: hand-offs: measured 0, bound == 0 (exact)
+✓ 2 acceptor-pool alt1: hand-offs, one per parcel (624000 parcels): measured 624000, bound == 624000 (exact)
+✓ 2 thread-per-core alt2: parcels decided (the zero below is about something): measured 624000, bound >= 1, margin 624000.00x
+✓ 2 thread-per-core alt2: hand-offs: measured 0, bound == 0 (exact)
+✓ 2 acceptor-pool alt2: hand-offs, one per parcel (624000 parcels): measured 624000, bound == 624000 (exact)
+✓ 2 thread-per-core alt3: parcels decided (the zero below is about something): measured 624000, bound >= 1, margin 624000.00x
+✓ 2 thread-per-core alt3: hand-offs: measured 0, bound == 0 (exact)
+✓ 2 acceptor-pool alt3: hand-offs, one per parcel (624000 parcels): measured 624000, bound == 624000 (exact)
+━━ criterion 3: the layout pair at a loaded acceptor (dropped == 0 both; p99 ratio, median of 3)
+✓ 3 thread-per-core alt1: dropped: measured 0, bound == 0 (exact)
+✓ 3 acceptor-pool alt1: dropped: measured 0, bound == 0 (exact)
+✓ 3 alt1: the acceptor was 816/1000 busy over its receive window (guard 750-900)
+  observed: alt1 thread-per-core busiest receiver 384/1000 busy
+✓ 3 thread-per-core alt2: dropped: measured 0, bound == 0 (exact)
+✓ 3 acceptor-pool alt2: dropped: measured 0, bound == 0 (exact)
+✓ 3 alt2: the acceptor was 827/1000 busy over its receive window (guard 750-900)
+  observed: alt2 thread-per-core busiest receiver 384/1000 busy
+✓ 3 thread-per-core alt3: dropped: measured 0, bound == 0 (exact)
+✓ 3 acceptor-pool alt3: dropped: measured 0, bound == 0 (exact)
+✓ 3 alt3: the acceptor was 820/1000 busy over its receive window (guard 750-900)
+  observed: alt3 thread-per-core busiest receiver 384/1000 busy
+  observed: C++ saturation p99, thread-per-core over acceptor-pool, per alternation: 815 824 825 thousandths (median 824; the plan's bound is <= 500, asserted only when it clears twice over)
+  observed: the hand-off cost at line rate (2.5 kHz per camera): thread-per-core p50 / p99 / p99.9 / max 91 / 115 / 199 / 2875 us; acceptor-pool 61 / 93 / 264 / 2908 us
+  observed: C++ io-uring over epoll p99 per alternation: 961 1012 1041 thousandths (median 1012)
+  C++ saturation epoll p50 / p99 / p99.9 / max, alternation 1: 53 / 79 / 618 / 925 us; dropped 0
+  C++ saturation recvmmsg p50 / p99 / p99.9 / max, alternation 1: 56 / 105 / 113 / 372 us; dropped 0
+  C++ saturation io-uring p50 / p99 / p99.9 / max, alternation 1: 56 / 76 / 101 / 282 us; dropped 0
+  C++ saturation thread-per-core p50 / p99 / p99.9 / max, alternation 1: 50 / 68 / 208 / 2918 us; dropped 0
+  C++ saturation acceptor-pool p50 / p99 / p99.9 / max, alternation 1: 56 / 84 / 1075 / 1913 us; dropped 0
+  observed: C++ saturation asio-io-uring p50 / p99 / p99.9 / max: 61 / 88 / 119 / 241 us; dropped 0
+━━ criterion 4: Quarkus p99 at lambda x W > pool, worker-pool against virtual-thread, same run, median of 3
+✓ 4 Quarkus p99: measured 223.10x (worker-pool over virtual-thread, per alternation: 223097 224000 156218 thousandths), bound >= 3.00x, margin 74.37x
+  observed: Quarkus event-loop over virtual-thread p99 per alternation: 976 1523 1029 thousandths (median 1029)
+  Quarkus event-loop p50 / p99 / p99.9 / max, alternation 1: 2506 / 6377 / 17743 / 20840 us
+  Quarkus worker-pool p50 / p99 / p99.9 / max, alternation 1: 739246 / 1457520 / 1471152 / 1473249 us
+  Quarkus virtual-thread p50 / p99 / p99.9 / max, alternation 1: 2152 / 6533 / 19480 / 23134 us
+  Quarkus blocking-on-event-loop p50 / p99 / p99.9 / max, alternation 1: 2287 / 7561 / 8962 / 9691 us
+━━ criterion 5: defect blocking-on-event-loop at 1850 Hz, against the event-loop control at the same rate
+✓ 5 alt1 blocked-thread warnings logged during the measured run (exact, counted in process): measured 1016, bound >= 1, margin 1016.00x
+✓ 5 alt1 the in-process count and the log's 'has been blocked for' lines are two views of the same JUL records: measured 1016, bound == 1016 (exact)
+✓ 5 alt1 the client's report and the final read of the in-process count agree: measured 1016, bound == 1016 (exact)
+✓ 5 alt1: requests in a handler at once 4 <= event-loop threads 4 (exact: a blocked loop runs one at a time)
+✓ 5 alt1 control: event-loop at the defect's rate has more requests in a handler at once (13) than event-loop threads (exact; the defect's <= 4 signature discriminates): measured 13, bound >= 5, margin 2.60x
+  observed: alt1 defect p99 7561 us (the 2 ms sleep alone meets a 2 ms bound); event-loop control at 1850 Hz p99 3342 us
+✓ 5 alt2 blocked-thread warnings logged during the measured run (exact, counted in process): measured 1030, bound >= 1, margin 1030.00x
+✓ 5 alt2 the in-process count and the log's 'has been blocked for' lines are two views of the same JUL records: measured 1030, bound == 1030 (exact)
+✓ 5 alt2 the client's report and the final read of the in-process count agree: measured 1030, bound == 1030 (exact)
+✓ 5 alt2: requests in a handler at once 4 <= event-loop threads 4 (exact: a blocked loop runs one at a time)
+✓ 5 alt2 control: event-loop at the defect's rate has more requests in a handler at once (14) than event-loop threads (exact; the defect's <= 4 signature discriminates): measured 14, bound >= 5, margin 2.80x
+  observed: alt2 defect p99 8544 us (the 2 ms sleep alone meets a 2 ms bound); event-loop control at 1850 Hz p99 3270 us
+✓ 5 alt3 blocked-thread warnings logged during the measured run (exact, counted in process): measured 990, bound >= 1, margin 990.00x
+✓ 5 alt3 the in-process count and the log's 'has been blocked for' lines are two views of the same JUL records: measured 990, bound == 990 (exact)
+✓ 5 alt3 the client's report and the final read of the in-process count agree: measured 990, bound == 990 (exact)
+✓ 5 alt3: requests in a handler at once 4 <= event-loop threads 4 (exact: a blocked loop runs one at a time)
+✓ 5 alt3 control: event-loop at the defect's rate has more requests in a handler at once (14) than event-loop threads (exact; the defect's <= 4 signature discriminates): measured 14, bound >= 5, margin 2.80x
+  observed: alt3 defect p99 9551 us (the 2 ms sleep alone meets a 2 ms bound); event-loop control at 1850 Hz p99 3332 us
+  observed: defect p99 over the event-loop control at 1850 Hz, per alternation: 2262 2612 2866 thousandths (median 2612; bound >= 2000, asserted only when it clears twice over)
+━━ criterion 9: Quarkus service counters (exact) and the open-loop client
+  event-loop: client max in flight 94 (Little's law 10.0 at 5000 Hz), late starts over 1 ms 138 of 25000, service in-handler max 90, event-loop threads 4, worker threads 0 (active max 0), carrier threads 0
+  worker-pool: client max in flight 5677 (Little's law 10.0 at 5000 Hz), late starts over 1 ms 616 of 25000, service in-handler max 8, event-loop threads 0, worker threads 8 (active max 8), carrier threads 0
+  virtual-thread: client max in flight 105 (Little's law 10.0 at 5000 Hz), late starts over 1 ms 127 of 25000, service in-handler max 93, event-loop threads 0, worker threads 0 (active max 0), carrier threads 4
+  blocking-on-event-loop: client max in flight 16 (Little's law 3.7 at 1850 Hz), late starts over 1 ms 12 of 9250, service in-handler max 4, event-loop threads 4, worker threads 0 (active max 0), carrier threads 0
+  event-loop-ctl: client max in flight 14 (Little's law 3.7 at 1850 Hz), late starts over 1 ms 10 of 9250, service in-handler max 13, event-loop threads 4, worker threads 0 (active max 0), carrier threads 0
+✓ 9 worker-pool alt1: worker pool active maximum equals the fixed pool size (load exceeds it): measured 8, bound == 8 (exact)
+✓ 9 worker-pool alt1: worker threads seen equal the fixed pool (prefilled, all used): measured 8, bound == 8 (exact)
+✓ 9 event-loop alt1: worker threads seen: measured 0, bound == 0 (exact)
+✓ 9 virtual-thread alt1: worker threads seen: measured 0, bound == 0 (exact)
+✓ 9 virtual-thread alt1: carrier threads (at least one): measured 4, bound >= 1, margin 4.00x
+✓ 9 virtual-thread alt1: client max in flight exceeds the pool (lambda x W > 8): measured 105, bound >= 9, margin 11.67x
+✓ 9 worker-pool alt2: worker pool active maximum equals the fixed pool size (load exceeds it): measured 8, bound == 8 (exact)
+✓ 9 worker-pool alt2: worker threads seen equal the fixed pool (prefilled, all used): measured 8, bound == 8 (exact)
+✓ 9 event-loop alt2: worker threads seen: measured 0, bound == 0 (exact)
+✓ 9 virtual-thread alt2: worker threads seen: measured 0, bound == 0 (exact)
+✓ 9 virtual-thread alt2: carrier threads (at least one): measured 4, bound >= 1, margin 4.00x
+✓ 9 virtual-thread alt2: client max in flight exceeds the pool (lambda x W > 8): measured 100, bound >= 9, margin 11.11x
+✓ 9 worker-pool alt3: worker pool active maximum equals the fixed pool size (load exceeds it): measured 8, bound == 8 (exact)
+✓ 9 worker-pool alt3: worker threads seen equal the fixed pool (prefilled, all used): measured 8, bound == 8 (exact)
+✓ 9 event-loop alt3: worker threads seen: measured 0, bound == 0 (exact)
+✓ 9 virtual-thread alt3: worker threads seen: measured 0, bound == 0 (exact)
+✓ 9 virtual-thread alt3: carrier threads (at least one): measured 4, bound >= 1, margin 4.00x
+✓ 9 virtual-thread alt3: client max in flight exceeds the pool (lambda x W > 8): measured 136, bound >= 9, margin 15.11x
+━━ criterion 6: the line
+✓ 6 cpp/acceptor-pool-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 61 / 93 / 264 / 2908 us
+✓ 6 cpp/asio-io-uring-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 61 / 93 / 110 / 2392 us
+✓ 6 cpp/epoll-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 84 / 118 / 129 / 2902 us
+✓ 6 cpp/io-uring-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 60 / 91 / 104 / 558 us
+✓ 6 cpp/recvmmsg-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 60 / 92 / 105 / 834 us
+✓ 6 cpp/thread-per-core-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 91 / 115 / 199 / 2875 us
+✓ 6 java/selector-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 61 / 92 / 142 / 2891 us
+✓ 6 java/thread-per-core-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 82 / 112 / 603 / 2897 us
+✓ 6 java/virtual-thread-blocking-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 65 / 95 / 128 / 1675 us
+✓ 6 python/free-threaded-asyncio-datagram-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 60 / 86 / 108 / 679 us
+✓ 6 python/free-threaded-blocking-thread-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 83 / 110 / 211 / 2873 us
+✓ 6 python/gil-asyncio-datagram-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 106 / 135 / 167 / 1336 us
+✓ 6 python/gil-blocking-thread-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 96 / 144 / 224 / 2906 us
+✓ 6 python/gil-uvloop-line.json: count 200000 (bound == 200000), dropped 0 (exact 0); p50 / p99 / p99.9 / max (observed): 79 / 110 / 120 / 439 us
+━━ criterion 8: start gates
+  observed: start skew of the single-carrier virtual-thread-blocking runs, ns: 455428 283475 213303 571236 (one carrier serializes the four virtual threads, so it is not bounded)
+✓ 8 largest start skew over every multi-thread run, ns (a timing bound): measured 326755, bound <= 999999, margin 3.06x
+━━ criterion 7: every report carries build.flags, counters, placement, python_build
+✓ 7 84 reports: runtime.counters, build.flags (C++ and Java), runtime.python_build (Python), GIL off in the free-threaded runs
+✓ 7 every pinned run records runtime.placement
+━━ observed: strace -f -c against the in-program counters (the same run: the program under strace is the one that wrote the report)
+  C++ epoll (40000 parcels): strace epoll_wait 32277 recvmsg 40000 recvmmsg 0 io_uring_enter 0; in-program epoll_wait 32277 recvmsg 40000 recvmmsg 0 io_uring_enter 0
+  C++ recvmmsg (40000 parcels): strace epoll_wait 39658 recvmsg 0 recvmmsg 39989 io_uring_enter 0; in-program epoll_wait 39658 recvmsg 0 recvmmsg 39989 io_uring_enter 0
+  C++ io-uring (40000 parcels): strace epoll_wait 0 recvmsg 0 recvmmsg 0 io_uring_enter 39343; in-program epoll_wait 0 recvmsg 0 recvmmsg 0 io_uring_enter 39343
+  C++ asio-io-uring (40000 parcels): strace io_uring_enter 74759 epoll_wait 0 recvmsg 0 recvfrom 0
+  Java selector (4000 parcels): strace epoll_wait 3808 epoll_pwait 0 recvfrom 8000 recvmsg 0 read 1868
+  Java virtual-thread-blocking (4000 parcels): strace epoll_wait 9047 epoll_pwait 0 recvfrom 8000 recvmsg 0 read 1868
+  Python free-threaded-blocking-thread (40000 parcels): strace epoll_wait 0 epoll_pwait 0 recvfrom 40000 recvmsg 0 (receive calls per parcel 1000/1000)
+  Python gil-asyncio-datagram (40000 parcels): strace epoll_wait 33334 epoll_pwait 0 recvfrom 40000 recvmsg 0 (receive calls per parcel 1000/1000)
+  Python gil-blocking-thread (40000 parcels): strace epoll_wait 0 epoll_pwait 0 recvfrom 40000 recvmsg 0 (receive calls per parcel 1000/1000)
+  Python gil-uvloop (40000 parcels): strace epoll_wait 0 epoll_pwait 39891 recvfrom 0 recvmsg 79999 (receive calls per parcel 1999/1000)
+━━ observed: the plain-JDK and Python lanes
+  java/selector-sat-alt1.json p50 / p99 / p99.9 / max: 58 / 69 / 159 / 1528 us; dropped 0
+  java/thread-per-core-sat-alt1.json p50 / p99 / p99.9 / max: 53 / 67 / 107 / 1696 us; dropped 0
+  java/virtual-thread-blocking-sat-alt1.json p50 / p99 / p99.9 / max: 61 / 77 / 124 / 1741 us; dropped 0
+  python/free-threaded-asyncio-datagram-sat.json p50 / p99 / p99.9 / max: 67 / 115 / 149 / 690 us; dropped 0
+  python/free-threaded-blocking-thread-sat.json p50 / p99 / p99.9 / max: 72 / 103 / 230 / 2783 us; dropped 0
+  python/gil-asyncio-datagram-sat.json p50 / p99 / p99.9 / max: 73 / 137 / 167 / 1431 us; dropped 0
+  python/gil-blocking-thread-sat.json p50 / p99 / p99.9 / max: 74 / 114 / 198 / 925 us; dropped 0
+  python/gil-uvloop-sat.json p50 / p99 / p99.9 / max: 59 / 101 / 155 / 420 us; dropped 0
+✓ 12-io-engines: every criterion holds; results in <repo>/examples/12-io-engines/results/r04-run3
+profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2 load1=1.82

@@ -1,0 +1,15 @@
+pinned pid=2866218 tid=2866221 cpu=2 role=pong
+pinned pid=2866218 tid=2866222 cpu=1 role=ping
+placement-ready
+released
+11-stackful-stackless    cpp  os-thread        count=     1000 dropped=     0 p50=      0.2us p90=      0.2us p99=      0.2us p99.9=      0.3us max=       0.3us
+counter ctx_involuntary_a=0
+counter ctx_involuntary_b=61
+counter ctx_voluntary_a=140
+counter ctx_voluntary_b=126
+counter payload_mismatch=0
+counter round_trips=1000000
+counter round_trips_served=1020000
+counter start_skew_ns=5317
+counter warmup_round_trips=20000
+report: <repo>/examples/11-stackful-stackless/results/r04-run1/cpp-pingpong-os-thread-semaphore.json

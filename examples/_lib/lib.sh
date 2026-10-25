@@ -16,6 +16,18 @@
 #   SKIP_BUILD=1  reuse existing builds
 #   LOWLAT_BUILD  C++ binary dir (default examples/build/release); set a private
 #                 one when several builds run at once
+#   TARGET_VM     the lab guest the `guest` helpers talk to (default lowlat-target); its name must
+#                 start with LAB_GUARD_PREFIX (default lowlat-)
+#   GUEST_REPO    repo path in the guest, relative to the guest user's home
+#                 (default low-latency-engineering)
+#   LAB_SSH       the vsock ssh wrapper (default scripts/lab/lab-ssh.sh); tests point it at a shim
+#   CONTAINER_OUT_DIR  the one guest directory container_run may bind-mount from (-v/--mount):
+#                 absolute, canonical, strictly under LOWLAT_GUEST_ROOT
+#   LOWLAT_GUEST_ROOT  the guest's checkout, as an absolute path (default: GUEST_USER's home plus GUEST_REPO,
+#                 GUEST_USER from scripts/lab/lab.env, default fedora); the only tree mounts and
+#                 seccomp profiles may come from
+#   GUEST_PROFILE guest snapshot/profile name (like lab-ready-r04/stock-unpinned) that
+#                 container_run records in runtime.environment
 #   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
 #                 scratch_dir (a caller-provided value is kept)
 
@@ -64,10 +76,46 @@ scrub_results() {
   [[ -d $d ]] || return 0
   python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" "$d" 2>/dev/null || true
 }
+# _descendants PID: the PIDs of every descendant of PID (children first, then theirs), from /proc.
+_descendants() {
+  local c
+  for c in $(pgrep -P "$1" 2>/dev/null); do
+    echo "$c"
+    _descendants "$c"
+  done
+}
+
+# _alive PID: true while PID is a live process (a zombie awaiting its parent's wait counts as gone).
+_alive() {
+  local state
+  state=$(awk '/^State:/ {print $2}' "/proc/$1/status" 2>/dev/null) || return 1
+  [[ -n $state && $state != Z ]]
+}
+
+# _bg_cleanup: runs on EXIT. Stops every tracked background PID and then the whole descendant tree of this shell (a launcher
+# such as `uv run` or `env` leaves grandchildren that BG_PIDS never saw; one that outlives the script keeps its inherited
+# lock descriptors, and a flock held that way blocks every later run): TERM, up to LOWLAT_KILL_GRACE seconds (default 3) for
+# them to go, then KILL for whatever is left. Then scrubs the results and removes the scratch dir.
 _bg_cleanup() {
-  local p
+  local p kids now i left
+  trap - TERM INT
   for p in "${BG_PIDS[@]}"; do
     kill "$p" 2>/dev/null || true
+  done
+  # shellcheck disable=SC2207
+  kids=($(_descendants $$))
+  ((${#kids[@]} == 0)) || kill -TERM "${kids[@]}" 2>/dev/null || true
+  for ((i = 0; i < ${LOWLAT_KILL_GRACE:-3} * 10; i++)); do
+    left=0
+    for p in "${kids[@]}"; do _alive "$p" && left=1; done
+    ((left)) || break
+    sleep 0.1
+  done
+  # Collect again: only a PID that is still a descendant is killed, so a PID the kernel has reused isn't hit.
+  # shellcheck disable=SC2207
+  now=($(_descendants $$))
+  for p in "${kids[@]}"; do
+    [[ " ${now[*]} " == *" $p "* ]] && _alive "$p" && kill -KILL "$p" 2>/dev/null || true
   done
   scrub_results
   # Scratch (JFR recordings, FIFOs) is ours only when lib.sh created it.
@@ -136,12 +184,68 @@ redact_host() {
 # example_dir: absolute path of the calling example (the dir holding verify.sh).
 example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 
-# Refuse to take host measurements while a lab VM competes for the CPUs.
+# require_quiet_host [--lab-idle]: refuse to take host measurements while a lab VM competes for
+# the CPUs. Without the flag any running lowlat-* VM refuses the run, and so does a libvirt that
+# cannot be read (no virsh installed counts as no lab).
+#   --lab-idle   the lowlat-target VM may be running, but only idle: its load1 (read
+#                through `lab_ssh`) must be <= LAB_IDLE_LOAD1 (default 0.5). Any other running
+#                domain (an ebpf-* or systems-* VM, a lowlat peer) refuses the run: this check
+#                reads libvirt's domain list and talks only to the lowlat target, and never
+#                starts, stops or touches another VM. The state is exported as LOWLAT_LAB_VM
+#                ("down" or "up (idle)") and, when RUN_START_JSON names a file, merged into it as
+#                "lab_vm" with "lab_vm_load1" (the run-start.json the driver writes).
+# ALLOW_BUSY=1 skips the check in both forms (with --lab-idle it records "unchecked (ALLOW_BUSY)").
 require_quiet_host() {
-  [[ ${ALLOW_BUSY:-0} == 1 ]] && return 0
-  local running
-  running=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null | grep '^lowlat-' || true)
-  [[ -z $running ]] || die "lab VM running ($running): stop it (scripts/lab/lab-down.sh) or set ALLOW_BUSY=1"
+  local lab_idle=0 running domains others
+  if [[ ${1:-} == --lab-idle ]]; then lab_idle=1; shift; fi
+  (($# == 0)) || die "require_quiet_host: unknown argument '$1' (only --lab-idle)"
+  if [[ ${ALLOW_BUSY:-0} == 1 ]]; then
+    ((!lab_idle)) || _run_start_record "unchecked (ALLOW_BUSY)" ''
+    return 0
+  fi
+  if ((!lab_idle)); then
+    # No virsh at all means no libvirt and so no lab VM (a CI container). A virsh that fails or
+    # times out is an error: "quiet" must be known, not assumed.
+    command -v virsh >/dev/null 2>&1 || return 0
+    domains=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null) ||
+      die "cannot read the libvirt domain list (virsh failed or timed out), so the host cannot be called quiet: fix libvirt access or set ALLOW_BUSY=1"
+    running=$(grep '^lowlat-' <<<"$domains" || true)
+    [[ -z $running ]] || die "lab VM running ($running): stop it (scripts/lab/lab-down.sh) or set ALLOW_BUSY=1"
+    return 0
+  fi
+  local prefix=${LAB_GUARD_PREFIX:-lowlat-} target=${TARGET_VM:-lowlat-target} load1=''
+  [[ $target == "$prefix"* ]] || die "require_quiet_host: '$target' is not a $prefix* domain; the lab helpers never touch it"
+  # A failed or timed-out virsh is "unknown", never "down".
+  if ! domains=$(timeout 5 virsh -c qemu:///system list --name 2>/dev/null); then
+    _run_start_record "unknown" ''
+    die "--lab-idle: cannot read the libvirt domain list (virsh failed or timed out); not assuming the lab is down"
+  fi
+  domains=$(sed '/^$/d' <<<"$domains")
+  running=$(grep "^$prefix" <<<"$domains" || true)
+  others=$(grep -v "^$prefix" <<<"$domains" || true)
+  [[ -z $others ]] || die "--lab-idle: a non-lab VM is running ($(tr '\n' ' ' <<<"$others")): stop it or set ALLOW_BUSY=1"
+  if [[ -z $running ]]; then
+    _run_start_record "down (require_quiet_host)" ''
+    return 0
+  fi
+  [[ $running == "$target" ]] || die "--lab-idle: running lab domains are ($(tr '\n' ' ' <<<"$running")), expected only $target"
+  load1=$(lab_ssh cat /proc/loadavg | awk '{print $1}') || die "--lab-idle: cannot read the guest load average (is $target reachable over vsock ssh?)"
+  [[ $load1 =~ ^[0-9]+([.][0-9]+)?$ ]] || die "--lab-idle: unreadable guest load1 '$load1'"
+  awk -v l="$load1" -v m="${LAB_IDLE_LOAD1:-0.5}" 'BEGIN { exit !(l <= m) }' ||
+    die "--lab-idle: $target is not idle (load1 $load1 > ${LAB_IDLE_LOAD1:-0.5}); wait, or stop it with scripts/lab/lab-down.sh"
+  _run_start_record "up (idle)" "$load1"
+}
+
+# _run_start_record STATE LOAD1: export LOWLAT_LAB_VM and merge lab_vm (and the guest load1) into
+# $RUN_START_JSON when it is set (the file is created as {} if absent).
+_run_start_record() {
+  export LOWLAT_LAB_VM=$1
+  [[ -n ${RUN_START_JSON:-} ]] || return 0
+  [[ -s $RUN_START_JSON ]] || printf '{}\n' >"$RUN_START_JSON"
+  jq --arg s "$1" --arg l "$2" \
+    '.lab_vm = $s | if $l == "" then . else .lab_vm_load1 = ($l | tonumber) end' \
+    "$RUN_START_JSON" >"$RUN_START_JSON.tmp" || die "run-start: jq failed on $RUN_START_JSON"
+  mv "$RUN_START_JSON.tmp" "$RUN_START_JSON"
 }
 
 # results_dir: create and print $RESULTS_DIR (default <example>/results/latest).
@@ -669,3 +773,543 @@ time_to_ready() (
   wait "$pid" 2>/dev/null || true
   echo $(((t1 - t0) * 1000))
 )
+
+# ---- the lab guest, containers in the guest, environment lanes -------------------------------
+# Everything below reaches the guest through scripts/lab/lab-ssh.sh (ssh over vsock, never NAT)
+# and only ever to a domain whose name starts with LAB_GUARD_PREFIX (default lowlat-). Nothing
+# here starts or stops a VM, and nothing runs docker on the host.
+
+# lab_ssh CMD...: run CMD in the guest's login shell; refuses a target outside the lab prefix.
+lab_ssh() {
+  local prefix=${LAB_GUARD_PREFIX:-lowlat-} target=${TARGET_VM:-lowlat-target}
+  [[ $target == "$prefix"* ]] || die "lab_ssh: '$target' is not a $prefix* domain; refusing"
+  "${LAB_SSH:-$LOWLAT_ROOT/scripts/lab/lab-ssh.sh}" "$target" "$@"
+}
+
+# guest CMD...: run CMD in the guest from the repo root (GUEST_REPO under the guest user's home),
+# each word quoted for the guest shell (printf %q output is bash syntax: it relies on the guest
+# user's login shell being bash, the Fedora default). Returns CMD's status.
+#   guest examples/build/release/line-simulator --help
+guest() { lab_ssh "cd ${GUEST_REPO:-low-latency-engineering} && $(printf '%q ' "$@")"; }
+
+# guest_fetch REMOTE LOCAL: copy a file out of the guest (REMOTE relative to the guest user's
+# home) to LOCAL. A REMOTE ending in / is a directory: its contents are unpacked into LOCAL
+# (created if needed) through tar, as the calling user, without the archive's owners or
+# permission bits. An archive with a symlink, hard link or device member is refused before
+# anything is extracted (a guest is not trusted not to plant ../ links).
+guest_fetch() {
+  local remote=${1:?guest_fetch REMOTE LOCAL} local_path=${2:?guest_fetch REMOTE LOCAL} tar_file bad
+  if [[ $remote == */ ]]; then
+    tar_file=$(mktemp "${TMPDIR:-/tmp}/lowlat-fetch.XXXXXX")
+    if ! lab_ssh "tar -C $(printf '%q' "$remote") -cf - ." >"$tar_file"; then
+      rm -f "$tar_file"
+      die "guest_fetch: cannot fetch $remote"
+    fi
+    bad=$(tar -tvf "$tar_file" | grep -v '^[-d]' || true)
+    if [[ -n $bad ]]; then
+      rm -f "$tar_file"
+      die "guest_fetch: $remote holds a link or special file, refusing to extract: $(head -n1 <<<"$bad")"
+    fi
+    mkdir -p "$local_path"
+    tar -C "$local_path" --no-same-owner --no-same-permissions -xf "$tar_file" || { rm -f "$tar_file"; die "guest_fetch: cannot unpack $remote"; }
+    rm -f "$tar_file"
+  else
+    lab_ssh "cat $(printf '%q' "$remote")" >"$local_path" || die "guest_fetch: cannot fetch $remote"
+  fi
+}
+
+# _scrub_ids: stdin to stdout through scripts/scrub-host-ids.py --filter.
+_scrub_ids() { python3 "$LOWLAT_ROOT/scripts/scrub-host-ids.py" --filter; }
+
+# The guest-side reader behind cgroup_stat, POSIX sh run as
+#   sh -c "$_CGROUP_SH" sh CONTAINER CGROUP_ROOT
+# It prints four lines: cpu.max, cpuset.cpus.effective, nr_throttled, throttled_usec (an empty
+# line for a file it could not read). Docker 29 with the systemd cgroup driver puts the container
+# at <root>/system.slice/docker-<id>.scope; the cgroupfs driver at <root>/docker/<id>.
+_CGROUP_SH=$(
+  cat <<'SCRIPT'
+name=$1 root=$2
+id=$(docker inspect --format '{{.Id}}' "$name") || exit 1
+for d in "$root/system.slice/docker-$id.scope" "$root/docker/$id"; do
+  [ -d "$d" ] && break
+  d=
+done
+[ -n "$d" ] && [ -r "$d/cpu.stat" ] || { echo "no cgroup for container $name (not running?)" >&2; exit 3; }
+cm=$(cat "$d/cpu.max" 2>/dev/null) || cm=
+cs=$(cat "$d/cpuset.cpus.effective" 2>/dev/null) || cs=
+nr=$(awk '$1 == "nr_throttled" { print $2 }' "$d/cpu.stat")
+us=$(awk '$1 == "throttled_usec" { print $2 }' "$d/cpu.stat")
+printf '%s\n%s\n%s\n%s\n' "$cm" "$cs" "$nr" "$us"
+SCRIPT
+)
+
+# _cgroup_json < four lines: the JSON object cgroup_stat prints (null for an empty line).
+_cgroup_json() {
+  local -a v
+  mapfile -t v
+  jq -n --arg cm "${v[0]:-}" --arg cs "${v[1]:-}" --arg nr "${v[2]:-}" --arg us "${v[3]:-}" \
+    '{nr_throttled: ($nr | if . == "" then null else tonumber end),
+      throttled_usec: ($us | if . == "" then null else tonumber end),
+      cpu_max: ($cm | if . == "" then null else . end),
+      cpuset_effective: ($cs | if . == "" then null else . end)}'
+}
+
+# cgroup_stat CONTAINER: print {nr_throttled, throttled_usec, cpu_max, cpuset_effective} as JSON
+# for a RUNNING container in the guest, read from its cgroup (CGROUP_ROOT, default /sys/fs/cgroup).
+# A stopped container has no cgroup (the kernel removes it at exit), so this returns 3 with a
+# message instead of guessing. container_run does not use it: it reads the container's own view.
+cgroup_stat() {
+  local name=${1:?cgroup_stat CONTAINER} out
+  out=$(guest sh -c "$_CGROUP_SH" sh "$name" "${CGROUP_ROOT:-/sys/fs/cgroup}") || return 3
+  _cgroup_json <<<"$out"
+}
+
+# The wrapper the container runs as its entrypoint (sh -c WRAPPER sh CMD...): CMD, then, as the
+# very last output, its own cgroup files between sentinels. With Docker's default private cgroup
+# namespace on cgroup v2 (https://docs.docker.com/engine/containers/runmetrics/) the container's
+# /sys/fs/cgroup is its own cgroup, so these are the container's own cpu.stat, cpu.max and
+# cpuset.cpus.effective, read while the cgroup still exists. The leading newline ends a workload
+# line that has no newline of its own; the parser drops exactly one empty line before BEGIN. container_run passes
+# --cgroupns=private explicitly so the daemon default cannot drift. The image needs sh and cat
+# (ubi10/ubi-minimal ships bash and coreutils-single; S5 confirms it in the guest).
+_CGROUP_WRAP=$(
+  cat <<'SCRIPT'
+"$@"; rc=$?
+printf '\n@@LOWLAT_CGROUP_BEGIN\n'
+echo "rc $rc"
+cat /sys/fs/cgroup/cpu.stat 2>/dev/null
+echo "cpu.max $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)"
+echo "cpuset.cpus.effective $(cat /sys/fs/cgroup/cpuset.cpus.effective 2>/dev/null)"
+echo @@LOWLAT_CGROUP_END
+exit $rc
+SCRIPT
+)
+
+# _container_deny OPT WHY: refuse a docker option that is not on container_run's allowlist.
+_container_deny() { die "container_run: $1 is refused: $2"; }
+
+# _guest_root: the guest checkout as an absolute path: LOWLAT_GUEST_ROOT, else the guest user's
+# home (lab.env GUEST_USER) plus GUEST_REPO.
+_guest_root() {
+  printf '%s' "${LOWLAT_GUEST_ROOT:-$(printf '/%s' home "${GUEST_USER:-fedora}" "${GUEST_REPO:-low-latency-engineering}")}"
+}
+
+# _path_canonical P: succeed if P is absolute with no //, no . or .. component (so no spelling
+# can reach a protected path lexically that the checks below do not see).
+_path_canonical() {
+  [[ $1 == /* && $1 != *//* && $1/ != */./* && $1/ != */../* ]]
+}
+
+# _system_tree P: succeed if P is / or one of the system trees (or beneath them), which a guest
+# checkout never is.
+_system_tree() {
+  case $1 in
+    / | /etc | /etc/* | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | /run | /run/* | /var | /var/* \
+      | /usr | /usr/* | /boot | /boot/* | /root | /root/* | /bin | /bin/* | /sbin | /sbin/* \
+      | /lib | /lib/* | /lib64 | /lib64/* | /opt | /opt/*) return 0 ;;
+  esac
+  return 1
+}
+
+# _container_out_dir: print the validated, guest-resolved CONTAINER_OUT_DIR, or die. It must be
+# absolute, canonical, not /, strictly under LOWLAT_GUEST_ROOT (default: the guest user's home plus GUEST_REPO),
+# and (resolved in the guest, symlinks followed) still under the resolved root.
+_container_out_dir() {
+  local out=${CONTAINER_OUT_DIR:-} root res_out res_root
+  root=$(_guest_root)
+  [[ -n $out ]] || _container_deny "a mount" "set CONTAINER_OUT_DIR to the declared output directory"
+  _path_canonical "$out" && [[ $out != / ]] || _container_deny "CONTAINER_OUT_DIR '${CONTAINER_OUT_DIR}'" "must be an absolute canonical path (no //, ., .. or relative)"
+  out=${out%/}
+  _path_canonical "$root" || die "container_run: LOWLAT_GUEST_ROOT '$root' is not an absolute canonical path"
+  _system_tree "$root" && die "container_run: LOWLAT_GUEST_ROOT '$root' is a system tree, not a checkout"
+  [[ $out == "${root%/}"/* ]] || _container_deny "CONTAINER_OUT_DIR '$out'" "is not under the guest checkout $root"
+  res_out=$(guest realpath -e -- "$out") || _container_deny "CONTAINER_OUT_DIR '$out'" "does not exist in the guest"
+  res_root=$(guest realpath -e -- "$root") || _container_deny "LOWLAT_GUEST_ROOT '$root'" "does not exist in the guest"
+  _system_tree "$res_root" && die "container_run: LOWLAT_GUEST_ROOT '$root' resolves to the system tree $res_root"
+  [[ $res_out == "$res_root"/* ]] || _container_deny "CONTAINER_OUT_DIR '$out'" "resolves to $res_out, outside $res_root"
+  printf '%s' "$res_out"
+}
+
+# _container_mount_ok SRC DST: die unless a bind mount's source is under the validated
+# CONTAINER_OUT_DIR (canonical, and still under it once symlinks are resolved in the guest) and its
+# target is canonical and not /, /proc, /sys, /dev, /run, /var/run, /etc, /bin, /sbin, /usr, /lib, /lib64,
+# /opt/venv (or beneath them: the wrapper's sh and cat must not be overmounted) or a docker/containerd socket.
+_container_mount_ok() {
+  local src=$1 dst=$2 res_out res_src
+  res_out=$(_container_out_dir)
+  _path_canonical "$src" || _container_deny "mount source '$src'" "must be an absolute canonical path (no //, ., ..)"
+  _path_canonical "$dst" || _container_deny "mount target '$dst'" "must be an absolute canonical path (no //, ., ..)"
+  case $src in *docker.sock* | *containerd*.sock | */run/*) _container_deny "mount source '$src'" "is a protected path" ;; esac
+  res_src=$(guest realpath -e -- "$src") || _container_deny "mount source '$src'" "does not exist in the guest"
+  [[ $res_src == "$res_out" || $res_src == "$res_out"/* ]] || _container_deny "mount source '$src'" "is not under CONTAINER_OUT_DIR ($res_out)"
+  case $res_src in *docker.sock* | *containerd*.sock | */run/*) _container_deny "mount source '$src'" "resolves to a protected path" ;; esac
+  dst=${dst%/}
+  case $dst in
+    "" | /proc | /proc/* | /sys | /sys/* | /dev | /dev/* | /run | /run/* | /var/run | /var/run/* | /etc | /etc/* \
+      | /bin | /bin/* | /sbin | /sbin/* | /usr | /usr/* | /lib | /lib/* | /lib64 | /lib64/* | /opt/venv | /opt/venv/* \
+      | *docker.sock* | *containerd*.sock)
+      _container_deny "mount target '${dst:-/}'" "is a protected path" ;;
+  esac
+}
+
+# container_run NAME --env-out FILE [OPTION...] -- IMAGE CMD...
+# Run CMD in IMAGE as a container named NAME INSIDE THE GUEST (docker through `guest`), wait for
+# it, print its stdout and stderr (scrubbed of host identifiers) and return its exit status.
+# Writes FILE (required) with the environment block for the report:
+#   {"runtime": {"environment": {kind: "container", guest_profile: $GUEST_PROFILE,
+#      container: {runtime docker, image name:tag, image_digest, network, cpu_quota, cpuset,
+#      seccomp}, cgroup: {cpu_max, cpuset_effective, nr_throttled, throttled_usec}}}}
+# which a caller merges into a report's runtime with `jq -s '.[0] * .[1]'`. GUEST_PROFILE
+# (snapshot/profile) must be set.
+#
+# OPTIONs are an ALLOWLIST; anything else is refused before any docker call. Both "--opt=value"
+# and "--opt value" are read, values are trimmed and compared case-insensitively, and combined
+# short flags (-dit) are expanded and refused. Allowed:
+#   --cpus N, --cpuset-cpus LIST, --memory SIZE
+#   --network|--net host|bridge|none
+#   --security-opt seccomp=NAME.json | no-new-privileges[=true]   (case-sensitive; NAME.json is read
+#       from examples/13-where-code-runs/containers/seccomp/ in the guest checkout, recorded by name)
+#   -e|--env KEY=VALUE, --hostname NAME, --init, -u|--user USER, -w|--workdir /ABS
+#   -v|--volume SRC:DST[:ro|rw|z|Z], --mount type=bind,src=SRC,dst=DST[,readonly]
+#       SRC must be under $CONTAINER_OUT_DIR (symlinks resolved in the guest); DST must be canonical
+#       and not /, /proc, /sys, /dev, /run, /var/run, /etc, /bin, /sbin, /usr, /lib, /lib64, /opt/venv
+#       (or beneath them) or a docker/containerd socket
+# --name is internal; --hostname defaults to NAME (so the container ID cannot show up as the
+# hostname); --cgroupns=private and --entrypoint sh are added (any image ENTRYPOINT is bypassed:
+# CMD is the whole command). The image needs sh and cat (see _CGROUP_WRAP).
+#
+# The block also carries `rc N`, the workload's exit status, which must equal docker wait's (a
+# workload that kills sh and forges a block cannot know it). The container's own cpu.stat, cpu.max
+# and cpuset.cpus.effective are printed by the wrapper as
+# the last output between sentinels and parsed into the block's cgroup (exact final counters,
+# not a sample); the fenced block is removed from the printed log. If the block is missing or
+# unparsable the run fails with status 4 when --cpus or --cpuset-cpus was passed (a limited lane
+# without its throttle counters is not a result); otherwise cgroup is all null.
+#
+# IMAGE is name:tag or name:tag@sha256:digest (a tagless or :latest reference is refused, as the
+# schema does). If examples/13-where-code-runs/containers/IMAGES.lock exists, the reference must
+# be listed there and its digest, when listed, must match the image; if the file is absent a
+# warning is printed. seccomp is "default" unless a seccomp FILE.json is passed (then its base
+# name). The container is removed on every exit path, a failure or a signal included, and its ID
+# is never printed. Returns 2 for a bad call (die), 3 if create/start/wait/inspect failed,
+# 4 for the missing cgroup block above, otherwise the container's status.
+container_run() (
+  local name=${1:?container_run NAME --env-out FILE [option...] -- IMAGE CMD...} image='' env_out=''
+  local seccomp=default network=bridge host_set=0 has_limit=0
+  local -a run_args=()
+  shift
+  local arg opt val have_val rest c
+  while (($#)); do
+    arg=$1
+    shift
+    [[ $arg == -- ]] && break
+    opt='' val='' have_val=0
+    if [[ $arg == --*=* ]]; then
+      opt=${arg%%=*} val=${arg#*=} have_val=1
+    elif [[ $arg == --* ]]; then
+      opt=$arg
+    elif [[ $arg =~ ^-[A-Za-z][A-Za-z]+$ && ! $arg =~ ^-[evwu] ]]; then
+      _container_deny "$arg" "combined short flags (${arg:1}) are not on the allowlist"
+    elif [[ $arg =~ ^-[evwu] ]]; then
+      c=${arg:1:1} rest=${arg:2}
+      case $c in e) opt=--env ;; v) opt=--volume ;; w) opt=--workdir ;; u) opt=--user ;; esac
+      [[ -z $rest ]] || { val=$rest have_val=1; }
+    elif [[ $arg == -* ]]; then
+      _container_deny "$arg" "not on the allowlist"
+    else
+      _container_deny "$arg" "unexpected argument before --"
+    fi
+    opt=${opt,,}
+    case $opt in
+      --init)
+        ((!have_val)) || _container_deny "$arg" "--init takes no value"
+        run_args+=(--init)
+        continue ;;
+      --env-out | --cpus | --cpuset-cpus | --memory | --network | --net | --security-opt | --env | --hostname | --user | --workdir | --volume | --mount) ;;
+      *) _container_deny "${arg%%=*}" "not on the allowlist (allowed: --cpus --cpuset-cpus --memory --network --security-opt seccomp=FILE.json -e --hostname --init --user --workdir -v --mount)" ;;
+    esac
+    if ((!have_val)); then
+      (($# >= 1)) || _container_deny "$opt" "needs a value"
+      val=$1
+      shift
+    fi
+    val=${val#"${val%%[![:space:]]*}"}
+    val=${val%"${val##*[![:space:]]}"}
+    case $opt in
+      --env-out) env_out=$val ;;
+      --cpus)
+        [[ $val =~ ^[0-9]+([.][0-9]+)?$ && $val =~ [1-9] ]] || _container_deny "--cpus $val" "not a positive number of CPUs"
+        has_limit=1; run_args+=(--cpus "$val") ;;
+      --cpuset-cpus)
+        [[ $val =~ ^[0-9]+([-,][0-9]+)*$ ]] || _container_deny "--cpuset-cpus $val" "not a CPU list"
+        has_limit=1; run_args+=(--cpuset-cpus "$val") ;;
+      --memory)
+        [[ $val =~ ^[0-9]+[bBkKmMgG]?$ && $val =~ [1-9] ]] || _container_deny "--memory $val" "not a positive size"
+        run_args+=(--memory "$val") ;;
+      --network | --net)
+        case ${val,,} in
+          host | bridge | none) network=${val,,} ;;
+          *) _container_deny "$opt $val" "only host, bridge or none" ;;
+        esac
+        run_args+=(--network "$network") ;;
+      --security-opt)
+        # Compared case-sensitively, the way docker reads it. Seccomp profiles come only from the
+        # repo's containers/seccomp/ directory in the guest, by base name.
+        if [[ $val =~ ^seccomp=([A-Za-z0-9._-]+\.json)$ ]]; then
+          seccomp=${BASH_REMATCH[1]}
+          run_args+=(--security-opt "seccomp=$(_guest_root)/examples/13-where-code-runs/containers/seccomp/$seccomp")
+        elif [[ $val == no-new-privileges || $val == no-new-privileges=true ]]; then
+          run_args+=(--security-opt no-new-privileges)
+        else
+          _container_deny "--security-opt $val" "only seccomp=NAME.json (from containers/seccomp/) and no-new-privileges"
+        fi ;;
+      --env)
+        [[ $val =~ ^[A-Za-z_][A-Za-z0-9_]*=.*$ ]] || _container_deny "--env $val" "must be KEY=VALUE (the guest's environment is not passed through)"
+        run_args+=(--env "$val") ;;
+      --hostname)
+        [[ $val =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || _container_deny "--hostname $val" "not a host name"
+        host_set=1; run_args+=(--hostname "$val") ;;
+      --user)
+        [[ $val =~ ^[A-Za-z0-9_.:-]+$ ]] || _container_deny "--user $val" "not a user"
+        run_args+=(--user "$val") ;;
+      --workdir)
+        [[ $val =~ ^/[^[:space:]]*$ && $val != *..* ]] || _container_deny "--workdir $val" "not an absolute path"
+        run_args+=(--workdir "$val") ;;
+      --volume)
+        local vsrc vdst vopts
+        IFS=: read -r vsrc vdst vopts <<<"$val"
+        [[ -z $vopts || $vopts =~ ^(ro|rw|z|Z)(,(ro|rw|z|Z))*$ ]] || _container_deny "--volume $val" "unknown mount options"
+        _container_mount_ok "$vsrc" "$vdst"
+        run_args+=(--volume "$val") ;;
+      --mount)
+        local msrc='' mdst='' kv key mtype=''
+        local -a kvs
+        IFS=, read -ra kvs <<<"$val"
+        for kv in "${kvs[@]}"; do
+          key=${kv%%=*}
+          case ${key,,} in
+            type) mtype=${kv#*=} ;;
+            src | source) msrc=${kv#*=} ;;
+            dst | destination | target) mdst=${kv#*=} ;;
+            readonly | ro) ;;
+            *) _container_deny "--mount $val" "key '$key' is not allowed" ;;
+          esac
+        done
+        [[ ${mtype,,} == bind ]] || _container_deny "--mount $val" "only type=bind"
+        _container_mount_ok "$msrc" "$mdst"
+        run_args+=(--mount "$val") ;;
+    esac
+  done
+  (($# >= 1)) || die "container_run: no IMAGE after --"
+  image=$1
+  shift
+  [[ $image != -* ]] || die "container_run: image '$image' starts with '-'"
+  ((host_set)) || run_args+=(--hostname "$name")
+  [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "container_run: bad container name '$name'"
+  [[ -n $env_out ]] || die "container_run: --env-out FILE is required"
+  [[ ${GUEST_PROFILE:-} =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] ||
+    die "container_run: set GUEST_PROFILE to snapshot/profile (like lab-ready-r04/stock-unpinned)"
+
+  # The image: name:tag, optionally @sha256:digest; never untagged or :latest.
+  local ref digest_arg='' last tag
+  [[ $image =~ ^([^[:space:]@]+)(@sha256:[0-9a-f]{64})?$ ]] || die "container_run: image '$image' is not name:tag[@sha256:digest]"
+  ref=${BASH_REMATCH[1]}
+  digest_arg=${BASH_REMATCH[2]#@}
+  last=${ref##*/}
+  [[ $last == *:* ]] || die "container_run: image '$image' has no tag (name:tag[@sha256:digest])"
+  tag=${last##*:}
+  [[ $tag != latest ]] || die "container_run: image '$image' uses :latest; pin an exact tag"
+  [[ $ref =~ ^([^[:space:]:@/]+:[0-9]+/)?[^[:space:]:@]+:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] ||
+    die "container_run: image '$ref' is not a name:tag the report schema accepts"
+  local lock=${LOWLAT_IMAGES_LOCK:-$LOWLAT_EXAMPLES/13-where-code-runs/containers/IMAGES.lock} lock_digest=''
+  if [[ -f $lock ]]; then
+    # Only field 1 (the image as container_run takes it) is matched.
+    lock_digest=$(awk -v ref="$ref" -v dg="$digest_arg" '
+      /^[[:space:]]*(#|$)/ { next }
+      { n = split($1, a, "@"); if (a[1] == ref && (dg == "" || a[2] == dg)) { found = 1; print a[2]; exit } }
+      END { exit !found }' "$lock") || die "container_run: $ref is not listed in $lock"
+    [[ $lock_digest != *PENDING* ]] || die "container_run: $ref has a PENDING digest in $lock; build the images first (containers/build-images.sh in the guest)"
+    [[ -z $lock_digest || $lock_digest =~ ^sha256:[0-9a-f]{64}$ ]] || die "container_run: $ref has a malformed digest '$lock_digest' in $lock"
+  else
+    echo "container_run: warning: no IMAGES.lock at $lock; the image is not checked against a lock" >&2
+  fi
+
+  # A name already in use is not ours to remove: refuse before the trap can know it.
+  if guest docker inspect --format '{{.Id}}' "$name" >/dev/null 2>&1; then
+    die "container_run: a container named $name already exists in the guest"
+  fi
+  local tmp created=0 rc=0
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-container.XXXXXX")
+  # shellcheck disable=SC2317,SC2329 # runs from the EXIT trap
+  _container_cleanup() {
+    # created is set before docker create, so a signal between the two still removes NAME.
+    if ((created)); then guest docker rm -f "$name" >/dev/null 2>&1 || true; fi
+    rm -rf "$tmp"
+  }
+  trap _container_cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  # create (pulls if needed), start, wait. Docker's stdout (the container ID) is discarded.
+  created=1
+  guest docker create --name "$name" --cgroupns=private --entrypoint sh "${run_args[@]}" "$image" \
+    -c "$_CGROUP_WRAP" sh "$@" >/dev/null 2> >(_scrub_ids >&2) ||
+    { echo "container_run: docker create failed for $name" >&2; return 3; }
+  guest docker start "$name" >/dev/null 2> >(_scrub_ids >&2) || { echo "container_run: docker start failed for $name" >&2; return 3; }
+  rc=$(guest docker wait "$name") || { echo "container_run: docker wait failed for $name" >&2; return 3; }
+  [[ $rc =~ ^[0-9]+$ ]] || { echo "container_run: unreadable exit status '$rc'" >&2; return 3; }
+
+  # Output: stdout minus the fenced cgroup block (which must be last), then stderr.
+  : >"$tmp/stdout.txt"; : >"$tmp/block.txt"
+  guest docker logs "$name" >"$tmp/out.txt" 2>"$tmp/err.txt" || true
+  # Only the LAST BEGIN counts and the END must be the last line, with no other sentinel between
+  # them. One empty line before BEGIN is the wrapper's own newline and is dropped; a partial last
+  # workload line stays. Everything before BEGIN is the workload's stdout.
+  local block_ok=1
+  awk -v blk="$tmp/block.txt" -v rest="$tmp/stdout.txt" '
+    { L[NR] = $0 }
+    $0 == "@@LOWLAT_CGROUP_BEGIN" { b = NR }
+    END {
+      for (i = 1; i <= NR; i++) if (i != b - 1 || L[i] != "" || !b) if (!b || i < b) print L[i] > rest
+      if (!b) exit 1
+      if (L[NR] != "@@LOWLAT_CGROUP_END" || NR == b) exit 1
+      for (i = b + 1; i < NR; i++) { if (L[i] ~ /^@@LOWLAT_CGROUP_/) exit 1; print L[i] > blk }
+    }' "$tmp/out.txt" || block_ok=0
+  _scrub_ids <"$tmp/stdout.txt" || true
+  _scrub_ids <"$tmp/err.txt" >&2 || true
+
+  local nr='' us='' cm='' cs=''
+  if ((block_ok)); then
+    # Every line is "key value" with a plain value; a key may appear once; the four we use must
+    # have the exact shapes below.
+    local key rest_of seen=' ' line
+    while IFS= read -r line; do
+      key=${line%% *}
+      rest_of=${line#"$key"}
+      rest_of=${rest_of# }
+      if [[ $seen == *" $key "* ]]; then block_ok=0; break; fi
+      seen+="$key "
+      case $key in
+        rc) [[ $rest_of == "$rc" ]] || block_ok=0 ;;
+        nr_throttled) [[ $rest_of =~ ^[0-9]+$ ]] && nr=$rest_of || block_ok=0 ;;
+        throttled_usec) [[ $rest_of =~ ^[0-9]+$ ]] && us=$rest_of || block_ok=0 ;;
+        cpu.max) [[ $rest_of =~ ^(max|[0-9]+)\ [0-9]+$ ]] && cm=$rest_of || block_ok=0 ;;
+        cpuset.cpus.effective) [[ -z $rest_of || $rest_of =~ ^[0-9]+([-,][0-9]+)*$ ]] && cs=$rest_of || block_ok=0 ;;
+        *) [[ $line =~ ^[a-z_][a-z0-9_.]*\ [0-9]+$ ]] || block_ok=0 ;;
+      esac
+      ((block_ok)) || break
+    done <"$tmp/block.txt"
+    [[ $seen == *" rc "* && $seen == *" nr_throttled "* && $seen == *" throttled_usec "* && $seen == *" cpu.max "* ]] || block_ok=0
+  fi
+  if ((!block_ok)); then
+    nr='' us='' cm='' cs=''
+    if ((has_limit)); then
+      echo "container_run: no usable cgroup block in the output of $name; a --cpus/--cpuset-cpus lane needs it (does the image have sh and cat?)" >&2
+      return 4
+    fi
+  fi
+
+  # The facts, while the container still exists.
+  local image_id
+  guest docker inspect "$name" >"$tmp/inspect.json" || { echo "container_run: docker inspect failed for $name" >&2; return 3; }
+  image_id=$(jq -er '.[0].Image' "$tmp/inspect.json") || die "container_run: inspect has no Image"
+  guest docker image inspect "$image_id" >"$tmp/image.json" || die "container_run: docker image inspect failed"
+  local digest=${digest_arg:-$lock_digest}
+  if [[ -n $digest ]]; then
+    jq -e --arg d "$digest" --arg i "$image_id" \
+      '.[0] | (.Id == $i) and ((.Id == $d) or ((.RepoDigests // []) | any(endswith("@" + $d))))' \
+      "$tmp/image.json" >/dev/null || die "container_run: the image the guest ran is not $digest (inspect says $image_id)"
+  else
+    digest=$image_id
+  fi
+  [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] || die "container_run: no usable image digest ('$digest')"
+  jq -n --slurpfile ins "$tmp/inspect.json" --arg gp "$GUEST_PROFILE" --arg image "$ref" --arg digest "$digest" \
+    --arg seccomp "$seccomp" --arg net "$network" --arg cm "$cm" --arg cs "$cs" --arg nr "$nr" --arg us "$us" '
+    ($ins[0][0].HostConfig) as $h
+    | {runtime: {environment: {
+        kind: "container",
+        guest_profile: $gp,
+        container: {
+          runtime: "docker", image: $image, image_digest: $digest,
+          network: $net,
+          cpu_quota: (if ($h.NanoCpus // 0) == 0 then null else (($h.NanoCpus / 1e9) | tostring) end),
+          cpuset: (if ($h.CpusetCpus // "") == "" then null else $h.CpusetCpus end),
+          seccomp: $seccomp},
+        cgroup: {
+          cpu_max: ($cm | if . == "" then null else . end),
+          cpuset_effective: ($cs | if . == "" then null else . end),
+          nr_throttled: ($nr | if . == "" then null else tonumber end),
+          throttled_usec: ($us | if . == "" then null else tonumber end)}}}}' >"$env_out.tmp" ||
+    die "container_run: jq could not build the environment block"
+  mv "$env_out.tmp" "$env_out"
+  return "$rc"
+)
+
+# interleave_env N LANE...: run N alternations over named environment lanes (host, vm, container)
+# in the order A B C A B C ... by calling the caller's `run_lane LANE ALT` for each (ALT counts
+# alternations from 1). The order is interleave's, so lanes share the machine's drift. A failing
+# run_lane stops the sequence and its status is returned.
+#   run_lane() { lane_run "$1" "$2"; }
+#   interleave_env 3 host vm container
+interleave_env() {
+  local n=${1:?interleave_env N LANE...} lane i=0 lanes
+  shift
+  (($#)) || die "interleave_env: no lanes"
+  [[ $n =~ ^[1-9][0-9]*$ ]] || die "interleave_env: N must be a positive integer, got '$n'"
+  for lane in "$@"; do
+    [[ $lane =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "interleave_env: bad lane name '$lane'"
+  done
+  declare -F run_lane >/dev/null || die "interleave_env: define run_lane LANE ALT first"
+  lanes=$#
+  # The order is read on fd 3, not stdin: a lane that reads stdin (ssh into the guest does) would
+  # otherwise swallow the rest of the order and the loop would end after the first lane.
+  while IFS= read -r lane <&3; do
+    run_lane "$lane" $((i / lanes + 1)) || return $?
+    i=$((i + 1))
+  done 3< <(interleave "$n" "$@")
+}
+
+# strace_summary OUT -- CMD...: run CMD under `strace -f -c` (syscall counts and time, children
+# followed; our own child, so no privilege) and write only the summary table to OUT, scrubbed
+# through scripts/scrub-host-ids.py --filter. The raw strace file OUT.raw is removed on every
+# path, a failure or a signal included. CMD's own output passes through.
+# Returns CMD's status, except 77 (the automake "skipped" code, so a CMD that exits 3 is not taken
+# for a skip) when strace is not installed or kernel.yama.ptrace_scope (read only) is 2 or more,
+# with the reason on stderr; 1 when strace wrote no summary.
+strace_summary() (
+  out=${1:?strace_summary OUT -- CMD...}
+  shift
+  [[ ${1:-} == -- ]] || die "usage: strace_summary OUT -- CMD..."
+  shift
+  (($#)) || die "strace_summary: no command"
+  command -v strace >/dev/null 2>&1 || { echo "strace_summary: skipped, strace is not installed" >&2; return 77; }
+  scope=$(cat /proc/sys/kernel/yama/ptrace_scope 2>/dev/null || echo 0)
+  if [[ $scope =~ ^[0-9]+$ ]] && ((scope >= 2)); then
+    echo "strace_summary: skipped, kernel.yama.ptrace_scope is $scope (tracing needs privilege)" >&2
+    return 77
+  fi
+  raw=$out.raw
+  trap 'rm -f "$raw"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  rc=0
+  strace -f -c -o "$raw" "$@" || rc=$?
+  if [[ -s $raw ]]; then
+    sed -n '/^% time/,$p' "$raw" | _scrub_ids >"$out"
+  else
+    : >"$out"
+  fi
+  [[ -s $out ]] || { echo "strace_summary: strace wrote no summary for '$*'" >&2; return 1; }
+  return "$rc"
+)
+
+# from_samples SAMPLES SIDECAR OUT: convert the raw little-endian int64 nanosecond file a
+# free-threaded process wrote with array('q').tofile, plus its JSON sidecar (example, variant,
+# count, dropped, build/runtime.python_build, gil_enabled false, ...), to a lowlat-report/1 JSON
+# at OUT, through `lowlat-report from-samples`. The measured process never imports lowlat_measure
+# (that re-enables the GIL); this runs in the ordinary GIL environment. Needs LOWLAT_PROFILE.
+from_samples() {
+  (($# == 3)) || die "usage: from_samples SAMPLES SIDECAR OUT"
+  [[ -f $1 && -f $2 ]] || die "from_samples: missing $1 or $2"
+  uvrun lowlat-report from-samples "$(realpath "$1")" "$(realpath "$2")" "$(realpath -m "$3")" >/dev/null || die "from_samples: conversion failed for $1"
+}

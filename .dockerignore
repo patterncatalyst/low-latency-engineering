@@ -1,0 +1,18 @@
+# Build context of the Ch13 images is the repository root (examples/13-where-code-runs/containers).
+# Send only what the Containerfiles COPY, minus build output, virtualenvs and results.
+*
+!versions.env
+!scripts/deps
+!contracts
+!examples
+**/build
+**/target
+**/.venv*
+**/results
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+*.local.md
+**/.scratch
+**/cmake-build-*

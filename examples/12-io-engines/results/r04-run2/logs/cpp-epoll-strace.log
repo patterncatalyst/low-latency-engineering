@@ -1,0 +1,8 @@
+pinned pid=3773091 tid=3773092 cpu=1 role=receiver-0
+placement-ready
+released
+receive: epoll parcels 40000 dropped 0 syscalls 79813 (epoll_wait 39813 recvmsg 40000 recvmmsg 0 io_uring_enter 0) cqes 0 handoffs 0 start skew 0 ns
+12-io-engines            cpp  epoll            count=    40000 dropped=     0 p50=     72.1us p90=     93.1us p99=    117.3us p99.9=    203.4us max=     406.3us
+report: <repo>/examples/12-io-engines/results/r04-run2/cpp/epoll-strace.json
+    61.0us p99=     62.3us p99.9=     66.6us max=      78.5us
+line-simulator           cpp  emit-lateness    count=    10000 dropped=     0 p50=     51.9us p90=     60.0us p99=     61.2us p99.9=     66.5us max=      95.1us

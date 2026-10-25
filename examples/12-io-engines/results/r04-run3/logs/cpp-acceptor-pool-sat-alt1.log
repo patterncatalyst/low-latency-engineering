@@ -1,0 +1,12 @@
+pinned pid=67272 tid=67279 cpu=4 role=worker-2
+pinned pid=67272 tid=67277 cpu=2 role=worker-0
+pinned pid=67272 tid=67280 cpu=5 role=worker-3
+pinned pid=67272 tid=67276 cpu=1 role=acceptor
+pinned pid=67272 tid=67278 cpu=3 role=worker-1
+placement-ready
+released
+receive: acceptor-pool parcels 624000 dropped 0 syscalls 42654 (epoll_wait 0 recvmsg 0 recvmmsg 0 io_uring_enter 42654) cqes 624000 handoffs 624000 start skew 794 ns
+12-io-engines            cpp  acceptor-pool    count=   624000 dropped=     0 p50=     56.8us p90=     73.8us p99=     84.2us p99.9=   1075.2us max=    1913.9us
+report: <repo>/examples/12-io-engines/results/r04-run3/cpp/acceptor-pool-sat-alt1.json
+p99.9=     61.3us max=     193.0us
+line-simulator           cpp  emit-lateness    count=   156000 dropped=     0 p50=     29.1us p90=     52.7us p99=     53.0us p99.9=    119.7us max=    1679.4us

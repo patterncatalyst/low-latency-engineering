@@ -1,0 +1,46 @@
+{
+  "cgroup": {
+    "cpu_max": "max 100000",
+    "cpu_stat": {
+      "burst_usec": 0,
+      "core_sched.force_idle_usec": 0,
+      "nice_usec": 23556229292,
+      "nr_bursts": 0,
+      "nr_periods": 0,
+      "nr_throttled": 0,
+      "system_usec": 19965331030,
+      "throttled_usec": 0,
+      "usage_usec": 120598992737,
+      "user_usec": 100633661706
+    },
+    "cpuset_count": 16,
+    "cpuset_effective": "0-15",
+    "quota_cpus": null
+  },
+  "cpus": {
+    "affinity_count": 16,
+    "hardware_concurrency": 16,
+    "online": "0-15",
+    "online_count": 16
+  },
+  "errors": [],
+  "example": "13-where-code-runs",
+  "io_uring": {
+    "setup_errno": 0,
+    "setup_result": "ok"
+  },
+  "language": "cpp",
+  "libc": {
+    "glibc": "2.43"
+  },
+  "pool_size": {
+    "by_hardware_concurrency": 16,
+    "cgroup_aware": 16
+  },
+  "schema": "lowlat-place-probe/1",
+  "runtime": {
+    "environment": {
+      "kind": "host"
+    }
+  }
+}

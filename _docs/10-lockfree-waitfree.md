@@ -17,11 +17,11 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-Four of the tunnel's cameras each read every parcel, and every read lands in one tracker log. Each camera thread takes the next slot number, writes its scan there and publishes it. If the thread holding the lock is descheduled, three cameras wait while the belt keeps moving. A parcel has 480 ms from scan to divert (1.2 m at 2.5 m/s), and a stall charges every parcel behind it (Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*).
+Four of the tunnel's cameras each read every parcel, and every read lands in one tracker log. Each camera thread takes the next slot number, writes its scan there and publishes it. If the thread holding the lock is descheduled, three cameras wait while the belt keeps moving. A parcel has 480 ms from scan to divert (1.2 m at 2.5 m/s), and a stall charges every parcel behind it, because each parcel's latency runs from its scheduled emission.
 
 Two more places wait. Two induction stations feed one gap on the belt, and exactly one of them may take it. And the diverter reads a parcel's state while the tracker rewrites it 1,000,000 times a second.
 
-[Chapter 7, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity*]({{ '/docs/07-offheap-lockfree/' | relative_url }}), built single-producer rings, and [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), priced a shared cache line. This chapter takes the waiting out of many-writer coordination.
+A single-producer ring needs no claim, because one writer owns the cursor. With several writers every claim contends for one counter on one cache line, and a store to a shared line takes it away from every other core. This chapter takes the waiting out of many-writer coordination.
 
 The code is in `examples/10-lockfree-waitfree/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -270,7 +270,7 @@ examples/10-lockfree-waitfree/verify.sh
 
 `ALLOW_BUSY=1` measures on a loaded host; `RECHECK=results/<run-id>` re-evaluates committed reports. A latency ratio is the median of three alternations inside one run.
 
-Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, GCC 16.2, Python 3.14.8. Threads sit on distinct physical cores other than CPU 0 (jcstress picks its own CPUs), placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Python 3.14.8. Threads sit on distinct physical cores other than CPU 0 (jcstress picks its own CPUs), placed with `sched_setaffinity`: an experiment control, not isolation. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
 
 ### Claims
 
@@ -313,7 +313,7 @@ The asserted ratio is 205.5-231.0x in C++ and 34.5-37.1x in Java (bound 3x). The
 
 Four threads claim 400,000 slots. `threading.Lock` lost or duplicated 0 claims in the GIL build and in the free-threaded build (3.14.8+freethreaded, GIL off from start to end); `itertools.count` lost 0 in both (observed). Without the lock, `value = n; n += 1` loses 0 claims under the GIL and 97,002-116,017 of 400,000 free-threaded (exact, asserted at least 1). The GIL doesn't make the read-modify-write atomic; it makes a switch inside it rare, because the interpreter switches threads every 5 ms (`sys.getswitchinterval()`). The lock's p99 is 664-686 ns under the GIL and 13.0-13.4 microseconds free-threaded (observed).
 
-The measured process can't import the measurement kit: its `pyhdrh` extension doesn't declare free-threading support, so importing it turns the GIL back on, and the run would measure a free-threaded build with a GIL. `sync-py measure` writes raw samples and refuses to finish with the GIL on; a separate step converts them. Appendix E, *Free-threaded Python vs the GIL*, treats the build in full.
+The measured process can't import the measurement kit: its `pyhdrh` extension doesn't declare free-threading support, so importing it turns the GIL back on, and the run would measure a free-threaded build with a GIL. `sync-py measure` writes raw samples and refuses to finish with the GIL on; a separate step converts them.
 
 ### The line
 
@@ -337,15 +337,15 @@ With C2's default loop unrolling, adjacent volatile stores in the JMH loop share
 - A seqlock's writer never waits: p99 205.5-231.0x lower in C++, 34.5-37.1x in Java, 0 torn snapshots.
 - A monotonic sequence avoids ABA and reclamation; the GIL build hides a race the free-threaded build shows.
 
-The next chapter, *Stackful vs stackless: threads and fibers vs event loops and coroutines* (Part 4), asks what runs the threads these structures coordinate.
-
 ## For deeper coverage
 
 - Williams, *C++ Concurrency in Action* (Manning), and Grimm, *Concurrency with Modern C++* (Leanpub), for atomics and memory orders.
-- Enberg, *Latency* (Manning), as further reading.
+- Enberg, *Latency* (Manning).
 - [Chapter 7, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity*]({{ '/docs/07-offheap-lockfree/' | relative_url }}), for SPSC rings and padding, and [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), for false sharing.
-- Chapter 11, *Stackful vs stackless: threads and fibers vs event loops and coroutines*, and Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core* (Part 4).
-- Appendix E, *Free-threaded Python vs the GIL*.
+- [Chapter 11, *Stackful vs stackless: threads and fibers vs event loops and coroutines*]({{ '/docs/11-stackful-stackless/' | relative_url }}), and [Chapter 12, *I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core*]({{ '/docs/12-io-engines/' | relative_url }}), for what runs the threads these structures coordinate.
+- Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission* (Part 1), for why a stall charges every parcel behind it.
+- Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5), for CPU isolation, which the thread placement here isn't.
+- Appendix E, *Free-threaded Python vs the GIL*, for the free-threaded build in full.
 
 ---
 

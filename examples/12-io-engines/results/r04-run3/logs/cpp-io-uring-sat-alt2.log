@@ -1,0 +1,8 @@
+pinned pid=67656 tid=67659 cpu=1 role=receiver-0
+placement-ready
+released
+receive: io-uring parcels 720000 dropped 0 syscalls 50185 (epoll_wait 0 recvmsg 0 recvmmsg 0 io_uring_enter 50185) cqes 720000 handoffs 0 start skew 0 ns
+12-io-engines            cpp  io-uring         count=   720000 dropped=     0 p50=     59.6us p90=     70.7us p99=     80.8us p99.9=    225.7us max=     495.6us
+report: <repo>/examples/12-io-engines/results/r04-run3/cpp/io-uring-sat-alt2.json
+ p99=     52.8us p99.9=     65.3us max=     257.9us
+line-simulator           cpp  emit-lateness    count=   180000 dropped=     0 p50=     30.1us p90=     52.4us p99=     52.8us p99.9=     60.6us max=     260.5us

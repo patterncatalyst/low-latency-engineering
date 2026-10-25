@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.patterncatalyst.lowlat</groupId>
+    <artifactId>lowlat-examples</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>io-engines-java</artifactId>
+  <name>io-engines-java (Ch12 plain-JDK micro lane and open-loop client, see ../README.md)</name>
+
+  <properties>
+    <shade.mainClass>io.patterncatalyst.lowlat.ch12.Main</shade.mainClass>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.openhft</groupId>
+      <artifactId>affinity</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>measure-java</artifactId>
+    </dependency>
+    <!-- Test only: the Lanes class of the line consumer is the reference the in-place lane decode is checked against. -->
+    <dependency>
+      <groupId>io.patterncatalyst.lowlat</groupId>
+      <artifactId>line-consumer-java</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>io-engines-java</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

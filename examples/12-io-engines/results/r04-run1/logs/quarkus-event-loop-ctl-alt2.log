@@ -1,0 +1,6 @@
+client: event-loop at 1850 Hz for 5 s (warm-up 3 s); Little's law: 1850 Hz x 2 ms = 3.7 in flight, worker pool 8
+12-io-engines              java   event-loop               9250        0     2367.5     2893.8     3348.5     6766.6     8097.8
+12-io-engines              java   client-lateness          9250        0        0.2        0.4        3.4      580.1     4296.7
+client: sent 9250 completed 9250 errors 0 max in flight 15 (Little's law 3.7) late starts over 1 ms 7
+service: service_requests 9250 service_in_handler_max 14 worker_active_max 0 worker_threads_seen 0 event_loop_threads_seen 4 carrier_threads 0 blocked_thread_warnings 0 blocked_thread_warnings_in_run 0
+report: <repo>/examples/12-io-engines/results/r04-run1/quarkus/event-loop-ctl-alt2.json

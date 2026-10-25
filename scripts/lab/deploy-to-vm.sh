@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# deploy-to-vm.sh — rsync the repo's examples/ and scripts/ into the lab guest.
+# deploy-to-vm.sh — rsync the repo's examples/, scripts/ and contracts/ (plus versions.env and
+# .dockerignore, the container build context) into the lab guest.
 #
 #   ./deploy-to-vm.sh                       # to <prefix>-target:~/low-latency-engineering/
 #   ./deploy-to-vm.sh lowlat-target         # explicit guest
@@ -19,17 +20,25 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 REMOTE_DIR="${REMOTE_DIR:-low-latency-engineering}" # relative to the guest user's home
 DEST="$(ssh_dest "$VM")"
 
-for d in examples scripts; do
+for d in examples scripts contracts; do
   [[ -d "$REPO_ROOT/$d" ]] || die "missing $REPO_ROOT/$d"
 done
+for f in versions.env .dockerignore; do
+  [[ -f "$REPO_ROOT/$f" ]] || die "missing $REPO_ROOT/$f"
+done
 
-echo "→ syncing examples/ and scripts/ to ${DEST}:${REMOTE_DIR}"
+echo "→ syncing examples/, scripts/, contracts/, versions.env and .dockerignore to ${DEST}:${REMOTE_DIR}"
 # shellcheck disable=SC2029  # REMOTE_DIR is meant to expand on the client
 ssh "${SSH_OPTS[@]}" "$DEST" "mkdir -p '${REMOTE_DIR}'"
+# --delete wipes anything in the guest under examples/ that the host tree lacks, including results
+# the guest produced (examples/*/results/...) and IMAGES.lock digests written by build-images.sh in
+# the guest. Fetch those first (see scripts/lab/README.md), then redeploy.
 printf -v rsh '%q ' ssh "${SSH_OPTS[@]}"
 rsync -az --delete \
   -e "$rsh" \
   --exclude '.git' --exclude 'target/' --exclude 'build/' --exclude '__pycache__' --exclude '.venv' \
-  "$REPO_ROOT/examples" "$REPO_ROOT/scripts" \
+  --exclude 'results/latest/' --exclude '*.local.md' \
+  "$REPO_ROOT/examples" "$REPO_ROOT/scripts" "$REPO_ROOT/contracts" \
+  "$REPO_ROOT/versions.env" "$REPO_ROOT/.dockerignore" \
   "${DEST}:${REMOTE_DIR}/"
 echo "deployed to $VM:$REMOTE_DIR"

@@ -63,7 +63,7 @@ scripts/lab/lab-up.sh                       # start, wait for ssh over vsock
 scripts/lab/lab-status.sh                   # state, ssh destination, readiness, snapshots
 scripts/lab/lab-ssh.sh [vm [command...]]   # ssh as fedora (passwordless sudo)
 scripts/lab/deploy-to-vm.sh                 # rsync examples/ and scripts/ into the guest
-scripts/lab/revert-vm.sh lowlat-target [snapshot]   # undo a destructive run
+scripts/lab/revert-vm.sh lowlat-target [snapshot]   # undo a destructive run; resets the guest clock
 scripts/lab/lab-down.sh                     # graceful shutdown; FORCE=1 to power off
 scripts/lab/destroy-vm.sh lowlat-target     # tear down, disks included
 ```
@@ -72,7 +72,14 @@ scripts/lab/destroy-vm.sh lowlat-target     # tear down, disks included
 cloud-init user-data and exits without touching libvirt.
 
 Snapshot names: `lab-ready` (tooled baseline) is the default. Later
-snapshots such as `lab-ready-rt` are passed as the second argument.
+snapshots are passed as the second argument:
+
+| Snapshot | Guest |
+|---|---|
+| `lab-ready` | stock Fedora kernel, Docker, tooled baseline (no Temurin) |
+| `lab-ready-rt` | PREEMPT_RT kernel, no isolation, no pin |
+| `lab-ready-iso` | RT kernel + `isolate-cpu3` + vcpupin + Temurin |
+| `lab-ready-r04` | the `stock-unpinned` "ordinary VM" (r04, D8): stock kernel, 4 vCPU unpinned, no isolation, Temurin, `strace`, `perf`, `stress-ng`, Docker with the Ch13 images |
 
 ## Sizing
 
@@ -98,8 +105,10 @@ With passt networking the peer cannot reach the target directly (see above).
 ## Measurement labelling
 
 Numbers measured in the guest are labelled `vm` and are never compared with
-bare-metal numbers. Record the guest profile (vCPUs, tuned profile, pinning,
-isolation) with every result.
+bare-metal numbers, with one exception: Chapter 13 (D9; see `CLAUDE.md`) compares
+host, VM and container lanes only within one interleaved run on this machine, every
+number lane-labelled; host vs VM is observed, never asserted, and the chapter says
+what the VM can't show. Record the guest profile (vCPUs, tuned profile, pinning, isolation) with every result.
 
 ## Conventions
 
@@ -187,3 +196,46 @@ scripts/lab/revert-vm.sh lowlat-target lab-ready-rt    # RT kernel, no isolation
 scripts/lab/apply-guest-profile.sh --remove            # or undo in place
 scripts/lab/pin-vcpu.sh --remove
 ```
+
+## The ordinary VM (`stock-unpinned`, snapshot `lab-ready-r04`)
+
+Chapter 13 needs a guest that looks like a cloud VM: the pinned stock Fedora 44 kernel
+(`LAB_STOCK_KERNEL` in `versions.env`, the same NVR the RT kernel is rebuilt from),
+4 vCPUs unpinned, no `isolcpus`/`nohz_full`/`rcu_nocbs`, the guest's tuned profile recorded and
+left alone, the pinned Temurin, `strace`, `perf`, `stress-ng`, and Docker Engine with the
+Ch13 images. `guest-profiles/stock-unpinned.conf` documents it.
+`scripts/lab/apply-guest-profile.sh stock-unpinned` selects the boot entry of the pinned kernel,
+strips any isolation argument from it, and reboots into it when the guest runs another kernel
+(the entry must be the default), then verifies `uname -r` and `/proc/cmdline`. When both already
+match it changes nothing and doesn't reboot. The profile adds no arguments, so `--remove` is
+refused. Start from `lab-ready`, not `lab-ready-rt`. The cloud image ships an older kernel, so
+the pinned one is installed first.
+
+```bash
+scripts/lab/revert-vm.sh lowlat-target lab-ready                        # 1
+scripts/lab/lab-up.sh                                                   # 2
+scripts/lab/pin-vcpu.sh --remove                                        # 3: removes any <cputune>
+scripts/lab/install-guest-tools.sh                                      # 4: Temurin, uv, stress-ng, strace, perf
+source versions.env                                                     # 5: the pinned stock kernel, in the guest only
+scripts/lab/lab-ssh.sh lowlat-target "sudo dnf -y install kernel-$LAB_STOCK_KERNEL kernel-core-$LAB_STOCK_KERNEL kernel-modules-$LAB_STOCK_KERNEL"
+scripts/lab/apply-guest-profile.sh stock-unpinned                       # 6: reboots into it, verifies
+scripts/lab/deploy-to-vm.sh                                             # 7: examples, scripts, contracts, versions.env
+scripts/lab/lab-ssh.sh lowlat-target 'cd low-latency-engineering && examples/13-where-code-runs/containers/build-images.sh'   # 8
+scripts/lab/lab-ssh.sh lowlat-target 'cat low-latency-engineering/examples/13-where-code-runs/containers/IMAGES.lock' > examples/13-where-code-runs/containers/IMAGES.lock   # 9
+scripts/lab/lab-down.sh && scripts/lab/lab-up.sh                        # 10: a full cycle, so the live XML has no <cputune>
+scripts/check-prereqs.sh --vm                                           # 11: the r04 checks
+scripts/lab/snapshot-vm.sh lowlat-target lab-ready-r04                  # 12
+scripts/lab/lab-down.sh                                                 # 13
+```
+
+Step 10 is needed because a revert restores the snapshot's live `vcpupin` element, which
+`pin-vcpu.sh --remove` can't clear in a running domain. Step 9 matters because `build-images.sh`
+rewrites `IMAGES.lock` in the guest only, and `deploy-to-vm.sh` (`rsync --delete`) would overwrite
+the guest copy from the host tree: pull the lock back before any redeploy, and fetch any other
+guest-produced results first.
+
+`check-prereqs.sh --vm` fails on any kernel but the pinned stock one, on isolation arguments, on a
+stopped Docker service, on a user outside the `docker` group, and on any image whose ID differs from
+`examples/13-where-code-runs/containers/IMAGES.lock`; it records the Docker Engine version, the
+active tuned profile, `kernel.io_uring_disabled` and whether the guest has a virtual PMU
+(`perf stat -e cycles:u true`). `--vm --rt` is the PREEMPT_RT variant.

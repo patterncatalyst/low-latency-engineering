@@ -95,6 +95,26 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
   - `aot`: `cache` (string), `mode` (string), `used` (boolean)
   - `ctx_switches`: `voluntary`, `involuntary` (integers)
   - `alloc_stalls`: `count`, `max_ns` (integers; `jdk.ZAllocationStall` events, written by `JfrPauses`)
+  - `placement`: `cpus` (non-empty array of distinct logical CPU numbers the measured threads were pinned
+    to), `distinct_cores`, `smt_siblings` (booleans). `distinct_cores: true` with `smt_siblings: true`
+    contradicts itself and fails.
+  - `hw_counters`: `source` (`perf`, `cachegrind` or `perfnorm`), `ops` (integer, at least 1) and
+    `per_op` (event name to count per operation, at least one entry). Never a time-average.
+  - `counters`: exact event counts, name to non-negative integer (CAS failures, max retries, torn
+    reads, `io_uring_setup` errno).
+  - `python_build`: `gil` or `free-threaded`, for Python lanes.
+  - `environment` (r04): where the measured program ran.
+    - `kind`: `host`, `vm` or `container`. Required.
+    - `guest_profile`: guest snapshot and profile, like `lab-ready-r04/stock-unpinned`. Required for `vm`
+      and `container`, forbidden for `host`.
+    - `container`: required for `container`, forbidden for `host` and `vm`. All fields are required:
+      `runtime` (`docker`), `image` (exact tag; `:latest` and tagless references fail, and a registry
+      port must be followed by `/`), `image_digest` (`sha256:` plus 64 lowercase hex), `network`
+      (`host`, `bridge` or `none`), `cpu_quota` (CPUs like `2` or `1.5`, or null), `cpuset` (like `2,3`,
+      or null) and `seccomp` (`default` or a profile file name ending in `.json`; `unconfined` fails).
+    - `cgroup`: optional. When present, all four keys are required and each may be null when its file
+      wasn't readable: `cpu_max`, `cpuset_effective` (strings) and `nr_throttled`, `throttled_usec`
+      (non-negative integers from `cpu.stat`).
 
   No key anywhere inside `runtime` may name a mean or an average. The schema matches the key
   case-insensitively and rejects `mean`, `avg` and `average` as a whole key or as a part of a

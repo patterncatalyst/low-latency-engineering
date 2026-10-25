@@ -57,7 +57,7 @@ A run of 10,000 parcels puts 100 above p99, 10 above p99.9 and one at the max. D
 
 ### Why the report never carries a mean
 
-A mean collapses a distribution into one value. In the bimodal workload it would fall between the two modes and describe neither group. It would also move whenever the slow fraction moved. Every report in this book therefore holds percentiles and a maximum. A time-average appears only in Chapter 2, labelled as a modelling input for Little's Law.
+A mean collapses a distribution into one value. In the bimodal workload it would fall between the two modes and describe neither group. It would also move whenever the slow fraction moved. Every report in this book therefore holds percentiles and a maximum. A time-average appears only as a labelled modelling input for Little's Law.
 
 ### The budget is a tail requirement
 
@@ -513,11 +513,11 @@ The C++ bimodal row of `r02-run2`, from its stored report, shows the shape. It i
 
 p50 and p90 differ by 69.8 us, p90 and p99 by more than 1.9 ms. p99.9 and max extend past the slow-path length because of queueing.
 
-The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 8.3 to 23.5 ms while C++ stays below 0.5 ms. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, treats the cause; p99.9 exposed it and p50 did not.
+The Java runs show a second tail effect. Their notes record `JIT not warmed: first parcels included`, and per-parcel p99.9 reaches 8.3 to 23.5 ms while C++ stays below 0.5 ms. The first parcels ran interpreted or C1-compiled, before the JIT's C2 code was ready; p99.9 exposed it and p50 didn't.
 
 ### The median itself moved
 
-The per-parcel median isn't a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 164 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed, yet one binary's median moved by up to 2.2 times. Across the nine per-parcel runs on this untuned host, p50 spread from 85 to 188 us. An interleaved A/B of the trees before and after the last code change, on the Chapter 0 and 5 consumers, found p50 varying alike in both (`examples/05-jvm-costs/results/r02-ab/`); the cause is unidentified.
+The per-parcel median isn't a constant of the code. It moved between runs of the same binary. C++ per-parcel p50 was 164 us in `r02-run1`, 157 us in `r02-run2` and 160 us in `r02-run3`; Python went 156, 185 and 154 us; Java 112, 188 and 85 us. Nothing in the program changed, yet one binary's median moved by up to 2.2 times. Across the nine per-parcel runs on this untuned host, p50 spread from 85 to 188 us. An interleaved A/B of the trees before and after the last code change found p50 varying alike in both (`examples/05-jvm-costs/results/r02-ab/`); the cause is unidentified.
 
 Variants in one run differ too: in `r02-run2` the C++ per-parcel p50 was 157 us and the bimodal p50, which does strictly more work, 95 us.
 
@@ -537,8 +537,6 @@ Each criterion pairs the percentiles with an independent measurement. Throughput
 - A shared receive loop takes a handler that reports each parcel done, now or later. One that holds parcels needs a drain hook. In C++ the handler is a template parameter, so the hook adds no indirect call.
 - Simulate a slow path with a calibrated busy loop, not a sleep.
 - A median isn't stable on an untuned host. Compare within one run and record the profile.
-
-Chapter 2 models these effects with Little's Law and Amdahl's Law.
 
 ## For deeper coverage
 

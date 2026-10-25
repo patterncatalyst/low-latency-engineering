@@ -17,11 +17,11 @@ GitHub release; no tarball is built.
   examples page, validation, CI, idiom and voice review, re-measurement). Step status: `_plans/r01-plan.md`.
   Claim log: `_plans/reconciliation-plan.md`.
 - **r02: complete** (merged in #4, tag `r02.x`). Part 2 (Ch5–8). Step status: `_plans/r02-plan.md`.
-- **r03 (`release/r03`): in progress.** Part 3 (Ch9–10). Steps S0 to S16 done (examples 09 and 10, measured on
-  `r03-run1..3`, Ch9 and Ch10 written and validated, figures, site wiring, CI and `validate.py` checks, idiom and
-  voice review including S14b, the S15 re-measure of 09, Opus validation); S17 (PR, tag, release) remains. Step status: `_plans/r03-plan.md`. Claim log:
-  `_plans/reconciliation-plan.md`.
-- Everything after r03 is planned, not started.
+- **r03: complete** (merged in #6, tag `r03.x`). Part 3 (Ch9–10). Step status: `_plans/r03-plan.md`.
+- **r04 (`release/r04`): in progress.** Part 4 (Ch11–13): chapters, examples 11–13 (measured as `r04-run1..3` at
+  commit 4434ed1) and figures 11.1–13.3 are written and wired into the site; checks and validation remain. Step status:
+  `_plans/r04-plan.md`. Claim log: `_plans/reconciliation-plan.md`.
+- Everything after r04 is planned, not started.
 
 ## Chapter numbering (resolves PRD §7 + §7a)
 
@@ -73,8 +73,8 @@ infrastructure plus the chapters that explain it:
 | r00 | Scaffold, outline, plan, Figure 0.1 | `release/r00` |
 | r01 | Line simulator, measurement kit, profile capture, Ch0, Ch1–4 | VM lab provisioned (LAB_PREFIX=lowlat) as part of Ch0. **Complete: merged in #3, tag `r01.x`** |
 | r02 | Part 2 (Ch5–8): the low-latency JVM track | Java-led; C++ comparisons inline. **Complete: merged in #4, tag `r02.x`** |
-| r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language |
-| r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers |
+| r03 | Part 3 (Ch9–10): the in-flight parcel tracker hot path | tri-language. **Complete: merged in #6, tag `r03.x`** |
+| r04 | Part 4 (Ch11–13): threading, I/O engines, where the code runs | Ch13 needs VM + container numbers. Chapters 11–13, examples 11–13 and figures 11.1–13.3 shipped on the branch. **In progress on `release/r04`** |
 | r05 | Part 5 (Ch14–18): PREEMPT_RT, partitioning, jitter, kernel bypass, latency config as code | VM only; before/after `cyclictest` every chapter |
 | r06 | Part 6a (Ch19–22): channel strategy, gRPC, DDS, Aeron + SBE | Appendix B drafted alongside Ch19 |
 | r07 | Part 6b (Ch23–25): FIX/Artio, WebSockets + Kafka, Modbus + D-Bus | Appendix D (PTP) with Ch21 follow-up |

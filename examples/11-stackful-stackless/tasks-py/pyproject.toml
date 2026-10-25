@@ -1,0 +1,28 @@
+# Ch11 Python lane. The tests run under both interpreter builds:
+#
+#   GIL (default workspace run):  uv run pytest 11-stackful-stackless/tasks-py
+#   free-threaded 3.14.9:         LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$PWD/.venv-ft \
+#                                   uv run --python 3.14.9t --all-packages pytest 11-stackful-stackless/tasks-py
+#
+# (from examples/; the free-threaded interpreter is a user-local `uv python install 3.14.9t`).
+# With LOWLAT_EXPECT_FREE_THREADED=1 a test asserts sys._is_gil_enabled() is False, so a silent
+# fall back to the GIL build fails the run instead of passing as a free-threaded one.
+[project]
+name = "lowlat-tasks"
+version = "1.0.0"
+description = "Ch11: stackful and stackless tasks, Python lane (threads against asyncio tasks), GIL and free-threaded"
+requires-python = ">=3.14"
+# The measuring command (`tasks-py measure`) imports nothing from lowlat-measure, whose HdrHistogram
+# extension re-enables the GIL under a free-threaded interpreter. The raw samples it writes are turned
+# into reports by `lowlat-report from-samples`, in the GIL workspace environment.
+dependencies = []
+
+[project.scripts]
+tasks-py = "lowlat_tasks.cli:main"
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lowlat_tasks"]

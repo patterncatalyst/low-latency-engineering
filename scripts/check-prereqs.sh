@@ -7,7 +7,8 @@
 # or stops a VM.
 #
 #   scripts/check-prereqs.sh          # host checks
-#   scripts/check-prereqs.sh --vm     # checks inside the lowlat-target guest
+#   scripts/check-prereqs.sh --vm     # checks inside the lowlat-target guest (r04: stock kernel)
+#   scripts/check-prereqs.sh --vm --rt   # the same guest on the PREEMPT_RT kernel (r02/r03)
 #   scripts/check-prereqs.sh -h
 set -euo pipefail
 
@@ -19,6 +20,7 @@ LOWLAT_PREFIX="${LOWLAT_PREFIX:-$HOME/.cache/lowlat/prefix}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LAB_SSH="$SCRIPT_DIR/lab/lab-ssh.sh"
 LAB_VM="${TARGET_VM:-lowlat-target}"
+IMAGES_LOCK="$SCRIPT_DIR/../examples/13-where-code-runs/containers/IMAGES.lock"
 MIN_CMAKE="4.3"
 
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -31,14 +33,20 @@ N_PASS=0; N_WARN=0; N_FAIL=0
 
 usage() {
   cat <<'USAGE'
-Usage: check-prereqs.sh [--vm] [-h|--help]
+Usage: check-prereqs.sh [--vm [--rt]] [-h|--help]
 
   (no flag)   check the host: OS, C++23 toolchain, CMake, JDK 25, Maven,
               Python 3.14, uv, pinned protoc, Docker Engine, KVM/libvirt,
               perf, async-profiler (optional), jq, rsync, SSH key
-  --vm        check the lab guest (lowlat-target) over SSH instead: PREEMPT_RT
-              kernel, pinned Temurin version, stress-ng, cyclictest, ptp4l, phc2sys,
-              tuned, docker, readiness marker; isolation and vcpupin state (info only)
+  --vm        check the lab guest (lowlat-target) over SSH instead, for the r04
+              "ordinary VM" (snapshot lab-ready-r04): pinned stock kernel booted, no
+              isolcpus/nohz_full/rcu_nocbs, pinned Temurin, stress-ng, strace, perf,
+              cyclictest, ptp4l, phc2sys, tuned (active profile recorded), Docker active
+              with the user in the docker group (version recorded), the images in
+              examples/13-where-code-runs/containers/IMAGES.lock present with the locked
+              digests, io_uring_disabled and the vPMU recorded, vcpupin state
+  --rt        with --vm: check the PREEMPT_RT guest instead (lab-ready-rt/-iso): RT kernel
+              required; isolation and vcpupin state (info only); no r04 checks
   -h, --help  show this help
 
 Output is one PASS/WARN/FAIL line per check; WARN and FAIL lines carry an
@@ -341,7 +349,8 @@ run_host() {
 }
 
 # vm <command...>: run a command in the guest via the lab ssh wrapper.
-vm() { timeout 30 "$LAB_SSH" "$LAB_VM" "$@" 2>/dev/null; }
+# stdin is closed so ssh cannot swallow the input of a caller's `while read` loop.
+vm() { timeout 30 "$LAB_SSH" "$LAB_VM" "$@" 2>/dev/null </dev/null; }
 
 vm_need() {
   local cmd="$1" pkg="$2"
@@ -361,7 +370,19 @@ check_vm_java() {
     # shellcheck disable=SC2016 # expands in the guest
     record PASS "guest: Temurin $TEMURIN_VERSION" "$(vm 'readlink -f "$(command -v java)"' || true)"
   else
-    record FAIL "guest: Temurin $TEMURIN_VERSION" "java is ${v:-missing}$([[ "$out" == *Temurin* ]] || echo ', not Temurin')" "scripts/lab/install-guest-tools.sh $LAB_VM (or revert to snapshot lab-ready-iso)"
+    record FAIL "guest: Temurin $TEMURIN_VERSION" "java is ${v:-missing}$([[ "$out" == *Temurin* ]] || echo ', not Temurin')" "scripts/lab/install-guest-tools.sh $LAB_VM (or revert to snapshot lab-ready-r04)"
+  fi
+}
+
+# The guest's uv must be the pinned one (versions.env): Fedora's packaged uv can lag the CPython
+# that examples/.python-version pins, and Ch13's vm lane installs that CPython with it.
+check_vm_uv() {
+  local out
+  out="$(vm 'command -v uv && uv --version' 2>/dev/null || true)"
+  if [[ "$out" == *"uv $UV_VERSION"* ]]; then
+    record PASS "guest: uv $UV_VERSION" "$(head -n1 <<<"$out")"
+  else
+    record FAIL "guest: uv $UV_VERSION" "uv is ${out:-missing}" "scripts/lab/install-guest-tools.sh $LAB_VM (or revert to snapshot lab-ready-r04)"
   fi
 }
 
@@ -383,8 +404,136 @@ check_vm_isolation() {
   fi
 }
 
+# ---- r04: the stock, unpinned guest (profile stock-unpinned, snapshot lab-ready-r04) ----------------
+
+check_vm_stock_kernel() {
+  local kr kv
+  kr="$(vm uname -r || true)"
+  kv="$(vm uname -v || true)"
+  if [[ -n "$kr" && "$kr" == "$LAB_STOCK_KERNEL".* && "$kr" != *lowlatrt* && "$kv" != *PREEMPT_RT* ]]; then
+    record PASS "guest stock kernel" "$kr (pinned $LAB_STOCK_KERNEL)"
+  else
+    record FAIL "guest stock kernel" "running ${kr:-?} (${kv:-?}), pinned $LAB_STOCK_KERNEL" "install and boot the pinned stock kernel: scripts/lab/apply-guest-profile.sh stock-unpinned (recipe in scripts/lab/README.md); or revert to snapshot lab-ready-r04 (or lab-ready) with scripts/lab/revert-vm.sh $LAB_VM, or boot the stock entry"
+  fi
+}
+
+check_vm_cmdline() {
+  local cmd bad=""
+  cmd="$(vm cat /proc/cmdline || true)"
+  if [[ -z "$cmd" ]]; then
+    record FAIL "guest cmdline" "cannot read /proc/cmdline"
+    return
+  fi
+  local a
+  for a in $cmd; do
+    case "$a" in isolcpus | isolcpus=* | nohz_full | nohz_full=* | rcu_nocbs | rcu_nocbs=*) bad+="$a " ;; esac
+  done
+  if [[ -z "$bad" ]]; then
+    record PASS "guest no isolation" "no isolcpus, nohz_full or rcu_nocbs on the cmdline"
+  else
+    record FAIL "guest no isolation" "cmdline has: ${bad% }" "scripts/lab/apply-guest-profile.sh stock-unpinned, or revert to lab-ready-r04"
+  fi
+}
+
+check_vm_unpinned() {
+  local xml n
+  if ! xml="$(virsh -c qemu:///system dumpxml "$LAB_VM" 2>/dev/null)" || [[ -z "$xml" ]]; then
+    record FAIL "guest vcpupin" "virsh dumpxml $LAB_VM failed" "check libvirt access (the libvirt group)"
+    return
+  fi
+  n="$(grep -c '<vcpupin ' <<<"$xml" || true)"
+  if [[ "$n" == 0 ]]; then
+    record PASS "guest vcpupin" "no <vcpupin> in the domain (unpinned)"
+  else
+    record WARN "guest vcpupin" "the domain pins $n vCPU(s)" "scripts/lab/pin-vcpu.sh --remove, then a full lab-down and lab-up"
+  fi
+}
+
+check_vm_tuned_record() {
+  local t
+  t="$(vm 'tuned-adm active' || true)"
+  if [[ -n "$t" ]]; then
+    record PASS "guest tuned (recorded)" "${t#Current active profile: }"
+  else
+    record WARN "guest tuned (recorded)" "tuned-adm active printed nothing" "systemctl status tuned in the guest"
+  fi
+}
+
+check_vm_docker_r04() {
+  local active ver groups
+  active="$(vm 'systemctl is-active docker' || true)"
+  if [[ "$active" == active ]]; then
+    record PASS "guest docker service" "active"
+  else
+    record FAIL "guest docker service" "${active:-unknown}" "in the guest: sudo systemctl enable --now docker"
+  fi
+  groups="$(vm 'id -nG' || true)"
+  if [[ " $groups " == *" docker "* ]]; then
+    record PASS "guest docker group" "the guest user is in the docker group"
+  else
+    record FAIL "guest docker group" "groups: ${groups:-?}" "in the guest: sudo usermod -aG docker \$USER, then log in again"
+  fi
+  ver="$(vm "docker version --format '{{.Server.Version}}'" || true)"
+  if [[ -n "$ver" ]]; then
+    record PASS "guest Docker Engine" "$ver (recorded)"
+  else
+    record FAIL "guest Docker Engine" "version not readable" "in the guest: docker version"
+  fi
+}
+
+# Every image in IMAGES.lock must be in the guest with the locked ID (or RepoDigest). A lock that
+# still has sha256:PENDING placeholders is a WARN: the images are built in S5, after this check exists.
+check_vm_images() {
+  local line ref want have rd pending=0 checked=0
+  if [[ ! -f "$IMAGES_LOCK" ]]; then
+    record WARN "guest images" "no IMAGES.lock at examples/13-where-code-runs/containers/" "see examples/13-where-code-runs/containers/README.md"
+    return
+  fi
+  while read -r line; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    read -r line _ <<<"$line"
+    ref="${line%@*}"
+    want="${line#*@}"
+    if [[ ! "$want" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+      pending=$((pending + 1))
+      continue
+    fi
+    checked=$((checked + 1))
+    have="$(vm "docker image inspect --format '{{.Id}}' $ref" || true)"
+    rd="$(vm "docker image inspect --format '{{range .RepoDigests}}{{.}} {{end}}' $ref" || true)"
+    if [[ "$have" == "$want" || " $rd " == *"@$want "* ]]; then
+      record PASS "guest image $ref" "$want"
+    elif [[ -z "$have" ]]; then
+      record FAIL "guest image $ref" "not present in the guest" "in the guest: examples/13-where-code-runs/containers/build-images.sh"
+    else
+      record FAIL "guest image $ref" "id $have, locked $want" "rebuild with build-images.sh, or restore snapshot lab-ready-r04"
+    fi
+  done <"$IMAGES_LOCK"
+  if ((pending > 0)); then
+    record WARN "guest images" "$pending IMAGES.lock entr$([[ $pending == 1 ]] && echo y || echo ies) still sha256:PENDING; digests not checked" "in the guest: examples/13-where-code-runs/containers/build-images.sh"
+  elif ((checked == 0)); then
+    record WARN "guest images" "IMAGES.lock lists no image"
+  fi
+}
+
+# Recorded, not required: the io_uring sysctl and whether the guest has a virtual PMU.
+check_vm_records() {
+  local iou pmu
+  iou="$(vm 'cat /proc/sys/kernel/io_uring_disabled' || true)"
+  if [[ -n "$iou" ]]; then
+    record PASS "guest io_uring_disabled" "$iou (recorded; 0 = enabled, 1 = restricted, 2 = disabled)"
+  else
+    record WARN "guest io_uring_disabled" "kernel.io_uring_disabled not readable (kernel without io_uring?)"
+  fi
+  if pmu="$(vm 'perf stat -x, -e cycles:u true 2>&1')" && [[ "$pmu" == *cycles* && "$pmu" != *"not supported"* && "$pmu" != *"not counted"* ]]; then
+    record PASS "guest vPMU (recorded)" "perf stat -e cycles:u works"
+  else
+    record WARN "guest vPMU (recorded)" "perf stat -e cycles:u does not count in the guest (no virtual PMU, or perf missing)" "scripts/lab/install-guest-tools.sh $LAB_VM; hardware counters are then not available to the lanes"
+  fi
+}
+
 run_vm() {
-  local state uv rt ready
+  local state uv rt ready rt_mode="${1:-stock}"
   printf 'Lab guest prerequisites (%s)\n' "$LAB_VM"
   if ! have virsh; then
     record FAIL "guest reachable" "virsh not found" "sudo dnf install libvirt-client"
@@ -401,18 +550,28 @@ run_vm() {
   fi
   record PASS "guest ssh" "$LAB_VM reachable"
 
-  uv="$(vm uname -v || true)"
-  # Mainline PREEMPT_RT has no /sys/kernel/realtime (that file came from the
-  # out-of-tree RT patch set); the running kernel's own config is the evidence.
-  # shellcheck disable=SC2016 # $(uname -r) must expand in the guest
-  rt="$(vm 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
-  if [[ "$uv" == *PREEMPT_RT* && "$rt" == CONFIG_PREEMPT_RT=y ]]; then
-    record PASS "guest RT kernel" "PREEMPT_RT in uname -v and the running kernel's config"
+  if [[ "$rt_mode" == rt ]]; then
+    uv="$(vm uname -v || true)"
+    # Mainline PREEMPT_RT has no /sys/kernel/realtime (that file came from the
+    # out-of-tree RT patch set); the running kernel's own config is the evidence.
+    # shellcheck disable=SC2016 # $(uname -r) must expand in the guest
+    rt="$(vm 'grep -x CONFIG_PREEMPT_RT=y /boot/config-$(uname -r)' || true)"
+    if [[ "$uv" == *PREEMPT_RT* && "$rt" == CONFIG_PREEMPT_RT=y ]]; then
+      record PASS "guest RT kernel" "PREEMPT_RT in uname -v and the running kernel's config"
+    else
+      record FAIL "guest RT kernel" "uname -v: ${uv:-?}; config: ${rt:-no CONFIG_PREEMPT_RT=y}" "boot the kernel-rt entry (scripts/lab/README.md), or revert to snapshot lab-ready-rt"
+    fi
   else
-    record FAIL "guest RT kernel" "uname -v: ${uv:-?}; config: ${rt:-no CONFIG_PREEMPT_RT=y}" "boot the kernel-rt entry (scripts/lab/README.md), or revert to snapshot lab-ready-rt"
+    check_vm_stock_kernel
+    check_vm_cmdline
   fi
   check_vm_java
   vm_need stress-ng stress-ng
+  if [[ "$rt_mode" == stock ]]; then
+    check_vm_uv
+    vm_need strace strace
+    vm_need perf perf
+  fi
   vm_need cyclictest realtime-tests
   vm_need ptp4l linuxptp
   vm_need phc2sys linuxptp
@@ -427,7 +586,15 @@ run_vm() {
   else
     record FAIL "guest: docker" "daemon not reachable" "in the guest: sudo systemctl enable --now docker"
   fi
-  check_vm_isolation
+  if [[ "$rt_mode" == rt ]]; then
+    check_vm_isolation
+  else
+    check_vm_docker_r04
+    check_vm_unpinned
+    check_vm_tuned_record
+    check_vm_images
+    check_vm_records
+  fi
   ready="$(vm head -n1 /var/log/lab-ready || true)"
   if [[ "$ready" == *ok* ]]; then
     record PASS "guest lab-ready" "$ready"
@@ -437,16 +604,20 @@ run_vm() {
 }
 
 main() {
-  local mode=host
+  local mode=host vm_mode=stock
   while (($#)); do
     case "$1" in
       --vm) mode=vm ;;
+      --rt) vm_mode=rt ;;
       -h|--help) usage; exit 0 ;;
       *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
     esac
     shift
   done
-  if [[ "$mode" == vm ]]; then run_vm; else run_host; fi
+  if [[ "$vm_mode" == rt && "$mode" != vm ]]; then
+    echo "--rt only applies with --vm" >&2; usage >&2; exit 2
+  fi
+  if [[ "$mode" == vm ]]; then run_vm "$vm_mode"; else run_host; fi
   printf '\nSummary: %d PASS, %d WARN, %d FAIL\n' "$N_PASS" "$N_WARN" "$N_FAIL"
   ((N_FAIL == 0))
 }

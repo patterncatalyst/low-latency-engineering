@@ -1,0 +1,54 @@
+# Ch13 Java lane image: the Ch12 Quarkus service (fast-jar) and the Ch13 CpuProbe jar, on the
+# same pinned Temurin as the host and the guest.
+#
+# Build context: the REPOSITORY ROOT. From the root, in the lab guest:
+#   docker build -f examples/13-where-code-runs/containers/java/Containerfile -t lowlat/place-java:r04 .
+#
+# Network is needed at build time (Maven Central). The JDK and Maven tarballs are checked against
+# the sha256 pinned below (_plans/dependency-pins.md, versions.env for Temurin).
+#
+# Entry points (the default CMD is the service; container_run passes its own command):
+#   java -jar /app/quarkus-app/quarkus-run.jar
+#   java -cp /app/cpuprobe/where-code-runs-java.jar io.patterncatalyst.lowlat.ch13.CpuProbe
+
+# ---- tools: the pinned Temurin JDK and Apache Maven ------------------------------------------------
+FROM registry.access.redhat.com/ubi10/ubi:10.2-1792744468@sha256:7495bfa53ae7a81a58aeface0bb4858d12741832c542c29dc690d67b183b73b0 AS tools
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG TEMURIN_BUILD=25.0.5+8
+ARG TEMURIN_URL=https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jdk_x64_linux_hotspot_25.0.5_8.tar.gz
+ARG TEMURIN_SHA256=68982529869257d0ee6b824ec5aa270ff8b118bb438670da0b97ebdab178d7fb
+ARG MAVEN_VERSION=3.9.16
+ARG MAVEN_SHA256=80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb
+RUN curl -fsSL --retry 3 -o /tmp/jdk.tgz "${TEMURIN_URL}" \
+    && echo "${TEMURIN_SHA256}  /tmp/jdk.tgz" | sha256sum -c - \
+    && mkdir -p /opt/temurin && tar -xzf /tmp/jdk.tgz -C /opt/temurin --strip-components=1 \
+    && curl -fsSL --retry 3 -o /tmp/maven.tgz \
+        "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+    && echo "${MAVEN_SHA256}  /tmp/maven.tgz" | sha256sum -c - \
+    && mkdir -p /opt/maven && tar -xzf /tmp/maven.tgz -C /opt/maven --strip-components=1 \
+    && rm -f /tmp/jdk.tgz /tmp/maven.tgz \
+    && /opt/temurin/bin/java -version 2>&1 | grep -q "Temurin-${TEMURIN_BUILD}"
+
+# ---- build: Quarkus fast-jar and the CpuProbe jar ---------------------------------------------------
+FROM tools AS build
+ENV JAVA_HOME=/opt/temurin PATH=/opt/maven/bin:/opt/temurin/bin:/usr/bin:/bin
+WORKDIR /src
+COPY examples /src/examples
+RUN mvn -B -ntp -f examples/12-io-engines/quarkus/pom.xml -DskipTests package
+RUN mvn -B -ntp -f examples/pom.xml -pl 13-where-code-runs/java -am -DskipTests package \
+    && mkdir -p /out/cpuprobe \
+    && cp examples/13-where-code-runs/java/target/where-code-runs-java.jar /out/cpuprobe/
+
+# ---- runtime: ubi-minimal + the same Temurin ---------------------------------------------------------
+FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2-1792742351@sha256:ab67cd02caf8706e34a695a1432ebe965934f6128ec352a6c3f4048b43a4fb5e AS runtime
+LABEL org.opencontainers.image.title="lowlat place-java" \
+      org.opencontainers.image.description="Ch13 Java lane: Ch12 Quarkus service and CpuProbe on Temurin 25.0.5+8" \
+      org.opencontainers.image.licenses="Apache-2.0"
+COPY --from=tools /opt/temurin /opt/temurin
+COPY --from=build /src/examples/12-io-engines/quarkus/target/quarkus-app /app/quarkus-app
+COPY --from=build /out/cpuprobe /app/cpuprobe
+ENV JAVA_HOME=/opt/temurin PATH=/opt/temurin/bin:/usr/bin:/bin HOME=/tmp
+WORKDIR /app/quarkus-app
+EXPOSE 8080
+USER 10001:10001
+CMD ["java", "-jar", "/app/quarkus-app/quarkus-run.jar"]

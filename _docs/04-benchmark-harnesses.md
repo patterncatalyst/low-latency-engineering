@@ -20,7 +20,7 @@ By the end of this chapter you can:
 
 On the sortation line the scanner reads the label, the controller decides, and the diverter fires before the parcel passes it. With the scanner 1.2 m upstream and the belt at 2.5 m/s, the whole decision has 480 ms. Part of that decision is validating the SSCC-18 barcode: the GS1 mod-10 check digit over the 17-digit body. The check digit is a few dozen arithmetic operations. Before anyone argues about whether it fits the budget, someone has to time it, and timing something this small is where measurements go wrong.
 
-Chapter 3 fixed the clock and the percentiles for a system under load. A microbenchmark is a different instrument. It runs a function in a loop, so the compiler, the JIT, the interpreter and the CPU frequency all get a vote. Each harness in this chapter exists to cancel one of those votes: Google Benchmark for C++, JMH for the JVM and pyperf for CPython. Chapter 1 established that latency is a distribution. A harness that reports one number has already discarded the distribution, so part of the work here is getting it back out of each tool.
+Under load, a latency is timed per parcel from the belt's schedule and recorded into a histogram. A microbenchmark is a different instrument. It runs a function in a loop, so the compiler, the JIT, the interpreter and the CPU frequency all get a vote. Each harness in this chapter exists to cancel one of those votes: Google Benchmark for C++, JMH for the JVM and pyperf for CPython. Latency is a distribution, and a harness that reports one number has already discarded the distribution, so part of the work here is getting it back out of each tool.
 
 The code is in `examples/04-benchmark-harnesses/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -191,15 +191,15 @@ The eliminated C++ median is a fraction of a nanosecond (1.8e-10 ns in all three
 
 **Python warm-up.** The first warm-up value of the calibration run, with a cold interpreter, was 1,894 to 1,917 ns per check, against a median measured value of 1,974 to 2,023 ns. The warm-up value is 5.6, 4.1 and 4.7 % lower than the median in runs 1 to 3, and below the minimum measured value in every run (2,001, 1,951 and 1,959 ns). That first value is one call of 1,024 checks (`loops=1` in `pyperf.json`), and it shows no cold-start penalty.
 
-**The tuning warning.** In all three runs pyperf warned the result may be unstable and advised `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, and they are Part 5 work, done inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are untuned, so they aren't comparable with a tuned VM later in the book.
+**The tuning warning.** In all three runs pyperf warned the result may be unstable and advised `pyperf system tune`. The book never tunes the host: governor, turbo and CPU isolation are system changes, made only inside the lab VM. `verify.sh` keeps the warning and records `pyperf system show` read-only. The numbers above are untuned, so they aren't comparable with numbers from a tuned VM.
 
-**Against the budget.** Even the slowest figure here, about 2 us per check digit in CPython, is microsecond-scale against a 480 ms window, so the check digit isn't where the budget goes. A microbenchmark answers a narrow question, how much does this function cost in isolation, and it can't answer how long a parcel waits under load. Chapter 3 covers measuring that.
+**Against the budget.** Even the slowest figure here, about 2 us per check digit in CPython, is microsecond-scale against a 480 ms window, so the check digit isn't where the budget goes. A microbenchmark answers a narrow question, how much does this function cost in isolation, and it can't answer how long a parcel waits under load. That needs a timer that starts at the belt's schedule.
 
 ## Cross-check
 
 The conversion step in `verify.sh` is an independent computation of the same percentiles. It reloads the raw samples (the 30 repetitions, JMH's `rawDataHistogram`, the 24 pyperf values) and computes p50, p99 and p99.9 itself. For Java the report p50 is 31, 32 and 32 ns, matching the JMH output of each run. For Python the report p50 is 2,023, 1,973 and 2,009 ns against the `pyperf stats` medians of 2.02, 1.97 and 2.01 us. All three agree: the report takes the lower of the middle two of the 24 values and pyperf averages them, and those two differ by at most 6.2 ns. For C++ the report records whole nanoseconds, so the guarded median shows as 5 where the harness says 4.73 to 4.74.
 
-The first re-run showed why the check is worth having. The converter computed every report's percentiles with one rank convention, and a sparse JMH tail came out one bucket apart: the emitted p99.9 was one bucket below the value recomputed from the decoded histogram. The cause is the rank-convention difference between HdrHistogram ports that the sidebar "a rank convention that differs by port" in *Measuring correctly: clocks, percentiles and coordinated omission* describes. The converter now computes each report's percentiles with the convention of the language the report is labelled with (commit `26a547c`), and a regression test pins the sparse-tail case. When two tools disagree by one bucket in a sparse tail, suspect a convention difference. The GoogleTest, JUnit and pytest parity tests are the second check, confirming that the three benchmarks time the same arithmetic.
+The first re-run showed why the check is worth having. The converter computed every report's percentiles with one rank convention, and a sparse JMH tail came out one bucket apart: the emitted p99.9 was one bucket below the value recomputed from the decoded histogram. The cause is a rank convention that differs between HdrHistogram ports: the C and Python ports round the percentile's rank half up and the Java port rounds it up, so in a sparse tail the two can land one bucket apart. The converter now computes each report's percentiles with the convention of the language the report is labelled with (commit `26a547c`), and a regression test pins the sparse-tail case. When two tools disagree by one bucket in a sparse tail, suspect a convention difference. The GoogleTest, JUnit and pytest parity tests are the second check, confirming that the three benchmarks time the same arithmetic.
 
 ## What you learned
 
@@ -209,8 +209,6 @@ The first re-run showed why the check is worth having. The converter computed ev
 - Google Benchmark's p99 here is the slowest of 30 repetitions, a view of spread. JMH SampleTime gives tail percentiles over batches.
 - Harnesses print a mean by default. Read the median and the percentiles.
 - A nanosecond-scale microbenchmark says what a function costs in isolation, not whether the line meets its 480 ms budget.
-
-The next chapter, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, opens Part 2.
 
 ## For deeper coverage
 

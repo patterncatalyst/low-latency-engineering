@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 458" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="44" width="840" height="112" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="64" font-size="12" font-weight="700" fill="#1d1d1d">OS threads: every wait owns a kernel stack and a reserved user stack</text>
+<rect x="20" y="164" width="840" height="112" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="184" font-size="12" font-weight="700" fill="#1d1d1d">Fibers and virtual threads: a small stack in user space</text>
+<rect x="20" y="284" width="840" height="112" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="304" font-size="12" font-weight="700" fill="#1d1d1d">Coroutines: no stack, only a frame</text>
+<rect x="40" y="74" width="170" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="125.0" y="101.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">OS thread</text>
+<text x="125.0" y="118.5" font-size="11.5" fill="#555555" text-anchor="middle">C++, Python and Java</text>
+<text x="125.0" y="133.5" font-size="11.5" fill="#555555" text-anchor="middle">threads</text>
+<rect x="260" y="74" width="240" height="74" rx="9" fill="#f4f4f4" stroke="#888888" stroke-width="1.5"/>
+<text x="380.0" y="101.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Stacks</text>
+<text x="380.0" y="118.5" font-size="11.5" fill="#555555" text-anchor="middle">kernel stack 16,380-16,384 B (C++)</text>
+<text x="380.0" y="133.5" font-size="11.5" fill="#555555" text-anchor="middle">user stack reserved: 8,192 KiB (C++)</text>
+<rect x="550" y="74" width="300" height="74" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="700.0" y="94.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Per wait: user RSS, address space (B)</text>
+<text x="700.0" y="111.0" font-size="11.5" fill="#555555" text-anchor="middle">C++ 8,774-8,778, 9,245,449</text>
+<text x="700.0" y="126.0" font-size="11.5" fill="#555555" text-anchor="middle">Python 19,228-19,247, 9,266,672-9,266,776</text>
+<text x="700.0" y="141.0" font-size="11.5" fill="#555555" text-anchor="middle">Java 22,805-22,898, 1,044,486-1,044,591</text>
+<rect x="40" y="194" width="170" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="125.0" y="221.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Fiber, virtual thread</text>
+<text x="125.0" y="238.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ Boost.Fiber,</text>
+<text x="125.0" y="253.5" font-size="11.5" fill="#555555" text-anchor="middle">Java virtual thread</text>
+<rect x="260" y="194" width="240" height="74" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="380.0" y="221.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">User-space stack</text>
+<text x="380.0" y="238.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ fiber: 65,536 B reserved</text>
+<text x="380.0" y="253.5" font-size="11.5" fill="#555555" text-anchor="middle">Java: heap, 2,063-2,105 B</text>
+<rect x="550" y="194" width="300" height="74" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="700.0" y="221.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Per wait: user RSS, address space (B)</text>
+<text x="700.0" y="238.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ 4,106, 69,645</text>
+<text x="700.0" y="253.5" font-size="11.5" fill="#555555" text-anchor="middle">Java 2,870-3,260, not per task*</text>
+<rect x="40" y="314" width="170" height="74" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="125.0" y="341.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Coroutine</text>
+<text x="125.0" y="358.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ awaitable,</text>
+<text x="125.0" y="373.5" font-size="11.5" fill="#555555" text-anchor="middle">Python asyncio task</text>
+<rect x="260" y="314" width="240" height="74" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="380.0" y="341.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Heap frame</text>
+<text x="380.0" y="358.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ Task probe frame: 208 B</text>
+<text x="380.0" y="373.5" font-size="11.5" fill="#555555" text-anchor="middle">Python: 1,641 B (tracemalloc)</text>
+<rect x="550" y="314" width="300" height="74" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="700.0" y="341.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Per wait: user RSS, address space (B)</text>
+<text x="700.0" y="358.5" font-size="11.5" fill="#555555" text-anchor="middle">C++ 1,009, not per task*</text>
+<text x="700.0" y="373.5" font-size="11.5" fill="#555555" text-anchor="middle">Python 2,611-2,614, 2,569</text>
+<path d="M210,111 L260,111" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M500,111 L550,111" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M210,231 L260,231" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M500,231 L550,231" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M210,351 L260,351" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M500,351 L550,351" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="440" y="28" font-size="14" fill="#b8650a" text-anchor="middle" font-weight="700">A parked wait costs a stack, a small stack or only a frame</text>
+<text x="440" y="420" font-size="12" fill="#1d1d1d" text-anchor="middle">10,000 tasks parked on one 1,000 ms timer; bytes per task, range across three runs.</text>
+<text x="440" y="438" font-size="12" fill="#1d1d1d" text-anchor="middle">* address space grew in steps (Java carrier arenas) or barely, 26 B (C++ frames in already-mapped heap)</text>
+</svg>

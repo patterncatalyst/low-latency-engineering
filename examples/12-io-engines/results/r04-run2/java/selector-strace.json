@@ -1,0 +1,214 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "12-io-engines",
+  "language" : "java",
+  "variant" : "selector",
+  "unit" : "ns",
+  "count" : 4000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 132863,
+    "p90" : 174591,
+    "p99" : 237823,
+    "p99_9" : 586239,
+    "max" : 1730559
+  },
+  "hdr_histogram" : "HISTFAAAA054nDWUPZblRAyFC1mWq9U11W734/FoGgZYARNMRDAZu2AFBBxCcs4hnIANkLIDNsFeWALflRu/Z7tKVkn36u/ltz+eWosv2nktr+9PWP7w3d9/tg//noKPv9ivtlo0d4twjwjr18g+O/eRMefsnf2YvWW6uaWVrjX+tnrjtxnLZr745r6GYZFPdudveD/ZYvdmDy7RYnZn9mhPvrqXXNJPzRZ2K7djzgwT3Fql4RSvC0+Uu0fryNNLDEggg3SkjWyji4JHDxRCFyejm/UZ6CN2nWqxcNxhCuWOI+hH975My4g2u3vvnhPV9Na5MbR0bLUuj7iArC/10nFxxxyumoWXEzA2s1lswIxakwLmik7RDB3X5SCL2hdv8Cd40C3IESNsxEQFtq7DyNgCebLucPeEewo2NOGb8hOCxgnRJDo61xfkFT/Q9JJwqKKk4OGZ+PpAdoiL6JpojEEVEMkuSD2IN5uMgXUFZAQCgOQIPxTP3qJgCqlwpMB5DKqGoFFto8kVn1uFK8APqq6wyH8qg514x4Ce1UrpFB1+Kj6sYKwKT5EBlpIAncqx6rSCillIRJJZVFxQVMUEBVY7xL3kVTkEWu+cM+PW2dAG42X3feZzn899cCIvsJx7Ps99XkZe9563/Grc9iOPfR/7ZVyf92Pu+3FN3tc8LvRQzhdM8vHbY4zL1z6O24X22rF0DJ+3Mne9jCnlMfJyHdSsH+MI33fhwNzcyUISnOsc+0Fi1JA5kZCtyqQIwUb1Q3DUO4oGOUrVBaXcYeUUk5qAoFd2BtHiO+nOqWah8JuinM2VD3JFvOZQ0bDq1Xmm7iF5VBY97dqqeDGk6ouzA3h5magEquSHipdTyJU+IXPNAU2RUF3YUk3RSlIZJotqUXabXJx/zQesLjV3GDtxLuSEL0uNM9T6Klq42Sj86q/22phWpYPn7ZwzTbrrq/lzRthpbrH/bddH16Di2jQAztJbigpjTIA23jUORWSp06u++ha2qfDW4qGpx+ORCXjPbGs8H6yIn5NUjzc6q+epXsNztUdZY1lbt3OobtwPArUxix/Y3AmBfW/3jOC3qNzb59wA+4zFl/x+LEPv7Z19g9pf3X4PVh/sJ/to9rP9c7H/AF8mLcc=",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-25T13:20:56Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "vendor" : "Intel",
+      "model" : "Intel 8-core/16-thread CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15",
+      "caches" : {
+        "l1d" : {
+          "size_bytes" : 49152,
+          "line_bytes" : 64
+        },
+        "l1i" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l2" : {
+          "size_bytes" : 1310720,
+          "line_bytes" : 64
+        },
+        "l3" : {
+          "size_bytes" : 25165824,
+          "line_bytes" : 64
+        }
+      },
+      "topology" : [ {
+        "cpu" : 0,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 1,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 2,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 3,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 4,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 5,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 6,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 7,
+        "core_id" : 7,
+        "package_id" : 0
+      }, {
+        "cpu" : 8,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 9,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 10,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 11,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 12,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 13,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 14,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 15,
+        "core_id" : 7,
+        "package_id" : 0
+      } ]
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3767790,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "container" : "none"
+    },
+    "cgroup" : {
+      "cpu_max" : "max 100000",
+      "cpuset_effective" : null,
+      "nr_throttled" : 0,
+      "throttled_usec" : 0
+    },
+    "load" : {
+      "load1" : 1.47,
+      "load5" : 2.19,
+      "load15" : 11.2,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf" : "7.2",
+      "valgrind" : "3.27.1",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "receive; cameras=4; expect_per_camera=1000; flat wire; variant=selector; threads=1; idle_ms=1500; decide_ns=3000; warmup_parcels_per_camera=0; the JDK has no io_uring; call counts are Java-level (receive and select), not system calls",
+  "runtime" : {
+    "counters" : {
+      "datagrams" : 4000,
+      "dropped" : 0,
+      "malformed" : 0,
+      "parcels" : 4000,
+      "rcvbuf_granted" : 4194304,
+      "receive_calls" : 8000,
+      "select_calls" : 3562,
+      "start_skew_ns" : 0,
+      "threads" : 1,
+      "warmup_parcels_per_camera" : 0
+    },
+    "placement" : {
+      "cpus" : [ 1 ],
+      "distinct_cores" : true,
+      "smt_siblings" : false
+    }
+  }
+}

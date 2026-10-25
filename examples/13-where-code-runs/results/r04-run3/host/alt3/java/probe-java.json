@@ -1,0 +1,25 @@
+{
+  "schema": "lowlat-place-probe/1",
+  "example": "13-where-code-runs",
+  "language": "java",
+  "java": {
+    "available_processors": 16,
+    "virtual_thread_parallelism": 16,
+    "virtual_thread_mounted_max": 16,
+    "virtual_thread_pool_size_after_spin": 16,
+    "parallel_gc_threads": 13,
+    "conc_gc_threads": 3,
+    "collectors": [
+      "G1 Young Generation",
+      "G1 Concurrent GC",
+      "G1 Old Generation"
+    ],
+    "max_heap_bytes": 16785604608,
+    "version": "25.0.5+8-LTS"
+  },
+  "runtime": {
+    "environment": {
+      "kind": "host"
+    }
+  }
+}

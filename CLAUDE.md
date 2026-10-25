@@ -2,7 +2,7 @@
 
 ## What this is
 A chapter-based Jekyll tutorial and Leanpub book teaching latency ENGINEERING
-through original C++20/23, Python 3.14 and Java 25 (JVM) examples on Fedora 44,
+through original C++23, Python 3.14 and Java 25 (JVM) examples on Fedora 44,
 in the lgtm house style. Repo: low-latency-engineering. It spans code-level
 technique, the low-latency JVM, the real-time kernel + CPU partitioning +
 kernel bypass, transport choice by latency budget (gRPC/DDS/Aeron+SBE/FIX/
@@ -50,7 +50,7 @@ are REFERENCES only.
 - OSS Aeron is UDP-only; DPDK kernel-bypass on Aeron is a PAID feature - say so.
 
 ## Ground rules
-- Fedora 44. Python 3.14 (GIL + free-threaded, Appendix E). C++20/23 (no C++21).
+- Fedora 44. Python 3.14 (GIL + free-threaded, Appendix E). C++23 floor.
   Java 25 on the plain JVM (NOT Quarkus-native on the hot path).
 - Every example emits a latency DISTRIBUTION (p50/p99/p99.9), never a mean.
 - RT chapters show a before/after cyclictest jitter number.
@@ -129,6 +129,10 @@ talks. Pull and re-point; cross-link; don't rewrite.
   chapters - never on the host. Use lgtm-systems-programming scripts by name
   (LAB_PREFIX=lowlat); revert to snapshot between measurement runs.
 - A VM number and a bare-metal number are NOT comparable; label every number.
+  Exception (r04 D9): Ch13 compares host, VM and container lanes only within one
+  interleaved run on this machine, every number lane-labelled; host vs VM is
+  observed, never asserted, and the chapter says what the VM can't show.
+- Language floor: C++23, JDK 25, Python 3.14 in every build, module and image.
 - Kernel-bypass examples needing real NIC hardware: mark conceptual vs measured.
   Ch17 depth (decided): what the VM can measure (AF_XDP on virtio, DPDK in the
   VM, labelled illustrative); RDMA conceptual only.
@@ -140,7 +144,7 @@ talks. Pull and re-point; cross-link; don't rewrite.
 Future Projects shared standard: _docs/ canonical -> build-manuscript.py ->
 Markua; code included from files; paired SVG+excalidraw; spine hook -> diagram
 -> concept -> how the code works -> measure -> cross-check -> what you learned
--> verification status; 1,900-2,500 words prose. Conventional Commits, scopes
+-> verification status; about 2,000-2,500 words of prose (1,900 minimum, no hard upper limit). Conventional Commits, scopes
 §N / demo-NN / rNN.x. An iteration ships as its merged PR plus the rNN.x tag
 and a GitHub release; no tarball or other artifact is built. Each iteration is
 its own release/rNN branch and PR, branched from an updated main, squash-merged

@@ -1,0 +1,48 @@
+{
+  "cpu_ns_total": 39102577056,
+  "example": "13-where-code-runs",
+  "per_worker": [
+    {
+      "cpu_ns": 6857449842,
+      "iterations": 576590
+    },
+    {
+      "cpu_ns": 6857327442,
+      "iterations": 576573
+    },
+    {
+      "cpu_ns": 18530103963,
+      "iterations": 1532258
+    },
+    {
+      "cpu_ns": 6857695809,
+      "iterations": 576634
+    }
+  ],
+  "schema": "lowlat-pool/1",
+  "start_skew_ns": 3338188,
+  "wall_ns": 20608072295,
+  "workers": 4,
+  "workers_with_no_iterations": 0,
+  "runtime": {
+    "environment": {
+      "kind": "container",
+      "guest_profile": "lab-ready-r04/stock-unpinned",
+      "container": {
+        "runtime": "docker",
+        "image": "lowlat/place-cpp:r04",
+        "image_digest": "sha256:007fe524247daaa80220d5cc80b3222ba51a4bef347e7f058dafd1c6c9fde05f",
+        "network": "bridge",
+        "cpu_quota": null,
+        "cpuset": "2,3",
+        "seccomp": "default"
+      },
+      "cgroup": {
+        "cpu_max": "max 100000",
+        "cpuset_effective": "2-3",
+        "nr_throttled": 0,
+        "throttled_usec": 0
+      }
+    }
+  }
+}

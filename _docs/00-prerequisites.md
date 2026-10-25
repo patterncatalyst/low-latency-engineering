@@ -42,7 +42,7 @@ Dependencies are pinned to exact upstream releases: protobuf 36.2 (Java 4.36.2, 
 
 ### Checking the host
 
-`scripts/check-prereqs.sh` only checks: it never installs, uses sudo or starts a VM. Each check prints one PASS, WARN or FAIL line, every WARN and FAIL carries an install hint, and the exit status is 0 unless something FAILed. It covers the compilers, zlib headers, CMake, JDK, Maven, Python, `uv`, the pinned `protoc`, Docker Engine and libvirt. With `--vm` it runs inside the guest over ssh and checks the PREEMPT_RT kernel, `cyclictest`, `ptp4l`, `tuned` and Docker.
+`scripts/check-prereqs.sh` only checks: it never installs, uses sudo or starts a VM. Each check prints one PASS, WARN or FAIL line, every WARN and FAIL carries an install hint, and it exits 0 unless something FAILed. It covers the compilers, zlib headers, CMake, JDK, Maven, Python, `uv`, the pinned `protoc`, Docker Engine and libvirt. With `--vm` it checks the stock-kernel guest over ssh (pinned kernel, no isolation, Docker, locked images); `--vm --rt` checks the RT guests (`cyclictest`, `ptp4l`, `tuned`, Docker).
 
 ### The machine profile
 
@@ -71,7 +71,7 @@ The guest carries `realtime-tests` (which provides `cyclictest`), `linuxptp`, `t
 
 Fedora 44 ships no `kernel-rt`, and the stock kernel lacks `CONFIG_PREEMPT_RT`, so `scripts/lab/build-rt-kernel.sh` rebuilds Fedora's kernel SRPM `kernel-7.2.11-200.fc44` with the SRPM's realtime flavour plus a one-line config fragment, under the release suffix `.lowlatrt`. The build runs in a throwaway, digest-pinned `fedora:44` container, installs nothing on the host and fails unless the config contains `CONFIG_PREEMPT_RT=y`.
 
-Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies and verifies the RPMs, installs the RT kernel beside the stock one, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the revert point for the real-time chapters.
+Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/install-rt-kernel.sh lowlat-target`. It copies and verifies the RPMs, installs the RT kernel beside the stock one, reboots, and fails unless `uname -v` reports `PREEMPT_RT`. The snapshot `lab-ready-rt` is the one each real-time run reverts to.
 
 ## The measurement pipeline
 
@@ -80,8 +80,8 @@ Installing the kernel is a guest-only step, `SNAPSHOT=lab-ready-rt scripts/lab/i
 `examples/common/MEASUREMENT.md` is the contract for the measurement kits. There's one kit per language, `lowlat::measure` for C++, `lowlat_measure` for Python and `measure-java`, and they share three rules.
 
 1. **One histogram shape.** Nanoseconds, one hour as the highest trackable value, three significant digits. Encoded histograms are interchangeable between languages.
-2. **The library's own recording calls.** `hdr_record_value`, `record_value` and `recordValue` for plain samples, and the corrected variants in Part 1. No percentile code is hand-rolled.
-3. **One report.** A `lowlat-report/1` JSON file holds the example, language, variant, `count`, `dropped`, the p50, p90, p99, p99.9 and max in nanoseconds, the compressed base64 histogram, the build and the embedded profile, and validates against `contracts/measurement/latency-report.schema.json`. It has no mean field. A time-average may appear only in a separate `model` block, introduced in Chapter 2.
+2. **The library's own recording calls.** `hdr_record_value`, `record_value` and `recordValue` for plain samples, and their variants that correct for coordinated omission. No percentile code is hand-rolled.
+3. **One report.** A `lowlat-report/1` JSON file holds the example, language, variant, `count`, `dropped`, the p50, p90, p99, p99.9 and max in nanoseconds, the compressed base64 histogram, the build and the embedded profile, and validates against `contracts/measurement/latency-report.schema.json`. It has no mean field. A time-average may appear only in a separate `model` block, as a modelling input for Little's Law.
 
 If `LOWLAT_PROFILE` is unset the kits fail rather than write a report. The `lowlat-report` command validates a report and shows it as a table.
 
@@ -148,7 +148,7 @@ The event is built before the sleep, off the wake-up path. `sleep_until_ns` retu
 
 ### The consumer's receive loop and handler hook
 
-Each consumer is split in two. The loop owns what every example shares: bind, receive, parse, check `seq` against the last one seen to detect gaps and reordering, and book the gaps. What an example does with a parcel is a handler that the loop calls once per new parcel. The handler reports the parcel done through a `Completion`, which records `done_ns - intended_emit_ns` and raises an error on a negative latency, because that means the clocks differ. Later chapters swap the handler and keep the loop. The files are `consumers/cpp/include/lowlat/line/consumer.hpp`, `consumers/consumer-py/src/lowlat_consumer/loop.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/EventReceiver.java`.
+Each consumer is split in two. The loop owns what every example shares: bind, receive, parse, check `seq` against the last one seen to detect gaps and reordering, and book the gaps. What an example does with a parcel is a handler that the loop calls once per new parcel. The handler reports the parcel done through a `Completion`, which records `done_ns - intended_emit_ns` and raises an error on a negative latency, because that means the clocks differ. Other examples swap the handler and keep the loop. The files are `consumers/cpp/include/lowlat/line/consumer.hpp`, `consumers/consumer-py/src/lowlat_consumer/loop.py` and `consumers/java/src/main/java/io/patterncatalyst/lowlat/line/EventReceiver.java`.
 
 {% include codetabs.html langs="C++|Python|Java" %}
 
@@ -298,7 +298,7 @@ def lane_handler(event: ParcelEvent, complete: Completion) -> None:
         });
 ```
 
-C++ keeps its lane counts in the handler object. Python passes the intended time and `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; a later chapter passes its own handler to `run(ParcelHandler)`.
+C++ keeps its lane counts in the handler object. Python passes the intended time and `time.monotonic_ns()` to `complete`. Java wraps the same step in a lambda; an example with other work passes its own handler to `run(ParcelHandler)`.
 
 Each consumer flushes stdout once its socket is bound, so a run script waiting on a ready line sees it at once, not at exit. Example 00's script polls `ss` for the bound socket instead. C++ flushes in the ready callback that `consume_with` calls once the socket is bound and sized, Python passes `flush=True` to `print`, and Java calls `System.out.flush()`.
 
@@ -329,11 +329,11 @@ Three runs (`r02-run1` to `r02-run3`) on the bare-metal host above. All nine rep
 | Python | 107.0 to 186.2 | 218.1 to 223.4 | 297.5 to 308.5 |
 | Java | 83.2 to 186.1 | 319.5 to 403.5 | 13,312.0 to 23,740.4 |
 
-The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. The consumer's note gives the likely cause: the JIT isn't warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. Part 2 covers warm-up. The point is a valid report from each, not a ranking.
+The one to read is the Java p99.9, 13.3 to 23.7 ms against p99 0.32 to 0.40 ms. The consumer's note gives the likely cause: the JIT isn't warmed, so early parcels ran interpreted or on C1 and sit in a 5,000-sample histogram. The C++ and Python p99.9 over the same path stay under 0.5 ms, which points at the runtime. The point is a valid report from each, not a ranking.
 
 ### Guest result
 
-Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the Intel host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. One `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It shows that the RT kernel boots and `cyclictest` runs through the lab's ssh path; it isn't a jitter measurement and isn't comparable with bare-metal numbers. The measured before and after comes in Part 5.
+Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the Intel host, kernel `7.2.11-200.lowlatrt.fc44.x86_64+rt` (`PREEMPT_RT`), tuned `virtual-guest`, clocksource `kvm-clock`, no CPU isolation. One `cyclictest` thread ran unpinned for 60 s at priority 95 with a 1,000 us interval, 60,000 loops. Its Max was 265 us. It shows that the RT kernel boots and `cyclictest` runs through the lab's ssh path; it isn't a jitter measurement and isn't comparable with bare-metal numbers.
 
 ## Cross-check
 
@@ -346,8 +346,6 @@ Profile, from `r01-vm-smoke/vm/profile.json`: VM, KVM guest with 4 vCPUs on the 
 - The simulator sends on `intended_emit_ns` and never waits, and consumers measure from that intended time, so lateness and queueing stay in the distribution.
 - Each consumer is a receive, parse and gap-check loop that calls a per-parcel handler in C++, Python and Java; they diverge in how they wait and how they bind the hook.
 - A VM number is labelled VM, and the smoke test proves the pipeline, not a latency.
-
-Next, Chapter 1 uses this workload to show that latency is a distribution.
 
 ## For deeper coverage
 

@@ -69,7 +69,7 @@ SIM=$(cpp_bin line-simulator)
 [[ -f $JAR ]] || die "no $JAR"
 
 step "guest prerequisites"
-"$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm | tee "$VMDIR/check-prereqs.txt"
+"$LOWLAT_ROOT/scripts/check-prereqs.sh" --vm --rt | tee "$VMDIR/check-prereqs.txt"
 lab_ssh 'java -version 2>&1' >"$VMDIR/guest-java.txt"
 java_line=$(head -n2 "$VMDIR/guest-java.txt" | tr '\n' ' ')
 [[ $java_line == *"Temurin-$TEMURIN_VERSION+"* ]] || die "guest java is not Temurin $TEMURIN_VERSION: $java_line"
@@ -108,9 +108,11 @@ ok "stress-ng --cpu 3 running on guest CPUs 0-2 (guest CPU 3 is isolated and idl
 
 # One run: guest-run.sh in the guest, then fetch its directory.
 JVM=(-Xms1g -Xmx1g -XX:+AlwaysPreTouch -XX:+UseG1GC --enable-native-access=ALL-UNNAMED -Dchronicle.analytics.disable=true)
-mapfile -t CHRONICLE_ARGS < <(sed -n '/<chronicle.jvmArgs>/,/<\/chronicle.jvmArgs>/p' "$DIR/java/pom.xml" |
+# The property lives in the parent examples/pom.xml since r03 (it was in java/pom.xml before), so
+# both files are read; whichever defines it wins.
+mapfile -t CHRONICLE_ARGS < <(sed -n '/<chronicle.jvmArgs>/,/<\/chronicle.jvmArgs>/p' "$DIR/java/pom.xml" "$DIR/../pom.xml" |
   grep -oE -- '--[a-z-]+=[^[:space:]<]+')
-((${#CHRONICLE_ARGS[@]} > 0)) || die "no chronicle.jvmArgs found in $DIR/java/pom.xml"
+((${#CHRONICLE_ARGS[@]} > 0)) || die "no chronicle.jvmArgs found in $DIR/java/pom.xml or $DIR/../pom.xml"
 for ((rep = 1; rep <= REPS; rep++)); do
   for placement in "${PLACEMENTS[@]}"; do
     run=r$rep-$placement

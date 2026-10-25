@@ -36,7 +36,7 @@ Every measured number here carries one profile: bare-metal host, an 8-core, 16-t
 
 For a stable system, the long-run number of items inside equals the arrival rate times the time each item spends inside: `L = lambda x W`. Here `lambda` is parcels per second, `W` is a parcel's residence time from intended emit to handler completion, and `L` counts parcels queued or in service. The law assumes nothing about arrival pattern or service-time distribution, only that nothing is lost inside the system, which is why the run asserts zero drops.
 
-Applied to the belt, it gives the 480 parcels in flight. Applied to a handler, `lambda` times the mean service time is the number of busy workers: the model block reports an offered utilisation of 0.60 from a 600 us service-time parameter. One worker suffices on average, with no slack for the tail Chapter 1 measured.
+Applied to the belt, it gives the 480 parcels in flight. Applied to a handler, `lambda` times the mean service time is the number of busy workers: the model block reports an offered utilisation of 0.60 from a 600 us service-time parameter. One worker suffices on average, with no slack for a tail.
 
 The check measures `L` and `W` by different mechanisms in one run. `W` is recorded per parcel, so its percentiles are the reported latency. `L` comes from a sampler thread counting parcels in the system at fixed instants, and its time-average is compared with `lambda x W-bar`, where `W-bar` is the time-average of the same per-parcel `W`. `W-bar` is a modelling input, appears only in the `model` block, and isn't a latency result. The C++ consumer shows why: `W-bar` is 1.04 to 1.08 ms, p50 is 0.76 to 0.80 ms and p99 is 4.35 to 4.42 ms. The mean is neither the typical parcel nor the tail, yet only the mean ties queue length to rate.
 
@@ -319,7 +319,7 @@ Worker `id` handles parcels `base + id`, `base + id + N`, and so on, so the work
 
 The lock is the idiomatic one in each language. C++ takes a `std::scoped_lock` on a `std::mutex` and waits on `std::barrier`. Java uses a `synchronized` block, the idiomatic critical section for a short non-blocking update, and `CyclicBarrier`; the workers are platform threads because the work is CPU-bound, and virtual threads exist for blocking I/O. Python uses `with lock` and a `threading` or `multiprocessing` barrier.
 
-Two details are specific to this experiment. In C++, `keep(w)` is an empty `asm volatile` that pins the scan result: `scan_work` has no side effects and its result is used only inside the lock, so without `keep` the optimiser may sink the call into the locked region and count parallel work as serial. This is the `DoNotOptimize` idiom of Chapter 4, which application code doesn't need. And `Timed` (the `timed` flag elsewhere) reads the clock inside the lock only in calibration runs, so timing calls don't enlarge the measured section.
+Two details are specific to this experiment. In C++, `keep(w)` is an empty `asm volatile` that pins the scan result: `scan_work` has no side effects and its result is used only inside the lock, so without `keep` the optimiser may sink the call into the locked region and count parallel work as serial. It's Google Benchmark's `DoNotOptimize` idiom, which application code doesn't need. And `Timed` (the `timed` flag elsewhere) reads the clock inside the lock only in calibration runs, so timing calls don't enlarge the measured section.
 
 ### The serial fraction and the speedup
 
@@ -431,8 +431,6 @@ For Little's Law, `L` and `W` come from a sampler thread and a per-parcel clock 
 - Amdahl's Law bounds speedup at `1/s`. With `s` near 0.1, N = 4 predicts about 3.1x and the phased runs measured 2.74 to 2.85x in C++ and Java. Size workers from measured speedup, not the formula.
 - A free-running lock measured above the formula, 3.51 to 3.59x, with lock sections overlapping other workers' scanning as the likely cause.
 - CPU-bound Python threads fall to 0.47 to 0.50x at N = 4 under the GIL; processes reached 2.92 to 2.97x.
-
-Chapter 3 returns to measurement itself: clocks, percentiles and coordinated omission.
 
 ## For deeper coverage
 

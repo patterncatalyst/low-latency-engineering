@@ -39,7 +39,7 @@
 # (mutex, blocking-queue) and 47304-47307 (fetch-add, agrona-mpsc) on 127.0.0.1. Threads are pinned to distinct
 # physical cores with sched_setaffinity as an experiment control; that is not isolation. Never changes the host: no
 # sudo, no sysctl, no governor.
-# The free-threaded interpreter is a user-local download: `uv python install 3.14t`.
+# The free-threaded interpreter is a user-local download: `uv python install 3.14.9t`.
 # shellcheck disable=SC2016
 set -euo pipefail
 # shellcheck source=../_lib/lib.sh
@@ -189,7 +189,7 @@ if ((RUN)); then
   ((${#CORES[@]} == 5)) || die "need 5 distinct physical cores other than CPU 0, found ${#CORES[@]}"
   cores=$(printf '%s\n' "${CORES[@]}")
   CPUS=$(paste -sd, <<<"$cores")
-  uv python find 3.14t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14t (a user-local download)"
+  uv python find 3.14.9t >/dev/null 2>&1 || die "no free-threaded Python: uv python install 3.14.9t (a user-local download)"
   build_cpp lockfree-bench lockfree-line lockfree-store-bench lockfree-test line-simulator
   BUILD_JAVA_TESTS=1 build_java "$HERE/java" # the Java tests run on the way; jcstress and benchmarks jars are packaged
   py_sync
@@ -199,7 +199,7 @@ if ((RUN)); then
   "$(cpp_bin lockfree-test)" --gtest_brief=1 >"$OUT/cpp-unit-tests.log" 2>&1 || { tail -20 "$OUT/cpp-unit-tests.log" >&2; die "C++ unit tests failed"; }
   uvrun pytest -q "$HERE/sync-py/tests" >"$OUT/python-unit-tests-gil.log" 2>&1 || { tail -20 "$OUT/python-unit-tests-gil.log" >&2; die "Python (GIL) tests failed"; }
   (cd "$LOWLAT_EXAMPLES" && LOWLAT_EXPECT_FREE_THREADED=1 UV_PROJECT_ENVIRONMENT=$LOWLAT_EXAMPLES/.venv-ft \
-    uv run -q --python 3.14t --all-packages pytest -q "$HERE/sync-py/tests") >"$OUT/python-unit-tests-free-threaded.log" 2>&1 ||
+    uv run -q --python 3.14.9t --all-packages pytest -q "$HERE/sync-py/tests") >"$OUT/python-unit-tests-free-threaded.log" 2>&1 ||
     { tail -20 "$OUT/python-unit-tests-free-threaded.log" >&2; die "Python (free-threaded) tests failed"; }
   ok "C++, Java and Python (both builds) unit tests pass"
   BENCH=$(cpp_bin lockfree-bench)
@@ -271,7 +271,7 @@ py_measure() {
     --cpus "$CPUS" --hold-ms "$HOLD_MS" --out "$raw" "$@")
   if [[ $build == free-threaded ]]; then
     run_pinned "$log" "$PRODUCERS" env UV_PROJECT_ENVIRONMENT="$LOWLAT_EXAMPLES/.venv-ft" \
-      uv --directory "$LOWLAT_EXAMPLES" run -q --python 3.14t --package lowlat-sync "${cmd[@]}"
+      uv --directory "$LOWLAT_EXAMPLES" run -q --python 3.14.9t --package lowlat-sync "${cmd[@]}"
   else
     run_pinned "$log" "$PRODUCERS" uvrun "${cmd[@]}"
   fi

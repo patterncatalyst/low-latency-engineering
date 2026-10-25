@@ -18,7 +18,7 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-A parcel travels 1.2 m at 2.5 m/s from the scanner to the diverter, which leaves 480 ms from scan to divert. The receive thread hands each scan to a decide thread, and the belt doesn't wait: a stall charges every parcel behind it, as Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed. At 10 kHz, 4,800 parcels are in flight inside the budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*), so a consumer that wakes late has thousands of parcels behind it.
+A parcel travels 1.2 m at 2.5 m/s from the scanner to the diverter, which leaves 480 ms from scan to divert. The receive thread hands each scan to a decide thread, and the belt doesn't wait: each parcel's latency runs from its scheduled emission, so a stall charges every parcel behind it. At 10 kHz, Little's Law (arrival rate times time in the system) puts 4,800 parcels in flight inside the budget, so a consumer that wakes late has thousands of parcels behind it.
 
 A `BlockingQueue` is the idiomatic hand-off, and this chapter measures what it costs against spinning rings, a memory-mapped audit journal, an off-heap manifest and a pinned thread. None of them is a default: a spinning consumer holds a core at 100 %.
 
@@ -42,7 +42,7 @@ Both use the idea in Figure 7.2. A sequence only grows, and the slot is the sequ
 
 {% include excalidraw.html file="07-ring-sequences" alt="A ring of eight slots, drawn as an illustration of the 65,536-slot ring, holds sequences 5 to 10 in slots 5, 6, 7, 0, 1 and 2. The producer, with its cursor on its own cache line, publishes sequence 11 into slot 3 (amber arrow); the consumer reads sequence 5 from slot 5. The slot is the sequence masked with slots minus one, which works because the slot count is a power of two. A dashed ghost box marks a full ring, where the producer would have to wait." caption="Figure 7.2: A sequence only grows; masking maps it to a slot, and each side writes only its own cursor, so neither takes a lock." %}
 
-The minimum ordering is a release store by the writer and an acquire load by the reader, which `VarHandle` `setRelease` and `getAcquire` express in Java. [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}) (Part 3), treats memory orders in full.
+The minimum ordering is a release store by the writer and an acquire load by the reader, which `VarHandle` `setRelease` and `getAcquire` express in Java: the release keeps the slot's writes ahead of the cursor that announces them, and the acquire keeps the reader's slot reads behind it.
 
 ## How the code works
 
@@ -217,7 +217,7 @@ After the command has gone out, each scan event is appended to a journal. `Chron
     }
 ```
 
-Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, pre-toucher, replication, encryption) aren't used; Appendix F surveys them. `BufferMode.None` is the only open-source buffer mode.
+Only the open-source line is used: Queue 2026.7, Map 2026.1, Bytes 2026.4 and Affinity 2026.2, all Apache-2.0. The commercial features (asynchronous buffers, pre-toucher, replication, encryption) aren't used. `BufferMode.None` is the only open-source buffer mode.
 
 Chronicle Core posts usage analytics unless `chronicle.analytics.disable` is `true`. This example disables them in code (`ChronicleAnalytics.disable()`, above), in `java/pom.xml` and in `verify.sh`; `ChronicleAnalyticsTest` checks it, and `scripts/validate.py` fails a Chronicle source without it. In your own program, set it before the first queue or map is built.
 
@@ -272,11 +272,11 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 **Hand-off latency (criterion 2).** Steady-window hand-off p99: `blocking-queue` 10,455-11,743 ns, `agrona-spsc` 572-674 ns and `disruptor` 674-731 ns. The bound is one fifth of `blocking-queue`'s in the same run. All three runs passed, with Disruptor margins (bound over observed) of 3.48, 2.86 and 3.38. Run 1 of an earlier set (git history, d419992) hit a Disruptor p99 of 2,117 ns, a margin of 1.01. It didn't recur here, and no cause was measured. A spinner on an unisolated host is at the scheduler's mercy, which motivates the VM part.
 
-**Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007-0.0009 B/op (both under 1 B/op), `linked-queue` 96.7-96.9 B/op. `blocking-queue`, observed, allocates 93.4-98.5 B/op for the immutable `Scan` record. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covers what an allocation costs.
+**Allocation (criterion 3).** JMH `-prof gc` bytes per publish: Agrona 0.0004 B/op and Disruptor 0.0007-0.0009 B/op (both under 1 B/op), `linked-queue` 96.7-96.9 B/op. `blocking-queue`, observed, allocates 93.4-98.5 B/op for the immutable `Scan` record; on the JVM each allocated byte brings the next young collection closer.
 
 **Journal (criterion 4).** The tailer reads back 200,000 events in order for both journals. The Chronicle decide thread makes 0 write system calls and `write-per-parcel` 200,000. The append removes the system call and not the first-touch page fault: Chronicle's decide thread takes 1,442-1,457 minor faults against 68-73 for `write-per-parcel`. The journal is 15,002,633 to 15,002,637 B on btrfs (block size 64 MiB, roll cycle `FAST_DAILY`) in 3,662 pages, so the faults are 39 % of the page count, consistent with the kernel mapping several cached pages per fault. Steady-window append latency is observed only, as the journal's file system sets it: Chronicle p50 311-316 ns, p99 813-1,211 ns, p99.9 4,619-5,263 ns; `write-per-parcel` p50 1,054-1,080 ns, p99 2,643-3,177 ns, p99.9 5,831-7,971 ns.
 
-**Heap (criterion 5).** After a full collection the old generation holds 14.42-14.43 MB with `chronicle-map-manifest` against 137.51-137.52 MB with `on-heap-manifest`, from a 3.8 MB baseline. Observed whole-run lookup p50 and p99 (200,000 lookups): Chronicle Map 279-297 and 1,293-1,373 ns, `HashMap` 33-40 and 477-487 ns. Observed: the `on-heap-manifest` hand-off p99.9 is 218-347 us against 1.1-2.9 us for `chronicle-map-manifest`; each run's `on-heap-manifest` G1 log records one young pause in the run, 22.6 to 22.8 ms, at 14.1 to 15.5 s. Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, covers the collectors.
+**Heap (criterion 5).** After a full collection the old generation holds 14.42-14.43 MB with `chronicle-map-manifest` against 137.51-137.52 MB with `on-heap-manifest`, from a 3.8 MB baseline. Observed whole-run lookup p50 and p99 (200,000 lookups): Chronicle Map 279-297 and 1,293-1,373 ns, `HashMap` 33-40 and 477-487 ns. Observed: the `on-heap-manifest` hand-off p99.9 is 218-347 us against 1.1-2.9 us for `chronicle-map-manifest`; each run's `on-heap-manifest` G1 log records one young pause in the run, 22.6 to 22.8 ms, at 14.1 to 15.5 s.
 
 **The C++ lane (observed).** `atomic-spsc` hand-off p50, p99 and p99.9 are 129-132, 330-336 and 509-599 ns with 0 voluntary switches. `atomic-wait` is 1,823-1,958, 8,187-9,471 and 53,855-67,583 ns with 199,859-199,899 voluntary switches.
 
@@ -311,7 +311,7 @@ Each run does the 10 kHz, 20 s workload unpinned and pinned, alternated three ti
 
 **Placement (criterion 3).** The pinned thread's `Cpus_allowed_list` was CPU 3 and `/proc` showed it on CPU 3. The unpinned thread was allowed on CPUs 0-3 and seen on CPUs 0-2.
 
-Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and doesn't remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code* (Part 5), own isolation, and Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, covers the real-time kernel.
+Pinned p99.9 stays at tens of microseconds because the pin narrows the tail and doesn't remove the host's share of it. The host kernel may still run other work on CPU 13 and its hyperthread sibling CPU 5, and a host interrupt can still land there; the guest sees such a stall only as lost time. Isolating that host CPU is deployment configuration, outside what this chapter measures.
 
 ## Cross-check
 
@@ -325,13 +325,16 @@ The decide thread's switches (read from `/proc/<pid>/task/<tid>/status`) and the
 - A memory-mapped journal removes the system call, not the first-touch fault; a Chronicle Map trims the heap at the price of a slower lookup.
 - A pin to an isolated vCPU removed the preemption in the VM; it narrows the tail and isn't host isolation.
 
-The next chapter, *Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison*, removes most of the allocation from the decode that feeds this hand-off.
-
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), as further reading.
+- Chapter 2, *Modelling with Little's Law and Amdahl's Law*, and Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1, for parcels in flight and why a stall charges every parcel behind it.
+- Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, and Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, in Part 2, for what an allocation costs and the collectors.
+- [Chapter 8, *Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison*]({{ '/docs/08-zero-copy-flat/' | relative_url }}), in Part 2, for removing the allocation from the decode that feeds this hand-off.
 - [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), in Part 3, for memory orders in full.
+- Chapter 14, *PREEMPT_RT: what real-time Linux does and doesn't promise*, in Part 5, for the real-time kernel.
 - Chapter 15, *CPU partitioning and the noisy-neighbour problem*, and Chapter 18, *Latency config as code: CI/CD, deployment, and rollouts gated on a latency and jitter SLO*, in Part 5, for isolation as versioned deployment config.
+- Appendix F for the commercial Chronicle features this example doesn't use.
 - `examples/common/MEASUREMENT.md` for the report format.
 
 ---

@@ -66,9 +66,11 @@ fi
 JAR=$DIR/java/target/benchmarks.jar
 # Chronicle's --add-opens/--add-exports list, read from the pom property it is defined in, so
 # the two cannot drift. (A shaded jar's manifest cannot carry them.)
-mapfile -t CHRONICLE_ARGS < <(sed -n '/<chronicle.jvmArgs>/,/<\/chronicle.jvmArgs>/p' "$DIR/java/pom.xml" |
+# The property lives in the parent examples/pom.xml since r03 (it was in java/pom.xml before), so
+# both files are read; whichever defines it wins.
+mapfile -t CHRONICLE_ARGS < <(sed -n '/<chronicle.jvmArgs>/,/<\/chronicle.jvmArgs>/p' "$DIR/java/pom.xml" "$DIR/../pom.xml" |
   grep -oE -- '--[a-z-]+=[^[:space:]<]+')
-((${#CHRONICLE_ARGS[@]} > 0)) || die "no chronicle.jvmArgs found in $DIR/java/pom.xml"
+((${#CHRONICLE_ARGS[@]} > 0)) || die "no chronicle.jvmArgs found in $DIR/java/pom.xml or $DIR/../pom.xml"
 # A fixed, pre-touched heap on the default collector (G1): no resize, no first-touch page faults.
 # Chronicle Core posts usage analytics unless told not to; a measurement run makes no network
 # call, so the property switches it off.

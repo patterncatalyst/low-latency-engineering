@@ -1,0 +1,147 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "12-io-engines",
+  "language" : "java",
+  "variant" : "client-lateness",
+  "unit" : "ns",
+  "count" : 15000,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 294,
+    "p90" : 457,
+    "p99" : 20895,
+    "p99_9" : 3069951,
+    "max" : 6324223
+  },
+  "hdr_histogram" : "HISTFAAABFR4nC1T31MbVRTec3ZJls0SQhLCNklDSENJabqkIQ0hZkJM0wgpxkgpAmLLZLBimlFEZSpG2kYqqKi1jtM6jtb2xV+PTkd9YJzRB/8GnxzHZ2d89cHR725h4Z57z/nud75zziW4/ZFHkjruSw9/5ANL2JYTP3whTfz90HGVO9nBHSzhE6vMiqLYJLYpim7Tnbo3aIQifiMSDx0Nx2NGYjgaN3P+cCpbPZoeTpuJVDBeyCaShVSylC3nUulKuriYmU5kUmZuOpEyY5l8KpLOmNlIpZCEzU9n4+mimcvnpyvVyep0MTM5ma1n8pVqslatzK/UKsXybK2yeKnZvFCfmVueX2q+RbdoptlYemV9udmmzV260GpTa+0abW6K0E1q7dIdWv0K+z1abdPKfVoD6nNE3sG3cZO2EdijK+s/0zf0Pu1S64W1ja09WrlDbQAaTaRow31lubnWugXENl2jRqt5aX1rtb7SmN/cqjeWFrfqG+Xl6nylVivPrs4US3Ol2bn8bGkx31gp5UqlcrKanK3n0rVaLV/OzpXL1UJ1OJzOREvZTCFfSk2my2YyWSzFCulCJrcYMWOhTMbIxpJmPBVPppLRRDQ7HA3GzahhJvxBvwFH3EwYuVA8Ggr5YxFf2AgbhqEHDZce9ob8Tpcv5gsZbpfP6/Z5fbrhNdxe1RcJer2Kpuu6WwPYF9JVXXF6nYbmdDp1l66pTtXQdU13uzFem0tTbZqGk+61Maymaqrq0m1OxeVUEFdtiqYqko1VTbIpeBQSXMxsY0XCOxFvRcJRwqrIOAJgvSFW2KGIjRXFwwLSOtm5C9ahdMIOYdeh9PAp9nAfMCfhYxE4hsAEoCM4dSLUjeAYBwA7wQuIHWE+Y5keHoAb0UHu5Vf5OFwenHrxoi8i2WlB+DTyPMHjfPDGB1hWBsB+3hLgwfkZ7lNkEHr4OoHgPBjt0NIDGR38LoHLAebDSBiA45DFcgK7AEgd0Cfj5iC+PlxDoePcj7DdEu6AFFk0wAO0ZH0CL4Pcw48iOI5zN8BC4hTWXui281WwjSIyCj7ZopCBkqC4D3o74e1SviYLbreCb/Bd4h+JL4N0QGQMgOcMsoj/7I+JvyP+i1DCCNI6+EV03M43CKg+sD2HmoTkl3H5EJ9Fp98msBxGkyR+ih+z2tTNOwq60IU7ExbqiKV7gJ9HJnT5Q8JkLvIHZDVlDP0LgOEknwNczFWM8rbo5ZfET2JUPVCJ3j7Lr4EtgFYvoOZj/CuB9rig2SfcfE8MpB+Oe8T8OGrBhOD7nqBoDOn64Zrib4k/Zf6NoKcbVdxm/kSomQLfGEp1AHwW0AW0BzznhNbT1vyGWLTlJzRHBu6eDJ2j+PtHRhEviQZ9RvyAILAb6n8Xm0F+IMMMgexNwp3XhaJ+0bAdGSO8zH8QP8L7Mu8Qcv9i2VMHdoT/FIn/JfTZWv4TJVrLdcayL6rqQW8wS+i8a/1Cwf8JM9Kx",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xms256m -Xmx1g -XX:+ExitOnOutOfMemoryError",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-25T13:08:01Z",
+    "host_label" : "lowlat-target.lab",
+    "cpu" : {
+      "vendor" : "Intel",
+      "model" : "Intel 4-core/4-thread CPU",
+      "sockets" : 4,
+      "cores_per_socket" : 1,
+      "threads_per_core" : 1,
+      "logical_cpus" : 4,
+      "smt_active" : false,
+      "online" : "0-3",
+      "caches" : {
+        "l1d" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l1i" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l2" : {
+          "size_bytes" : 4194304,
+          "line_bytes" : 64
+        },
+        "l3" : {
+          "size_bytes" : 16777216,
+          "line_bytes" : 64
+        }
+      },
+      "topology" : [ {
+        "cpu" : 0,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 1,
+        "core_id" : 0,
+        "package_id" : 1
+      }, {
+        "cpu" : 2,
+        "core_id" : 0,
+        "package_id" : 2
+      }, {
+        "cpu" : 3,
+        "core_id" : 0,
+        "package_id" : 3
+      } ]
+    },
+    "power" : {
+      "scaling_driver" : null,
+      "governor" : null,
+      "energy_performance_preference" : null,
+      "intel_pstate_no_turbo" : null,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : null,
+      "cpu0_max_khz" : null
+    },
+    "tuned" : "virtual-guest",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "kvm-clock",
+      "available_clocksource" : [ "kvm-clock", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3265,
+      "cpu_affinity" : "0-3",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "kvm",
+      "container" : "none"
+    },
+    "cgroup" : {
+      "cpu_max" : "max 100000",
+      "cpuset_effective" : null,
+      "nr_throttled" : 0,
+      "throttled_usec" : 0
+    },
+    "load" : {
+      "load1" : 0.34,
+      "load5" : 0.08,
+      "load15" : 0.03,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 8117540,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.3",
+      "cmake" : "cmake version 4.3.0",
+      "perf" : "7.2",
+      "valgrind" : null,
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "service; variant=virtual-thread; open loop; rate_hz=3000; seconds=5; warmup_seconds=3; HTTP/1.1 on loopback; latency from the intended send time; dispatcher lateness (start of dispatch minus intended time)"
+}

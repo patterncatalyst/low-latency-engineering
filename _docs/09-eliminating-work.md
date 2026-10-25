@@ -16,9 +16,9 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-Every scan asks the tracker one question: where is this parcel? On one line the answer lives among about 4,800 parcels in flight (Chapter 2, *Modelling with Little's Law and Amdahl's Law*). A hub-wide tracker holds 1,000,000. What changes is the working set against the caches, which decides whether a lookup costs cache hits or trips to memory.
+Every scan asks the tracker one question: where is this parcel? On one line the answer lives among about 4,800 parcels in flight (Little's Law: arrival rate times time in the system). A hub-wide tracker holds 1,000,000. What changes is the working set against the caches, which decides whether a lookup costs cache hits or trips to memory.
 
-The budget is physical: 1.2 m at 2.5 m/s is 480 ms from scan to divert, and the belt doesn't wait. At line scale that's forgiving: the lookup map, the sweep's record and the five cameras' counters matter at hub scale and at saturation, and the line run shows how little they move at 10 kHz. [Chapter 7]({{ '/docs/07-offheap-lockfree/' | relative_url }}) padded its rings by design; here the padding is measured.
+The budget is physical: 1.2 m at 2.5 m/s is 480 ms from scan to divert, and the belt doesn't wait. At line scale that's forgiving: the lookup map, the sweep's record and the five cameras' counters matter at hub scale and at saturation, and the line run shows how little they move at 10 kHz. Lock-free rings pad their cursors by design; here the padding is measured.
 
 The code is in `examples/09-eliminating-work/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -26,7 +26,7 @@ The code is in `examples/09-eliminating-work/`. The run script there builds and 
 
 {% include excalidraw.html file="09-working-set" alt="Nested bands show the host caches: L3 of 24 MiB, L2 of 1.25 MiB and L1d of 48 KiB with 64-byte lines. Inside L2 sits the line tracker with 4,800 parcels, where a node-map lookup takes a p50 of 46-48 ns and a flat-map lookup (amber) 20 ns. A separate RAM band holds the hub trackers of 1,000,000 parcels: the node-map, 148.1 MB built, with a lookup p50 of 389-393 ns and 5.00-5.13 last-level misses per lookup, and the flat-map (amber), 126.0 MB built, with 113 ns and 0.19-0.20 misses. A dashed box notes that both hub maps exceed the 24 MiB L3." caption="Figure 9.1: The 4,800-parcel line tracker fits L2 and both maps look up in tens of nanoseconds; at 1,000,000 parcels both maps live in RAM, 148.1 MB for the node-map and 126.0 MB for the flat map, and the layout sets the misses." %}
 
-Profile for every number in this chapter: bare-metal host, untuned: `powersave` governor, `balanced` profile, kernel 7.2; 8-core/16-thread Intel laptop CPU; 64-byte lines, L1d 48 KiB and L2 1.25 MiB per core, L3 24 MiB shared; threads placed on distinct physical cores with `sched_setaffinity`, an experiment control, not isolation, with CPU 0 left out; Temurin 25.0.5+8, GCC 16.2, Python 3.14.8 and 3.14.8+freethreaded. Ranges span `r03-run1` to `r03-run3`.
+Profile for every number in this chapter: bare-metal host, untuned: `powersave` governor, `balanced` profile, kernel 7.2; 8-core/16-thread Intel laptop CPU; 64-byte lines, L1d 48 KiB and L2 1.25 MiB per core, L3 24 MiB shared; threads placed on distinct physical cores with `sched_setaffinity`, an experiment control, not isolation, with CPU 0 left out; Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Python 3.14.8 and 3.14.8+freethreaded. Ranges span `r03-run1` to `r03-run3`.
 
 The line tracker fits L2. A lookup among its 4,800 parcels takes a p50 of 46-48 ns in a node map and 20 ns in a flat map (observed). The hub tracker fits nothing: building it allocates 148.1 MB as a node map and 126.0 MB as a flat map, the flat figure including the cold columns. Both are far beyond the 24 MiB L3, so layout can only make each lookup touch fewer lines.
 
@@ -34,7 +34,7 @@ The line tracker fits L2. A lookup among its 4,800 parcels takes a p50 of 46-48 
 
 ### Node map against open addressing
 
-A scan arrives with an 18-digit barcode. The first-draft tracker keys a `std::unordered_map<std::string, FatRecord>` with it. Eighteen characters exceed libstdc++'s 15-character small-string buffer, so the key's text goes to the heap along with the map node: two allocations per insert, counted exactly with a replaced `operator new`, the Chapter 5 pattern. A lookup makes at least three dependent loads: the bucket, the node and the key's characters (libstdc++ adds a hop through the previous node).
+A scan arrives with an 18-digit barcode. The first-draft tracker keys a `std::unordered_map<std::string, FatRecord>` with it. Eighteen characters exceed libstdc++'s 15-character small-string buffer, so the key's text goes to the heap along with the map node: two allocations per insert, counted exactly with a replaced `operator new`. A lookup makes at least three dependent loads: the bucket, the node and the key's characters (libstdc++ adds a hop through the previous node).
 
 The alternative packs the barcode into a `uint64` and maps it to a slot in an `absl::flat_hash_map`. Java compares `HashMap<String, ParcelState>` (#A, with the C++ node map) with Agrona's `Long2LongHashMap`, open addressing over one `long[]` (#B, with the flat map).
 
@@ -109,7 +109,7 @@ In #A, `map_.find(scan.barcode)` takes a `string_view` because the hash is trans
 
 ### What the saving is
 
-The allocation counters are exact. C++ `node-map` makes 2 allocations per insert and `flat-map` makes 0 after `reserve`. JMH's `gc` profiler gives 128 B per insert-and-erase pair for the Java node map and 0.014-0.016 B for the flat map. Insert latency gets worse: the Java line-scale insert p50 is 60-62 ns for the node map and 99-103 ns for the flat one, across all nine alternations. The flat map removes garbage, whose price Chapter 6 measures.
+The allocation counters are exact. C++ `node-map` makes 2 allocations per insert and `flat-map` makes 0 after `reserve`. JMH's `gc` profiler gives 128 B per insert-and-erase pair for the Java node map and 0.014-0.016 B for the flat map. Insert latency gets worse: the Java line-scale insert p50 is 60-62 ns for the node map and 99-103 ns for the flat one, across all nine alternations. The flat map removes garbage, and with it the young collections that garbage brings closer.
 
 At hub scale the C++ lookup p50 is 389-393 ns for the node map and 113 ns for the flat map: 3.43-3.48x within each run, observed. Java's is 321-322 ns against 57-58 ns, 5.53-5.67x (observed). Cachegrind, a simulated cache with this host's geometry, counts 5.94 last-level read misses per node-map lookup and 0.70 per flat-map lookup, 8.54x and exact. On the hardware, `perf stat` (user-space events) counts 5.00-5.13 and 0.19-0.20 in the first alternation. L1 misses only halve, about 10.0 against 5.3 per lookup, so the misses that disappear went to memory. Even 393 ns is under a millionth of the 480 ms budget; the flat map buys CPU and headroom, not a deadline.
 
@@ -168,17 +168,17 @@ At every encoder tick the tracker sweeps its table for parcels due at the divert
 
 {% include excalidraw.html file="09-hot-cold-split" alt="In the fat-record lane each slot is one 80-byte struct. The sweep reads the due tick and the state, 9 of the 80 bytes, and takes a p50 of 4.18-4.21 ms in C++ and 9.25-9.27 ms in Java over 1,000,000 slots, with 1.2500 cachegrind D1 read misses per slot. In the hot-cold lane (amber) the due_tick column holds 8 B per slot and the state column 1 B per slot; a dashed ghost box holds the cold fields, 71 B per slot, which the sweep never reads. The sweep takes 0.57 ms in C++ and 0.44 ms in Java, with 0.1406 D1 read misses per slot." caption="Figure 9.3: The due sweep reads 9 of every 80 bytes. Splitting them into hot columns takes the sweep p50 from 4.18-4.21 ms to 0.57 ms in C++ and from 9.25-9.27 ms to 0.44 ms in Java." %}
 
-`is_due` combines its two tests with a bitwise `&`, so the C++ sweep has no data-dependent branch and its time is the memory it reads. The Java fat table is an array of ordinary `ParcelState` objects (not Chapter 8's `MemorySegment` table) allocated in shuffled order; the hot columns are primitive arrays.
+`is_due` combines its two tests with a bitwise `&`, so the C++ sweep has no data-dependent branch and its time is the memory it reads. The Java fat table is an array of ordinary `ParcelState` objects (not a flat `MemorySegment` table) allocated in shuffled order; the hot columns are primitive arrays.
 
 An 80 B slot is 1.25 cache lines and a 9 B slot 0.1406 of one, and cachegrind counts exactly that: 1.2500 against 0.1406 D1 read misses per slot, 8.89x. The hardware agrees: 9 MB of hot columns for 1,000,000 slots fit L3, and `perf` counts no last-level misses per slot for them against 0.85-0.88 for the 80 MB of fat records.
 
-The C++ sweep p50 is 4.18-4.21 ms for the fat record and 0.57 ms for the columns, 7.31-7.38x. The Java sweep is 9.25-9.27 ms against 0.44 ms, 21.07-21.10x. Java's gap is larger because each fat slot is a reference to a 96 B object (JOL), a dependent load; the C++ rows are contiguous and the prefetcher streams them. Chapter 8's flat table won for this reason; this chapter doesn't re-measure it.
+The C++ sweep p50 is 4.18-4.21 ms for the fat record and 0.57 ms for the columns, 7.31-7.38x. The Java sweep is 9.25-9.27 ms against 0.44 ms, 21.07-21.10x. Java's gap is larger because each fat slot is a reference to a 96 B object (JOL), a dependent load; the C++ rows are contiguous and the prefetcher streams them. A flat off-heap table avoids the reference for the same reason; this chapter doesn't measure one.
 
 ## False sharing
 
 Five cameras in the scan tunnel each count reads and no-reads, and each thread writes only its own counters. In the hardware's terms, five 8 B counters fit in one 64-byte line, and a store by one camera invalidates the other four cameras' copies of it. The line ping-pongs between cores.
 
-Padding is the fix, and it isn't idiomatic C++ or Java: it's a latency construct, as the comments in `counters.hpp` and `CameraCounters.java` say. `alignas(Align)` rounds a struct's address and size up to `Align`, so each array element starts on its own boundary. `AdjacentBank` forces the opposite: the five read counters share one line, and `alignas(kLine)` on the second member starts the no-read counters in the next. `std::hardware_destructive_interference_size` is 64 B here; the padded layout uses twice that, as Chapter 7 padded to 128 B because the L2 spatial prefetcher fetches lines in pairs. A Java heap array's alignment isn't controllable, so the counters live in a `MemorySegment` from `Arena.ofAuto().allocate(size, 128)`, Chapter 8's idiom.
+Padding is the fix, and it isn't idiomatic C++ or Java: it's a latency construct, as the comments in `counters.hpp` and `CameraCounters.java` say. `alignas(Align)` rounds a struct's address and size up to `Align`, so each array element starts on its own boundary. `AdjacentBank` forces the opposite: the five read counters share one line, and `alignas(kLine)` on the second member starts the no-read counters in the next. `std::hardware_destructive_interference_size` is 64 B here; the padded layout uses twice that, 128 B, because the L2 spatial prefetcher fetches lines in pairs. A Java heap array's alignment isn't controllable, so the counters live in a `MemorySegment` from `Arena.ofAuto().allocate(size, 128)`, the FFM idiom for aligned off-heap memory.
 
 #A is the adjacent layout. In the Java `Layout` constants the two arguments are the camera stride and the offset of the no-read counter from its camera's read counter, both in bytes: `ADJACENT(8, 64)` puts cameras 8 B apart with the no-read counters a line later.
 
@@ -245,7 +245,7 @@ The L1 miss count falls over a hundredfold; the batch time moves about 3x. For s
 
 A read-modify-write can't hide behind the buffer: a `lock xadd` must own the line before it completes. C++ batch time moves 9.89-11.96x (48.3-57.3 us to 4.89-5.01 us), asserted at 3x or more, and Java's `getAndAdd` moves 11.02-12.29x, observed.
 
-Two variations are observed only. Padding to 64 B gives a store batch p50 of 1,653-1,692 ns against 1,603-1,625 ns for 128 B in the same alternation, and the same L1 misses per increment, 0.00016 (`counters-line-padded.json`): 2-6 % slower in every run, too small to demonstrate Chapter 7's prefetcher reason. And two cameras on the SMT siblings of one core, adjacent layout, took 4,311-4,383 ns against 1,948-2,197 ns on distinct cores. Siblings were slower. They share one L1, so no line moves between cores: 0.00020-0.00022 L1 misses per increment against 0.081-0.098 for two cameras on distinct cores (`counters-smt-siblings.json`, `counters-adjacent-counters.2-cameras.json`). The extra time isn't traffic between cores; it arises inside the shared core, which this run doesn't break down.
+Two variations are observed only. Padding to 64 B gives a store batch p50 of 1,653-1,692 ns against 1,603-1,625 ns for 128 B in the same alternation, and the same L1 misses per increment, 0.00016 (`counters-line-padded.json`): 2-6 % slower in every run, too small to demonstrate the line-pair prefetcher reason. And two cameras on the SMT siblings of one core, adjacent layout, took 4,311-4,383 ns against 1,948-2,197 ns on distinct cores. Siblings were slower. They share one L1, so no line moves between cores: 0.00020-0.00022 L1 misses per increment against 0.081-0.098 for two cameras on distinct cores (`counters-smt-siblings.json`, `counters-adjacent-counters.2-cameras.json`). The extra time isn't traffic between cores; it arises inside the shared core, which this run doesn't break down.
 
 ## Python: fewer objects, not tighter ones
 
@@ -304,12 +304,13 @@ In Java, warming only the inner batch would leave the outer loop on C1's profili
 - False sharing shows in L1 misses per increment (590-622x in C++); batch time moves about 3x for stores and 10x for read-modify-writes. SMT siblings were slower than distinct cores.
 - At 4,800 parcels the tracker fits L2; all of this is headroom.
 
-The next chapter, [*Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}) (Part 3), asks what a stalled writer does. Isolation is Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5).
-
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), as further reading.
 - Back-links: [Chapter 5]({{ '/docs/05-jvm-costs/' | relative_url }}) (TLAB, escape analysis), [Chapter 6]({{ '/docs/06-gc-tails/' | relative_url }}) (GC cost), [Chapter 7]({{ '/docs/07-offheap-lockfree/' | relative_url }}) (ring padding), [Chapter 8]({{ '/docs/08-zero-copy-flat/' | relative_url }}) (flat table, FFM).
+- Chapter 2, *Modelling with Little's Law and Amdahl's Law* (Part 1), for the parcels in flight.
+- [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}) (Part 3), for what a stalled writer does to shared counters.
+- Chapter 15, *CPU partitioning and the noisy-neighbour problem* (Part 5), for CPU isolation, which the thread placement here isn't.
 - `examples/09-eliminating-work/README.md` and `examples/common/MEASUREMENT.md`.
 - Abseil's [Swiss tables design notes](https://abseil.io/about/design/swisstables) and the Python data model's [`__slots__`](https://docs.python.org/3.14/reference/datamodel.html#slots).
 

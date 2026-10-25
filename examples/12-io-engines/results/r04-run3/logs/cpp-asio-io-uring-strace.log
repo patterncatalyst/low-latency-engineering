@@ -1,0 +1,8 @@
+pinned pid=70867 tid=70868 cpu=1 role=asio-io-context
+placement-ready
+released
+receive: asio-io-uring parcels 40000 dropped 0 (system calls: see the strace summary)
+12-io-engines            cpp  asio-io-uring    count=    40000 dropped=     0 p50=     65.2us p90=     85.8us p99=     96.2us p99.9=    143.0us max=     525.3us
+report: <repo>/examples/12-io-engines/results/r04-run3/cpp/asio-io-uring-strace.json
+   count=    10000 dropped=     0 p50=     52.0us p90=     60.6us p99=     68.4us p99.9=     73.5us max=      84.9us
+line-simulator           cpp  emit-lateness    count=    10000 dropped=     0 p50=     52.0us p90=     52.5us p99=     61.2us p99.9=     64.4us max=      74.0us

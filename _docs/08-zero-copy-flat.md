@@ -18,9 +18,9 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-Every datagram on the line is decoded before anything else happens to it. A protobuf parse builds a message, a `Dimensions` and a `String` per datagram: garbage at the rate of the belt. The belt never waits for a slow consumer, and the scan-to-divert budget is 480 ms (1.2 m at 2.5 m/s). At 10 kHz the line holds 4,800 parcels in flight at that budget (Chapter 2, *Modelling with Little's Law and Amdahl's Law*).
+Every datagram on the line is decoded before anything else happens to it. A protobuf parse builds a message, a `Dimensions` and a `String` per datagram: garbage at the rate of the belt. The belt never waits for a slow consumer, and the scan-to-divert budget is 480 ms (1.2 m at 2.5 m/s). At 10 kHz, Little's Law (arrival rate times time in the system) puts 4,800 parcels in flight at that budget.
 
-This chapter removes that allocation: a fixed 80-byte record is read where the kernel wrote it, and the in-flight table is a run of memory instead of a pointer per parcel. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, counted 654 to 733 B allocated per parcel on its receive thread, protobuf parse included.
+This chapter removes that allocation: a fixed 80-byte record is read where the kernel wrote it, and the in-flight table is a run of memory instead of a pointer per parcel. A JVM tracker consumer that parses protobuf allocates 654 to 733 B per parcel on its receive thread, the parse included.
 
 Build and run it from `examples/08-zero-copy-flat/`; its `README.md` covers the options.
 
@@ -43,8 +43,6 @@ A record can be read in place only if the reader knows where every field is. `co
 - **Explicit endianness.** Little-endian whatever the host is. The C++ header refuses to compile on a big-endian host.
 - **Evolution by rule.** A changed field is a new `schema_id`. An added field is a new `version` that keeps every old offset and appends.
 - **Golden bytes.** Three files (seeds 1, 42 and 2026) of eight records each, with extreme and full-range values, so a byte-order mistake changes a field.
-
-Chapter 22, *Aeron and SBE* (Part 6), covers a production flat wire.
 
 ### The Java reader
 
@@ -213,7 +211,7 @@ The object table is a `ParcelState[]`, a heap object behind each reference; the 
 
 `Arena.ofConfined()` gives the table an explicit lifetime: `close()` releases the memory when the code chooses, with no collector involved, and only the creating thread may touch the segment. The `VarHandle`s are `static final` so the JIT treats them as constants.
 
-The sweep reads `encoder_tick` of every slot, and `state` and `weight_g` only for the about 2 % that are due; in the object layout each read first follows a reference. Why adjacent slots are cheaper than pointers is the subject of [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3); this chapter only measures the difference.
+The sweep reads `encoder_tick` of every slot, and `state` and `weight_g` only for the about 2 % that are due; in the object layout each read first follows a reference, a dependent load, where adjacent slots stream through the cache. This chapter measures the difference and doesn't break it down.
 
 C++ gets the flat layout by default: a `std::vector<ParcelState>` is contiguous, and the pointer layout is the one the code has to ask for with `std::vector<std::unique_ptr<ParcelState>>`. The two are a contrast of layouts, not of languages.
 
@@ -287,11 +285,11 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel lapt
 
 ### What the line doesn't show
 
-The line runs' end-to-end latency isn't a criterion, and it doesn't show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, measured on unwarmed JVMs on the default heap (Chapter 5 measures that cost). It's lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load doesn't. The latency is `done - intended_emit`, as in Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*. All of it fits the budget.
+The line runs' end-to-end latency isn't a criterion, and it doesn't show the decode saving. The p50 is 57.0 to 57.6 us and the p99 is 87 to 94 us for both variants, and the p99.9 is 4.9 to 11.1 ms, measured on unwarmed JVMs, which compile while the first parcels arrive, on the default heap. It's lower for `flat-ffm` in each run (4.9 to 7.7 ms against 9.3 to 11.1 ms), a gap far larger than the decode's saving, and is given no cause. JMH and the counters resolve the saving, 141 to 146 ns and 582 to 583 B per parcel; an end-to-end percentile at this load doesn't. The latency is `done - intended_emit`, timed from the parcel's scheduled emission. All of it fits the budget.
 
 ## Cross-check
 
-Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf, 0.0012 to 0.0014 B/op for flat) and `ThreadMXBean` on the line's receive thread (591 B and 8.76 B per parcel). The golden bytes cross three readers, JOL matches the record arithmetic, and the downcall is checked against `System.nanoTime()`. Chapter 5's 654 to 733 B per parcel is the cost this chapter removes, but Chapter 5 ran at 1 kHz with its own handler, so the numbers aren't subtracted.
+Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf, 0.0012 to 0.0014 B/op for flat) and `ThreadMXBean` on the line's receive thread (591 B and 8.76 B per parcel). The golden bytes cross three readers, JOL matches the record arithmetic, and the downcall is checked against `System.nanoTime()`. The protobuf tracker consumer's 654 to 733 B per parcel is the cost this chapter removes, but that consumer ran at 1 kHz with its own handler, so the numbers aren't subtracted.
 
 ## What you learned
 
@@ -302,12 +300,13 @@ Two independent allocation counters agree: JMH `-prof gc` (576 B/op for protobuf
 - C++ spells the idea `std::start_lifetime_as`; a `reinterpret_cast` read is undefined behaviour. CPython copies no bytes but allocates per field.
 - Value classes (JEP 401) are a JDK 28 early-access preview. The book measures JDK 25 and revisits at JDK 28 GA.
 
-The next chapter, [*Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3), takes data-structure-level work elimination across all three languages.
-
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), as further reading.
+- Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT* (Part 2), for the tracker consumer's allocation per parcel and the unwarmed JVM's tail.
 - Chapter 6, *GC for tails: Generational ZGC and Shenandoah* (Part 2), for what the collector does with the allocation removed here.
+- [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}) (Part 3), for why adjacent slots are cheaper than pointers.
+- Chapter 22, *Aeron and SBE* (Part 6), for a production flat wire.
 - Chapter 4, *Benchmark harnesses: Google Benchmark, pyperf and JMH* (Part 1), for JMH SampleTime, forks and `Blackhole`.
 - `contracts/flat/parcel-v1/README.md`, `examples/08-zero-copy-flat/VALHALLA.md` and `examples/common/MEASUREMENT.md`.
 - JEP 519 (compact object headers, product in JDK 25), JEP 534 (default in JDK 27) and JEP 401 (preview, JDK 28 early access only).

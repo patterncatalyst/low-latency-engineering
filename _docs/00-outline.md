@@ -55,9 +55,9 @@ The arc is below. Chapters link as they ship.
 - Ch10 · [Lock-free and wait-free synchronization]({{ '/docs/10-lockfree-waitfree/' | relative_url }})
 
 ## Part 4: Threading & I/O Models
-- Ch11 · Stackful vs stackless: threads and fibers vs event loops and coroutines
-- Ch12 · I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core
-- Ch13 · Where the code runs: bare metal, VMs and containers, and when not to use containers
+- Ch11 · [Stackful vs stackless: threads and fibers vs event loops and coroutines]({{ '/docs/11-stackful-stackless/' | relative_url }})
+- Ch12 · [I/O engines: `epoll` and `io_uring`, `asyncio`, virtual threads vs reactive; thread-per-core]({{ '/docs/12-io-engines/' | relative_url }})
+- Ch13 · [Where the code runs: bare metal, VMs and containers, and when not to use containers]({{ '/docs/13-where-code-runs/' | relative_url }})
 
 ## Part 5: The OS, Isolation & the Network Edge
 - Ch14 · PREEMPT_RT: what real-time Linux does and doesn't promise

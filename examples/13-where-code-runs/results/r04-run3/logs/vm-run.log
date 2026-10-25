@@ -1,0 +1,129 @@
+━━ revert lowlat-target to lab-ready-r04 and bring it up
+Domain snapshot lab-ready-r04 reverted
+
+lowlat-target reverted to snapshot 'lab-ready-r04'
+lowlat-target clock set from the host (guest minus host: 0s)
+lowlat-target already running
+lowlat-target: ssh lowlat-target  (or <repo>/scripts/lab/lab-ssh.sh lowlat-target)
+━━ deploy the repository into the guest
+→ syncing examples/, scripts/, contracts/, versions.env and .dockerignore to lowlat-target:low-latency-engineering
+deployed to lowlat-target:low-latency-engineering
+━━ the guest: Temurin, and the three images against containers/IMAGES.lock
+✓ the guest runs Temurin 25.0.5
+✓ lowlat/place-cpp:r04 is sha256:007fe524247daaa80220d5cc80b3222ba51a4bef347e7f058dafd1c6c9fde05f, built from this tree
+✓ lowlat/place-java:r04 is sha256:da6684ca44f28935abe38ea3907a42f78197f64851962a008e36c4c52b488cc7, built from this tree
+✓ lowlat/place-py:r04 is sha256:276c666a61652b183d9a452608531d76d8686d2a54e2ec50fc53cbe3a9deed31, built from this tree
+━━ prepare the guest: output directory, guest profile, the four C++ binaries out of the image
+━━ guest: prepare <repo>/examples/13-where-code-runs/vm-out
+Python 3.14.9 is already installed
+bfea59d07806e46cce55d9836f5c8e21abdf7716a6c2bff43b50231a9a9ca738  line-simulator
+1a4aa3c72e9641100f9f847c1d58642d4a92bbdc44159c22bfaa1ca147e95795  io-receive
+f7c38dce88468d331b916e6f507adb795565e47b6da43af0f01337e703320e2e  place-probe
+bf45d5d6cda5fd22c22b76d496df48daba6fd51f024be93652429593a023ba1c  busy-pool
+✓ the host runs the same four binaries as the guest and the containers: bfea59d07806 1a4aa3c72e96 f7c38dce8846 bf45d5d6cda5 
+━━ require_quiet_host --lab-idle: the guest may run, but only idle
+✓ profile: bare-metal-host virt=none governor=powersave tuned=balanced kernel=7.2
+✓ guest state for the host lane: up (idle), load1 0.37
+━━ host lane, alternation 1: simulators and consumer on the host (consumer on CPU 1, simulators on 2,3,4,5,6,7,10,11,12,13,14,15)
+lane-cpp: full done
+✓ the guest was 3/1000 busy across the host lane (alternation 1)
+━━ guest: vm lane (native), alternation 1
+lane-cpp: full done
+━━ guest: container-host-net, alternation 1: simulators and consumer in lowlat-c13-container-host-net-a1-cpp
+lane-cpp: full done
+━━ guest: container-bridge, alternation 1: consumer in lowlat-c13-container-bridge-a1-cpp, simulators in the guest
+lane-cpp: sims done
+lane-cpp: consumer done
+━━ guest: container-cpu-quota, alternation 1: simulators and consumer in lowlat-c13-container-cpu-quota-a1-cpp
+lane-cpp: full done
+━━ guest: container-cpu-quota, alternation 1: Quarkus service in lowlat-c13-container-cpu-quota-a1-svc at 3000 Hz, client in the guest
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+14:03:46.990 INFO  [io.quarkus] (main) io-engines-quarkus 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.40.1.1) started in 0.585s. Listening on: http://127.0.0.1:47344
+14:03:46.991 INFO  [io.quarkus] (main) Profile prod activated. 
+14:03:46.991 INFO  [io.quarkus] (main) Installed features: [cdi, rest, smallrye-context-propagation, vertx]
+14:03:50.682 INFO  [io.pa.lo.ch.StatsResource] (executor-thread-4) measured run begins
+14:03:56.072 INFO  [io.quarkus] (Shutdown thread) io-engines-quarkus stopped in 0.026s
+━━ guest: container-cpuset, alternation 1: simulators and consumer in lowlat-c13-container-cpuset-a1-cpp
+lane-cpp: full done
+━━ guest: container-cpuset, alternation 1: Quarkus service in lowlat-c13-container-cpuset-a1-svc at 3000 Hz, client in the guest
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+14:04:21.904 INFO  [io.quarkus] (main) io-engines-quarkus 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.40.1.1) started in 0.453s. Listening on: http://127.0.0.1:47344
+14:04:21.905 INFO  [io.quarkus] (main) Profile prod activated. 
+14:04:21.905 INFO  [io.quarkus] (main) Installed features: [cdi, rest, smallrye-context-propagation, vertx]
+14:04:25.486 INFO  [io.pa.lo.ch.StatsResource] (executor-thread-8) measured run begins
+14:04:30.964 INFO  [io.quarkus] (Shutdown thread) io-engines-quarkus stopped in 0.040s
+━━ host lane, alternation 2: simulators and consumer on the host (consumer on CPU 1, simulators on 2,3,4,5,6,7,10,11,12,13,14,15)
+lane-cpp: full done
+✓ the guest was 3/1000 busy across the host lane (alternation 2)
+━━ guest: vm lane (native), alternation 2
+lane-cpp: full done
+━━ guest: container-host-net, alternation 2: simulators and consumer in lowlat-c13-container-host-net-a2-cpp
+lane-cpp: full done
+━━ guest: container-bridge, alternation 2: consumer in lowlat-c13-container-bridge-a2-cpp, simulators in the guest
+lane-cpp: sims done
+lane-cpp: consumer done
+━━ guest: container-cpu-quota, alternation 2: simulators and consumer in lowlat-c13-container-cpu-quota-a2-cpp
+lane-cpp: full done
+━━ guest: container-cpu-quota, alternation 2: Quarkus service in lowlat-c13-container-cpu-quota-a2-svc at 3000 Hz, client in the guest
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+14:06:28.519 INFO  [io.quarkus] (main) io-engines-quarkus 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.40.1.1) started in 0.416s. Listening on: http://127.0.0.1:47344
+14:06:28.520 INFO  [io.quarkus] (main) Profile prod activated. 
+14:06:28.520 INFO  [io.quarkus] (main) Installed features: [cdi, rest, smallrye-context-propagation, vertx]
+14:06:32.142 INFO  [io.pa.lo.ch.StatsResource] (executor-thread-8) measured run begins
+14:06:37.497 INFO  [io.quarkus] (Shutdown thread) io-engines-quarkus stopped in 0.014s
+━━ guest: container-cpuset, alternation 2: simulators and consumer in lowlat-c13-container-cpuset-a2-cpp
+lane-cpp: full done
+━━ guest: container-cpuset, alternation 2: Quarkus service in lowlat-c13-container-cpuset-a2-svc at 3000 Hz, client in the guest
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+14:07:02.215 INFO  [io.quarkus] (main) io-engines-quarkus 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.40.1.1) started in 0.453s. Listening on: http://127.0.0.1:47344
+14:07:02.217 INFO  [io.quarkus] (main) Profile prod activated. 
+14:07:02.217 INFO  [io.quarkus] (main) Installed features: [cdi, rest, smallrye-context-propagation, vertx]
+14:07:05.816 INFO  [io.pa.lo.ch.StatsResource] (executor-thread-8) measured run begins
+14:07:11.285 INFO  [io.quarkus] (Shutdown thread) io-engines-quarkus stopped in 0.037s
+━━ host lane, alternation 3: simulators and consumer on the host (consumer on CPU 1, simulators on 2,3,4,5,6,7,10,11,12,13,14,15)
+lane-cpp: full done
+✓ the guest was 3/1000 busy across the host lane (alternation 3)
+━━ guest: vm lane (native), alternation 3
+lane-cpp: full done
+━━ guest: container-host-net, alternation 3: simulators and consumer in lowlat-c13-container-host-net-a3-cpp
+lane-cpp: full done
+━━ guest: container-bridge, alternation 3: consumer in lowlat-c13-container-bridge-a3-cpp, simulators in the guest
+lane-cpp: sims done
+lane-cpp: consumer done
+━━ guest: container-cpu-quota, alternation 3: simulators and consumer in lowlat-c13-container-cpu-quota-a3-cpp
+lane-cpp: full done
+━━ guest: container-cpu-quota, alternation 3: Quarkus service in lowlat-c13-container-cpu-quota-a3-svc at 3000 Hz, client in the guest
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+14:09:08.308 INFO  [io.quarkus] (main) io-engines-quarkus 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.40.1.1) started in 0.413s. Listening on: http://127.0.0.1:47344
+14:09:08.310 INFO  [io.quarkus] (main) Profile prod activated. 
+14:09:08.310 INFO  [io.quarkus] (main) Installed features: [cdi, rest, smallrye-context-propagation, vertx]
+14:09:11.936 INFO  [io.pa.lo.ch.StatsResource] (executor-thread-8) measured run begins
+14:09:17.385 INFO  [io.quarkus] (Shutdown thread) io-engines-quarkus stopped in 0.017s
+━━ guest: container-cpuset, alternation 3: simulators and consumer in lowlat-c13-container-cpuset-a3-cpp
+lane-cpp: full done
+━━ guest: container-cpuset, alternation 3: Quarkus service in lowlat-c13-container-cpuset-a3-svc at 3000 Hz, client in the guest
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+14:09:42.215 INFO  [io.quarkus] (main) io-engines-quarkus 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.40.1.1) started in 0.495s. Listening on: http://127.0.0.1:47344
+14:09:42.216 INFO  [io.quarkus] (main) Profile prod activated. 
+14:09:42.216 INFO  [io.quarkus] (main) Installed features: [cdi, rest, smallrye-context-propagation, vertx]
+14:09:45.840 INFO  [io.pa.lo.ch.StatsResource] (executor-thread-8) measured run begins
+14:09:51.239 INFO  [io.quarkus] (Shutdown thread) io-engines-quarkus stopped in 0.032s
+━━ fetch the guest's lane directories

@@ -1,0 +1,195 @@
+{
+  "schema" : "lowlat-report/1",
+  "example" : "12-io-engines",
+  "language" : "java",
+  "variant" : "client-lateness",
+  "unit" : "ns",
+  "count" : 9250,
+  "dropped" : 0,
+  "percentiles" : {
+    "p50" : 166,
+    "p90" : 414,
+    "p99" : 2203,
+    "p99_9" : 443135,
+    "max" : 3815423
+  },
+  "hdr_histogram" : "HISTFAAAAwp4nDWSXWhcRRTHZ/73ZDKZTMfJzey6rpd12aSxrrX1I8alaJOGGkutZfGLNMQSI4ZFiw9+1LiU+v1VoaYNqLVQ9KEiPgv64pP46KMPPvokIoIg0gdf/N8b3bkzd87//P7nnGW3eGt7UqnsL7Xzyf57a16Xbv/2MzX/545wQYuCcjAIqeg0W63p6Xtn9uy7s7d6pH/s8ZX+4vLG6vrzw2c2B+f0cHPzzEX9kf6K+x29xX1RX9GfMPqU2plz+ksGX1O6oje39Hn9BZnBFo/hef2aPnt6sPaGHp4dDE+fWh2+pzfWTg2WnlvZePHk+tr6wsrxI8fW+svLD88dP9B/9Gi/f/TkQq/XXTx88PDSwdnZ6emFzsziXG9vd+5Ap9jb3Ndqzsy29vS63XY35e2i6LZaRbvd6DRSq2iG0EyxE2N0sfB58rFeJBdTHlIjeG9jrDddSsm4BldKPrdlzlvvvOQqGoneuRDrtqRDskFCcCGvB5/7ZF09hRhcvSVkgncxWKZoSbk1dRcbvIbcBOLOlw1DIsIqPIoU8lbb57nYGKKJ1gUT8txHF5qGlDWEhYKJniOzQPRN46NhGxu94Si0OifOO1hjfLBenBHx1kCZIFbK2FiBdVasERhrrBKhIPypjVjlrLJABqsAiIUFqRHwP8AtqEQlIMxFjyg2AFgEphQJS4bSTJMqD56ZlAJtkMpSaRjDRJVV/+NZtXaeSewqtZGKGudSqAmux91VXmGUEg4xP4n92I3rUAM1xfA+yBQ9Y3iEewo34gai+3EbCcVbjf67yiI3EZrnewJvapL3s1rGeidkjKkayQdwgt5rGvew6jj+0PhBE3mBIC/jNNaYeJWVD9E/wtHK8V5ml2c5zy72n8At+FFT5nEzHsStdD1Njd/gDmxrvF7mJmi4Wt3nCT3G5r9IVeMf4DuNdzWewFO4VA46hVfwEF5iOIon2Ws3fgWuAh9k+MZRe1vT+FOGjzWDzy07XQL+HsW1WIK/Z+Uc22P4WfBhhssO3wsuW1wYxftSPr9l+BcQQnyR",
+  "build" : {
+    "compiler" : "OpenJDK 25.0.5+8-LTS (OpenJDK 64-Bit Server VM)",
+    "flags" : "-Xms256m -Xmx1g -XX:+ExitOnOutOfMemoryError",
+    "gil_enabled" : null
+  },
+  "profile" : {
+    "schema" : "lowlat-profile/1",
+    "captured_at" : "2026-10-25T13:20:56Z",
+    "host_label" : "bare-metal-host",
+    "cpu" : {
+      "vendor" : "Intel",
+      "model" : "Intel 8-core/16-thread CPU",
+      "sockets" : 1,
+      "cores_per_socket" : 8,
+      "threads_per_core" : 2,
+      "logical_cpus" : 16,
+      "smt_active" : true,
+      "online" : "0-15",
+      "caches" : {
+        "l1d" : {
+          "size_bytes" : 49152,
+          "line_bytes" : 64
+        },
+        "l1i" : {
+          "size_bytes" : 32768,
+          "line_bytes" : 64
+        },
+        "l2" : {
+          "size_bytes" : 1310720,
+          "line_bytes" : 64
+        },
+        "l3" : {
+          "size_bytes" : 25165824,
+          "line_bytes" : 64
+        }
+      },
+      "topology" : [ {
+        "cpu" : 0,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 1,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 2,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 3,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 4,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 5,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 6,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 7,
+        "core_id" : 7,
+        "package_id" : 0
+      }, {
+        "cpu" : 8,
+        "core_id" : 0,
+        "package_id" : 0
+      }, {
+        "cpu" : 9,
+        "core_id" : 1,
+        "package_id" : 0
+      }, {
+        "cpu" : 10,
+        "core_id" : 2,
+        "package_id" : 0
+      }, {
+        "cpu" : 11,
+        "core_id" : 3,
+        "package_id" : 0
+      }, {
+        "cpu" : 12,
+        "core_id" : 4,
+        "package_id" : 0
+      }, {
+        "cpu" : 13,
+        "core_id" : 5,
+        "package_id" : 0
+      }, {
+        "cpu" : 14,
+        "core_id" : 6,
+        "package_id" : 0
+      }, {
+        "cpu" : 15,
+        "core_id" : 7,
+        "package_id" : 0
+      } ]
+    },
+    "power" : {
+      "scaling_driver" : "intel_pstate",
+      "governor" : "powersave",
+      "energy_performance_preference" : "balance_performance",
+      "intel_pstate_no_turbo" : false,
+      "cpufreq_boost" : null,
+      "cpu0_min_khz" : 800000,
+      "cpu0_max_khz" : 4600000
+    },
+    "tuned" : "balanced",
+    "kernel" : {
+      "release" : "7.2",
+      "version" : "PREEMPT_DYNAMIC",
+      "preempt_model" : "PREEMPT_DYNAMIC",
+      "realtime" : false,
+      "sys_kernel_realtime" : null,
+      "cmdline" : null,
+      "isolcpus" : null,
+      "nohz_full" : null,
+      "rcu_nocbs" : null,
+      "irqaffinity" : null,
+      "sys_isolated" : null,
+      "sys_nohz_full" : null
+    },
+    "clock" : {
+      "current_clocksource" : "tsc",
+      "available_clocksource" : [ "tsc", "acpi_pm" ]
+    },
+    "process" : {
+      "pid" : 3767790,
+      "cpu_affinity" : "0-15",
+      "sched_policy" : "SCHED_OTHER"
+    },
+    "virt" : {
+      "type" : "none",
+      "container" : "none"
+    },
+    "cgroup" : {
+      "cpu_max" : "max 100000",
+      "cpuset_effective" : null,
+      "nr_throttled" : 0,
+      "throttled_usec" : 0
+    },
+    "load" : {
+      "load1" : 1.47,
+      "load5" : 2.19,
+      "load15" : 11.2,
+      "running" : 1
+    },
+    "memory" : {
+      "mem_total_kb" : 65545544,
+      "hugepages_total" : 0,
+      "hugepages_free" : 0,
+      "hugepagesize_kb" : 2048,
+      "transparent_hugepage" : "madvise",
+      "thp_enabled" : "madvise",
+      "thp_defrag" : "madvise",
+      "thp_shmem_enabled" : "never"
+    },
+    "lab" : {
+      "running_domains" : [ ]
+    },
+    "tools" : {
+      "gcc" : "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+      "clang" : "clang version 22.1.8 (Fedora 22.1.8-4.fc44)",
+      "java" : "openjdk version \"25.0.5\" 2026-10-20 LTS",
+      "java_full" : "OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS) | OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+      "python3" : "Python 3.14.8",
+      "cmake" : "cmake version 4.3.0",
+      "perf" : "7.2",
+      "valgrind" : "3.27.1",
+      "perf_event_paranoid" : 2,
+      "memlock_kb" : "8192"
+    }
+  },
+  "notes" : "service; variant=event-loop; open loop; rate_hz=1850; seconds=5; warmup_seconds=3; HTTP/1.1 on loopback; latency from the intended send time; dispatcher lateness (start of dispatch minus intended time)"
+}
