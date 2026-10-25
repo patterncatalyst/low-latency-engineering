@@ -1,5 +1,6 @@
 package io.patterncatalyst.lowlat.ch14;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Structure;
@@ -28,9 +29,11 @@ public interface Libc extends Library {
         }
     }
 
-    int sched_setscheduler(int pid, int policy, SchedParam param);
+    /** Throws {@link LastErrorException} (errno in {@code getErrorCode()}) when the call returns -1. */
+    int sched_setscheduler(int pid, int policy, SchedParam param) throws LastErrorException;
 
-    int sched_getscheduler(int pid);
+    /** Throws {@link LastErrorException} when the call returns -1. */
+    int sched_getscheduler(int pid) throws LastErrorException;
 
     /** glibc has had a gettid() wrapper since 2.30. */
     int gettid();

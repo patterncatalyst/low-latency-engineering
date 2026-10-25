@@ -34,9 +34,11 @@ struct Config {
   bool lock_memory = false;              ///< mlockall(MCL_CURRENT | MCL_FUTURE) before the loop
 };
 
+/// samples + missed_periods == duration / interval whenever the run completes: every period inside the window is
+/// either woken for (a sample) or skipped because the wake came after the next deadline.
 struct Outcome {
   std::uint64_t samples = 0;         ///< wake-ups recorded
-  std::uint64_t missed_periods = 0;  ///< whole intervals skipped because a wake came a period or more late
+  std::uint64_t missed_periods = 0;  ///< periods inside the window that were skipped, not slept for
 };
 
 /// The deadline after `deadline`, and how many intervals were skipped to get past `now`.
@@ -45,9 +47,15 @@ struct Advance {
   std::uint64_t skipped;
 };
 
-/// Pure arithmetic: deadline + interval, stepping further by whole intervals while that is still <= now.
-/// Skipped periods are counted, not back-filled: a late wake records one sample, not several.
+/// Pure arithmetic: deadline + interval, stepping further by whole intervals while that is strictly before `now`
+/// (cyclictest's rule: a wake exactly on the next deadline is not a miss). Skipped periods are counted, not
+/// back-filled: a late wake records one sample, not several.
 [[nodiscard]] Advance advance(Mono deadline, Mono now, std::chrono::nanoseconds interval);
+
+/// Pure: how many of `skipped` periods (the grid points next, next+interval, ...) fall at or before `end`. Periods
+/// skipped beyond the window do not count, so samples + missed_periods stays equal to duration / interval.
+[[nodiscard]] std::uint64_t missed_in_window(std::uint64_t skipped, Mono first_skipped, Mono end,
+                                             std::chrono::nanoseconds interval);
 
 /// Pure: the timespec for an absolute CLOCK_MONOTONIC time.
 [[nodiscard]] timespec to_timespec(Mono t);
@@ -60,11 +68,13 @@ struct Advance {
 [[nodiscard]] Result set_fifo(int priority);    ///< sched_setscheduler(0, SCHED_FIFO, ...): needs CAP_SYS_NICE or RLIMIT_RTPRIO
 [[nodiscard]] Result lock_all_memory();         ///< mlockall: needs CAP_IPC_LOCK or RLIMIT_MEMLOCK
 
-/// Current CLOCK_MONOTONIC time.
+/// Current CLOCK_MONOTONIC time. Throws std::system_error if clock_gettime fails (it cannot for this clock).
 [[nodiscard]] Mono now();
 
-/// Applies the config (mlockall, pin, FIFO, in that order), then runs duration / interval wake-ups, recording
-/// each lateness in `recorder`. Setup errors and a failing clock_nanosleep come back as the error.
+/// Applies the config (mlockall, pin, FIFO, in that order), then wakes on every deadline up to start + duration,
+/// recording each lateness in `recorder`. The run ends when the next deadline passes the window, so a stalled run
+/// finishes on time with fewer samples (cyclictest -D does the same) instead of overrunning a lane `timeout`.
+/// Setup errors and a failing clock_nanosleep come back as the error.
 [[nodiscard]] std::expected<Outcome, std::string> run(const Config& config, measure::Recorder& recorder);
 
 /// The report's `runtime` object: placement when a CPU is pinned, counters, and the environment when given.

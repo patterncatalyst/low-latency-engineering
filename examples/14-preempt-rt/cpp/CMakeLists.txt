@@ -16,9 +16,17 @@ if(BUILD_TESTING)
   include(GoogleTest)
   gtest_discover_tests(pi-test)
 
-  # The demo's shape without privilege: SCHED_OTHER threads, one CPU-free pass, both variants.
+  # The demo's shape without privilege: SCHED_OTHER threads, three rounds, both variants.
   foreach(_variant IN ITEMS plain-mutex pi-mutex)
-    add_test(NAME pi-demo-${_variant}-no-rt COMMAND pi-demo --variant ${_variant} --no-rt --bursts 1 --burst-ms 2)
-    set_tests_properties(pi-demo-${_variant}-no-rt PROPERTIES PASS_REGULAR_EXPRESSION "variant=${_variant}")
+    add_test(NAME pi-demo-${_variant}-no-rt COMMAND pi-demo --variant ${_variant} --no-rt --rounds 3 --bursts 1 --burst-ms 2)
+    set_tests_properties(pi-demo-${_variant}-no-rt PROPERTIES PASS_REGULAR_EXPRESSION "recorded=3")
   endforeach()
+
+  # Usage errors: a misspelled option, RT without --cpu, and a run past the 30 s bound.
+  add_test(NAME pi-demo-unknown-option COMMAND pi-demo --no-rt --prority 95)
+  set_tests_properties(pi-demo-unknown-option PROPERTIES PASS_REGULAR_EXPRESSION "unknown option '--prority'")
+  add_test(NAME pi-demo-rt-needs-cpu COMMAND pi-demo --variant pi-mutex)
+  set_tests_properties(pi-demo-rt-needs-cpu PROPERTIES PASS_REGULAR_EXPRESSION "--cpu is required")
+  add_test(NAME pi-demo-total-bound COMMAND pi-demo --no-rt --rounds 2000 --bursts 5 --burst-ms 20)
+  set_tests_properties(pi-demo-total-bound PROPERTIES PASS_REGULAR_EXPRESSION "the bound is")
 endif()

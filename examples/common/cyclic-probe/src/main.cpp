@@ -11,6 +11,7 @@
 #include <format>
 #include <map>
 #include <print>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -20,6 +21,14 @@
 namespace {
 
 using namespace lowlat;
+
+constexpr std::string_view kUsage =
+    "usage: cyclic-probe [--cpu N] [--interval-us N] [--duration-ms N] [--priority 0..99] [--mlockall]\n"
+    "                    [--example NAME] [--variant NAME] [--env host|vm|container] [--guest-profile S] [--report FILE]";
+
+// A misspelled option must not run with the default (--prority 95 would measure SCHED_OTHER).
+const std::set<std::string_view> kOptions{"cpu",     "interval-us", "duration-ms", "priority",      "mlockall",
+                                          "example", "variant",     "env",         "guest-profile", "report"};
 
 std::int64_t number(std::string_view option, const std::string& text) {
   std::int64_t value = 0;
@@ -36,6 +45,7 @@ int run(int argc, char** argv) {
     std::string_view key{argv[i]};
     if (!key.starts_with("--")) throw std::invalid_argument(std::format("unexpected argument '{}'", key));
     key.remove_prefix(2);
+    if (!kOptions.contains(key)) throw std::invalid_argument(std::format("unknown option '--{}'\n{}", key, kUsage));
     if (key == "mlockall") {
       opts["mlockall"] = "1";
     } else if (i + 1 < argc) {

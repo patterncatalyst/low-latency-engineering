@@ -14,13 +14,16 @@ TEST(PiMutex, DefaultsToPriorityInheritance) {
   EXPECT_EQ(mutex.protocol(), Protocol::inherit);
 }
 
-TEST(PiMutex, ProtocolAttributeIsSetOnTheAttributeObject) {
+TEST(PiMutex, ConfigureSetsThePriorityInheritanceAttribute) {
   pthread_mutexattr_t attr;
   ASSERT_EQ(pthread_mutexattr_init(&attr), 0);
-  ASSERT_EQ(pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT), 0);
+  PiMutex::configure(attr, Protocol::inherit);
   int value = -1;
   ASSERT_EQ(pthread_mutexattr_getprotocol(&attr, &value), 0);
   EXPECT_EQ(value, PTHREAD_PRIO_INHERIT);
+  PiMutex::configure(attr, Protocol::none);
+  ASSERT_EQ(pthread_mutexattr_getprotocol(&attr, &value), 0);
+  EXPECT_EQ(value, PTHREAD_PRIO_NONE);
   pthread_mutexattr_destroy(&attr);
 }
 
@@ -38,6 +41,10 @@ TEST(PiMutex, WorksWithTheStandardGuards) {
   }
   EXPECT_EQ(counter, 2000);
   EXPECT_TRUE(mutex.try_lock());
+  // A held lock is "busy" (false), not an error: checked from another thread, since a PI mutex is not recursive.
+  bool second = true;
+  std::jthread{[&] { second = mutex.try_lock(); }}.join();
+  EXPECT_FALSE(second);
   mutex.unlock();
 }
 

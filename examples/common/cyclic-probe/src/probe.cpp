@@ -25,13 +25,20 @@ std::string errno_text(const char* call, int err) {
 Advance advance(Mono deadline, Mono now, nanoseconds interval) {
   Mono next = deadline + interval;
   std::uint64_t skipped = 0;
-  if (next <= now) {
+  if (next < now) {
     // Whole intervals to step over, in one division instead of a loop that a long stall would spin.
-    const auto behind = (now - next) / interval + 1;
+    // ceil((now - next) / interval): a grid point exactly at `now` is not skipped.
+    const auto behind = (now - next + interval - nanoseconds{1}) / interval;
     next += behind * interval;
     skipped = static_cast<std::uint64_t>(behind);
   }
   return {next, skipped};
+}
+
+std::uint64_t missed_in_window(std::uint64_t skipped, Mono first_skipped, Mono end, nanoseconds interval) {
+  if (first_skipped > end) return 0;
+  const auto inside = static_cast<std::uint64_t>((end - first_skipped) / interval) + 1;
+  return std::min(skipped, inside);
 }
 
 timespec to_timespec(Mono t) {
@@ -70,7 +77,7 @@ Result lock_all_memory() {
 Mono now() {
   timespec ts{};
   // clock_gettime, not std::chrono::steady_clock: the deadline and the sleep must name the same clock id explicitly.
-  clock_gettime(CLOCK_MONOTONIC, &ts);
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) throw std::system_error(errno, std::system_category(), "clock_gettime");
   return std::chrono::seconds{ts.tv_sec} + nanoseconds{ts.tv_nsec};
 }
 
@@ -86,10 +93,11 @@ std::expected<Outcome, std::string> run(const Config& config, measure::Recorder&
     if (auto ok = set_fifo(config.fifo_priority); !ok) return std::unexpected{ok.error()};
   }
 
-  const auto wakeups = static_cast<std::uint64_t>(config.duration / config.interval);
+  const Mono start = now();
+  const Mono end = start + config.duration;
   Outcome outcome;
-  Mono deadline = now() + config.interval;
-  for (std::uint64_t i = 0; i < wakeups; ++i) {
+  Mono deadline = start + config.interval;
+  while (deadline <= end) {
     const timespec target = to_timespec(deadline);
     int rc = 0;
     // clock_nanosleep returns the error number itself (it does not set errno); EINTR resumes the same deadline.
@@ -101,8 +109,8 @@ std::expected<Outcome, std::string> run(const Config& config, measure::Recorder&
     recorder.record(std::max<std::int64_t>(0, (woke - deadline).count()));
     ++outcome.samples;
     const Advance next = advance(deadline, woke, config.interval);
+    outcome.missed_periods += missed_in_window(next.skipped, deadline + config.interval, end, config.interval);
     deadline = next.deadline;
-    outcome.missed_periods += next.skipped;
   }
   return outcome;
 }

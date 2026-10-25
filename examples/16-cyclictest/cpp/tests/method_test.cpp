@@ -13,7 +13,7 @@ TEST(Method, MatchesTheCyclictestMethodLane) {
   EXPECT_EQ(config.interval, 1ms);
   EXPECT_TRUE(config.lock_memory);
   EXPECT_TRUE(cyclic::validate(config));
-  // 300 s at 1 ms is the lane's sample count the converter checks against.
+  // 300 s at 1 ms is 300,000 periods; the lane's sample-count check belongs to the converter (S4), not this test.
   EXPECT_EQ(config.duration / config.interval, 300'000);
 }
 
@@ -26,7 +26,7 @@ TEST(Method, RunsWithoutPrivilegeWhenFifoAndPinAreDropped) {
   measure::Recorder recorder{"16-cyclictest", "probe"};
   const auto outcome = cyclic::run(config, recorder);
   ASSERT_TRUE(outcome) << outcome.error();
-  EXPECT_EQ(outcome->samples, 20U);
+  EXPECT_EQ(outcome->samples + outcome->missed_periods, 20U);
 }
 
 }  // namespace

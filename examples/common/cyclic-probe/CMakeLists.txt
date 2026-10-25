@@ -21,5 +21,9 @@ if(BUILD_TESTING)
 
   # The command line, end to end, with no privilege: SCHED_OTHER, no mlockall, 40 ms at 1 ms.
   add_test(NAME cyclic-probe-cli COMMAND cyclic-probe --interval-us 1000 --duration-ms 40)
-  set_tests_properties(cyclic-probe-cli PROPERTIES PASS_REGULAR_EXPRESSION "samples=40")
+  set_tests_properties(cyclic-probe-cli PROPERTIES PASS_REGULAR_EXPRESSION "samples=[0-9]+ missed_periods=[0-9]+")
+
+  # A misspelled option is a usage error, not a run with the default.
+  add_test(NAME cyclic-probe-unknown-option COMMAND cyclic-probe --prority 95)
+  set_tests_properties(cyclic-probe-unknown-option PROPERTIES PASS_REGULAR_EXPRESSION "unknown option '--prority'")
 endif()

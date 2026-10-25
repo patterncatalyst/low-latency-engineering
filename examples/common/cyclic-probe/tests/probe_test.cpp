@@ -25,10 +25,23 @@ TEST(Advance, SkipsWholePeriodsAfterAStall) {
   EXPECT_EQ(next.skipped, 3U);
 }
 
-TEST(Advance, AWakeExactlyOnTheNextDeadlineSkipsIt) {
+TEST(Advance, AWakeExactlyOnTheNextDeadlineDoesNotSkipIt) {
+  // cyclictest skips only when now is strictly after the next deadline.
   const auto next = advance(10ms, 11ms, 1ms);
-  EXPECT_EQ(next.deadline, 12ms);
-  EXPECT_EQ(next.skipped, 1U);
+  EXPECT_EQ(next.deadline, 11ms);
+  EXPECT_EQ(next.skipped, 0U);
+}
+
+TEST(Advance, ALandingOnAGridPointInsideAStallKeepsThatPoint) {
+  const auto next = advance(10ms, 13ms, 1ms);  // 11 and 12 are past; 13 is now, not past
+  EXPECT_EQ(next.deadline, 13ms);
+  EXPECT_EQ(next.skipped, 2U);
+}
+
+TEST(MissedInWindow, CountsOnlyPeriodsInsideTheWindow) {
+  EXPECT_EQ(missed_in_window(3, 11ms, 100ms, 1ms), 3U);
+  EXPECT_EQ(missed_in_window(5, 11ms, 13ms, 1ms), 3U);  // 11, 12, 13 are inside; 14 and 15 are not
+  EXPECT_EQ(missed_in_window(2, 20ms, 13ms, 1ms), 0U);
 }
 
 TEST(ToTimespec, SplitsSecondsAndNanoseconds) {
@@ -56,8 +69,20 @@ TEST(Run, RecordsOneSamplePerIntervalWithoutPrivilege) {
   config.duration = 30ms;
   const auto outcome = run(config, recorder);
   ASSERT_TRUE(outcome) << outcome.error();
-  EXPECT_EQ(outcome->samples, 30U);
-  EXPECT_EQ(recorder.count(), 30);
+  EXPECT_EQ(outcome->samples + outcome->missed_periods, 30U);  // every period is a sample or a counted miss
+  EXPECT_GE(outcome->samples, 1U);
+  EXPECT_EQ(recorder.count(), static_cast<std::int64_t>(outcome->samples));
+}
+
+TEST(Run, EndsWithinTheRequestedDuration) {
+  measure::Recorder recorder{"16-cyclictest", "probe"};
+  Config config;
+  config.duration = 50ms;
+  const auto begun = now();
+  const auto outcome = run(config, recorder);
+  ASSERT_TRUE(outcome) << outcome.error();
+  // The last deadline is at most start + duration; the generous slack covers a loaded CI runner's wake-up.
+  EXPECT_LT(now() - begun, config.duration + 200ms);
 }
 
 TEST(Run, ReportsAnInvalidConfigAsAnError) {
