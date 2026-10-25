@@ -243,7 +243,8 @@ java_lane() {
   bg_track "$jpid"
   tid=''
   for ((tries = 0; tries < 600; tries++)); do
-    tid=$(sed -n 's/^hot-thread tid=\([0-9][0-9]*\) .*/\1/p' "$OUT/java/java.log" 2>/dev/null | head -n1)
+    # The JVM creates java.log a moment after it starts; until then sed fails, which must not end the step (pipefail).
+    tid=$(sed -n 's/^hot-thread tid=\([0-9][0-9]*\) .*/\1/p' "$OUT/java/java.log" 2>/dev/null | head -n1 || true)
     [[ -n $tid ]] && break
     kill -0 "$jpid" 2>/dev/null || { wait "$jpid" || true; tail -n 20 "$OUT/java/java.log" >&2; die "the Java lane exited before its hot thread was FIFO"; }
     sleep 0.1
@@ -258,6 +259,7 @@ java_lane() {
   own_out
   # Safepoints: the log has one line per safepoint ("Safepoint "Reason", ... Total: N ns").
   local n total
+  [[ -r $OUT/java/safepoint.log ]] || die "the JVM wrote no $OUT/java/safepoint.log"
   n=$(grep -c 'Safepoint "' "$OUT/java/safepoint.log" || true)
   total=$(sed -n 's/.*Total: \([0-9][0-9]*\) ns.*/\1/p' "$OUT/java/safepoint.log" | awk '{s += $1} END {print s + 0}')
   jq --argjson n "$n" --argjson t "$total" '.runtime.counters.safepoints = $n | .runtime.counters.safepoint_total_ns = $t' \
