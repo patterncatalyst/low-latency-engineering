@@ -33,7 +33,7 @@ Planned by Opus on 2026-10-25 on `release/r05`, cut from main at `461f6d4` (r04 
   - XDP modes:
     - Generic (SKB) XDP works on any netdev.
     - Native XDP is implemented by `virtio_net`, with conditions: guest offloads switched off through `VIRTIO_NET_F_CTRL_GUEST_OFFLOADS`, an MTU limit, and on one queue pair, XDP_TX/REDIRECT fall back to a shared, locked TX queue.
-    - AF_XDP zero-copy on `virtio_net` landed upstream in about the 6.11–6.12 cycle and needs the device to offer `VIRTIO_F_RING_RESET`. Whether QEMU's userspace device offers it behind passt is unverified; S0 checks the v7.2 source, S1 probes the errno.
+    - AF_XDP zero-copy on `virtio_net` landed upstream (RX in v6.11, TX in v6.13) and needs the device to offer `VIRTIO_F_RING_RESET`. Whether QEMU's userspace device offers it behind passt is unverified; S0 checks the v7.2 source, S1 probes the errno.
   - Traffic sources:
     - ssh runs over vsock, so an XDP program on `eth0` can't lock us out.
     - Guests can't reach each other, so the only external traffic source for the virtio NIC is the host through passt. That's an r06 design decision (§7, Q8).
@@ -248,7 +248,7 @@ Model: `sonnet` executes and `opus` plans and validates. MAIN means the main ses
 
 | id | Title | Files touched | Depends on | Model | Where | Status |
 |---|---|---|---|---|---|---|
-| S0 | Upstream survey, fact-source rows, r04 bookkeeping | `_plans/dependency-pins.md` ("r05 pins", "Runtime facts for Ch14-16 prose"), `versions.env` (only if a tarball is pinned), `_plans/iteration-plan.md` (r04 complete: #7, `r04.x`), `_plans/r04-plan.md` (S21 done) | – | sonnet (opus validates) | host, read-only | todo |
+| S0 | Upstream survey, fact-source rows, r04 bookkeeping | `_plans/dependency-pins.md` ("r05 pins", "Runtime facts for Ch14-16 prose"), `versions.env` (only if a tarball is pinned), `_plans/iteration-plan.md` (r04 complete: #7, `r04.x`), `_plans/r04-plan.md` (S21 done) | – | sonnet (opus validates) | host, read-only | done |
 | S1 | Guest probes (read-only in intent; guest reverted after) | `_plans/dependency-pins.md` ("r05 guest probes") | S0 | opus (MAIN) | VM | todo |
 | S2 | Record answers to §6; iteration-plan split and renumber; commit `r05-plan.md`, `r05-chapters.md`, `r05-figures.md` | `_plans/iteration-plan.md`, `_plans/r05-*.md`, `CLAUDE.md` only if a rule changes | S0, S1, user | opus (MAIN) | host | todo |
 | S3 | Report/profile contract, additive in `lowlat-report/1`; cyclictest converter | `contracts/measurement/latency-report.schema.json`, `contracts/measurement/examples/`, `examples/common/measure-py/**` (`lowlat-report from-cyclictest`), `examples/common/measure-fixtures/`, `scripts/profile.sh`, `scripts/scrub-host-ids.py` | S0 | sonnet | host | todo |
