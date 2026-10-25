@@ -31,7 +31,7 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
   means          "mean latency"/"average latency" fail (unless the sentence negates it);
                  every other use of mean/average in _docs is printed for review
   no-jfr         no *.jfr file is tracked by git (the JFR evidence is the text summaries)
-  java-flags     every Java run report of chapters 5-10 under results/r0[2-9]-* has a non-empty
+  java-flags     every Java run report of chapters 5-13 under results/r0[2-9]-* has a non-empty
                  build.flags (the -gc-pause reports derived from a JFR are exempt)
   hw-source      every report with runtime.hw_counters names a non-empty `source`
   placement      every report with runtime.placement has a non-empty `cpus` list; every
@@ -44,6 +44,33 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
                  major.minor[.patch], in every profile.json and every report's profile
   vm-runs        every results/*vm-run*/ has vm/LABEL = vm, and every report and profile in
                  it records profile.virt.type = kvm
+  env-labels     every Chapter 13 report under results/r04-* or later (lowlat-report, place-probe,
+                 pool, steal) has runtime.environment.kind equal to its lane directory (host/,
+                 vm/, container-*/; steal.json is the guest's and the simulator's lateness.json in a
+                 container lane may be the guest's); vm and container lanes carry a non-empty
+                 guest_profile, a lowlat-report there records profile.virt.type = kvm, and a
+                 container report names container.image with an exact tag and an image_digest
+                 sha256:<64 hex> equal to containers/IMAGES.lock
+  lang-floor     no CMake file, CMakePresets.json or Containerfile names a C++ standard below 23
+                 (CMAKE_CXX_STANDARD, cxx_std_NN, -std=c++NN); every pom.xml resolves
+                 maven.compiler.release (or the compiler plugin's release, through its parent
+                 chain) >= 25; every pyproject.toml requires-python and .python-version are >= 3.14;
+                 a Containerfile naming a JDK or a Python names >= 25 / >= 3.14
+  image-pins     every Containerfile/Dockerfile FROM (a previous stage or scratch aside) has an
+                 exact tag, never latest, and an @sha256:<64 hex> digest; compose and script image
+                 references are not parsed
+  no-privileged  no --privileged, --cap-add=ALL, seccomp=unconfined or `privileged: true` in a
+                 tracked shell script, YAML file (compose, workflows) or Containerfile, outside
+                 NO_PRIVILEGED_ALLOW (empty)
+  ft-reports     a report whose build.compiler says "free-threading" has runtime.python_build
+                 "free-threaded" and build.gil_enabled false; a "free-threaded" report has a
+                 free-threading build.compiler; only a notes marker gil_reenabled=PYTHON_GIL=1
+                 (a deliberate GIL-on control) is exempt, and FT_KNOWN_MISLABELLED lists the frozen
+                 Ch9 r03 reports written before the identity was taken from the binary
+  versions-consumers
+                 each pin in VERSION_CONSUMERS (Boost, liburing, Quarkus platform, uvloop, protobuf
+                 Java/Python, the Chapter 13 toolchain ARGs) appears verbatim in its consumer file
+                 (ci.yml may instead source versions.env and name $BOOST_SHA256)
   prerelease     no EA/prerelease version in a pom.xml (dependency, plugin, parent, *.version
                  property), pyproject.toml, uv.lock, versions.env or CMake pin
   variant-names  a variant, option or slug is named for its defect (--naive, --unwarmed),
@@ -61,6 +88,7 @@ Checks (exit 1 on any failure, each failure printed as "FAIL <check>: <detail>")
                                               in a temporary tree and requires it to fail
 """
 
+import fnmatch
 import getpass
 import gzip
 import json
@@ -545,7 +573,7 @@ def check_no_jfr(root: Path) -> None:
 
 
 FLAGS_FROM_CHAPTER = 5  # chapters 1-4 predate build.flags
-FLAGS_TO_CHAPTER = 10
+FLAGS_TO_CHAPTER = 13
 RUN_DIR = re.compile(r"r0[2-9]-")
 
 
@@ -740,6 +768,418 @@ def check_vm_runs(root: Path) -> None:
             if virt != "kvm":
                 fail("vm-runs", f"{relto(root, path)}: profile.virt.type is {virt!r}, need 'kvm'")
     print(f"vm-runs: {runs} vm-run director(ies)")
+
+
+# ---------------------------------------------------------------- r04 environment and build checks
+ENV_FROM_RUN = 4  # Chapter 13 reports from r04 on carry runtime.environment
+ENV_SCHEMAS = ("lowlat-report/", "lowlat-place-probe/", "lowlat-pool/", "lowlat-steal/")
+ENV_LANE = re.compile(r"host|vm|container-[a-z0-9-]+")
+# Reports that carry no runtime.environment by design: the Quarkus client's emit-lateness sidecar.
+ENV_UNLABELLED = {"client-lateness.json"}
+# Reports whose environment is the guest's, not the lane's: steal ticks are read from the guest's
+# /proc/stat, and the line simulator (lateness.json) runs in the guest outside the container.
+ENV_KIND_EXCEPTIONS = {
+    ("steal.json", "vm"): {"vm"},
+    ("steal.json", "container"): {"vm"},
+    ("lateness.json", "container"): {"vm", "container"},
+}
+IMAGE_REF = re.compile(r"[a-z0-9][a-z0-9._/-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*")
+IMAGE_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
+
+
+def images_lock(root: Path) -> dict[str, str]:
+    """Image name:tag -> digest from Chapter 13's IMAGES.lock (field 1, name:tag@sha256:...)."""
+    lock = root / "examples" / "13-where-code-runs" / "containers" / "IMAGES.lock"
+    out: dict[str, str] = {}
+    if lock.is_file():
+        for line in lock.read_text(encoding="utf-8").splitlines():
+            fields = line.split()
+            if fields and not fields[0].startswith("#") and "@" in fields[0]:
+                name, digest = fields[0].split("@", 1)
+                out[name] = digest
+    return out
+
+
+def check_env_labels(root: Path) -> None:
+    n = 0
+    lock = images_lock(root)
+    seen_lanes: set[tuple[str, str, str]] = set()
+    for ch in sorted((root / "examples").glob("13-*")):
+        for path in walk(ch, "*.json"):
+            parts = path.relative_to(ch).parts
+            run = re.match(r"r0*(\d+)-", parts[1]) if len(parts) > 3 else None
+            if parts[0] != "results" or not run or int(run.group(1)) < ENV_FROM_RUN:
+                continue
+            lane = parts[2]
+            if not ENV_LANE.fullmatch(lane):
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except ValueError:
+                continue
+            if not (isinstance(data, dict) and str(data.get("schema", "")).startswith(ENV_SCHEMAS)):
+                continue
+            n += 1
+            seen_lanes.add((ch.name, parts[1], lane))
+            where = relto(root, path)
+            lane_kind = lane.split("-")[0]
+            runtime = data.get("runtime")
+            env = runtime.get("environment") if isinstance(runtime, dict) else None
+            if not isinstance(env, dict):
+                if path.name not in ENV_UNLABELLED:
+                    fail("env-labels", f"{where}: no runtime.environment")
+                continue
+            kind = env.get("kind")
+            allowed = ENV_KIND_EXCEPTIONS.get((path.name, lane_kind), {lane_kind})
+            if kind not in allowed:
+                fail(
+                    "env-labels",
+                    f"{where}: runtime.environment.kind is {kind!r}, lane {lane}/ needs "
+                    f"{' or '.join(sorted(allowed))!r}",
+                )
+            if kind in ("vm", "container") and not str(env.get("guest_profile") or "").strip():
+                fail(
+                    "env-labels", f"{where}: {kind} report has no runtime.environment.guest_profile"
+                )
+            if lane_kind != "host" and str(data.get("schema", "")).startswith("lowlat-report/"):
+                prof = data.get("profile")
+                virt = (
+                    ((prof or {}).get("virt") or {}).get("type") if isinstance(prof, dict) else None
+                )
+                if virt != "kvm":
+                    fail("env-labels", f"{where}: profile.virt.type is {virt!r}, need 'kvm'")
+            if kind == "container":
+                box = env.get("container")
+                box = box if isinstance(box, dict) else {}
+                image, digest = str(box.get("image") or ""), str(box.get("image_digest") or "")
+                if not IMAGE_REF.fullmatch(image) or image.rsplit(":", 1)[1] == "latest":
+                    fail(
+                        "env-labels",
+                        f"{where}: container.image {image!r} is not name:tag with an exact tag",
+                    )
+                if not IMAGE_DIGEST.fullmatch(digest):
+                    fail(
+                        "env-labels",
+                        f"{where}: container.image_digest {digest!r} is not sha256:<64 hex>",
+                    )
+                elif lock.get(image) != digest:
+                    fail(
+                        "env-labels",
+                        f"{where}: {image} digest {digest[:19]}... differs from IMAGES.lock "
+                        f"({(lock.get(image) or 'not listed')[:19]})",
+                    )
+    print(f"env-labels: {n} Chapter 13 report(s) in {len(seen_lanes)} lane(s) of r04 or later runs")
+
+
+# ---------------------------------------------------------------- language floor
+CXX_FLOOR = 23
+JDK_FLOOR = 25
+PY_FLOOR = (3, 14)
+CXX_STD = [
+    re.compile(r"set\(\s*CMAKE_CXX_STANDARD\s+(\w+)", re.I),
+    re.compile(r"-DCMAKE_CXX_STANDARD=(\w+)"),
+    re.compile(r'"CMAKE_CXX_STANDARD"\s*:\s*"?(\w+)'),
+    re.compile(r"cxx_std_(\w+)"),
+    re.compile(r"-std=(?:c|gnu)\+\+(\w+)"),
+]
+JDK_NAMED = re.compile(r"(?:temurin|openjdk|jdk|java)[-:]?(\d{2})\b|TEMURIN_BUILD=(\d+)", re.I)
+PY_NAMED = re.compile(r"(?:python[-:]?|--python[ =])3\.(\d+)", re.I)
+# C++98 ranks as 3 (the 2003 revision), below every floor
+CXX_YEAR = {"98": 3, "0x": 11, "1y": 14, "1z": 17, "2a": 20, "2b": 23, "2c": 26}
+PROPS_BLOCK = re.compile(r"<properties>(.*?)</properties>", re.S)
+PROP = re.compile(r"<([\w.\-]+)>([^<]*)</\1>")
+COMPILER_PLUGIN = re.compile(
+    r"<artifactId>\s*maven-compiler-plugin\s*</artifactId>.*?</plugin>", re.S
+)
+RELEASE = re.compile(r"<release>\s*([^<]+?)\s*</release>")
+PARENT = re.compile(r"<parent>.*?</parent>", re.S)
+REL_PATH = re.compile(r"<relativePath>\s*([^<]*?)\s*</relativePath>")
+
+
+def cxx_standard(token: str) -> int | None:
+    """The C++ standard a CMake/compiler token names as a two-digit year, None when unknown."""
+    if token in CXX_YEAR:
+        return CXX_YEAR[token]
+    return int(token) if token.isdigit() else None
+
+
+def is_containerfile(name: str) -> bool:
+    return name.startswith(("Containerfile", "Dockerfile")) or name.endswith(
+        (".Containerfile", ".Dockerfile")
+    )
+
+
+def code_lines(text: str) -> str:
+    return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
+
+
+def pom_release(path: Path, depth: int = 0) -> str | None:
+    """maven.compiler.release, or the compiler plugin's <release>, through the parent chain."""
+    texts: list[str] = []
+    cur: Path | None = path
+    while cur is not None and cur.is_file() and depth < 8:
+        text = XML_COMMENT.sub("", cur.read_text(encoding="utf-8"))
+        texts.append(text)
+        parent = PARENT.search(text)
+        if not parent:
+            break
+        rp = REL_PATH.search(parent.group(0))
+        nxt = (cur.parent / (rp.group(1) if rp else "../pom.xml")).resolve()
+        cur = nxt / "pom.xml" if nxt.is_dir() else nxt
+        depth += 1
+    props: dict[str, str] = {}
+    for text in reversed(texts):  # the child's properties override its parents'
+        for block in PROPS_BLOCK.findall(text):
+            props.update(PROP.findall(block))
+    value = props.get("maven.compiler.release")
+    for text in texts:
+        for plugin in COMPILER_PLUGIN.findall(text):
+            m = RELEASE.search(plugin)
+            if m and value is None:
+                value = m.group(1)
+    if value is not None:
+        value = re.sub(r"\$\{([^}]+)\}", lambda m: props.get(m.group(1), m.group(0)), value)
+    return value
+
+
+def check_lang_floor(root: Path) -> None:
+    cxx = poms = pys = 0
+
+    def floor(where: str, what: str, found: int | None, minimum: int) -> None:
+        if found is None or found < minimum:
+            fail("lang-floor", f"{where}: {what} is below the floor {minimum}")
+
+    for f in tracked_files(root):
+        p = root / f
+        if SKIP_DIRS & set(Path(f).parts) or not p.is_file():
+            continue
+        name = p.name
+        if name == "pom.xml":
+            poms += 1
+            value = pom_release(p)
+            if value is None or not value.isdigit():
+                fail("lang-floor", f"{f}: maven.compiler.release does not resolve ({value!r})")
+            elif int(value) < JDK_FLOOR:
+                fail("lang-floor", f"{f}: maven.compiler.release {value} is below JDK {JDK_FLOOR}")
+        elif name == "pyproject.toml":
+            pys += 1
+            try:
+                spec = (tomllib.loads(p.read_text(encoding="utf-8")).get("project") or {}).get(
+                    "requires-python"
+                )
+            except tomllib.TOMLDecodeError as exc:
+                fail("lang-floor", f"{f}: not valid TOML ({exc})")
+                continue
+            m = re.search(r"(?:>=|~=|==|>)\s*(\d+)\.(\d+)", str(spec or ""))
+            if not m or (int(m.group(1)), int(m.group(2))) < PY_FLOOR:
+                fail(
+                    "lang-floor",
+                    f"{f}: requires-python {spec!r} is below Python {PY_FLOOR[0]}.{PY_FLOOR[1]}",
+                )
+        elif name == ".python-version":
+            m = re.match(r"\s*(\d+)\.(\d+)", p.read_text(encoding="utf-8"))
+            if not m or (int(m.group(1)), int(m.group(2))) < PY_FLOOR:
+                fail("lang-floor", f"{f}: Python version is below {PY_FLOOR[0]}.{PY_FLOOR[1]}")
+        elif (
+            name in ("CMakeLists.txt", "CMakePresets.json")
+            or p.suffix == ".cmake"
+            or is_containerfile(name)
+        ):
+            cxx += 1
+            text = code_lines(p.read_text(encoding="utf-8"))
+            for rx in CXX_STD:
+                for tok in rx.findall(text):
+                    std = cxx_standard(tok)
+                    if std is None or std < CXX_FLOOR:
+                        fail("lang-floor", f"{f}: C++ standard {tok!r} is below C++{CXX_FLOOR}")
+            if is_containerfile(name):
+                for m in JDK_NAMED.finditer(text):
+                    jdk = int(m.group(1) or m.group(2))
+                    floor(f, f"JDK {jdk}", jdk, JDK_FLOOR)
+                for m in PY_NAMED.finditer(text):
+                    if int(m.group(1)) < PY_FLOOR[1]:
+                        fail("lang-floor", f"{f}: Python 3.{m.group(1)} is below 3.{PY_FLOOR[1]}")
+    print(f"lang-floor: {cxx} CMake/Containerfile(s), {poms} pom(s), {pys} pyproject(s)")
+
+
+# ---------------------------------------------------------------- image pins
+FROM_LINE = re.compile(r"^\s*FROM\s+(?:--\S+\s+)*(\S+)(?:\s+AS\s+(\S+))?", re.I | re.M)
+ARG_DEFAULT = re.compile(r"^\s*ARG\s+(\w+)=(\S+)", re.M)
+
+
+def check_image_pins(root: Path) -> None:
+    files = froms = 0
+    for f in tracked_files(root):
+        p = root / f
+        if SKIP_DIRS & set(Path(f).parts) or not is_containerfile(p.name) or not p.is_file():
+            continue
+        files += 1
+        text = code_lines(p.read_text(encoding="utf-8"))
+        args = dict(ARG_DEFAULT.findall(text))
+        stages: set[str] = set()
+        for m in FROM_LINE.finditer(text):
+            image, alias = m.group(1), m.group(2)
+            if alias:
+                stages.add(alias.lower())
+            if image.lower() == "scratch" or image.lower() in stages:
+                continue
+            froms += 1
+            image = re.sub(r"\$\{?(\w+)\}?", lambda v, a=args: a.get(v.group(1), v.group(0)), image)
+            ref, _, digest = image.partition("@")
+            tag = ref.rsplit("/", 1)[-1].partition(":")[2]
+            if "$" in image:
+                fail("image-pins", f"{f}: FROM {m.group(1)} has an ARG with no default")
+            elif not tag:
+                fail("image-pins", f"{f}: FROM {image} has no tag")
+            elif tag == "latest":
+                fail("image-pins", f"{f}: FROM {image} uses :latest")
+            elif not IMAGE_DIGEST.fullmatch(digest):
+                fail("image-pins", f"{f}: FROM {image} has no @sha256:<64 hex> digest")
+    print(f"image-pins: {froms} FROM line(s) in {files} Containerfile(s)")
+
+
+# ---------------------------------------------------------------- no privileged containers
+# Tracked scripts, compose files, Containerfiles and workflows. A (path, pattern name) entry here
+# is an explicit, reviewed exception; the tree needs none.
+NO_PRIVILEGED_ALLOW: set[tuple[str, str]] = set()
+PRIVILEGED = {
+    "--privileged": re.compile(r"--privileged\b"),
+    "--cap-add=ALL": re.compile(r"--cap-add[= ]\s*['\"]?ALL\b", re.I),
+    "seccomp=unconfined": re.compile(r"seccomp[=:]\s*['\"]?unconfined", re.I),
+    "privileged: true": re.compile(r"\bprivileged:\s*['\"]?true\b", re.I),
+}
+
+
+def check_no_privileged(root: Path) -> None:
+    n = 0
+    for f in tracked_files(root):
+        p = root / f
+        name = p.name
+        if SKIP_DIRS & set(Path(f).parts) or not p.is_file():
+            continue
+        if not (
+            p.suffix in {".sh", ".bash", ".yml", ".yaml"}
+            or is_containerfile(name)
+            or name == "Makefile"
+        ):
+            continue
+        n += 1
+        for lineno, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            for label, rx in PRIVILEGED.items():
+                if rx.search(line) and (f, label) not in NO_PRIVILEGED_ALLOW:
+                    fail("no-privileged", f"{f}:{lineno}: {label}: {line.strip()[:100]}")
+    print(f"no-privileged: {n} script/compose/Containerfile/workflow file(s)")
+
+
+# ---------------------------------------------------------------- free-threaded lane identity
+GIL_CONTROL = "gil_reenabled=PYTHON_GIL=1"
+# Ch9 r03 free-threaded counter reports were written before the S3 tightening: the harness recorded
+# the driver's build (build.compiler without "free-threading", build.gil_enabled true) while the
+# worker ran the free-threaded interpreter (its notes say gil_enabled=False). Frozen measurements;
+# the r04 reports (Ch11, Ch12) and Ch10 carry the binary's own identity.
+FT_KNOWN_MISLABELLED = (
+    "09-eliminating-work/results/*/python/counters-threads-free-threaded-*.json",
+)
+
+
+def check_ft_reports(root: Path) -> None:
+    n = known = 0
+    for path, parts, report in example_reports(root):
+        build = report.get("build") or {}
+        runtime = report.get("runtime") or {}
+        ft_binary = "free-threading" in str(build.get("compiler") or "")
+        label = runtime.get("python_build")
+        if not ft_binary and label != "free-threaded":
+            continue
+        n += 1
+        if GIL_CONTROL in str(report.get("notes") or ""):
+            continue
+        where = relto(root, path)
+        problems = []
+        if ft_binary and label != "free-threaded":
+            problems.append(f"free-threading build but runtime.python_build is {label!r}")
+        if ft_binary and build.get("gil_enabled") is not False:
+            problems.append(
+                f"free-threading build but build.gil_enabled is {build.get('gil_enabled')!r}"
+            )
+        if label == "free-threaded" and not ft_binary:
+            problems.append(
+                "runtime.python_build is 'free-threaded', build.compiler lacks 'free-threading'"
+            )
+        if problems and any(fnmatch.fnmatch("/".join(parts), pat) for pat in FT_KNOWN_MISLABELLED):
+            known += 1
+            continue
+        for problem in problems:
+            fail("ft-reports", f"{where}: {problem}")
+    print(f"ft-reports: {n} free-threaded report(s), {known} known r03 mislabel(s) listed")
+
+
+# ---------------------------------------------------------------- versions.env consumers
+# (variable, consumer file, how the consumer holds it)
+#   text    the value appears verbatim in the file
+#   arg     a Containerfile `ARG VAR=value` line holds it
+#   sourced the value appears verbatim, or the file sources versions.env and names $VAR
+VERSION_CONSUMERS: list[tuple[str, str, str]] = [
+    ("BOOST_VERSION", "examples/cmake/deps.cmake", "text"),
+    ("BOOST_URL", "examples/cmake/deps.cmake", "text"),
+    ("BOOST_SHA256", "examples/cmake/deps.cmake", "text"),
+    ("BOOST_SHA256", ".github/workflows/ci.yml", "sourced"),
+    ("LIBURING_VERSION", "examples/cmake/deps.cmake", "text"),
+    ("LIBURING_URL", "examples/cmake/deps.cmake", "text"),
+    ("LIBURING_SHA256", "examples/cmake/deps.cmake", "text"),
+    ("QUARKUS_PLATFORM_VERSION", "examples/12-io-engines/quarkus/pom.xml", "text"),
+    ("UVLOOP_VERSION", "examples/12-io-engines/io-py/pyproject.toml", "text"),
+    ("PROTOBUF_JAVA_VERSION", "examples/pom.xml", "text"),
+    ("PROTOBUF_PYTHON_VERSION", "examples/common/proto-py/pyproject.toml", "text"),
+    ("CMAKE_VERSION", "examples/13-where-code-runs/containers/cpp/Containerfile", "arg"),
+    ("CMAKE_SHA256", "examples/13-where-code-runs/containers/cpp/Containerfile", "arg"),
+    ("NINJA_VERSION", "examples/13-where-code-runs/containers/cpp/Containerfile", "arg"),
+    ("NINJA_SHA256", "examples/13-where-code-runs/containers/cpp/Containerfile", "arg"),
+    ("TEMURIN_BUILD", "examples/13-where-code-runs/containers/java/Containerfile", "arg"),
+    ("TEMURIN_URL", "examples/13-where-code-runs/containers/java/Containerfile", "arg"),
+    ("TEMURIN_SHA256", "examples/13-where-code-runs/containers/java/Containerfile", "arg"),
+    ("MAVEN_VERSION", "examples/13-where-code-runs/containers/java/Containerfile", "arg"),
+    ("MAVEN_SHA256", "examples/13-where-code-runs/containers/java/Containerfile", "arg"),
+    ("UV_VERSION", "examples/13-where-code-runs/containers/python/Containerfile", "arg"),
+    ("UV_SHA256", "examples/13-where-code-runs/containers/python/Containerfile", "arg"),
+]
+ENV_ASSIGN = re.compile(r'^([A-Z][A-Z0-9_]*)="([^"]*)"', re.M)
+
+
+def check_versions_consumers(root: Path, table: list[tuple[str, str, str]] | None = None) -> None:
+    table = VERSION_CONSUMERS if table is None else table
+    env_file = root / "versions.env"
+    pins = (
+        dict(ENV_ASSIGN.findall(env_file.read_text(encoding="utf-8"))) if env_file.is_file() else {}
+    )
+    for var, consumer, how in table:
+        value = pins.get(var)
+        path = root / consumer
+        if value is None:
+            fail("versions-consumers", f"versions.env has no {var} (consumer {consumer})")
+        elif not path.is_file():
+            fail("versions-consumers", f"{consumer}: consumer of {var} is missing")
+        else:
+            text = path.read_text(encoding="utf-8")
+            if how == "arg":
+                ok = f"ARG {var}={value}\n" in text + "\n"
+            elif how == "sourced":
+                ok = value in text or (
+                    "versions.env" in text and re.search(rf"\$\{{?{var}\b", text) is not None
+                )
+            else:
+                ok = value in text
+            if not ok:
+                fail(
+                    "versions-consumers",
+                    f"{consumer}: {var}={value[:48]} not found "
+                    f"{'as an ARG default' if how == 'arg' else 'verbatim'}",
+                )
+    print(
+        f"versions-consumers: {len(table)} pin/consumer pair(s), {len(pins)} pin(s) in versions.env"
+    )
 
 
 # A version is a prerelease when a separator or digit is followed by one of these words.
@@ -1044,6 +1484,57 @@ def listing_doc(prose_name: str, body: str, lang: str = "java") -> str:
     return f"# Chapter\n\nThe listing shows {prose_name}.\n\n```{lang}\n{body}\n```\n"
 
 
+# ---- planted-tree builders for the r04 checks
+IMG = "lowlat/place-cpp:r04"
+DIGEST = "sha256:" + "a" * 64
+ENV_DIR = "examples/13-where-code-runs"
+LOCK = {f"{ENV_DIR}/containers/IMAGES.lock": f"# comment\n{IMG}@{DIGEST} ubi@sha256:{'b' * 64}\n"}
+
+
+def env_report(lane: str, **env: object) -> dict:
+    """A Chapter 13 consumer report for `lane`, its environment overridden by `env`."""
+    kind = lane.split("-")[0]
+    environment: dict = {"kind": kind}
+    if kind != "host":
+        environment["guest_profile"] = "lab-ready-r04/stock-unpinned"
+    if kind == "container":
+        environment["container"] = {"runtime": "docker", "image": IMG, "image_digest": DIGEST}
+    environment.update(env)
+    virt = {"type": "none" if kind == "host" else "kvm"}
+    return {
+        **GOOD_REPORT,
+        "example": "13-where-code-runs",
+        "runtime": {"environment": environment},
+        "profile": {"schema": "lowlat-profile/1", "virt": virt},
+    }
+
+
+def env_path(lane: str, name: str = "cpp/consumer.json") -> str:
+    return f"{ENV_DIR}/results/r04-run1/{lane}/alt1/{name}"
+
+
+def ft_report(compiler: str, build: str, gil: bool, notes: str = "") -> dict:
+    return {
+        **GOOD_REPORT,
+        "language": "python",
+        "build": {"compiler": compiler, "gil_enabled": gil},
+        "runtime": {"python_build": build},
+        "notes": notes,
+    }
+
+
+FT_COMPILER = "3.14.9 free-threading build (main) [Clang 23.1.3 ]"
+GIL_COMPILER = "3.14.9 (main) [Clang 23.1.3 ]"
+FT_PATH = "examples/11-stackful-stackless/results/r04-run1/python/python-free-threaded-x.json"
+BASE = "registry.access.redhat.com/ubi10/ubi-minimal:10.2-1@sha256:" + "c" * 64
+
+
+def pom_with(release: str | None, parent: str | None = None) -> str:
+    props = f"<properties><maven.compiler.release>{release}</maven.compiler.release></properties>"
+    head = f"<parent><relativePath>{parent}</relativePath></parent>" if parent else ""
+    return f"<project>{head}{props if release is not None else ''}</project>"
+
+
 # A made-up host kernel build for the planted cases: never a real machine's.
 HOST_KERNEL_BUILD = "9.9.9-100.fc99.x86_64"
 
@@ -1098,6 +1589,25 @@ def self_test() -> int:
             "no build.flags",
         ),
         ("java-flags r03 chapter 10 good", {r10: GOOD_REPORT}, check_java_flags, False, ""),
+        (
+            "java-flags r04 chapter 13 bad",
+            {
+                "examples/13-where-code-runs/results/r04-run1/host/alt1/java/x.json": {
+                    **GOOD_REPORT,
+                    "build": {"compiler": "c", "flags": ""},
+                }
+            },
+            check_java_flags,
+            False,
+            "no build.flags",
+        ),
+        (
+            "java-flags r04 chapter 11 good",
+            {"examples/11-stackful-stackless/results/r04-run1/java-x.json": GOOD_REPORT},
+            check_java_flags,
+            False,
+            "",
+        ),
         (
             "hw-source bad",
             {h: {**GOOD_REPORT, "runtime": {"hw_counters": {"per_op": {"cycles": 1}}}}},
@@ -1564,6 +2074,394 @@ def self_test() -> int:
             False,
             "",
         ),
+        # ---- r04 S17 checks
+        (
+            "env-labels wrong kind",
+            {**LOCK, env_path("vm"): env_report("vm", kind="host")},
+            check_env_labels,
+            False,
+            "kind is 'host', lane vm/ needs 'vm'",
+        ),
+        (
+            "env-labels vm without guest_profile",
+            {**LOCK, env_path("vm"): env_report("vm", guest_profile="")},
+            check_env_labels,
+            False,
+            "no runtime.environment.guest_profile",
+        ),
+        (
+            "env-labels vm not kvm",
+            {
+                **LOCK,
+                env_path("vm"): {
+                    **env_report("vm"),
+                    "profile": {"schema": "lowlat-profile/1", "virt": {"type": "none"}},
+                },
+            },
+            check_env_labels,
+            False,
+            "need 'kvm'",
+        ),
+        (
+            "env-labels missing environment",
+            {**LOCK, env_path("host"): {**GOOD_REPORT, "runtime": {}}},
+            check_env_labels,
+            False,
+            "no runtime.environment",
+        ),
+        (
+            "env-labels container latest tag",
+            {
+                **LOCK,
+                env_path("container-cpuset"): env_report(
+                    "container-cpuset",
+                    container={
+                        "runtime": "docker",
+                        "image": "lowlat/place-cpp:latest",
+                        "image_digest": DIGEST,
+                    },
+                ),
+            },
+            check_env_labels,
+            False,
+            "exact tag",
+        ),
+        (
+            "env-labels container tagless",
+            {
+                **LOCK,
+                env_path("container-cpuset"): env_report(
+                    "container-cpuset",
+                    container={
+                        "runtime": "docker",
+                        "image": "lowlat/place-cpp",
+                        "image_digest": DIGEST,
+                    },
+                ),
+            },
+            check_env_labels,
+            False,
+            "exact tag",
+        ),
+        (
+            "env-labels container digest not sha256",
+            {
+                **LOCK,
+                env_path("container-cpuset"): env_report(
+                    "container-cpuset",
+                    container={"runtime": "docker", "image": IMG, "image_digest": "abc"},
+                ),
+            },
+            check_env_labels,
+            False,
+            "not sha256:<64 hex>",
+        ),
+        (
+            "env-labels container digest differs from IMAGES.lock",
+            {
+                **LOCK,
+                env_path("container-cpuset"): env_report(
+                    "container-cpuset",
+                    container={
+                        "runtime": "docker",
+                        "image": IMG,
+                        "image_digest": "sha256:" + "d" * 64,
+                    },
+                ),
+            },
+            check_env_labels,
+            False,
+            "differs from IMAGES.lock",
+        ),
+        (
+            "env-labels good lanes",
+            {
+                **LOCK,
+                env_path("host"): env_report("host"),
+                env_path("vm"): env_report("vm"),
+                env_path("container-cpuset"): env_report("container-cpuset"),
+                # the guest's steal ticks and a container lane's simulator are labelled vm
+                env_path("container-bridge", "steal.json"): {
+                    "schema": "lowlat-steal/1",
+                    "runtime": {"environment": {"kind": "vm", "guest_profile": "g"}},
+                },
+                env_path("container-bridge", "cpp/lateness.json"): env_report("vm"),
+                env_path("container-bridge", "quarkus/client-lateness.json"): GOOD_REPORT,
+                # an older run is out of scope
+                f"{ENV_DIR}/results/r03-run1/host/a.json": env_report("vm"),
+            },
+            check_env_labels,
+            False,
+            "",
+        ),
+        (
+            "lang-floor cmake C++20",
+            {"examples/a/CMakeLists.txt": "set(CMAKE_CXX_STANDARD 20)\n"},
+            check_lang_floor,
+            False,
+            "C++ standard '20' is below C++23",
+        ),
+        (
+            "lang-floor cxx_std_17",
+            {"examples/a/CMakeLists.txt": "target_compile_features(x PUBLIC cxx_std_17)\n"},
+            check_lang_floor,
+            False,
+            "'17' is below C++23",
+        ),
+        (
+            "lang-floor Containerfile -std=c++20",
+            {"c/Containerfile": "RUN g++ -std=c++20 x.cpp\n"},
+            check_lang_floor,
+            False,
+            "'20' is below C++23",
+        ),
+        (
+            "lang-floor pom release 21",
+            {"examples/a/pom.xml": pom_with("21")},
+            check_lang_floor,
+            False,
+            "release 21 is below JDK 25",
+        ),
+        (
+            "lang-floor parentless pom without release",
+            {"examples/a/pom.xml": pom_with(None)},
+            check_lang_floor,
+            False,
+            "does not resolve",
+        ),
+        (
+            "lang-floor pom inherits a low release",
+            {
+                "examples/pom.xml": pom_with("21"),
+                "examples/a/pom.xml": pom_with(None, "../pom.xml"),
+            },
+            check_lang_floor,
+            False,
+            "release 21 is below JDK 25",
+        ),
+        (
+            "lang-floor pyproject 3.12",
+            {"examples/a/pyproject.toml": '[project]\nname = "a"\nrequires-python = ">=3.12"\n'},
+            check_lang_floor,
+            False,
+            "below Python 3.14",
+        ),
+        (
+            "lang-floor Containerfile names JDK 21",
+            {"c/Containerfile": "ARG U=https://example.org/temurin21-binaries/jdk-21.0.5.tar.gz\n"},
+            check_lang_floor,
+            False,
+            "JDK 21 is below the floor 25",
+        ),
+        (
+            "lang-floor Containerfile names Python 3.12",
+            {"c/Containerfile": "RUN uv venv --python 3.12 /opt/venv\n"},
+            check_lang_floor,
+            False,
+            "Python 3.12 is below 3.14",
+        ),
+        (
+            "lang-floor good",
+            {
+                "examples/pom.xml": pom_with("25"),
+                "examples/a/pom.xml": pom_with(None, "../pom.xml"),
+                "examples/b/pom.xml": pom_with("${java.version}").replace(
+                    "<properties>", "<properties><java.version>25</java.version>"
+                ),
+                "examples/CMakeLists.txt": (
+                    "if(CMAKE_CXX_STANDARD LESS 23)\nendif()\nset(CMAKE_CXX_STANDARD 23)\n"
+                    "target_compile_features(x PUBLIC cxx_std_26)\n# cxx_std_17 in a comment\n"
+                ),
+                "examples/a/pyproject.toml": (
+                    '[project]\nname = "a"\nrequires-python = ">=3.14,<4"\n'
+                ),
+                "examples/.python-version": "3.14.9\n",
+                "c/Containerfile": (
+                    "ARG U=https://example.org/temurin25-binaries/jdk-25.0.5.tar.gz\n"
+                    "ARG TEMURIN_BUILD=25.0.5+8\nRUN g++ -std=c++23 x.cpp\n"
+                ),
+            },
+            check_lang_floor,
+            False,
+            "",
+        ),
+        (
+            "image-pins tagless FROM",
+            {"c/Containerfile": f"FROM registry.example.org/ubi@sha256:{'c' * 64}\n"},
+            check_image_pins,
+            False,
+            "has no tag",
+        ),
+        (
+            "image-pins :latest",
+            {"c/Containerfile": f"FROM registry.example.org/ubi:latest@sha256:{'c' * 64}\n"},
+            check_image_pins,
+            False,
+            "uses :latest",
+        ),
+        (
+            "image-pins no digest",
+            {"c/Containerfile": "FROM registry.example.org/ubi:10.2\n"},
+            check_image_pins,
+            False,
+            "no @sha256",
+        ),
+        (
+            "image-pins unresolved ARG",
+            {"c/Containerfile": "ARG BASE\nFROM $BASE\n"},
+            check_image_pins,
+            False,
+            "ARG with no default",
+        ),
+        (
+            "image-pins good",
+            {
+                "c/Containerfile": (
+                    f"ARG B={BASE}\nFROM --platform=linux/amd64 $B AS build\n"
+                    f"FROM {BASE} AS runtime\nFROM build AS again\nFROM scratch\n"
+                )
+            },
+            check_image_pins,
+            False,
+            "",
+        ),
+        (
+            "no-privileged --privileged",
+            {"scripts/run.sh": "docker run --rm --privileged img\n"},
+            check_no_privileged,
+            False,
+            "scripts/run.sh:1: --privileged",
+        ),
+        (
+            "no-privileged --cap-add=ALL",
+            {"compose.yaml": "services:\n  a:\n    command: docker run --cap-add=ALL img\n"},
+            check_no_privileged,
+            False,
+            "--cap-add=ALL",
+        ),
+        (
+            "no-privileged seccomp=unconfined",
+            {"x/run.sh": "docker run --security-opt seccomp=unconfined img\n"},
+            check_no_privileged,
+            False,
+            "seccomp=unconfined",
+        ),
+        (
+            "no-privileged seccomp:unconfined in a workflow",
+            {".github/workflows/ci.yml": "options: --security-opt seccomp:unconfined\n"},
+            check_no_privileged,
+            False,
+            "seccomp=unconfined",
+        ),
+        (
+            "no-privileged good",
+            {
+                "x/run.sh": (
+                    "# no --privileged here\ndocker run --cpuset-cpus=2,3 "
+                    "--security-opt seccomp=iouring.json img\n"
+                ),
+                "x/README.md": "never --privileged\n",
+            },
+            check_no_privileged,
+            False,
+            "",
+        ),
+        (
+            "ft-reports free-threading build labelled gil",
+            {FT_PATH: ft_report(FT_COMPILER, "gil", False)},
+            check_ft_reports,
+            False,
+            "runtime.python_build is 'gil'",
+        ),
+        (
+            "ft-reports free-threading build with the GIL back",
+            {FT_PATH: ft_report(FT_COMPILER, "free-threaded", True)},
+            check_ft_reports,
+            False,
+            "build.gil_enabled is True",
+        ),
+        (
+            "ft-reports free-threaded label on a GIL build",
+            {FT_PATH: ft_report(GIL_COMPILER, "free-threaded", True)},
+            check_ft_reports,
+            False,
+            "build.compiler lacks 'free-threading'",
+        ),
+        (
+            "ft-reports good",
+            {
+                FT_PATH: ft_report(FT_COMPILER, "free-threaded", False),
+                FT_PATH.replace("-x", "-gil"): ft_report(GIL_COMPILER, "gil", True),
+                FT_PATH.replace("-x", "-control"): ft_report(
+                    FT_COMPILER, "gil", True, "control; gil_reenabled=PYTHON_GIL=1"
+                ),
+            },
+            check_ft_reports,
+            False,
+            "",
+        ),
+        (
+            "ft-reports known r03 mislabel listed",
+            {
+                "examples/09-eliminating-work/results/r03-run1/python/"
+                "counters-threads-free-threaded-pair-padded.json": ft_report(
+                    GIL_COMPILER, "free-threaded", True
+                )
+            },
+            check_ft_reports,
+            False,
+            "",
+        ),
+        (
+            "versions-consumers drifted URL",
+            {
+                "versions.env": 'X_URL="https://example.org/x-2.tar.gz"\n',
+                "c.cmake": "URL https://example.org/x-1.tar.gz\n",
+            },
+            lambda r: check_versions_consumers(r, [("X_URL", "c.cmake", "text")]),
+            False,
+            "c.cmake: X_URL=https://example.org/x-2.tar.gz not found verbatim",
+        ),
+        (
+            "versions-consumers ARG default drifted",
+            {"versions.env": 'M_VERSION="3.9.16"\n', "Containerfile": "ARG M_VERSION=3.9.15\n"},
+            lambda r: check_versions_consumers(r, [("M_VERSION", "Containerfile", "arg")]),
+            False,
+            "as an ARG default",
+        ),
+        (
+            "versions-consumers workflow neither repeats nor sources the pin",
+            {"versions.env": 'B_SHA256="abc"\n', "ci.yml": "run: echo hi\n"},
+            lambda r: check_versions_consumers(r, [("B_SHA256", "ci.yml", "sourced")]),
+            False,
+            "B_SHA256=abc not found",
+        ),
+        (
+            "versions-consumers missing consumer",
+            {"versions.env": 'B_SHA256="abc"\n'},
+            lambda r: check_versions_consumers(r, [("B_SHA256", "ci.yml", "sourced")]),
+            False,
+            "consumer of B_SHA256 is missing",
+        ),
+        (
+            "versions-consumers good",
+            {
+                "versions.env": 'B_SHA256="abc"\nQ="3.40.1.1"\nM="3.9.16"\n',
+                "ci.yml": '. ./versions.env\necho "$B_SHA256"\n',
+                "pom.xml": "<v>3.40.1.1</v>",
+                "Containerfile": "ARG M=3.9.16\n",
+            },
+            lambda r: check_versions_consumers(
+                r,
+                [
+                    ("B_SHA256", "ci.yml", "sourced"),
+                    ("Q", "pom.xml", "text"),
+                    ("M", "Containerfile", "arg"),
+                ],
+            ),
+            False,
+            "",
+        ),
         (
             "variant good",
             {
@@ -1639,6 +2537,12 @@ def main() -> int:
     check_raw_tool_output(ROOT)
     check_tool_versions(ROOT)
     check_vm_runs(ROOT)
+    check_env_labels(ROOT)
+    check_lang_floor(ROOT)
+    check_image_pins(ROOT)
+    check_no_privileged(ROOT)
+    check_ft_reports(ROOT)
+    check_versions_consumers(ROOT)
     check_prerelease(ROOT)
     check_variant_names(ROOT)
     check_host_ids(ROOT)
