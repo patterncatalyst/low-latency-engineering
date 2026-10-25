@@ -145,7 +145,7 @@ In #A, `wait` goes straight to a futex and `notify_one` wakes it, so every hand-
 
 ### The blocking call
 
-One task in 1,000 makes a 2 ms blocking call every tenth iteration. Before (#A), `boost::this_fiber::sleep_until` suspends only this fiber; after (#B), `std::this_thread::sleep_for` blocks the thread, and `time.sleep` does the same in the asyncio twin. 
+One task in 1,000 makes a 2 ms blocking call every tenth iteration. #A, `boost::this_fiber::sleep_until`, suspends only this fiber; #B, the defect, `std::this_thread::sleep_for`, blocks the thread, and `time.sleep` does the same in the asyncio twin.
 
 {% include codetabs.html langs="C++|Python" %}
 
@@ -174,7 +174,7 @@ Run from the repository root:
 examples/11-stackful-stackless/verify.sh
 ```
 
-Profile for every number below: bare-metal host, an 8-core, 16-thread Intel CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Boost 1.92.0, Python 3.14.9 (GIL and free-threaded builds). Threads sit on distinct physical cores other than CPU 0, placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. The parked and line runs' lookup threads float. Ranges span the committed runs `r04-run1` to `r04-run3`; a ratio is the run's median over three alternations.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Boost 1.92.0, Python 3.14.9 (GIL and free-threaded builds). Threads sit on distinct physical cores other than CPU 0, placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. The parked and line runs' lookup threads float. Ranges span the committed runs `r04-run1` to `r04-run3`.
 
 ### Ten thousand parked waits
 
@@ -187,8 +187,6 @@ Profile for every number below: bare-metal host, an 8-core, 16-thread Intel CPU 
 | C++ `coroutine` | 26 B (not per task) | 1,009 B | 1,010 B |
 | Java `platform-thread` | 1,044,486-1,044,591 B | 22,805-22,898 B | 41,204-41,322 B |
 | Java `virtual-thread` | 27,262-34,078 B (not per task) | 2,870-3,260 B | 2,888-3,276 B |
-
-{% include excalidraw.html file="11-blocking-in-a-fiber" alt="Two lanes. In the C++ lane one carrier thread runs 1,000 fibers; one fiber makes a blocking call, std::this_thread::sleep_for for 2,000 us, 50 times in a run (amber), and the carrier is blocked, so the neighbour fibers wake late. The neighbours' wake lateness p99 is 52 us without the call and 1,917-1,952 us with it. In the ghost lane the Python asyncio twin (gil build, 50 tasks) calls time.sleep for 2 ms in one coroutine and the event loop stalls the same way: the p99 is 1,305-1,308 us without the call and 2,672-2,859 us with it." caption="Figure 11.3: A blocking call stops the carrier, not only the caller. The neighbour fibers' p99 wake lateness goes from 52 us to 1,917-1,952 us, close to the 2 ms sleep itself; the asyncio twin goes from 1,305-1,308 us to 2,672-2,859 us." %}
 
 Java's virtual-thread address space grows in steps of about 64 MiB, likely the carriers' malloc arenas, and is 0 at small task counts, so that cell isn't a per-task cost. Nor is the coroutine's 26 B: its frames land in already-mapped heap.
 
@@ -226,7 +224,7 @@ A simulator at 10 kHz for 20 s sends 200,000 parcels. One lookup task per parcel
 
 ## Cross-check
 
-The stack sizes account for the memory. A fiber's 65,536 B stack plus one 4,096 B guard page is 69,632 B; the run measured 69,645 B. A thread's default stack is 8,192 KiB, glibc's default from `ulimit -s` (the notes print that default; the run doesn't read the limit),, which is 8,388,608 of the 9,245,449 B it reserved. The 10,000 allocations `operator new` counted agree with one frame per task. Under Clang, 1,000 of 1,000 non-escaping coroutines still reached `operator new`, while the ping-pong's two frames made 0 allocations in all nine alternations. HALO (heap allocation elision) happens where the compiler can prove the lifetime, so neither outcome can be assumed.
+The stack sizes account for the memory. A fiber's 65,536 B stack plus one 4,096 B guard page is 69,632 B; the run measured 69,645 B. A thread's default stack is 8,192 KiB, glibc's default from `ulimit -s`, and it's 8,388,608 of the 9,245,449 B it reserved (the notes print that default; the run doesn't read the limit). The 10,000 allocations `operator new` counted agree with one frame per task. Under Clang, 1,000 of 1,000 non-escaping coroutines still reached `operator new`, while the ping-pong's two frames made 0 allocations in all nine alternations. HALO (heap allocation elision) happens where the compiler can prove the lifetime, so neither outcome can be assumed.
 
 The `/proc` switch counts explain the histogram: a thread round trip is 2 voluntary switches in about 3.8 us, and fiber and coroutine round trips never left user space.
 
@@ -249,7 +247,7 @@ The next chapter, *I/O engines* (Part 4), asks how a thread learns that data has
 - Evans and Gough, *Optimizing Cloud Native Java* (O'Reilly), for the JVM side.
 - Ghosh, *Building Low Latency Applications with C++* (Packt), and Enberg, *Latency* (Manning).
 - Companion sites cpp-concurrency-and-parallelism, [Chapter 11, *Coroutines in Depth*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/11-coroutines-in-depth/), [Chapter 12, *Async Runtimes and Event Loops*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/12-async-runtimes-and-event-loops/) and [Chapter 13, *Fibers and Stackful Coroutines*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/docs/13-fibers-and-stackful-coroutines/), and linux-systems-programming, [*Event loops: epoll and inotify*](https://patterncatalyst.github.io/linux-systems-programming/docs/09-event-loops-epoll-inotify/).
-- [Chapter 10]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), for the MPSC hand-off and memory orders.
+- [Chapter 10, *Lock-free and wait-free synchronization*]({{ '/docs/10-lockfree-waitfree/' | relative_url }}), for the MPSC hand-off and memory orders.
 - Appendix E, *Free-threaded Python vs the GIL*.
 
 ---

@@ -110,7 +110,14 @@ f_res = box(
 
 c_hold = box(40, 314, 170, 74, "user", "Coroutine", "C++ awaitable,", "Python asyncio task")
 c_frame = box(
-    260, 314, 240, 74, "accent", "Heap frame", "C++ frame: 208 B", "Python: 1,641 B (tracemalloc)"
+    260,
+    314,
+    240,
+    74,
+    "accent",
+    "Heap frame",
+    "C++ Task probe frame: 208 B",
+    "Python: 1,641 B (tracemalloc)",
 )
 c_res = box(
     550,
@@ -157,7 +164,7 @@ notes = [
         "x": 440,
         "y": 438,
         "text": (
-            "* address space grew in steps (Java carrier arenas) or not at all (C++ frames in "
+            "* address space grew in steps (Java carrier arenas) or barely, 26 B (C++ frames in "
             "already-mapped heap)"
         ),
         "anchor": "middle",

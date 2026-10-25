@@ -227,7 +227,7 @@ The control plane, telemetry and analytics are fine in containers; they tolerate
 
 The counters explain the tails. In the quota lane, `throttled_usec` over `nr_throttled` over the 4 vCPUs is 45.8-49.2 ms per CPU per period, nearly the 50 ms the arithmetic predicts (100 ms less 200 ms of budget spread over four CPUs). The consumer's p99 was 50,462-51,642 us, and its p90 41-42 ms: about half the run was a stall, and the percentiles trace its length. The cpuset lane had no throttling and a p90 of 168-557 us.
 
-Steal ticks are the cross-check on the VM's floor. The `vm` lane showed 0-1 ticks in all nine alternations, of 8,848-9,886 guest ticks: at most 10 ms stolen in a 20 s lane. The 80-83 us emit-lateness p99 can't come from sustained steal. Steal counts only time the host ran something else while a vCPU wanted to run, in 10 ms ticks; time spent handling VM exits isn't steal, and anything under a tick rounds to 0. The container lanes showed up to 10 ticks (`container-bridge`, run 1, alternation 2).
+Steal ticks are the cross-check on the VM's floor. The `vm` lane showed 0-1 ticks in all nine alternations, of 8,848-9,886 guest ticks: at most 10 ms stolen in a 20 s lane. The 80-83 us emit-lateness p99 can't come from sustained steal. Steal is time a vCPU didn't run while the guest wanted it to, as KVM reports it (idle time isn't steal); `/proc/stat` shows it in 10 ms ticks, so anything shorter rounds to 0. The container lanes showed up to 10 ticks (`container-bridge`, run 1, alternation 2).
 
 ## What you learned
 
