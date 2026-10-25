@@ -75,7 +75,7 @@ step "making the $LAB_STOCK_KERNEL stock entry the default boot entry"
 # By BLS id, as install-rt-kernel.sh does: grubby --set-default silently does nothing when /boot is
 # a btrfs subvolume (Fedora Cloud) unless it's given the /boot/loader/entries path.
 # shellcheck disable=SC2029  # expands on the client by design
-id="$(gssh "ls /boot/loader/entries/ | grep -F -- '-$LAB_STOCK_KERNEL.x86_64.conf' | grep -v lowlatrt | sed 's/\\.conf\$//'")"
+id="$(gssh "sudo ls /boot/loader/entries/ | grep -F -- '-$LAB_STOCK_KERNEL.x86_64.conf' | grep -v lowlatrt | sed 's/\\.conf\$//'")"
 [[ -n "$id" && "$id" != *$'\n'* ]] || die "expected one BLS entry for the stock $LAB_STOCK_KERNEL kernel, got: '${id:-none}'"
 # shellcheck disable=SC2029
 gssh "sudo grub2-set-default '$id' && sudo grub2-editenv list | grep saved_entry"
