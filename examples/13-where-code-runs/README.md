@@ -98,14 +98,14 @@ three alternations within the one run.
    under the quota and 2 under the cpuset; Java `availableProcessors()` = 2 under both.
 3. **(exact)** `io_uring_setup` returns `EPERM` in every container lane and 0 in the guest outside a container.
 4. `container-cpu-quota` consumer p99.9 is at least 2x `container-cpuset`'s, the median of 3 alternations. It's asserted:
-   the calibration runs measured 14.2x to 27.0x over 9 alternations. `CRIT4_ASSERTED=0` makes it observed.
+   the committed runs measured 11.15x to 27.37x per alternation, per-run medians 13.16x to 18.91x. `CRIT4_ASSERTED=0` makes it observed.
 5. Every lane and alternation: 200,000 parcels, `dropped = 0`, `lowlat-report check`, `runtime.environment.kind` matching the
    lane, the guest profile recorded, the container image digest equal to `IMAGES.lock`, and one set of binary checksums
    across all lanes.
 
 ## Reading the numbers
 
-- The host lane is a bare-metal host, untuned and shared (`powersave`, `balanced`, a desktop session running). `verify.sh` records the
+- The host lane is a bare-metal host, untuned and shared (`powersave`, `balanced`). `verify.sh` records the
   host's load and busy share across each host alternation in `host/altN/host-quiet.json` and prints them as observed; it
   never refuses on them. In the committed runs the host consumer p99.9 had per-run medians of 195 to 264 microseconds (single alternations
   176 to 573) with a host load1 between 0.97 and 2.45 over the nine alternations, which is what an unquiet host looks like. The host simulators are pinned to the CPUs left after the consumer's core
@@ -136,7 +136,7 @@ lane runs with the lab VM booted and idle, and the guest's busy share across it 
 
 ## What the VM can't show
 
-- A production hypervisor: this is a desktop KVM guest with passt networking, unpinned vCPUs and no tuning.
+- A production hypervisor: this is a single-host KVM guest with passt networking, unpinned vCPUs and no tuning.
 - Dedicated or isolated host cores. Isolation is Part 5; here the guest's 4 vCPUs are scheduled by the host like any process.
 - SR-IOV or passthrough NICs. The bridge lane crosses a software veth and a software bridge inside the guest.
 - A quiet host. The host is untuned and shared, so the jitter floor includes whatever the host does.
@@ -192,7 +192,7 @@ table. Grafana: no panel by design (Part 7 covers observability); the numbers he
 ## Verification status
 
 Behavioural. `verify.sh` asserts the five criteria above, and all of them held on `r04-run1..3` (commit 4434ed1, results
-committed in cd4a269; load average at most 2 at each start). Host lane: bare metal, untuned (governor `powersave`, tuned
+committed in cd4a269; load average at most 2 at each start). Host lane: bare metal, an 8-core, 16-thread Intel CPU, untuned (governor `powersave`, tuned
 `balanced`, kernel 7.2), the lab VM booted and idle. VM lane: guest profile `stock-unpinned`, snapshot `lab-ready-r04`,
 4 vCPU unpinned, kernel 7.2, tuned `virtual-guest`, `virt: kvm`, each run restored from the snapshot. Container lanes:
 `place-cpp:r04@sha256:007fe524247d…`, `place-java:r04@sha256:da6684ca44f2…` and `place-py:r04@sha256:276c666a6165…` (full

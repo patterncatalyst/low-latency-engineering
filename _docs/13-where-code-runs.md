@@ -151,7 +151,7 @@ It reverts the guest to snapshot `lab-ready-r04`, interleaves six lanes three ti
 
 One line per lane:
 
-- `host`: the bare-metal host with the VM booted and idle (the guest 3 permille busy in every host alternation). Fedora 44, kernel 7.2, `powersave` governor, tuned `balanced`, untuned and shared; the whole host, this lane's simulators and consumer included, was 22-55 permille busy across the host alternations. The consumer sits on one CPU and the simulators on the CPUs outside its core and CPU 0's core, over loopback.
+- `host`: the bare-metal host with the VM booted and idle (the guest 3 permille busy in every host alternation): an 8-core, 16-thread Intel CPU (SMT on, `intel_pstate`), Fedora 44, kernel 7.2, `powersave` governor, tuned `balanced`, untuned and shared; the whole host, this lane's simulators and consumer included, was 22-55 permille busy across the host alternations. The consumer sits on one CPU and the simulators on the CPUs outside its core and CPU 0's core, over loopback.
 - `vm`: `lowlat-target`, guest profile `stock-unpinned`, snapshot `lab-ready-r04`: 4 vCPUs, unpinned, stock Fedora kernel 7.2, tuned `virtual-guest`, Docker Engine 29.9.2 in snapshot `lab-ready-r04`. Everything runs over loopback, the consumer on guest CPU 3.
 - `container-host-net`: `place-cpp:r04` below, `--network host` (the guest's network namespace, loopback), simulators and consumer in the container, no limit, default seccomp.
 - `container-bridge`: the same image on the default bridge, no limit, default seccomp. The simulators run in the guest and only the consumer in the container, so every datagram crosses the veth and the bridge.
@@ -185,7 +185,7 @@ What this guest can't show: a production hypervisor (it's a single-host KVM gues
 
 ### The network namespace
 
-With the consumer behind the veth, the consumer p99 was above `container-host-net`'s in all three runs: 1.39x, 1.04x and 1.03x (rounded from the nanosecond medians), or 39, 4 and 2 us. Each is under 2x, so it's observed and not asserted.
+With the consumer behind the veth, the consumer p99 was above `container-host-net`'s in all three runs: 1.39x, 1.04x and 1.03x (rounded from the nanosecond medians), or 39, 4 and 2 us between the nanosecond medians (the table's truncated microseconds differ by 1). Each is under 2x, so it's observed and not asserted.
 
 ### The quota and the cpuset
 
@@ -250,4 +250,4 @@ Steal ticks are the cross-check on the VM's floor. The `vm` lane showed 0-1 tick
 
 ---
 
-*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts the cgroup counters (`nr_throttled` and `throttled_usec` at least 1 under `--cpus=2` and 0 under `--cpuset-cpus=2,3`), the CPU counts each runtime reports, `EPERM` from `io_uring_setup` in every container lane and success in the VM lane, a consumer p99.9 under the quota of at least 2x the cpuset's, and, for every lane and alternation, 200,000 parcels, 0 dropped, the lane's environment record, the image digest and one set of binary checksums across lanes. Observed only: host against VM, bridge against host network, emit lateness per lane, steal ticks, the Quarkus p99 under the two limits, the GC thread counts and the Quarkus thread counts. It held on `r04-run1` to `r04-run3` at commit 4434ed1 (results committed in cd4a269). Host: bare metal, untuned, the VM booted and idle. VM: `stock-unpinned`, snapshot `lab-ready-r04`. Containers: `place-cpp:r04@sha256:007fe524247d…`, `place-java:r04@sha256:da6684ca44f2…`, `place-py:r04@sha256:276c666a6165…`, full digests above.*
+*Verification status: <span class="status status--verified">verified (behavioural)</span>. `verify.sh` asserts the cgroup counters (`nr_throttled` and `throttled_usec` at least 1 under `--cpus=2` and 0 under `--cpuset-cpus=2,3`), the CPU counts each runtime reports, `EPERM` from `io_uring_setup` in every container lane and success in the VM lane, a consumer p99.9 under the quota of at least 2x the cpuset's, and, for every lane and alternation, 200,000 parcels, 0 dropped, the lane's environment record, the image digest and one set of binary checksums across lanes. Observed only: host against VM, bridge against host network, emit lateness per lane, steal ticks, the Quarkus p99 under the two limits, the GC thread counts and the Quarkus thread counts. It held on `r04-run1` to `r04-run3` at commit 4434ed1 (results committed in cd4a269). Host: bare metal, an 8-core, 16-thread Intel CPU, untuned, the VM booted and idle. VM: `stock-unpinned`, snapshot `lab-ready-r04`. Containers: `place-cpp:r04@sha256:007fe524247d…`, `place-java:r04@sha256:da6684ca44f2…`, `place-py:r04@sha256:276c666a6165…`, full digests above.*

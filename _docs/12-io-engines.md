@@ -218,7 +218,7 @@ The load differs from saturation. These runs send 2.5 kHz x 4 cameras for 4 s, a
 
 The Java `virtual-thread-blocking` run shows the poller: 7,813, 8,370 and 9,047 `epoll_wait` calls and 7,998-8,000 `recvfrom` calls for 4,000 parcels, and in every run half of them (3,998-4,000) returned no datagram, after which the virtual thread parked. The Python `blocking-thread` made 1 `recvfrom` per parcel and no `epoll_wait`; `uvloop` made about 2 `recvmsg` calls per parcel.
 
-On the client side, the `worker-pool` run's own lateness p99 (how far past its schedule the client sent) was 12.4-13.5 ms, against a request p99 of 1,453-1,455 ms. The queue wasn't in the client's schedule. The server's counters place it: the workers' active maximum was 8, equal to the pool, and the handler maximum 8, while the client held 5,661-5,677 requests in flight. The `event-loop` run had a lateness p99 of 11-163 us.
+On the client side, the `worker-pool` run's own lateness p99 (how far past its schedule the client sent; per-run medians) was 12.4-13.5 ms, against a request p99 of 1,453-1,455 ms. The queue wasn't in the client's schedule. The server's counters place it: the workers' active maximum was 8, equal to the pool, and the handler maximum 8, while the client held 5,661-5,677 requests in flight. The `event-loop` run had a lateness p99 of 11-163 us.
 
 ## What you learned
 

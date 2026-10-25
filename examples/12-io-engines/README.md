@@ -60,7 +60,7 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
     acceptor overloads: the sockets' buffers fill, parcels drop, and the p99 is a backlog growing for the length of the
     run, not a property of the layout. So the tail ratio is observed, and the exact hand-off counts carry the claim. The
     input is a model, like `DECIDE_NS`, and both are printed in each report's notes. Without the receive-side work both
-    layouts keep up until the simulators themselves fall behind (around 150 kHz per camera on this host).
+    layouts keep up until the simulators themselves fall behind (around 150 kHz per camera in sizing trials on this host, not a committed run).
   - The commands keep their own channel (Ch10): this example measures the receive and decide path and sends no divert
     command.
 - **(c) the service.** `GET /plan/<variant>/<sscc>` over HTTP/1.1 on loopback (TCP 47336), 2 ms downstream wait. The open-loop
@@ -68,7 +68,7 @@ and the pinned threads exist to expose the mechanism; they're not advice for gen
   happened to the earlier ones, and measures from that intended time. It runs 3 s of warm-up and then `Q_SECONDS` of
   measurement at `Q_RATE` (5 kHz): the Little's-law in-flight number, `Q_RATE x 2 ms` = 10 against a pool of 8, is printed and
   recorded in the report's `model` block. The first sizing was 12 kHz against a pool of 16; a JDK HTTP/1.1 client and a four-core
-  Quarkus service on this host fall behind in every variant above about 6 kHz, the pool or not, so the pool shrank to 8 and
+  Quarkus service on this host fell behind in every variant above about 6 kHz in sizing trials, the pool or not, so the pool shrank to 8 and
   the rate to 5 kHz to keep `lambda x W` above it. The defect variant runs at `DEFECT_RATE` (1.85 kHz): four event loops each
   blocked for 2 ms carry at most 2 kHz, so it's driven below that and the queue it shows is the loop's, not the client's. The `event-loop` variant runs at the same rate in every alternation as the control for it. The client records its own lateness (a second report, variant `client-lateness`) and counts the
   requests it started more than a millisecond late; the JDK client opens a connection for every request that finds none
@@ -384,7 +384,7 @@ Example 12 also builds on example 10's `lowlat::lockfree` library (the multi-pro
 ## Verification status
 
 Behavioural. `verify.sh` asserts the nine criteria above, and all of them held on the host runs `r04-run1..3` (bare-metal
-host, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8, Clang 22.1.8,
+host, an 8-core, 16-thread Intel CPU, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8, Clang 22.1.8,
 Quarkus 3.40.1.1, Python 3.14.9 in both builds; lab VM down; commit 4434ed1; load average at most 2 at each start). The
 free-threaded runs kept the GIL off. Ranges over the three runs; a ratio is the range of each run's median over its 3
 alternations.

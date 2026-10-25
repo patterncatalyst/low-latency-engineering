@@ -199,8 +199,8 @@ per-alternation ratios; a p50 is never compared across runs. Counters marked exa
    that escape into a vector) with one allocation per frame (exact). Java `platform-thread` full resident cost per task (RSS, page tables and
    kernel stack, measured the same way on both sides) over `virtual-thread`'s at least 5x. The `VmSize` ratio, platform RSS over
    virtual RSS, and platform RSS over virtual-thread heap (`MemoryMXBean` after a forced collection) are printed as observed. A
-   virtual thread's `VmSize` growth isn't a per-task cost: it's 0 at 300 tasks and about 34 KB per task at 10,000, which is
-   about five steps of 64 MiB, most likely the malloc arenas of new carrier threads, so it's reported and not asserted.
+   virtual thread's `VmSize` growth isn't a per-task cost: at 10,000 tasks it came to 27,262 to 34,078 B per task across the three runs, which is
+   four to five steps of 64 MiB, most likely the malloc arenas of new carrier threads, so it's reported and not asserted.
    Python thread RSS over asyncio task
    bytes (measured by `tracemalloc`, not exact) at least 5x, in each build.
 2. **Parked tasks armed, and RSS observed.** For the C++ `fiber` and `coroutine` variants, the number of tasks that had reached
@@ -282,7 +282,7 @@ Each adapted file says so in its first lines.
 ## Verification status
 
 Behavioural. `verify.sh` asserts the seven criteria above, and all of them held on the host runs `r04-run1..3` (bare-metal
-host, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8, Clang 22.1.8,
+host, an 8-core, 16-thread Intel CPU, untuned: governor `powersave`, tuned `balanced`, clocksource `tsc`, kernel 7.2, Temurin 25.0.5+8, Clang 22.1.8,
 Python 3.14.9 in both builds; lab VM down; commit 4434ed1; load average at most 2 at each start). The free-threaded
 measurements kept the GIL off from imports to the end. Ranges over the three runs; a ratio is the range of each run's
 median over its 3 alternations.
