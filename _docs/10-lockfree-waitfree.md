@@ -270,7 +270,7 @@ examples/10-lockfree-waitfree/verify.sh
 
 `ALLOW_BUSY=1` measures on a loaded host; `RECHECK=results/<run-id>` re-evaluates committed reports. A latency ratio is the median of three alternations inside one run.
 
-Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, GCC 16.2, Python 3.14.8. Threads sit on distinct physical cores other than CPU 0 (jcstress picks its own CPUs), placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
+Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8, Clang 22.1.8 with GCC 16.2's libstdc++, Python 3.14.8. Threads sit on distinct physical cores other than CPU 0 (jcstress picks its own CPUs), placed with `sched_setaffinity`: an experiment control, not isolation, which Chapter 15, *CPU partitioning and the noisy-neighbour problem*, covers. Ranges span the committed runs `r03-run1` to `r03-run3`; a p99 in ns is the first of three alternations.
 
 ### Claims
 
