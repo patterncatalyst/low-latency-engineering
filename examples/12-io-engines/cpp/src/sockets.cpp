@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 
 #include <cerrno>
+#include <stdexcept>
+#include <string>
 #include <system_error>
 
 namespace lowlat::io {
@@ -15,7 +17,7 @@ namespace {
 
 }  // namespace
 
-Bound open_udp(std::uint16_t port, int rcvbuf) {
+Bound open_udp(std::uint16_t port, int rcvbuf, std::string_view address) {
   line::Fd fd{::socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0)};
   if (fd.get() < 0) fail("socket");
   const int on = 1;
@@ -24,7 +26,8 @@ Bound open_udp(std::uint16_t port, int rcvbuf) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  const std::string text{address};
+  if (::inet_pton(AF_INET, text.c_str(), &addr.sin_addr) != 1) throw std::invalid_argument("not an IPv4 address: " + text);
   if (::bind(fd.get(), reinterpret_cast<const sockaddr*>(&addr), sizeof addr) != 0) fail("bind");
   socklen_t len = sizeof addr;
   if (::getsockname(fd.get(), reinterpret_cast<sockaddr*>(&addr), &len) != 0) fail("getsockname");

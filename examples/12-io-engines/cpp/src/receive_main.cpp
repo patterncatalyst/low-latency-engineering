@@ -9,7 +9,7 @@
 //   thread-per-core  four threads, each its own socket and its own ring      (shared nothing)
 //   acceptor-pool    one io-uring thread + hand-off to four decide workers    (hand-off)
 //
-//   io-receive --variant NAME [--base-port 47320] [--expect 50000] [--cpus A,B,C,D,E] [--hold-ms N]
+//   io-receive --variant NAME [--bind 127.0.0.1] [--base-port 47320] [--expect 50000] [--cpus A,B,C,D,E] [--hold-ms N]
 //              [--idle-ms 1500] [--receive-ns 0] [--decide-ns 0] [--report FILE]
 //   io-receive --probe-uring       exit 0 when io_uring works here, 77 (skip) on EPERM / ENOSYS
 //
@@ -93,6 +93,7 @@ int run(const lf::Options& o) {
   const Plan plan = plan_for(o.text("variant", ""));
   const auto base_port = static_cast<std::uint16_t>(o.number("base-port", 47320));
   const std::uint64_t expect = o.number("expect", 50'000);
+  const std::string bind_address = o.text("bind", "127.0.0.1");  // Ch13's bridge lane passes 0.0.0.0
   const int idle_ms = static_cast<int>(o.number("idle-ms", 1500));
   const std::string report_path = o.text("report", "");
   const auto work_ns = static_cast<std::int64_t>(o.number("decide-ns", 0));
@@ -141,7 +142,7 @@ int run(const lf::Options& o) {
     bool ready = false;
     try {
       for (std::size_t c = r * per_receiver; c < (r + 1) * per_receiver; ++c) {
-        io::Bound b = io::open_udp(static_cast<std::uint16_t>(base_port + c));
+        io::Bound b = io::open_udp(static_cast<std::uint16_t>(base_port + c), 4 * 1024 * 1024, bind_address);
         shared.rcvbuf[r] = b.rcvbuf_granted;
         cameras.push_back({b.fd.get(), expect, line::SeqTracker{}});
         fds.push_back(std::move(b.fd));

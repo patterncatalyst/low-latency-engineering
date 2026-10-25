@@ -2,6 +2,7 @@
 // socket before the engine starts, so each test sees the same sequence of calls.
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 
 #include <array>
@@ -10,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <span>
 #include <thread>
 #include <vector>
@@ -157,6 +159,18 @@ TEST(Handoff, EveryParcelCrossesThreadsOnceAndComesOutDecided) {
   }
   EXPECT_EQ(sender.handoffs, 400U);
   for (std::size_t w = 0; w < kWorkers; ++w) EXPECT_EQ(counters[w].parcels, 100U);  // round robin
+}
+
+TEST(OpenUdp, BindsLoopbackByDefaultAndTheGivenAddressOnRequest) {
+  const auto address_of = [](const Bound& b) {
+    sockaddr_in addr{};
+    socklen_t len = sizeof addr;
+    EXPECT_EQ(::getsockname(b.fd.get(), reinterpret_cast<sockaddr*>(&addr), &len), 0);
+    return ntohl(addr.sin_addr.s_addr);
+  };
+  EXPECT_EQ(address_of(open_udp(0)), INADDR_LOOPBACK);
+  EXPECT_EQ(address_of(open_udp(0, 1 << 20, "0.0.0.0")), INADDR_ANY);
+  EXPECT_THROW(static_cast<void>(open_udp(0, 1 << 20, "not-an-address")), std::invalid_argument);
 }
 
 }  // namespace
