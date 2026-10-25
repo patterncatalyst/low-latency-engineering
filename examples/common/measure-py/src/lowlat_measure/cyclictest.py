@@ -7,7 +7,7 @@ tab, plus a sum column with ``--histofall``) and the trailer lines ``# Min Laten
 ``# Avg Latencies:``, ``# Max Latencies:`` and ``# Histogram Overflows:`` with one value per
 thread. A bucket is one unit wide: 1 us, or 1 ns with ``-N``. The counts are loaded into the
 lowlat recorder (value = bucket x unit, in ns), so percentiles come from HdrHistogram like every
-other report.
+other report (five significant digits, so 1 us buckets stay distinct to about 65 ms).
 
 What is deliberately left out:
 
@@ -16,15 +16,18 @@ What is deliberately left out:
 * ``sysinfo.nodename`` (the guest hostname) and the raw command line. ``sysinfo.realtime`` is
   ignored too: it reads 0 on a PREEMPT_RT kernel, so the kernel check uses the profile.
 
-Samples beyond the histogram's range (``-h US``) are counted, not binned. They make the
-percentiles cover only the binned samples, so an overflow fails the conversion unless
-``allow_overflow`` is set, in which case it is recorded in ``runtime.counters.overflows`` and
-the notes.
+Samples beyond the histogram's range (``-h US``) are counted, not binned, so their values are
+unknown beyond the thread's maximum. An overflow fails the conversion unless ``allow_overflow``
+is set; then each overflowed sample is recorded at that maximum (the tail percentiles become
+upper bounds, the max stays exact) and the overflow is in ``runtime.counters.overflows`` and the
+notes. A run whose JSON and histfile disagree (cycles, the JSON's own histogram, ``return_code``)
+is refused.
 
 The clock comes from the ``cmdline:`` value of the JSON. rt-tests v2.11 uses CLOCK_REALTIME when
 ``-c`` is absent (its help text says monotonic), so absent means ``realtime``.
 """
 
+import getopt
 import json
 import re
 from collections.abc import Mapping
@@ -35,14 +38,21 @@ from typing import Any
 from lowlat_measure.recorder import Recorder
 from lowlat_measure.runtime import environment, runtime_block
 
-# Short options that take an argument (getopt string "a::A::b:c:d:D:F:h:H:i:l:MNo:p:mqrRsSt::uvx").
+# getopt_long() arguments of cyclictest v2.11 (process_options). Python's getopt has no optional
+# arguments, so "a::A::t::" are listed as flags here and _normalise() removes their values.
+_SHORT = "b:c:d:D:F:h:H:i:l:MNo:p:mqrRsSuvxaAt"
+_SHORT_OPTIONAL = frozenset("aAt")
 _SHORT_WITH_ARG = frozenset("bcdDFhHilop")
-_SHORT_OPTIONAL_ARG = frozenset("aAt")
-# Long options with a required argument (long_options in cyclictest.c).
-_LONG_WITH_ARG = frozenset(
+_LONG_NO_ARG = (
+    "default-system laptop mlockall refresh_on_max nsecs quiet priospread relative resolution "
+    "system smi smp tracemark unbuffered verbose dbg_cyclictest help posix_timers"
+).split()
+_LONG_WITH_ARG = (
     "breaktrace clock distance duration latency fifo histogram histofall histfile interval json "
-    "loops mainaffinity oscope priority policy".split()
-)
+    "loops mainaffinity oscope priority policy spike spike-nodes deepest-idle-state"
+).split()
+_LONG_OPTIONAL = ("affinity", "aligned", "secaligned", "threads")
+_LONG_ALL = (*_LONG_NO_ARG, *_LONG_WITH_ARG, *_LONG_OPTIONAL)
 _CLOCKS = {"0": "monotonic", "monotonic": "monotonic", "1": "realtime", "realtime": "realtime"}
 _POLICIES = (
     ("other", "other"),
@@ -52,17 +62,21 @@ _POLICIES = (
     ("rr", "rr"),
 )
 LANGUAGE = "cpp"  # cyclictest is C; the schema's language enum has no "c"
+# 1 us buckets stay distinct in HdrHistogram up to about 65 ms with five significant digits
+# (three, the kit default, merge neighbouring buckets from about 1 ms).
+SIGNIFICANT_DIGITS = 5
 _HIST_ROW = re.compile(r"^\d+(\s|$)")
 
 
 @dataclass(frozen=True)
 class CmdLine:
-    """What a report needs from the cyclictest command line."""
+    """What a report needs from the cyclictest command line, after cyclictest's own rules."""
 
     clock: str  # "monotonic", "realtime" or "aux<N>"
-    policy: str
-    priority: int
+    policy: str  # of the highest-priority thread
+    priority: int  # of thread 0; each later thread is one lower with ``priospread``
     nsecs: bool
+    priospread: bool
 
 
 @dataclass(frozen=True)
@@ -74,59 +88,79 @@ class Histogram:
     overflows: list[int]
 
 
-def parse_cmdline(cmdline: str) -> CmdLine:
-    """Clock, policy, priority and ``-N`` from the ``cmdline:`` string, as getopt would see it.
+def _normalise(tokens: list[str]) -> list[str]:
+    """Drop the attached value of an optional-argument option (Python's getopt has none).
 
-    Later options win, as in cyclictest. ``-p`` makes the policy FIFO unless it is already FIFO
-    or RR; ``--policy`` after it overrides. An unrecognised policy name means ``other``.
+    ``-a2,3``, ``-t4`` and ``--affinity=2`` become ``-a``, ``-t`` and ``--affinity``; the rest of
+    a short cluster before the optional letter is kept (``-mt4`` is ``-m -t``).
     """
-    tokens = cmdline.split()[1:]  # drop argv[0]
-    clock, policy, priority, nsecs = "realtime", "other", 0, False
-    i = 0
-    while i < len(tokens):
-        token = tokens[i]
-        i += 1
-        name: str | None = None
-        value: str | None = None
-        if token.startswith("--") and len(token) > 2:
-            name, _, inline = token[2:].partition("=")
-            value = inline if "=" in token else None
-            if name in _LONG_WITH_ARG and value is None and i < len(tokens):
-                value = tokens[i]
-                i += 1
-            if name == "nsecs":
-                nsecs = True
-        elif token.startswith("-") and len(token) > 1:
+    out = []
+    for token in tokens:
+        if token.startswith("--"):
+            name, eq, _ = token[2:].partition("=")
+            matches = [n for n in _LONG_ALL if n == name] or [
+                n for n in _LONG_ALL if n.startswith(name)
+            ]
+            if eq and len(matches) == 1 and matches[0] in _LONG_OPTIONAL:
+                token = f"--{name}"
+        elif token.startswith("-") and len(token) > 2:
             for pos, letter in enumerate(token[1:], start=1):
-                if letter == "N":
-                    nsecs = True
                 if letter in _SHORT_WITH_ARG:
-                    rest = token[pos + 1 :]
-                    if rest:
-                        value = rest
-                    elif i < len(tokens):
-                        value = tokens[i]
-                        i += 1
-                    name = {"c": "clock", "p": "priority"}.get(letter, letter)
                     break
-                if letter in _SHORT_OPTIONAL_ARG:
-                    break  # an optional argument is only ever attached; the rest is its value
-        if name == "clock" and value is not None:
+                if letter in _SHORT_OPTIONAL:
+                    token = token[: pos + 1]
+                    break
+        out.append(token)
+    return out
+
+
+def parse_cmdline(cmdline: str, threads: int) -> CmdLine:
+    """Clock, policy, priority and ``-N`` from the ``cmdline:`` string, as cyclictest sees them.
+
+    Options are read with ``getopt.gnu_getopt`` and cyclictest v2.11's option tables, so long
+    options may be abbreviated. Later options win. Then v2.11's rules apply (``process_options``):
+    ``-p`` makes the policy FIFO unless it is FIFO or RR already, and any non-zero priority forces
+    FIFO afterwards (``-p95 --policy=other`` runs FIFO 95); a FIFO or RR policy with priority 0
+    (no ``-p``, or ``-p 0``) runs at ``threads + 1``, and so does ``--priospread`` with priority 0.
+    An unrecognised policy name means ``other``. ``threads`` is the run's thread count (``-S``
+    makes it the CPU count, which only the JSON knows).
+    """
+    longs = [f"{n}=" if n in _LONG_WITH_ARG else n for n in _LONG_ALL]
+    try:
+        options, _ = getopt.gnu_getopt(_normalise(cmdline.split()[1:]), _SHORT, longs)
+    except getopt.GetoptError as exc:
+        raise ValueError(f"cmdline: {exc}") from exc
+    clock, policy, priority, nsecs, spread = "realtime", "other", 0, False, False
+    for opt, value in options:
+        name = {"-c": "--clock", "-p": "--priority"}.get(opt, opt)
+        if name in ("-N", "--nsecs"):
+            nsecs = True
+        elif name == "--priospread":
+            spread = True
+        elif name == "--clock":
             if value in _CLOCKS:
                 clock = _CLOCKS[value]
             elif re.fullmatch(r"aux[0-7]", value):
                 clock = value
             else:
                 raise ValueError(f"cmdline: unknown clock {value!r}")
-        elif name == "priority" and value is not None:
+        elif name == "--priority":
             priority = int(value)
             if policy not in ("fifo", "rr"):
                 policy = "fifo"
-        elif name == "policy" and value is not None:
+        elif name == "--policy":
             policy = next(
                 (p for prefix, p in _POLICIES if value.lower().startswith(prefix)), "other"
             )
-    return CmdLine(clock, policy, priority, nsecs)
+    if not 0 <= priority <= 99:
+        raise ValueError(f"cmdline: priority {priority} is outside 0-99")
+    if spread and priority == 0:
+        priority = threads + 1
+    if priority and policy not in ("fifo", "rr"):
+        policy = "fifo"
+    if policy in ("fifo", "rr") and priority == 0:
+        priority = threads + 1
+    return CmdLine(clock, policy, priority, nsecs, spread)
 
 
 def parse_histfile(text: str, threads: int) -> Histogram:
@@ -173,15 +207,22 @@ def reports_from_cyclictest(
 ) -> list[tuple[str, dict[str, Any]]]:
     """``(variant, report)`` per thread: ``<variant>-t<N>``.
 
-    Raises ``ValueError`` on an overflow (unless ``allow_overflow``), on an empty thread and on
-    input that contradicts itself (units, thread count, maximum).
+    Raises ``ValueError`` on a failed run (``return_code``), on an overflow (unless
+    ``allow_overflow``), on an empty thread and on input that contradicts itself (units, thread
+    count, sample counts, the JSON's own histogram, the maximum).
+
+    An overflowed sample has no bucket; it is recorded at the thread's ``# Max Latencies:``
+    value, so the report's count equals the cycles and its max is exact. The tail percentiles
+    then read as upper bounds, and the notes say so.
     """
-    cmd = parse_cmdline(str(result.get("cmdline:", "")))
+    if result.get("return_code", 0) != 0:
+        raise ValueError(f"json: cyclictest return_code {result['return_code']}")
+    threads = sorted(result["thread"].items(), key=lambda item: int(item[0]))
+    cmd = parse_cmdline(str(result.get("cmdline:", "")), len(threads))
     if "resolution_in_ns" in result and bool(result["resolution_in_ns"]) != cmd.nsecs:
         raise ValueError("json: resolution_in_ns disagrees with -N in cmdline:")
     unit = 1 if cmd.nsecs else 1000  # ns per bucket
     unit_name = "ns" if cmd.nsecs else "us"
-    threads = sorted(result["thread"].items(), key=lambda item: int(item[0]))
     hist = parse_histfile(histfile_text, len(threads))
     if not allow_overflow and any(hist.overflows):
         spots = ", ".join(f"thread {t}: {n}" for t, n in enumerate(hist.overflows) if n)
@@ -195,28 +236,46 @@ def reports_from_cyclictest(
         bins = hist.buckets[slot]
         if not bins:
             raise ValueError(f"thread {thread_id}: the histogram holds no samples")
-        recorder = Recorder(example, f"{variant}-t{thread_id}")
+        if (
+            "histogram" in thread
+            and {int(k): int(v) for k, v in thread["histogram"].items()} != bins
+        ):
+            raise ValueError(f"thread {thread_id}: json histogram differs from the histfile")
+        binned, overflows, cycles = sum(bins.values()), hist.overflows[slot], int(thread["cycles"])
+        if binned + overflows != cycles:
+            raise ValueError(
+                f"thread {thread_id}: histfile holds {binned} binned + {overflows} overflowed "
+                f"samples, json says {cycles} cycles"
+            )
+        top, peak = max(bins), hist.maxima[slot]
+        if overflows and peak <= top:
+            raise ValueError(
+                f"thread {thread_id}: overflowed, but max {peak} is within the buckets"
+            )
+        if not overflows and peak != top:
+            raise ValueError(f"thread {thread_id}: max {peak} but top bucket {top}")
+        recorder = Recorder(example, f"{variant}-t{thread_id}", SIGNIFICANT_DIGITS)
         for bucket, count in sorted(bins.items()):
             recorder.record(bucket * unit, count)
-        binned, overflows = sum(bins.values()), hist.overflows[slot]
-        top = max(bins)
-        if not overflows and hist.maxima[slot] != top:
-            raise ValueError(f"thread {thread_id}: max {hist.maxima[slot]} but top bucket {top}")
-        cycles = int(thread["cycles"])
+        if overflows:
+            recorder.record(peak * unit, overflows)
+        priority = cmd.priority - slot if cmd.priospread else cmd.priority
         notes = (
             f"cyclictest{f' {version}' if version else ''}, thread {thread_id} on cpu "
-            f"{thread['cpu']}; clock {cmd.clock}; policy {cmd.policy}, priority {cmd.priority}; "
-            f"histogram buckets of 1 {unit_name}, so percentiles resolve to 1 {unit_name}; "
-            f"max is the worst of {cycles} samples"
+            f"{thread['cpu']}; clock {cmd.clock}; policy {cmd.policy if priority else 'other'}, "
+            f"priority {priority}; histogram buckets of 1 {unit_name}, reported as the bucket's "
+            f"lower edge in ns (cyclictest truncates to whole {unit_name}, so a latency is up "
+            f"to 1 {unit_name} above its value; HdrHistogram with {SIGNIFICANT_DIGITS} digits "
+            "adds under 0.002% above 131 us)"
         )
         if overflows:
             notes += (
-                f"; HISTOGRAM OVERFLOW: {overflows} samples beyond the -h range (max "
-                f"{hist.maxima[slot]} {unit_name}) are not binned, so the percentiles cover "
-                f"{binned} of {cycles} samples and max is the top bucket"
+                f"; HISTOGRAM OVERFLOW: {overflows} of {cycles} samples were beyond the -h "
+                f"range and are recorded at the maximum, {peak} {unit_name}, so the tail "
+                "percentiles are upper bounds; max is exact"
             )
-        elif binned != cycles:
-            notes += f"; {binned} binned against {cycles} cycles"
+        else:
+            notes += f"; max is the worst of {cycles} samples"
         env = environment("vm", guest_profile=guest_profile) if guest_profile else None
         report = recorder.build_report(
             notes,

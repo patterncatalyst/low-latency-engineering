@@ -102,7 +102,8 @@ Must validate against `contracts/measurement/latency-report.schema.json`.
     `per_op` (event name to count per operation, at least one entry). Never a time-average.
   - `counters`: exact event counts, name to non-negative integer (CAS failures, max retries, torn
     reads, `io_uring_setup` errno). r05 names: `samples`, `overflows` (samples beyond a cyclictest
-    histogram's range) and `safepoints`, plus `interrupts`, the one nested member: row name (`LOC`,
+    histogram's range) and `safepoints`, plus `interrupts`, the one nested member (an object, narrowed from the integer any counter name
+    could take before; no committed report used an integer there): row name (`LOC`,
     `RES`, `CAL`, `TLB` or an IRQ name) to logical CPU number to the delta over the run.
   - `python_build`: `gil` or `free-threaded`, for Python lanes.
   - `environment` (r04): where the measured program ran.
@@ -176,6 +177,21 @@ Record 1,000 values of 1 ms, then one value of 1 s with an expected interval of
   `gc.alloc.rate.norm` becomes `runtime.alloc_bytes_per_parcel`.
 - `lowlat-report from-gbench SOURCE OUT_DIR --example ID [--toolchain TEXT]`: convert Google Benchmark JSON
   (with `--benchmark_repetitions`) to `cpp-<variant>.json` reports, one sample per repetition.
+- `lowlat-report from-cyclictest JSON HISTFILE OUT_DIR --example ID [--variant PREFIX] [--allow-overflow]
+  [--guest-profile SNAPSHOT/PROFILE]`: convert cyclictest (rt-tests v2.11) `--json` plus `--histfile` to one
+  `<variant>-t<N>.json` report per thread (language `cpp`); needs `LOWLAT_PROFILE`.
+  - Percentiles come from the histogram buckets. cyclictest truncates a latency to whole microseconds (whole
+    nanoseconds with `-N`), so a bucket value is the bucket's lower edge in ns and the true latency is up to
+    1 us higher. The recorder uses five HdrHistogram digits (the kit default is three), which keeps 1 us
+    buckets distinct to about 65 ms and adds under 0.002% above 131 us (a `p99` may read 5000031 for a 5000 us
+    bucket). `-N` buckets stay distinct only to 131 us.
+  - The average, `sysinfo.nodename`, `sysinfo.realtime` and the raw command line are never written. The
+    clock (absent `-c` means `realtime` at v2.11), policy and priority are in `notes`, with the priority
+    and policy rules of `process_options` applied (`-p95 --policy=other` runs FIFO 95).
+  - A histogram overflow, a `return_code` other than 0, cycles that differ from the histogram, or a JSON
+    histogram that differs from the histfile fails the conversion. `--allow-overflow` records each overflowed
+    sample at the thread's maximum, so the count equals the cycles, `max` is exact and the tail
+    percentiles are upper bounds; `runtime.counters.overflows` and `notes` say so.
 
 ## Scratch files and JFR (Part 2)
 

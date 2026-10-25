@@ -232,10 +232,20 @@ irqbalance_state() {
   fi
 }
 
+# Banned CPU list from irqbalance's environment file (Fedora/RHEL: /etc/sysconfig/irqbalance,
+# world-readable); null when the file or the setting is absent or empty.
+irqbalance_banned() {
+  local f=/etc/sysconfig/irqbalance
+  [[ -r $f ]] || return 0
+  sed -nE 's/^[[:space:]]*(export[[:space:]]+)?IRQBALANCE_BANNED_CPU(LIST|S)=["'"'"']?([^"'"'"'#[:space:]]*).*/\3/p' "$f" 2>/dev/null |
+    sed -n '/./{p;q}' || true
+}
+
 g_irq() {
   jq -nc --argjson aff "$(jstr "$(read_file /proc/irq/default_smp_affinity)")" \
      --argjson bal "$(jstr "$(irqbalance_state | head -n1)")" \
-     '{default_smp_affinity: $aff, balance: $bal}'
+     --argjson ban "$(jstr "$(irqbalance_banned)")" \
+     '{default_smp_affinity: $aff, balance: $bal, balance_banned_cpus: $ban}'
 }
 
 g_clock() {
