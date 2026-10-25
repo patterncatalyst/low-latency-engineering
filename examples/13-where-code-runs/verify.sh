@@ -20,7 +20,7 @@
 #   3  (exact) io_uring_setup in a container under Docker's default seccomp profile returns EPERM (1), in every container
 #      lane; the same binary in the guest outside a container returns 0. The host's value is observed. Behind CRIT3_ASSERTED.
 #   4  container-cpu-quota consumer p99.9 >= 2x container-cpuset (same run, median of 3). Observed unless it shows twice the
-#      margin (CRIT4_ASSERTED, default 0).
+#      margin (CRIT4_ASSERTED, default 1 since the S10 calibration; 0 makes it observed).
 #   5  every lane, every alternation: count, dropped == 0, lowlat-report check, runtime.environment.kind matching the lane
 #      (the bridge lane's simulator report says vm: it ran in the guest), guest profile recorded for vm and container lanes,
 #      the container lanes' image digest equal to containers/IMAGES.lock, the lane's network, quota, cpuset and seccomp, the
@@ -39,7 +39,7 @@
 #   RESULTS_DIR=DIR             where reports go (default results/latest)
 #   LOWLAT_BUILD=DIR            private C++ build directory
 #   CRIT3_ASSERTED=0|1          (default 1) criterion 3 asserted; 0 observes it
-#   CRIT4_ASSERTED=0|1          (default 0) criterion 4 asserted; set 1 only when the ratio clears 4x in every calibration run
+#   CRIT4_ASSERTED=0|1          (default 1) criterion 4 asserted: S10 measured 14.2x to 27.0x over 9 alternations (min margin 7.1x); 0 observes it
 #
 # Run it under the host benchmark lock when another example measures on this host, and give flock -o so the lock
 #   flock -o "$LOCK" ./verify.sh
@@ -65,7 +65,7 @@ LOCK_FILE=$HERE/containers/IMAGES.lock
 # ---- provisional bounds (S10 calibrates; a miss is reported, never loosened here) -------------------------------------
 NR_THROTTLED_QUOTA_MIN=1                      # 1: exact, at least one throttled period under --cpus=2
 QUOTA_P999_RATIO_MIN_PERMILLE=2000            # 4: quota p99.9 >= 2x cpuset (asserted only if CRIT4_ASSERTED)
-CRIT4_ASSERTED=${CRIT4_ASSERTED:-0}           # 1 only when the ratio clears the bound twice over (>= 4x) in every calibration run
+CRIT4_ASSERTED=${CRIT4_ASSERTED:-1}           # S10: >= 14.2x in every alternation of 3 runs, so asserted (user, 2026-10-25)
 CRIT3_ASSERTED=${CRIT3_ASSERTED:-1}           # 3: the EPERM and success are exact; 0 observes them if S5 finds the guest's Docker behaves otherwise
 EPERM=1
 GUEST_IDLE_MAX_PERMILLE=100                   # 5: workload guard, the guest's busy share across the host lane (10 percent; idle is about 0)

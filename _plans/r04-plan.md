@@ -252,7 +252,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 | S7 | Example 12 (C++, plain-JDK Java, Quarkus service + open-loop client, Python) + `verify.sh` + README | `examples/12-io-engines/**` | S3, S4 | sonnet | done (972992a; Opus READY after round 1, round-2 nits fixed and mutation-checked) |
 | S8 | Example 13 (host, VM, container lanes) + `verify.sh` + `vm/run.sh` + `vm/guest-run.sh` + README | `examples/13-where-code-runs/**` | S3, S5, S7 | sonnet (VM runs by MAIN) | done (a019252; real VM=1 run exit 0, Opus READY; round-2 fixes host-checked, re-measured at S11) |
 | S9 | Idiom review before calibration (`lgtm-idiomatic-review`) on 11–13 and kit diffs; r03 lesson checks; fix now | all r04 code | S6, S7, S8 | opus + sonnet fixes | done (16 findings fixed; measured-path changes recorded in Follow-ups) |
-| S10 | Calibration gate: 3 quiet dry runs each into `results/latest`; margin table; user decides asserted vs observed | READMEs, this file's Follow-ups | S9 | opus (MAIN) | todo |
+| S10 | Calibration gate: 3 quiet dry runs each into `results/latest`; margin table; user decides asserted vs observed | READMEs, this file's Follow-ups | S9 | opus (MAIN) | done (margin table in §5; Ch13 criterion 4 asserted) |
 | S11 | Measurement `r04-run{1,2,3}` for 11, 12 (host) and 13 (host+VM+container), serial, one recorded commit | `examples/1[1-3]-*/results/r04-run*/` | S10 | opus (MAIN) | todo |
 | S12 | Figures 11.1–11.3, 12.1–12.3, 13.1–13.3; value table from S11 only | `_plans/r04-figures.md`, `diagrams/1[1-3]-*.py`, `assets/diagrams/`, `_data/diagrams.yml` | S11 | sonnet | todo |
 | S13 | Ch11 prose | `_docs/11-stackful-stackless.md`, `_plans/r04-chapters.md` (claims table) | S12 | sonnet | todo |
@@ -500,7 +500,28 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 
 ## 5. S10 margin table
 
-Filled in at S10 in the r03 form: Example | Criterion | Measured | Bound | Margin.
+Filled in at S10 (2026-10-25) from three full calibration runs of 11, 12 and 13 on the S9 code (13 on the images rebuilt at 287e23c). Smallest margin over the three runs; exact counters omitted.
+
+| Example | Criterion | Measured (at the smallest margin) | Bound | Margin |
+|---|---|---|---|---|
+| 11 | 5 C++ fiber blocking, neighbours' p99 | 1.93 ms | >= 1 ms | 1.93x (2x by construction, accepted) |
+| 11 | 3 C++ os-thread voluntary switches per round trip | 1.999 | >= 0.9 | 2.22x |
+| 11 | 1 Python GIL, thread RSS over asyncio bytes | 11.67x | >= 5x | 2.33x |
+| 11 | 1 Java full resident cost, platform over virtual | 13.06x | >= 5x | 2.61x |
+| 11 | 4 C++ round-trip p50, os-thread over fiber | 18.09x | >= 5x | 3.62x |
+| 11 | 1 C++ coroutine frame bytes | 208 | <= 1024 | 4.92x |
+| 11 | 4 Java round-trip p50, platform over virtual | 10.37x | >= 2x | 5.18x |
+| 11 | 1 C++ address space, os-thread over fiber | 132.75x | >= 10x | 13.28x |
+| 11 | 1 Python free-threaded, thread RSS over asyncio bytes | 148.42x | >= 5x | 29.68x |
+| 11 | 1 C++ fiber address space over frame bytes | 334.83x | >= 10x | 33.48x |
+| 12 | 5 event-loop control in-handler max over loop threads | 13 | >= 5 | 2.60x |
+| 12 | 9 virtual-thread carrier threads | 4 | >= 1 | 4.00x |
+| 12 | 8 largest start skew | 200 us | < 1 ms | 5.00x |
+| 12 | 4 Quarkus worker-pool p99 over virtual-thread | 196.84x | >= 3x | 65.61x |
+| 13 | 4 quota over cpuset consumer p99.9, median of 3 (asserted from S10) | 16.85x | >= 2x | 8.43x |
+| 13 | 5 guest busy share across the host lane | 4 permille | <= 100 | 25x |
+
+Observed, not asserted (user, S10): Ch12 thread-per-core over acceptor-pool saturation p99 0.43 to 0.86 (the plan's <= 0.5 doesn't hold on this host); Ch12 defect over the same-rate control p99 2.13x to 4.83x (1.06x margin over 2x). Ch12 criterion 1 (io_uring enters <= 1/4 of epoll's syscalls) and the exact counters hold in every run.
 
 ## 6. Open decisions (answered in S1)
 
@@ -576,3 +597,4 @@ Filled in at S10 in the r03 form: Example | Criterion | Measured | Bound | Margi
 | CPython 3.14.9 (user, 2026-10-24) | Promoted in f61252a after `uv self update` to 0.13.5 (uv 0.13.0 could not see 3.14.9): `examples/.python-version` `3.14.9+gil`, free-threaded selectors `3.14.9t`, both python-build-standalone 20261021; uv 0.13.5 in `versions.env` and the Ch13 python Containerfile (image rebuild and IMAGES.lock pending, S8). Fedora's system python3.14 is still 3.14.8 (zlib-ng) and is no longer used: the user chose uv-managed 3.14.9 everywhere, CI included. uv's build uses zlib 1.3.2, so example 08 asserts decoded-histogram equality always and byte identity only under zlib-ng; the r02 evidence is unchanged. Supersedes the S4 "blocked on uv" note. |
 | S8 decisions (user, 2026-10-25) | First real-guest runs found and fixed: stale guest clock after a live revert (`revert-vm.sh` sets it from the host, 4095565); `interleave_env` read its lane order on stdin and ssh swallowed it (fd 3, 126ab52); dotted `cpu.stat` keys such as `core_sched.force_idle_usec` failed the cgroup block (4deb964); `validate.py tool-versions` accepts null as "not installed" (the guest has no valgrind). User decisions: (1) io-receive gains an additive `--bind ADDR` (default 127.0.0.1, so examples 00–12 are unchanged; Ch12 unit tests and RECHECK, no re-measure); the bridge lane binds 0.0.0.0. (2) The four Ch13 binaries link `-static-libstdc++ -static-libgcc`, with the glibc version recorded per lane; the README says glibc still differs. (3) The vm lane runs uv-managed 3.14.9 from `examples/.python-version`, and criterion 5 asserts the same Python and Java versions in every lane. (4) Plain `./verify.sh` without `VM=1` is a host-only partial run that exits non-zero by design; the busy pool's start skew is observed (4 spinners on 2 CPUs are spread by the scheduler, not the gate). |
 | S9 idiom fixes (2026-10-25) | Opus review of 11–13 and the kit diff, all 16 findings fixed (74b1339, f17bd8c, b593fce, 480d5bf, 2227256); every bench loop survives in the release build (objdump), no deprecation warnings in any language. **Measured paths changed, so S10/S11 re-measure 11, 12 and 13 on this code** (the S6–S8 `results/latest` are superseded): Ch11 C++ ping-pong tokens and frame counters padded 2x, sized `operator delete`, line workload `Decider`/`mutex_`/`spawned_` padded and `spawned_` a plain counter; Ch11 Java line `LongAdder` counters; Ch12 `asio-io-uring` now awaitable/co_spawn (D2), `SpinStart` pause, Java `SeqTracker` allocated in its owning thread, Quarkus `ServiceStats` reads `VirtualThreadSchedulerMXBean` instead of parsing `Thread.toString()` per request (this biased criterion 4's `virtual-thread` side), Python per-worker `Camera`/`Stats`; Ch13 `SpinGate` pause; `CpuProbe` asserts the sampled `getMountedVirtualThreadCount()` maximum equals the CPU count (watch for flakiness under the quota at S10). |
+| S10 gate (user, 2026-10-25) | Three calibration runs each of 11, 12 and 13 passed (exit 0) on the S9 code. Margin table in §5. Ch13 criterion 4 (quota over cpuset consumer p99.9 >= 2x, median of 3) is now asserted: 14.2x to 27.0x over 9 alternations, smallest median 16.85x, margin 8.43x. Both Ch12 tail comparisons stay observed. Run 3 of 11 and 12 was refused once because the lab VM was still up after a snapshot (the quiet-host check working) and was rerun with it down. The first 13 run used images built before S9 (still matching the lock), which the new inputs-hash label (287e23c) now refuses. |

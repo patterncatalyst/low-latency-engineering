@@ -97,8 +97,8 @@ three alternations within the one run.
 2. **(exact)** On the 4-vCPU guest: C++ `hardware_concurrency()` = 4 under both limits; Python `os.process_cpu_count()` = 4
    under the quota and 2 under the cpuset; Java `availableProcessors()` = 2 under both.
 3. **(exact)** `io_uring_setup` returns `EPERM` in every container lane and 0 in the guest outside a container.
-4. `container-cpu-quota` consumer p99.9 is at least 2x `container-cpuset`'s. Observed unless the run shows twice that margin
-   (`CRIT4_ASSERTED`).
+4. `container-cpu-quota` consumer p99.9 is at least 2x `container-cpuset`'s, the median of 3 alternations. It's asserted:
+   the calibration runs measured 14.2x to 27.0x over 9 alternations. `CRIT4_ASSERTED=0` makes it observed.
 5. Every lane and alternation: 200,000 parcels, `dropped = 0`, `lowlat-report check`, `runtime.environment.kind` matching the
    lane, the guest profile recorded, the container image digest equal to `IMAGES.lock`, and one set of binary checksums
    across all lanes.
