@@ -18,7 +18,7 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-A parcel is scanned and must be diverted 480 ms later, 1.2 m down the belt at 2.5 m/s. The belt doesn't wait for the tracker. When the tracker stops, parcels keep arriving at 10 kHz, so every millisecond of pause puts 10 more parcels behind it, each charged for the wait, as Chapter 3 showed. Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, covered the pause a cold JVM adds. A warm JVM adds pauses at any time, and this chapter measures those.
+A parcel is scanned and must be diverted 480 ms later, 1.2 m down the belt at 2.5 m/s. The belt doesn't wait for the tracker. When the tracker stops, parcels keep arriving at 10 kHz, so every millisecond of pause puts 10 more parcels behind it, each charged for the wait, because its latency runs from its scheduled emission. A cold JVM stalls at start-up while it loads classes and compiles. A warm JVM adds pauses at any time, and this chapter measures those.
 
 The tracker keeps a 1.8 GB live set and allocates scan history at about 400 MB/s. The same bytecode runs under four collectors; Python and C++ lanes reclaim memory without a tracing collector.
 
@@ -51,7 +51,7 @@ The shape came from a sweep of calibration runs on 2026-10-22, one run per row, 
 
 ### Pre-touch and huge pages
 
-Every Java variant pre-touches a fixed heap (`-Xms` = `-Xmx`, with `-XX:+AlwaysPreTouch`), 4 GB except `undersized-heap`: no heap growth, and no first-touch page faults inside the window. The `thp` variant adds `-XX:+UseTransparentHugePages` to ZGC to request huge pages. The OS refused them for ZGC's shared-memory heap, and the JVM logged `Large Page Support: Disabled (OS enforced)` in every run, which `verify.sh` prints as `thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never`. So `thp` ran on 4 KB pages, effectively a second ZGC run, and the book draws no conclusion about huge pages. Huge pages for ZGC are versioned configuration in Part 5, *The OS, Isolation & the Network Edge*, in the lab VM.
+Every Java variant pre-touches a fixed heap (`-Xms` = `-Xmx`, with `-XX:+AlwaysPreTouch`), 4 GB except `undersized-heap`: no heap growth, and no first-touch page faults inside the window. The `thp` variant adds `-XX:+UseTransparentHugePages` to ZGC to request huge pages. The OS refused them for ZGC's shared-memory heap, and the JVM logged `Large Page Support: Disabled (OS enforced)` in every run, which `verify.sh` prints as `thp: large pages Disabled (OS enforced) (GC log), shmem_enabled=never`. So `thp` ran on 4 KB pages, effectively a second ZGC run, and the book draws no conclusion about huge pages. Huge pages for ZGC are a system setting, so they belong in versioned configuration in the lab VM, not on this host.
 
 ### Reclaiming in C++ and Python
 
@@ -288,14 +288,14 @@ Python's cross-check is the callback count: `collections=1200` is 1,092 + 99 + 9
 - In CPython, reference cycles cost generation-2 collections that walk the live set; without cycles, refcounting frees each parcel and no collection runs. In C++, the choice is which thread pays for the frees.
 - The `thp` variant got no huge pages from the OS, so it shows nothing about them; turning the recording off didn't lower ZGC's p99.9.
 
-The next chapter, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity*, moves data out of the collector's reach.
-
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), for the broader treatment of tail latency.
 - Chapter 5, *What the JVM costs: allocation, escape analysis, JIT warmup vs AOT*, in Part 2, for allocation cost and warm-up.
 - Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1, for why a pause charges every parcel behind it.
 - [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), in Part 3, for removing allocation in the data structure instead of tuning the collector.
+- [Chapter 7, *Off-heap and lock-free Java: Chronicle, Agrona, the Disruptor, thread affinity*]({{ '/docs/07-offheap-lockfree/' | relative_url }}), in Part 2, for moving data out of the collector's reach.
+- Part 5, *The OS, Isolation & the Network Edge*, for huge pages as versioned configuration in the lab VM.
 - JEP 490 (ZGC: remove the non-generational mode, JDK 24) and JEP 521 (Generational Shenandoah, product in JDK 25).
 - `examples/common/MEASUREMENT.md` for the report format and the checks every report passes.
 

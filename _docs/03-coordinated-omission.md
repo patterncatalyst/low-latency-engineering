@@ -22,7 +22,7 @@ The belt never waits. The simulator in this book emits a parcel every millisecon
 
 A timer that starts when the consumer picks up a parcel can't see that wait. Neither can a benchmark that sends its next request only after the previous one returns. Both report a healthy service while the line mis-sorts 200 parcels. This is coordinated omission: the measuring system coordinates with the system under test, so the samples the stall would have produced are never taken.
 
-Chapter 1 showed that latency is a distribution. This chapter keeps that distribution's samples intact, starting with the clock and the histogram underneath.
+Latency is a distribution, read as percentiles, and a percentile is only as good as the samples under it. This chapter keeps those samples intact, starting with the clock and the histogram.
 
 The code is in `examples/03-coordinated-omission/`. The run script there builds and runs it; its `README.md` covers what it does and how to drive it.
 
@@ -188,7 +188,7 @@ The receive loop does one thing the line consumer doesn't: it starts a latency c
             rec.intendedTime().record(doneNs - event.getIntendedEmitNs());
 ```
 
-The handling step is the line's lane lookup from the barcode. The C++ and Java versions store its result in a sink (an atomic and a `volatile` field) so the compiler or JIT can't delete a call whose result is unused. Python needs no sink. Chapter 4 returns to dead-code elimination.
+The handling step is the line's lane lookup from the barcode. The C++ and Java versions store its result in a sink (an atomic and a `volatile` field) so the compiler or JIT can't delete a call whose result is unused. Python needs no sink.
 
 ### The stall
 
@@ -330,8 +330,6 @@ The maximum can't separate the methods. Every variant records the stalled sample
 - Configure the histogram once with a fixed range and precision (1 ns to one hour, 3 significant digits) and use the library's correction call, `record_corrected` or `recordValueWithExpectedInterval`, instead of hand-written percentile or back-fill code.
 - Expect post-hoc and inline correction to agree on count and possibly differ by one bucket, and the ports to differ by one bucket in a sparse tail.
 - A control run with the stall removed shows what the method itself adds. Here the correction adds nothing.
-
-The next chapter, Benchmark harnesses: Google Benchmark, pyperf and JMH, takes the same discipline into the tools that automate warm-up and repetition and guard against dead code.
 
 ## For deeper coverage
 

@@ -18,9 +18,9 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-The scanner sits 1.2 m upstream of the diverter and the belt moves at 2.5 m/s, so the scan-to-divert budget is 480 ms. The belt never waits for a slow consumer. Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, showed that a stall charges every parcel queued behind it; on the line those parcels keep moving. Chapter 2, *Modelling with Little's Law and Amdahl's Law*, put the in-flight count at 480 parcels at 1 kHz.
+The scanner sits 1.2 m upstream of the diverter and the belt moves at 2.5 m/s, so the scan-to-divert budget is 480 ms. The belt never waits for a slow consumer. Latency is timed from each parcel's scheduled emission, so a stall charges every parcel queued behind it; on the line those parcels keep moving. By Little's Law, arrival rate times time in the system, 1 kHz over the 480 ms budget puts 480 parcels in flight.
 
-A controller JVM that has just started is such a stall: its first parcels arrive while classes load and the interpreter still runs code the compiler will replace. Chapter 1, *Latency vs bandwidth: latency is a distribution*, showed a Java warm-up p99.9 and left the cause to Part 2. This chapter measures three costs of a managed runtime: heap bytes per decision, the warm-up tail of the first parcels, and process start.
+A controller JVM that has just started is such a stall: its first parcels arrive while classes load and the interpreter still runs code the compiler will replace. An unwarmed Java consumer on the line shows it in its p99.9, while its median looks like the other languages'. This chapter measures three costs of a managed runtime: heap bytes per decision, the warm-up tail of the first parcels, and process start.
 
 Build and run it from `examples/05-jvm-costs/`; its `README.md` covers the options.
 
@@ -40,7 +40,7 @@ When C2 inlines a small method into its caller, it can see whether an object bui
 
 {% include excalidraw.html file="05-escape-analysis" alt="Three JMH lanes run the same decide() call on each parcel. In the escaping lane the DivertDecision is stored in a field, so it stays on the heap and gc.alloc.rate.norm is about 24 B/op. In the scalar-replaced lane (amber) C2 keeps the fields in registers and the counter is below 1 B/op. In the --no-escape-analysis lane, scalar replacement is absent and the counter is about 24 B/op again." caption="Figure 5.2: An object that never leaves the compiled method costs nothing on the heap: about 24 B/op becomes less than 1 B/op, and turning escape analysis off brings the 24 B back." %}
 
-Inlining and non-escape are decided per call site, so the same `decide` source allocates in one caller and not in another. A hot path shouldn't depend on it; [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), designs the data instead.
+Inlining and non-escape are decided per call site, so the same `decide` source allocates in one caller and not in another. A hot path shouldn't depend on it; designing the data so there's nothing to allocate is the robust fix.
 
 ### Tiered compilation and deoptimization
 
@@ -201,7 +201,7 @@ void BM_Decide_Pmr(benchmark::State& state) {
 }
 ```
 
-In `escaping` the result goes into the field `stored`, so the object outlives the call. In `scalarReplaced` the decision is read inside `sumOfDecisions` and never stored, and the loop returns a `long` that JMH consumes, so it isn't dead code (Chapter 4, *Benchmark harnesses: Google Benchmark, pyperf and JMH*). `scalarReplacedNoEscapeAnalysis` runs the same loop in a fork with `-XX:-DoEscapeAnalysis`; the method-level `@Fork` overrides the class-level one. `@OperationsPerInvocation(BATCH)` divides by the 1,024 decisions per invocation.
+In `escaping` the result goes into the field `stored`, so the object outlives the call. In `scalarReplaced` the decision is read inside `sumOfDecisions` and never stored, and the loop returns a `long` that JMH consumes, so it isn't dead code. `scalarReplacedNoEscapeAnalysis` runs the same loop in a fork with `-XX:-DoEscapeAnalysis`; the method-level `@Fork` overrides the class-level one. `@OperationsPerInvocation(BATCH)` divides by the 1,024 decisions per invocation.
 
 C++ has no escape analysis to switch off, and the language doesn't promise to elide an allocation, so the lane makes storage explicit. `BM_Decide_Value` keeps the `Decision` on the stack and uses `benchmark::DoNotOptimize` so the work isn't deleted. `BM_Decide_Allocating` puts it behind `std::make_unique`. `BM_Decide_Pmr` takes the same `Decision` object from an arena over a stack buffer whose upstream is `std::pmr::null_memory_resource()`, so an exhausted arena throws instead of reaching the global allocator, and `arena.release()` rewinds the arena in one step.
 
@@ -287,7 +287,7 @@ It builds both modules and runs the JMH and Google Benchmark lanes. The line run
 
 Profile for every number below: bare-metal host, an 8-core, 16-thread Intel laptop CPU (SMT on, `intel_pstate`), Fedora 44 kernel 7.2 (PREEMPT_DYNAMIC), governor `powersave`, tuned `balanced`, untuned, clocksource `tsc`, Temurin 25.0.5+8. Ranges span the committed runs `r02-run1` to `r02-run3`.
 
-**Allocation per decision.** JMH `-prof gc` reports `escaping` at 24 B/op in all three runs, the 12-byte header, the `int` and the `long`. `scalar-replaced` reports 0.00016 to 0.00018 B/op, under 1 B/op. `--no-escape-analysis` reports 24 B/op again. In C++, `--allocating` costs 16 B/op and one allocation per parcel, and the value variant 1.3e-06 B/op. The pmr arena makes 0.00 B/op through the global allocator (observed). The median cost per operation over 30 repetitions is 2.3 ns for the value, 11.2 to 13.1 ns for `--allocating` and 3.7 to 4.1 ns for pmr (observed). The allocating variant's extra 8.9 to 10.8 ns is small against 480 ms; on the JVM an allocation costs the young collection it brings closer (Chapter 6).
+**Allocation per decision.** JMH `-prof gc` reports `escaping` at 24 B/op in all three runs, the 12-byte header, the `int` and the `long`. `scalar-replaced` reports 0.00016 to 0.00018 B/op, under 1 B/op. `--no-escape-analysis` reports 24 B/op again. In C++, `--allocating` costs 16 B/op and one allocation per parcel, and the value variant 1.3e-06 B/op. The pmr arena makes 0.00 B/op through the global allocator (observed). The median cost per operation over 30 repetitions is 2.3 ns for the value, 11.2 to 13.1 ns for `--allocating` and 3.7 to 4.1 ns for pmr (observed). The allocating variant's extra 8.9 to 10.8 ns is small against 480 ms; on the JVM an allocation costs the young collection it brings closer.
 
 **The first window.** The first window is parcels 0 to 1,999; the steady window is the rest of the run.
 
@@ -303,13 +303,13 @@ In runs 1 and 3 the cold stall at the start is 28 and 30 ms and delays 29 and 30
 
 **Criterion 2 and the percentile a window can resolve.** The criterion was first written on p99, and failed in run 2 of the earlier set (commit d419992): 1.7x against a bound of 5x. The edge recurs: the p99 ratios are 41.6x, 1.8x and 48.2x, from first-window p99 values of 8.9, 0.42 and 10.4 ms. The cold stall leaves 29, 16 and 30 parcels above 1 ms (0.80 to 1.50 % of a 2,000-parcel window). The window's p99 is its 21st-worst parcel, so run 2, with 16, put its p99 outside the stall; the p99.9, its 3rd-worst parcel, is inside every time.
 
-The criterion is asserted on p99.9, which passes at 91.2x, 41.5x and 98.5x; the p99 ratio is observed. A window resolves only the percentiles whose rank the effect covers. Choose them for the sample count, as Chapter 1 argued.
+The criterion is asserted on p99.9, which passes at 91.2x, 41.5x and 98.5x; the p99 ratio is observed. A window resolves only the percentiles whose rank the effect covers. Choose them for the sample count.
 
-**Host spread.** The p50 of a 1 kHz consumer varies on this untuned `powersave` host. The whole-run p50 is 103.6 to 211.3 us across the nine Java line runs and 116.9 to 158.8 us for the C++ tracker; the three steady p99 values of 461 to 468 us come from runs with p50 near 200 us. An interleaved A/B of the trees before and after the last change to the measured code found p50 varying alike in both (Java steady p50 77 to 176 us in each; `examples/05-jvm-costs/results/r02-ab/`); the cause is unidentified (Chapter 1). Every comparison here is a ratio inside one run.
+**Host spread.** The p50 of a 1 kHz consumer varies on this untuned `powersave` host. The whole-run p50 is 103.6 to 211.3 us across the nine Java line runs and 116.9 to 158.8 us for the C++ tracker; the three steady p99 values of 461 to 468 us come from runs with p50 near 200 us. An interleaved A/B of the trees before and after the last change to the measured code found p50 varying alike in both (Java steady p50 77 to 176 us in each; `examples/05-jvm-costs/results/r02-ab/`); the cause is unidentified. Every comparison here is a ratio inside one run.
 
 **JIT events** (observed). The `--unwarmed` run compiles 241 to 246 methods in the first window, 18 to 19 of them at tier 4. The `warmed` run compiles 1,075 to 1,082 before the first parcel, 233 to 248 at tier 4, and 14 to 25 in the first window. The `aot-cache` run compiles 189 to 194 at startup and 266 to 269 in the first window, with 0 deoptimizations there.
 
-**Allocation on the line** (observed). The receive thread allocates 733.3 B per parcel for `--unwarmed`, 667.3 to 667.5 B for `warmed` and 654.4 B for `aot-cache`, protobuf parse included. Chapter 8 removes most of it.
+**Allocation on the line** (observed). The receive thread allocates 733.3 B per parcel for `--unwarmed`, 667.3 to 667.5 B for `warmed` and 654.4 B for `aot-cache`, protobuf parse included. Reading a fixed-layout record in place, instead of parsing protobuf, removes most of it.
 
 **The C++ lane** (observed). The C++ consumer's first-window p99 over its steady p99 is 1.0x, 0.9x and 1.0x. Every line run counted 20,000 parcels and dropped none.
 
@@ -329,14 +329,14 @@ Cache: the `-Xlog:aot` line (copied into `runtime.aot.used`) and `-XX:AOTMode=on
 - A replay moves that work before the bind. The AOT cache cut time to ready from 176.8 to 178.0 ms to 50.5 to 51.4 ms, and `-XX:AOTMode=on` makes an unusable cache fail at startup.
 - A 2,000-parcel window resolves p99.9 of a 16 to 30 ms stall and can miss it at p99.
 
-The next chapter, *GC for tails: Generational ZGC and Shenandoah*, measures the pauses that allocation causes.
-
 ## For deeper coverage
 
 - Enberg, *Latency* (Manning), for further reading on measuring and reasoning about latency.
 - Chapter 1, *Latency vs bandwidth: latency is a distribution*, and Chapter 4, *Benchmark harnesses: Google Benchmark, pyperf and JMH*, in Part 1.
-- Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, in Part 2.
-- [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), in Part 3.
+- Chapter 2, *Modelling with Little's Law and Amdahl's Law*, and Chapter 3, *Measuring correctly: clocks, percentiles and coordinated omission*, in Part 1: parcels in flight and why a stall charges every parcel behind it.
+- Chapter 6, *GC for tails: Generational ZGC and Shenandoah*, in Part 2: the collection an allocation brings closer.
+- [Chapter 8, *Zero-copy and flat data: Panama (FFM), Valhalla value objects, and the C++ comparison*]({{ '/docs/08-zero-copy-flat/' | relative_url }}), in Part 2: removing the decode's allocation.
+- [Chapter 9, *Eliminating work: allocation, cache locality, false sharing*]({{ '/docs/09-eliminating-work/' | relative_url }}), in Part 3: designing the data instead of relying on escape analysis.
 - `examples/common/MEASUREMENT.md` for the report format.
 
 ---
