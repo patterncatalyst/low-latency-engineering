@@ -114,14 +114,15 @@ host changes: no sudo, no sysctl, no tuning. The guest is reached over vsock ssh
 ## Expected effect and criteria
 
 Counters first, then latency. "Exact" marks a count the kernel, the tool or the file reports; the rest are medians of three
-alternations. The bounds are provisional: the calibration step (S11) decides which stay asserted.
+alternations. A calibration run (S11) checked every bound before the measured runs.
 
 1. **(exact)** `method`: the sample count is within 1% of duration over interval (300,000) and at least 100,000, and the
    histogram overflow count is 0.
 2. **(exact)** `naive` ran SCHED_OTHER with priority 0 and `CLOCK_REALTIME`; `method` ran SCHED_FIFO 95 on CPU 3 with
    `CLOCK_MONOTONIC`, and the probe ran SCHED_FIFO 95 on CPU 2. Read back with `chrt -p` and `taskset -pc` while the program ran.
 3. The probe's p99 and `cyclictest`'s `method` p99 are within 2x of each other (larger over smaller, floored at 1 us, the
-   resolution of `cyclictest`), median of 3. Provisional: `CRIT3_ASSERTED=0` observes it.
+   resolution of `cyclictest`), median of 3. Exact agreement is 1.00x, so the margin is the headroom above it, (2 - 1) over
+   (measured - 1); the calibration measured 1.03x, about 34x. `CRIT3_ASSERTED=0` observes it.
 4. **(exact)** The converter's p50, p90, p99, p99.9 and max equal an independent recomputation from the gzipped histfile, in every
    `cyclictest` lane and alternation. Below 262 us the figures are equal to the nanosecond; above, the report holds the top of
    an HdrHistogram bucket, and the recomputation applies that rule.

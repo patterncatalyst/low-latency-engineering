@@ -7,8 +7,8 @@
 # is lane `vm`: it means "in this KVM guest, in this run". Nothing is compared with a host number, and the vCPU pins are
 # pins, not host isolation. Every criterion is evaluated; each prints its measured value, its bound and the margin, and any
 # miss fails the run after all of them have been evaluated. Counters labelled "exact" are deterministic and are judged in
-# every alternation; a latency ratio is the median of the three alternations. The bounds are PROVISIONAL until the S11
-# calibration gate has run: a criterion that does not clear 2x in all three calibration runs becomes observed, by decision.
+# every alternation; a latency ratio is the median of the three alternations. The S11 calibration run checked the bounds:
+# every asserted one cleared 2x (the thinnest, LOC/s shared 2.12x and jvm-taskset threads 2.10x); criterion 4 is observed.
 #
 #   1  (exact) /sys/devices/system/cpu/isolated and nohz_full: "2-3" in the four isolated-snapshot lanes, empty in shared.
 #   2  (exact) LOC (local timer) interrupts per second on CPU 2 with one busy task and no other load: isolated <= 10,
@@ -56,14 +56,14 @@ trap 'exit 130' INT
 
 HERE=$EXAMPLE_DIR
 
-# ---- bounds (provisional; S11 sets them from the calibration runs, and a miss is reported, never loosened here) ------------------
+# ---- bounds (checked by the S11 calibration run; a miss is reported, never loosened here) ----------------------------------------
 LOC_ISOLATED_MAX=10                           # 2: per second, CPU 2, one busy task (exact: S1 saw 0)
 LOC_SHARED_MIN=500                            # 2: HZ 1000 on a busy CPU
 SWITCHES_ISOLATED_MAX=10                      # 3: the decide thread's involuntary switches over DECIDE_SECONDS
 SWITCHES_SHARED_MIN=100
 P999_RATIO_MIN_PERMILLE=2000                  # 4: shared p99.9 >= 2x isolated
 BLK_STEERED_EXACT=0                           # 5
-BLK_ON_MEASURE_MIN=1000                       # 5: S11 sizes it
+BLK_ON_MEASURE_MIN=1000                       # 5: S11 measured 1525066 at the lowest
 HOT_THREADS_ON_ISOLATED=1                     # 6
 HOT_SWITCHES_MAX=10
 JVM_THREADS_ON_ISOLATED_MIN=10
@@ -402,7 +402,7 @@ for lane in "${LANES[@]}"; do
 done
 
 # ---- the criteria table -------------------------------------------------------------------------------------------------------
-step "criteria table (lane vm; provisional bounds until the S11 calibration gate)"
+step "criteria table (lane vm)"
 {
   printf '%s\n' "id|criterion|measured|bound|margin|result"
   printf '%s\n' "${ROWS[@]}" | sort -t'|' -k1,1n -s

@@ -9,7 +9,7 @@
 # them have been evaluated. Counters labelled "exact" are counts the kernel, the tool or the file reports, with no median.
 # A latency figure is the median of the three per-alternation values.
 #
-# Asserted (provisional until the S11 calibration sets the bounds):
+# Asserted (the S11 calibration run checked every bound):
 #   1  (exact) method: cyclictest's sample count = duration / interval within 1%, at least 100,000, and no histogram
 #      overflow (a stall longer than one interval records one late sample, so a count that falls short is a finding)
 #   2  (exact) naive ran SCHED_OTHER with priority 0 and the default clock (CLOCK_REALTIME at v2.11); method ran
@@ -47,7 +47,7 @@ trap 'exit 130' INT
 HERE=$EXAMPLE_DIR
 RECOMPUTE=$HERE/check/recompute_hist.py
 
-# ---- bounds (provisional; a miss is reported, never loosened here) ------------------------------------------------------
+# ---- bounds (checked by the S11 calibration; a miss is reported, never loosened here) -----------------------------------
 SAMPLES_TOLERANCE_PERCENT=1  # 1: method's sample count against duration / interval
 SAMPLES_MIN=100000           # 1: enough that p99.9 rests on 100 samples
 PROBE_RATIO_MAX_MILLI=2000   # 3: probe p99 against cyclictest p99, 2x
@@ -203,8 +203,10 @@ for n in $(seq 1 "$ALTS"); do
     "$(val "$(P method "$n" cpp/cyclic-probe.json)" .runtime.counters.samples)" "$(val "$(P method "$n" cpp/cyclic-probe.json)" .runtime.counters.missed_periods)"
 done
 med=$(median_ns "${ratios[@]}")
-crit 3 "cross-check (provisional)" "probe p99 against cyclictest p99, larger over smaller (per alternation: ${ratios[*]} thousandths)" \
-  "$(awk -v m="$med" 'BEGIN { printf "%.2fx", m / 1000 }')" "<= $(awk -v m="$PROBE_RATIO_MAX_MILLI" 'BEGIN { printf "%.2fx", m / 1000 }'), margin $(awk -v m="$med" -v b="$PROBE_RATIO_MAX_MILLI" 'BEGIN { printf "%.2fx", b / m }')" \
+# The ratio is larger over smaller, so 1.00x is exact agreement and the bound can never be cleared "twice over" as bound/measured.
+# The margin is the headroom above agreement instead: (bound - 1) / (measured - 1), infinite when the two agree exactly.
+crit 3 "cross-check" "probe p99 against cyclictest p99, larger over smaller (per alternation: ${ratios[*]} thousandths)" \
+  "$(awk -v m="$med" 'BEGIN { printf "%.2fx", m / 1000 }')" "<= $(awk -v m="$PROBE_RATIO_MAX_MILLI" 'BEGIN { printf "%.2fx", m / 1000 }'), margin $(awk -v m="$med" -v b="$PROBE_RATIO_MAX_MILLI" 'BEGIN { if (m <= 1000) print "inf"; else printf "%.1fx", (b - 1000) / (m - 1000) }') over agreement" \
   "$((med <= PROBE_RATIO_MAX_MILLI))" "$CRIT3_ASSERTED"
 
 # ---- criterion 4: the converter against an independent recomputation ------------------------------------------------------

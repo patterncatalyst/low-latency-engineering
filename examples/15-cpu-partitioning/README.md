@@ -88,8 +88,8 @@ A plain `./verify.sh` has nothing to run, prints how to start a run and exits 2.
 
 ## Expected effect and criteria
 
-Counters first, then latency. The bounds below are **provisional** until the S11 calibration gate: a bound that doesn't clear
-2x in all three calibration runs becomes observed, and the user decides.
+Counters first, then latency. A calibration run (S11) checked the bounds below before the measured runs: every asserted bound
+cleared 2x. The thinnest were the shared CPU's LOC rate (2.12x) and the JVM threads under `taskset` (2.10x).
 
 1. **(exact)** `/sys/devices/system/cpu/isolated` and `nohz_full` are `2-3` in the four isolated-snapshot lanes and empty in
    `shared`.
@@ -177,6 +177,6 @@ the end. Grafana: no panel by design (Part 7 covers observability); the numbers 
 ## Verification status
 
 **Unverified.** The code, the driver and `verify.sh` are written and checked on the host (shell syntax, shellcheck, unit tests,
-a dry run, and `verify.sh` against a synthetic results tree that exercises each criterion and its failure). No VM run has
-happened. The VM smoke (S8) and the calibration gate (S11) come next, then the three committed runs (S12). Until S12 the
-bounds above are provisional and this section stays unverified.
+a dry run, and `verify.sh` against a synthetic results tree that exercises each criterion and its failure). The VM smoke (S8)
+and a calibration run (S11) passed every criterion; the three committed runs (S12) are next, and until they land this section
+stays unverified.
