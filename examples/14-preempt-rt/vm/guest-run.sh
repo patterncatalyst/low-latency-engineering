@@ -269,6 +269,8 @@ java_lane() {
   jq --argjson n "$n" --argjson t "$total" '.runtime.counters.safepoints = $n | .runtime.counters.safepoint_total_ns = $t' \
     "$OUT/java/java-wake.json" >"$OUT/java/java-wake.json.tmp" || die "jq failed on java-wake.json"
   mv "$OUT/java/java-wake.json.tmp" "$OUT/java/java-wake.json"
+  # One line per safepoint is about 2.5 MB a run; the counts are in the report, so keep the log gzipped (about 8x smaller).
+  gzip -9f "$OUT/java/safepoint.log" || die "gzip failed on $OUT/java/safepoint.log"
 }
 
 # ---- end ------------------------------------------------------------------------------------------------------------------

@@ -194,7 +194,7 @@ evaluate() {
   expected_files() {
     echo profile.json vcpupin.json interrupts.json binaries.txt steal.json mechanism.json probe.json
     echo line/consumer.json line/lateness.json pi/plain-mutex.json pi/pi-mutex.json
-    echo java/java-wake.json java/chrt-hot.txt java/safepoint.log
+    echo java/java-wake.json java/chrt-hot.txt java/safepoint.log.gz
   }
   declare -A MISSING=()
   step "completeness: every lane x alternation has every file it should, and every lane ran"
