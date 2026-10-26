@@ -10,10 +10,11 @@
 #      `rt` runs the lowlatrt build with CONFIG_PREEMPT_RT=y and PREEMPT_RT in `uname -v`; /sys/kernel/debug/sched/preempt reads
 #      "full (lazy)" in stock-lazy and "(full) lazy" in stock-full and rt.
 #   2  (exact) irq/ kernel threads: stock 15 (driver-requested), rt 80 (every device IRQ). ktimers: stock 0, rt 4 at SCHED_FIFO 1.
-#      TODO(S11): the counts come from the S1 probes; the calibration runs confirm them or correct them.
+#      The counts come from the S1 probes; the S11 calibration confirmed them in every alternation.
 #   3  priority inversion: pi-mutex high-priority wait p99 <= 1/4 of plain-mutex's, in every lane (median of 3 alternations;
 #      >= 10x by construction, because the holder runs at the waiter's priority).
-#   4  OBSERVED until S11 decides: cyclictest p99.9, rt <= 1/2 of stock-lazy under load (median of 3). CRIT4_ASSERTED=1 asserts it.
+#   4  OBSERVED: cyclictest p99.9, rt against stock-lazy under load (median of 3). The plan's bound (rt <= 1/2) didn't clear in the
+#      S11 calibration (rt over stock-lazy 0.83x, 1.20x, 1.28x), so it stays observed. CRIT4_ASSERTED=1 asserts it anyway.
 #   5  the line, every lane and alternation: 200,000 parcels, dropped == 0, runtime.counters.parcels equals the count, the probe's
 #      samples + missed periods equal duration / period, lowlat-report check on every report, runtime.environment.kind == vm with
 #      a guest_profile that names the lane's snapshot and records the vCPU pins, the embedded profile says virt.type kvm, and
@@ -52,7 +53,7 @@ scratch_dir
 
 # ---- bounds (provisional; S11 decides which latency bounds are asserted) --------------------------------------------------------
 PI_RATIO_MAX_PERMILLE=250                   # 3: pi-mutex p99 <= 1/4 of plain-mutex p99
-CRIT4_ASSERTED=${CRIT4_ASSERTED:-0}         # 4: observed until S11 shows a >= 2x margin in all three runs
+CRIT4_ASSERTED=${CRIT4_ASSERTED:-0}         # 4: observed; S11 showed no 2x margin (rt over stock-lazy 0.83x to 1.28x)
 RT_P999_RATIO_MAX_PERMILLE=500              # 4: rt p99.9 <= 1/2 of stock-lazy
 JAVA_POLICY='SCHED_FIFO'
 JAVA_PRIORITY=95
@@ -179,7 +180,7 @@ evaluate() {
   crit_def 1 exact "kernel and preemption mode per lane (7.2.11-200.fc44, PREEMPT_DYNAMIC lazy / full, PREEMPT_RT)"
   crit_def 2 exact "irq/ kthreads (stock 15, rt 80) and ktimers (stock 0, rt 4 at FIFO 1), per snapshot"
   crit_def 3 bound "priority inversion: pi-mutex wait p99 <= 1/4 of plain-mutex, median of $ROUNDS_RUN"
-  crit_def 4 observed "cyclictest p99.9 rt <= 1/2 of stock-lazy under load, median of $ROUNDS_RUN (observed until S11)"
+  crit_def 4 observed "cyclictest p99.9 rt against stock-lazy under load, median of $ROUNDS_RUN (observed)"
   crit_def 5 exact "every lane and alternation: line 200,000 parcels, none dropped, environment, checksums, report check"
   crit_def 6 exact "the Java hot thread is SCHED_FIFO 95 (chrt -p)"
   local n lane
@@ -246,8 +247,8 @@ evaluate() {
         irq_want=$IRQ_KTHREADS_STOCK ktim_want=$KTIMERS_STOCK
       fi
       crit_exact 1 "$lane alt$n /sys/kernel/debug/sched/preempt" "$mode" "$(lane_preempt_mode "$lane")"
-      crit_exact 2 "$lane alt$n irq/ kernel threads (TODO(S11): confirm)" "$(val "$m" .threads.irq.count)" "$irq_want"
-      crit_exact 2 "$lane alt$n ktimers threads (TODO(S11): confirm)" "$(val "$m" .threads.ktimers.count)" "$ktim_want"
+      crit_exact 2 "$lane alt$n irq/ kernel threads " "$(val "$m" .threads.irq.count)" "$irq_want"
+      crit_exact 2 "$lane alt$n ktimers threads " "$(val "$m" .threads.ktimers.count)" "$ktim_want"
       [[ $lane != rt ]] || crit_exact 2 "$lane alt$n ktimers scheduling policy (class:priority)" "$(val "$m" .threads.ktimers.policies)" "FF:1"
       crit_exact 1 "$lane alt$n snapshot named in the mechanism record" "$(val "$m" .snapshot)" "$(lane_snapshot "$lane")"
     done
@@ -277,7 +278,7 @@ evaluate() {
     crit_le 4 "cyclictest p99.9, rt over stock-lazy, thousandths, per alternation: ${ratios[*]}" "$(median_ns "${ratios[@]}")" "$RT_P999_RATIO_MAX_PERMILLE"
   else
     note_check 4
-    observed "cyclictest p99.9, rt over stock-lazy, thousandths per alternation: ${ratios[*]} (median $(median_ns "${ratios[@]}"); the plan's bound is <= $RT_P999_RATIO_MAX_PERMILLE, asserted only with a 2x margin in all runs, S11 decides; a guest RT kernel can't remove host preemption of the vCPU)"
+    observed "cyclictest p99.9, rt over stock-lazy, thousandths per alternation: ${ratios[*]} (median $(median_ns "${ratios[@]}"); the plan's bound is <= $RT_P999_RATIO_MAX_PERMILLE, not asserted, because the calibration showed no 2x margin; a guest RT kernel can't remove host preemption of the vCPU)"
   fi
 
   # ---- criterion 5: every lane and alternation ---------------------------------------------------------------------------------------

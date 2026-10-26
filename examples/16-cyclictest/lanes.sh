@@ -40,8 +40,10 @@ NAIVE_S=${NAIVE_S:-10}
 METHOD_S=${METHOD_S:-300}
 TIMERLAT_S=${TIMERLAT_S:-120}
 IDLE_S=${IDLE_S:-120}
-# rtla stops the run when the thread latency passes this and prints its auto-analysis (S11 sets the final value).
-TIMERLAT_THRESHOLD_US=${TIMERLAT_THRESHOLD_US:-1000}
+# rtla stops the run when the thread latency passes this and prints its auto-analysis. At 1000 us every S11 run stopped after
+# 3 to 4 s of its 120 s, because the guest's ordinary tail passes 1 ms; 9000 us is about 3x the largest cyclictest max seen on
+# the measured CPU (2891 us) and inside the histogram's 9999 us range, so a stop now means a real outlier.
+TIMERLAT_THRESHOLD_US=${TIMERLAT_THRESHOLD_US:-9000}
 TIMERLAT_BUCKET_US=1
 TIMERLAT_ENTRIES=9999
 NOISE_MARGIN_S=15 # the noise outlasts the lane by this long, so no lane ends in a quiet guest

@@ -32,7 +32,7 @@ GUEST_PROFILE_SUFFIX=pinned-shared
 lane_guest_profile() { echo "$(lane_snapshot "$1")/$GUEST_PROFILE_SUFFIX"; }
 
 # What the kernel of each lane must show (exact). Set from the S1 probes (`_plans/dependency-pins.md`, "r05 guest probes");
-# the S11 calibration confirms or corrects them. TODO(S11): confirm the irq/ and ktimers counts over the three runs.
+# the S11 calibration confirmed them in all three alternations of every lane.
 lane_mode() { [[ $1 == rt ]] && echo rt || echo stock; }
 IRQ_KTHREADS_STOCK=15 # 14 aerdrv (PCIe port services) + 1 acpi, all requested by the drivers themselves; none for a virtio IRQ
 IRQ_KTHREADS_RT=80    # a thread for every device IRQ

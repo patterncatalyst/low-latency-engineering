@@ -29,7 +29,7 @@
 #   SMOKE=1 RESULTS_DIR=DIR     short lanes, one alternation, a check of the scripts (not a measurement, nothing enforced)
 #   CRIT3_ASSERTED=0|1          (default 1) criterion 3 asserted; 0 observes it
 #   SKIP_BUILD=1                reuse the existing build
-#   TIMERLAT_THRESHOLD_US=N     rtla's stop threshold (default 1000; S11 sets it)
+#   TIMERLAT_THRESHOLD_US=N     rtla's stop threshold (default 9000, from the S11 calibration)
 #
 # Run it under the host benchmark lock when another example measures on this host:  flock -o "$LOCK" env VM=1 ./verify.sh
 # Never changes the host: no sudo, no sysctl, no governor. The guest is driven by vm/run.sh and vm/guest-run.sh.

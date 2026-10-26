@@ -106,9 +106,10 @@ Counters first, then latency. Everything marked exact is a count the kernel or t
    The counts are the S1 probe values; the S11 calibration confirms them or corrects them.
 3. Priority inversion: the `pi-mutex` high-priority wait p99 is at most a quarter of `plain-mutex`'s, in every lane (median of 3).
    The expected ratio is about 10x or better by construction.
-4. **Observed until S11 decides:** cyclictest p99.9 on `rt` at most half of `stock-lazy` under load (median of 3). A guest RT kernel
-   can't remove the host's preemption of the vCPU thread, and the r01 smoke showed RT not beating stock in an untuned guest, so
-   the bound is asserted only if it clears twice over in every calibration run (`CRIT4_ASSERTED=1`).
+4. **Observed:** cyclictest p99.9 on `rt` against `stock-lazy` under load (median of 3). A guest RT kernel can't remove the host's
+   preemption of the vCPU thread. The bound the plan proposed (`rt` at most half of `stock-lazy`) was to be asserted only if it
+   cleared twice over in every calibration run; it didn't (`rt` over `stock-lazy` was 0.83x, 1.20x and 1.28x), so it stays
+   observed. `CRIT4_ASSERTED=1` asserts it anyway.
 5. Every lane and alternation: 200,000 parcels, `dropped = 0`, `lowlat-report check` on every report, the probe's samples plus
    missed periods equal to duration over period, `runtime.environment.kind` = `vm` with a `guest_profile` that names the lane's
    snapshot and records the vCPU pins, an embedded profile that says `virt.type` `kvm`, and one set of binary checksums across all
