@@ -1,0 +1,51 @@
+{
+  "file_version": 1,
+  "cmdline:": "cyclictest -m -p 95 -a 2,3 -t 2 -i 1000 -D 1m --clock=monotonic -h 50 --histfile=hist.txt --json=out.json",
+  "rt_test_version:": "2.11",
+  "start_time": "2026-10-25 12:00:00",
+  "end_time": "2026-10-25 12:01:00",
+  "return_code": 0,
+  "sysinfo": {
+    "sysname": "Linux",
+    "nodename": "guest-fixture.invalid",
+    "release": "7.2.11-rt",
+    "version": "#1 SMP PREEMPT_RT",
+    "machine": "x86_64",
+    "realtime": 0
+  },
+  "num_threads": 2,
+  "resolution_in_ns": 0,
+  "thread": {
+    "0": {
+      "histogram": {
+        "5": 400,
+        "6": 300,
+        "7": 200,
+        "8": 90,
+        "9": 9,
+        "40": 1
+      },
+      "cycles": 1003,
+      "min": 5,
+      "max": 123,
+      "avg": 6.12,
+      "cpu": 2,
+      "node": 0
+    },
+    "1": {
+      "histogram": {
+        "4": 600,
+        "5": 300,
+        "6": 80,
+        "7": 19,
+        "12": 1
+      },
+      "cycles": 1000,
+      "min": 4,
+      "max": 12,
+      "avg": 4.55,
+      "cpu": 3,
+      "node": 0
+    }
+  }
+}

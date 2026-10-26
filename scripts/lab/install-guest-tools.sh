@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# install-guest-tools.sh - install the pinned Temurin JDK, the pinned uv, stress-ng, strace and perf into
-# the lab guest.
+# install-guest-tools.sh - install the pinned Temurin JDK, the pinned uv, stress-ng, strace, perf and
+# rtla into the lab guest.
 #
 #   ./install-guest-tools.sh [vm]        # default lowlat-target
 #
@@ -13,6 +13,8 @@
 # versions.env, checked the same way and installed as /usr/local/bin/uv and uvx (ahead of Fedora's
 # packaged uv on PATH), so the guest's `uv python install` sees the CPython that
 # examples/.python-version pins.
+# rtla is a subpackage of the kernel SRPM, so its version-release must equal LAB_STOCK_KERNEL
+# (versions.env), the kernel the stock and RT lanes are built from; the script fails otherwise.
 # Idempotent. Guest-only: nothing on the host changes. cloud-init does the same for a rebuilt guest.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -82,8 +84,12 @@ uvv="$(gssh 'command -v uv && uv --version')"
 [[ "$uvv" == /usr/local/bin/uv*"uv $UV_VERSION"* ]] || die "guest uv on PATH is not /usr/local/bin/uv $UV_VERSION: $uvv"
 ok "guest uv: $(tail -n1 <<<"$uvv")"
 
-step "stress-ng, strace, perf"
-gssh 'for p in stress-ng strace perf; do rpm -q "$p" >/dev/null 2>&1 || sudo dnf -y -q install "$p"; done'
+step "stress-ng, strace, perf, rtla"
+# shellcheck disable=SC2016 # $p expands in the guest's shell
+gssh 'for p in stress-ng strace perf rtla; do rpm -q "$p" >/dev/null 2>&1 || sudo dnf -y -q install "$p"; done'
+rtla_nvr="$(gssh "rpm -q --qf '%{VERSION}-%{RELEASE}' rtla")"
+[[ "$rtla_nvr" == "$LAB_STOCK_KERNEL" ]] ||
+  die "guest rtla is $rtla_nvr, expected $LAB_STOCK_KERNEL (the kernel SRPM it comes from): dnf -y install rtla-$LAB_STOCK_KERNEL in the guest"
 
 jv="$(gssh 'java -version 2>&1')"
 [[ "$jv" == *"\"$TEMURIN_VERSION\""* && "$jv" == *Temurin* ]] || die "guest java is not Temurin $TEMURIN_VERSION: $jv"
@@ -91,3 +97,4 @@ ok "guest java: $(head -n1 <<<"$jv") ($(grep -o 'Temurin[^ ]*' <<<"$jv" | head -
 ok "stress-ng: $(gssh 'stress-ng --version' | head -n1)"
 ok "strace: $(gssh 'strace -V' | head -n1)"
 ok "perf: $(gssh 'perf --version' | head -n1)"
+ok "rtla: $rtla_nvr"

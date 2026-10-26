@@ -28,6 +28,10 @@
 #                 seccomp profiles may come from
 #   GUEST_PROFILE guest snapshot/profile name (like lab-ready-r04/stock-unpinned) that
 #                 container_run records in runtime.environment
+#   VM-lane helpers (end of file): LAB_REVERT (the revert script, default scripts/lab/revert-vm.sh), LANE_BIN_DIR,
+#                 LANE_SUMS, LANE_GUEST_BIN, LAB_RUN_LOAD1 (host load1 limit, default 2), LAB_RUN_LOAD1_FILE,
+#                 ISOLATED_CPUS and NOISE_SHARED_LANE, EXAMPLE (the id from-cyclictest records), CYCLICTEST_TIMEOUT;
+#                 each is described at its helper
 #   LOWLAT_SCRATCH  per-run scratch dir for recordings and other untracked files; set by
 #                 scratch_dir (a caller-provided value is kept)
 
@@ -63,6 +67,20 @@ bg_forget() {
     [[ $p == "$1" ]] || keep+=("$p")
   done
   BG_PIDS=("${keep[@]}")
+}
+# run_bg LOG CMD...: run CMD in the background, wait for it, and print its output afterwards. A bash trap runs only after a
+# foreground command ends, so a TERM or INT to the driver would otherwise wait out a 300 s lane; a `wait` returns at once, the
+# trap exits, and the EXIT handler stops the whole tree (_bg_cleanup).
+run_bg() {
+  local log=$1 pid rc=0
+  shift
+  "$@" >"$log" 2>&1 &
+  pid=$!
+  bg_track "$pid"
+  wait "$pid" || rc=$?
+  bg_forget "$pid"
+  cat "$log"
+  return "$rc"
 }
 # The repository is public, so a results directory must not name the machine or its owner.
 # Reports and logs written by third-party tools and by the example binaries carry absolute
@@ -184,7 +202,7 @@ redact_host() {
 # example_dir: absolute path of the calling example (the dir holding verify.sh).
 example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 
-# require_quiet_host [--lab-idle]: refuse to take host measurements while a lab VM competes for
+# require_quiet_host [--lab-idle | --lab-run]: refuse to take host measurements while a lab VM competes for
 # the CPUs. Without the flag any running lowlat-* VM refuses the run, and so does a libvirt that
 # cannot be read (no virsh installed counts as no lab).
 #   --lab-idle   the lowlat-target VM may be running, but only idle: its load1 (read
@@ -194,11 +212,28 @@ example_dir() { cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd; }
 #                starts, stops or touches another VM. The state is exported as LOWLAT_LAB_VM
 #                ("down" or "up (idle)") and, when RUN_START_JSON names a file, merged into it as
 #                "lab_vm" with "lab_vm_load1" (the run-start.json the driver writes).
-# ALLOW_BUSY=1 skips the check in both forms (with --lab-idle it records "unchecked (ALLOW_BUSY)").
+#   --lab-run    the guest is the thing being measured, so the VM may run; the HOST must be quiet
+#                around it: the host's load1 (/proc/loadavg; LOWLAT_LOADAVG names another file, for tests)
+#                must be <= LAB_RUN_LOAD1 (default 2). Call it before every lane. The load1 is
+#                written to the file named by LAB_RUN_LOAD1_FILE (one number) and, when RUN_START_JSON
+#                is set, merged into it as "host_load1", before the check, so a refused lane keeps its evidence.
+#                A busy host is given LAB_RUN_SETTLE seconds (default 300) to settle, re-read every LAB_RUN_POLL
+#                seconds (default 10): the guest's own previous lane shows up in the host's 1-minute load average
+#                for about a minute after it ends. The run is refused only if load1 is still above the bound then;
+#                the load1 recorded is the one the lane started at, and LAB_RUN_WAITED_S holds the wait.
+# ALLOW_BUSY=1 skips the check in all forms (with --lab-idle it records "unchecked (ALLOW_BUSY)"; --lab-run
+# still records the load1 but does not abort).
 require_quiet_host() {
-  local lab_idle=0 running domains others
-  if [[ ${1:-} == --lab-idle ]]; then lab_idle=1; shift; fi
-  (($# == 0)) || die "require_quiet_host: unknown argument '$1' (only --lab-idle)"
+  local lab_idle=0 lab_run=0 running domains others
+  case ${1:-} in
+    --lab-idle) lab_idle=1; shift ;;
+    --lab-run) lab_run=1; shift ;;
+  esac
+  (($# == 0)) || die "require_quiet_host: unknown argument '$1' (only --lab-idle or --lab-run)"
+  if ((lab_run)); then
+    _quiet_lab_run
+    return
+  fi
   if [[ ${ALLOW_BUSY:-0} == 1 ]]; then
     ((!lab_idle)) || _run_start_record "unchecked (ALLOW_BUSY)" ''
     return 0
@@ -234,6 +269,31 @@ require_quiet_host() {
   awk -v l="$load1" -v m="${LAB_IDLE_LOAD1:-0.5}" 'BEGIN { exit !(l <= m) }' ||
     die "--lab-idle: $target is not idle (load1 $load1 > ${LAB_IDLE_LOAD1:-0.5}); wait, or stop it with scripts/lab/lab-down.sh"
   _run_start_record "up (idle)" "$load1"
+}
+
+# _quiet_lab_run: the --lab-run check of require_quiet_host (host load1 against LAB_RUN_LOAD1).
+_quiet_lab_run() {
+  local load1 max=${LAB_RUN_LOAD1:-2} settle=${LAB_RUN_SETTLE:-300} poll=${LAB_RUN_POLL:-10} waited=0
+  [[ $settle =~ ^[0-9]+$ && $poll =~ ^[1-9][0-9]*$ ]] || die "--lab-run: LAB_RUN_SETTLE and LAB_RUN_POLL must be whole seconds"
+  while :; do
+    load1=$(awk '{print $1}' "${LOWLAT_LOADAVG:-/proc/loadavg}") || die "--lab-run: cannot read the host load average"
+    [[ $load1 =~ ^[0-9]+([.][0-9]+)?$ ]] || die "--lab-run: unreadable host load1 '$load1'"
+    [[ ${ALLOW_BUSY:-0} == 1 ]] && break
+    awk -v l="$load1" -v m="$max" 'BEGIN { exit !(l <= m) }' && break
+    ((waited + poll <= settle)) || break
+    sleep "$poll"
+    waited=$((waited + poll))
+  done
+  export LAB_RUN_WAITED_S=$waited
+  [[ -z ${LAB_RUN_LOAD1_FILE:-} ]] || printf '%s\n' "$load1" >"$LAB_RUN_LOAD1_FILE"
+  if [[ -n ${RUN_START_JSON:-} ]]; then
+    [[ -s $RUN_START_JSON ]] || printf '{}\n' >"$RUN_START_JSON"
+    jq --arg l "$load1" '.host_load1 = ($l | tonumber)' "$RUN_START_JSON" >"$RUN_START_JSON.tmp" || die "run-start: jq failed on $RUN_START_JSON"
+    mv "$RUN_START_JSON.tmp" "$RUN_START_JSON"
+  fi
+  [[ ${ALLOW_BUSY:-0} == 1 ]] && return 0
+  awk -v l="$load1" -v m="$max" 'BEGIN { exit !(l <= m) }' ||
+    die "--lab-run: the host is busy (load1 $load1 > $max after waiting ${waited} s); wait for it to settle, or set ALLOW_BUSY=1 (and the numbers are labelled noisy)"
 }
 
 # _run_start_record STATE LOAD1: export LOWLAT_LAB_VM and merge lab_vm (and the guest load1) into
@@ -1263,8 +1323,13 @@ interleave_env() {
   lanes=$#
   # The order is read on fd 3, not stdin: a lane that reads stdin (ssh into the guest does) would
   # otherwise swallow the rest of the order and the loop would end after the first lane.
+  # run_lane is called on its own, never on the left of || or &&: bash ignores set -e for every
+  # command inside a function called there, so a failed step inside a lane would not stop the run.
+  local rc
   while IFS= read -r lane <&3; do
-    run_lane "$lane" $((i / lanes + 1)) || return $?
+    run_lane "$lane" $((i / lanes + 1))
+    rc=$? # reached with a non-zero rc only when the caller runs without set -e
+    ((rc == 0)) || return "$rc"
     i=$((i + 1))
   done 3< <(interleave "$n" "$@")
 }
@@ -1312,4 +1377,289 @@ from_samples() {
   (($# == 3)) || die "usage: from_samples SAMPLES SIDECAR OUT"
   [[ -f $1 && -f $2 ]] || die "from_samples: missing $1 or $2"
   uvrun lowlat-report from-samples "$(realpath "$1")" "$(realpath "$2")" "$(realpath -m "$3")" >/dev/null || die "from_samples: conversion failed for $1"
+}
+
+# ---- VM lanes (r05): revert, noise, interrupts, cyclictest, placement, vCPU pins -------------------
+# One lane is: lane_revert SNAP, then the measurement, each from a clean snapshot (D4). Every helper talks to
+# the guest through lab_ssh/guest (so only to a domain under LAB_GUARD_PREFIX) and the host side only reads.
+# sudo appears only inside a command string run in the guest.
+
+# _lab_target WHO: print TARGET_VM, or fail with a message naming WHO when it is outside the lab prefix.
+# Call it as `target=$(_lab_target who) || return 1`.
+_lab_target() {
+  local prefix=${LAB_GUARD_PREFIX:-lowlat-} target=${TARGET_VM:-lowlat-target}
+  [[ $target == "$prefix"* ]] || { echo "$1: '$target' is not a $prefix* domain; refusing" >&2; return 1; }
+  printf '%s' "$target"
+}
+
+# lane_revert SNAP: put the target VM back to snapshot SNAP and make sure the guest runs the run's own binaries.
+#   1  scripts/lab/revert-vm.sh TARGET SNAP (LAB_REVERT names another script; it also sets the guest clock)
+#   2  wait for ssh (LANE_SSH_TRIES x LANE_SSH_SLEEP s, default 60 x 3)
+#   3  push every file named in LANE_SUMS (a sha256sum file of plain names; default $LANE_BIN_DIR/SHA256SUMS) from
+#      LANE_BIN_DIR to LANE_GUEST_BIN in the guest (relative to the guest home; default $GUEST_REPO/lane-bin)
+#   4  compare the sha256 the guest computes with the one in LANE_SUMS, name by name; a mismatch dies and
+#      the run must not go on (D17: the binaries are the same bytes in every lane). A name ending in
+#      .tar.gz or .tgz is unpacked in LANE_GUEST_BIN after it verified; any other file is made executable.
+# The sums are also checked against the host's own files first, so a stale SHA256SUMS fails here, not in the guest.
+lane_revert() {
+  local snap=${1:?lane_revert SNAP} target dir sums gdir revert name want have i
+  target=$(_lab_target lane_revert) || return 1
+  dir=${LANE_BIN_DIR:?lane_revert: set LANE_BIN_DIR (the host directory holding the binaries of the run)}
+  sums=${LANE_SUMS:-$dir/SHA256SUMS}
+  gdir=${LANE_GUEST_BIN:-${GUEST_REPO:-low-latency-engineering}/lane-bin}
+  revert=${LAB_REVERT:-$LOWLAT_ROOT/scripts/lab/revert-vm.sh}
+  [[ -s $sums ]] || die "lane_revert: no checksums at $sums"
+  [[ $gdir =~ ^[A-Za-z0-9._/-]+$ && $gdir != /* && $gdir != *..* ]] || die "lane_revert: LANE_GUEST_BIN '$gdir' must be a plain path under the guest home"
+  step "lane_revert: $target to $snap"
+  # Host side first: the sums must describe the files that will be pushed.
+  while read -r want name; do
+    [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || die "lane_revert: '$name' in $sums is not a plain file name"
+    [[ -f $dir/$name ]] || die "lane_revert: $dir/$name is listed in $sums but missing"
+    have=$(sha256sum "$dir/$name" | cut -d' ' -f1)
+    [ "$have" = "$want" ] || die "lane_revert: $dir/$name does not match $sums (host sha256 $have, listed $want)"
+  done <"$sums"
+  "$revert" "$target" "$snap" || die "lane_revert: reverting $target to $snap failed"
+  for ((i = 0; i < ${LANE_SSH_TRIES:-60}; i++)); do
+    lab_ssh true </dev/null >/dev/null 2>&1 && break
+    sleep "${LANE_SSH_SLEEP:-3}"
+  done
+  lab_ssh true </dev/null >/dev/null 2>&1 || die "lane_revert: no ssh to $target after the revert to $snap"
+  lab_ssh "rm -rf $(printf '%q' "$gdir") && mkdir -p $(printf '%q' "$gdir")" </dev/null || die "lane_revert: cannot prepare $gdir in the guest"
+  while read -r want name; do
+    lab_ssh "cat >$(printf '%q' "$gdir/$name")" <"$dir/$name" || die "lane_revert: cannot push $name"
+    have=$(lab_ssh "sha256sum $(printf '%q' "$gdir/$name")" </dev/null | cut -d' ' -f1) || die "lane_revert: cannot hash $name in the guest"
+    [ "$have" = "$want" ] || die "lane_revert: sha256 mismatch for $name in the guest (guest $have, host $want); aborting the run"
+    case $name in
+      *.tar.gz | *.tgz) lab_ssh "tar -C $(printf '%q' "$gdir") -xzf $(printf '%q' "$gdir/$name")" </dev/null || die "lane_revert: cannot unpack $name" ;;
+      *) lab_ssh "chmod +x $(printf '%q' "$gdir/$name")" </dev/null || die "lane_revert: cannot chmod $name" ;;
+    esac
+  done <"$sums"
+  ok "lane_revert: $target at $snap, $(wc -l <"$sums") file(s) in ~/$gdir verified by sha256"
+}
+
+# guest_noise CPUS SECONDS KIND: start load in the guest, in the background, bound to CPUS (a CPU list like 0-1 or 1,3).
+# KIND is cpu, hackbench, hdd, stream or cache: stress-ng (--cpu, --hdd, --stream, --cache, one worker per listed CPU) or
+# hackbench (one group per CPU), always as `timeout -s KILL ... taskset -c CPUS ...`, so a hung generator is killed.
+# Prints the guest pid file (the handle) on stdout; guest_noise_wait HANDLE waits for the load to end.
+# Refuses, with a message and status 1, when
+#   - the guest has no timeout (or taskset, or the generator for KIND);
+#   - ISOLATED_CPUS names the isolated set (like 2-3) and CPUS overlaps it, unless NOISE_SHARED_LANE=1 says this
+#     is the shared lane (isolation is the point of the isolated lanes: noise must stay on the housekeeping CPUs).
+guest_noise() {
+  local cpus=${1:?guest_noise CPUS SECONDS KIND} secs=${2:?guest_noise CPUS SECONDS KIND} kind=${3:?guest_noise CPUS SECONDS KIND}
+  local n t tool cmd kill_after c iso handle
+  local -A isolated=()
+  _lab_target guest_noise >/dev/null || return 1
+  [[ $cpus =~ ^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$ ]] || { echo "guest_noise: CPUS '$cpus' is not a CPU list" >&2; return 1; }
+  [[ $secs =~ ^[1-9][0-9]*$ ]] || { echo "guest_noise: SECONDS must be a positive integer, got '$secs'" >&2; return 1; }
+  if [[ -n ${ISOLATED_CPUS:-} && ${NOISE_SHARED_LANE:-0} != 1 ]]; then
+    for iso in $(_cpu_expand "$ISOLATED_CPUS"); do isolated[$iso]=1; done
+    for c in $(_cpu_expand "$cpus"); do
+      [[ -z ${isolated[$c]:-} ]] || { echo "guest_noise: CPU $c is in the isolated set ($ISOLATED_CPUS); noise there would measure the noise, not the isolation (the shared lane sets NOISE_SHARED_LANE=1)" >&2; return 1; }
+    done
+  fi
+  n=$(_cpu_expand "$cpus" | wc -l)
+  kill_after=$((secs + 2))
+  case $kind in
+    cpu) tool=stress-ng cmd="stress-ng --cpu $n --timeout ${secs}s" ;;
+    hdd) tool=stress-ng cmd="stress-ng --hdd $n --temp-path /tmp --timeout ${secs}s" ;;
+    stream) tool=stress-ng cmd="stress-ng --stream $n --timeout ${secs}s" ;;
+    cache) tool=stress-ng cmd="stress-ng --cache $n --timeout ${secs}s" ;;
+    hackbench) tool=hackbench cmd="hackbench -g $n -l 1000000000" kill_after=$secs ;; # no duration of its own: the KILL ends it
+    *) echo "guest_noise: KIND must be cpu, hackbench, hdd, stream or cache, got '$kind'" >&2; return 1 ;;
+  esac
+  lab_ssh "command -v timeout" </dev/null >/dev/null 2>&1 || { echo "guest_noise: the guest has no timeout; refusing to start unbounded load" >&2; return 1; }
+  for t in taskset "$tool"; do
+    lab_ssh "command -v $t" </dev/null >/dev/null 2>&1 || { echo "guest_noise: the guest has no $t" >&2; return 1; }
+  done
+  handle=${GUEST_NOISE_DIR:-/tmp}/lowlat-noise-$kind-$$-$RANDOM.pid
+  # nohup and the redirections let the ssh session end while the load goes on; $! is the timeout process.
+  lab_ssh "nohup timeout -s KILL $kill_after taskset -c $cpus $cmd </dev/null >/dev/null 2>&1 & echo \$! >$(printf '%q' "$handle")" </dev/null ||
+    { echo "guest_noise: could not start $kind in the guest" >&2; return 1; }
+  printf '%s\n' "$handle"
+}
+
+# guest_noise_wait HANDLE: wait until the load guest_noise started (HANDLE is the pid file it printed) has ended, then remove the file.
+guest_noise_wait() {
+  local handle=${1:?guest_noise_wait HANDLE}
+  [[ $handle =~ ^/[A-Za-z0-9._/-]+\.pid$ ]] || die "guest_noise_wait: '$handle' is not a pid file guest_noise printed"
+  lab_ssh "p=\$(cat $(printf '%q' "$handle")) && while kill -0 \"\$p\" 2>/dev/null; do sleep 0.2; done; rm -f $(printf '%q' "$handle")" </dev/null ||
+    die "guest_noise_wait: cannot wait on $handle"
+}
+
+# interrupts_delta OUT CPU... -- CMD...: run CMD in the guest (from the repo root, as `guest`) between two reads of the
+# guest's /proc/interrupts and write OUT, the per-row, per-CPU increase of the listed CPUs, in the shape of
+# runtime.counters.interrupts: {"LOC": {"2": 1000, "3": 998}, "RES": {...}, "25-virtio0-config": {...}}.
+# Rows are /proc/interrupts rows with a count for every CPU: the named ones (LOC, RES, CAL, TLB, NMI, ...) by their
+# name, a numbered IRQ as NUMBER-LAST-COLUMN. A count that went down dies (the CPU was offlined, or the reads are
+# not from one boot). Returns CMD's status; OUT is written either way. Every step checks its own status, so the helper
+# stays correct when a caller runs it on the left of || (bash ignores set -e inside a function called there).
+interrupts_delta() {
+  local out=${1:?interrupts_delta OUT CPU... -- CMD...} rc=0 tmp
+  local -a cpus=()
+  shift
+  while (($#)) && [[ $1 != -- ]]; do
+    [[ $1 =~ ^[0-9]+$ ]] || die "interrupts_delta: '$1' is not a CPU number"
+    cpus+=("$1")
+    shift
+  done
+  (($# >= 2)) || die "interrupts_delta: usage: interrupts_delta OUT CPU... -- CMD..."
+  shift
+  ((${#cpus[@]})) || die "interrupts_delta: name at least one CPU"
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-irq.XXXXXX") || die "interrupts_delta: mktemp failed"
+  lab_ssh cat /proc/interrupts </dev/null >"$tmp/before" || { rm -rf "$tmp"; die "interrupts_delta: cannot read /proc/interrupts in the guest"; }
+  guest "$@" || rc=$?
+  lab_ssh cat /proc/interrupts </dev/null >"$tmp/after" || { rm -rf "$tmp"; die "interrupts_delta: cannot read /proc/interrupts in the guest"; }
+  awk -v want="${cpus[*]}" '
+    function parse(file_no,    i, name, ok) {
+      if (FNR == 1) {
+        nc = NF
+        for (i = 1; i <= NF; i++) { cpu[i] = $i; sub(/^CPU/, "", cpu[i]) }
+        return
+      }
+      name = $1; sub(/:$/, "", name)
+      if (NF < nc + 1) return
+      ok = 1
+      for (i = 2; i <= nc + 1; i++) if ($i !~ /^[0-9]+$/) ok = 0
+      if (!ok) return
+      if (name ~ /^[0-9]+$/) name = name "-" $NF
+      for (i = 1; i <= nc; i++) val[file_no, name, cpu[i]] = $(i + 1)
+      if (file_no == 2) { order[++rows] = name }
+    }
+    FNR == 1 { file_no++ }
+    { parse(file_no) }
+    END {
+      split(want, w, " ")
+      for (j in w) { found = 0; for (i = 1; i <= nc; i++) if (cpu[i] == w[j]) found = 1
+        if (!found) { print "interrupts_delta: the guest has no CPU " w[j] > "/dev/stderr"; exit 3 } }
+      for (r = 1; r <= rows; r++) for (j = 1; j in w; j++) {
+        k1 = 1 SUBSEP order[r] SUBSEP w[j]; k2 = 2 SUBSEP order[r] SUBSEP w[j]
+        if (!(k1 in val)) continue
+        d = val[k2] - val[k1]
+        if (d < 0) { print "interrupts_delta: " order[r] " CPU " w[j] " went down" > "/dev/stderr"; exit 2 }
+        print order[r] "\t" w[j] "\t" d
+      }
+    }' "$tmp/before" "$tmp/after" >"$tmp/rows.tsv" || { rm -rf "$tmp"; die "interrupts_delta: cannot compute the deltas"; }
+  jq -Rn 'reduce (inputs | split("\t")) as $r ({}; .[$r[0]][$r[1]] = ($r[2] | tonumber))' <"$tmp/rows.tsv" >"$tmp/out.json" ||
+    { rm -rf "$tmp"; die "interrupts_delta: jq failed"; }
+  [[ $(jq length "$tmp/out.json") -gt 0 ]] || { rm -rf "$tmp"; die "interrupts_delta: no /proc/interrupts rows for CPUs ${cpus[*]}"; }
+  mv "$tmp/out.json" "$out" || { rm -rf "$tmp"; die "interrupts_delta: cannot write $out"; }
+  rm -rf "$tmp"
+  return "$rc"
+}
+
+# cyclictest_run [--default-clock] [--allow-overflow] OUT ARGS...: run cyclictest in the guest and convert its output to
+# reports in the directory OUT (one <variant>-tN.json per thread, through `lowlat-report from-cyclictest`).
+# The guest command is always `sudo timeout -k 10 $CYCLICTEST_TIMEOUT cyclictest ARGS --clock=monotonic --json=F --histfile=F`
+# (CYCLICTEST_TIMEOUT defaults to 300 s; a run the timeout ends is a failure). Put -D (the duration), -h (the histogram
+# range; the converter needs it), -p, -a, -t in ARGS. rt-tests v2.11 uses CLOCK_REALTIME when no clock is named, although
+# its help text says monotonic, so --clock=monotonic is added; --default-clock leaves cyclictest on its own default (only
+# Ch16's naive lane, which says which clock that is). --json, --histfile and the clock options in ARGS are refused: the
+# helper owns them. EXAMPLE names the example in the reports; CYCLICTEST_VARIANT is the variant prefix (default
+# cyclictest); GUEST_PROFILE, when set, is recorded as the vm lane's snapshot/profile. Needs LOWLAT_PROFILE.
+# The raw files are kept in the guest only until this returns.
+cyclictest_run() (
+  clock=--clock=monotonic
+  allow=()
+  args=()
+  while (($# > 0)); do
+    case $1 in
+      --default-clock) clock='' ;;
+      --allow-overflow) allow=(--allow-overflow) ;;
+      --json | --json=* | --histfile | --histfile=* | -c | -c* | --clock | --clock=*)
+        die "cyclictest_run: $1 is set by the helper (--json, --histfile, --clock=monotonic); use --default-clock for cyclictest's own clock" ;;
+      *) args+=("$1") ;;
+    esac
+    shift
+  done
+  out=${args[0]:?cyclictest_run [--default-clock] OUT ARGS...}
+  args=("${args[@]:1}")
+  example=${EXAMPLE:?cyclictest_run: set EXAMPLE (the example id recorded in the reports)}
+  variant=${CYCLICTEST_VARIANT:-cyclictest}
+  limit=${CYCLICTEST_TIMEOUT:-300}
+  [[ $limit =~ ^[1-9][0-9]*$ ]] || die "cyclictest_run: CYCLICTEST_TIMEOUT must be a positive integer, got '$limit'"
+  _lab_target cyclictest_run >/dev/null || exit 1
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/lowlat-ct.XXXXXX")
+  gd=''
+  trap '[[ -z $gd ]] || lab_ssh "sudo rm -rf $(printf "%q" "$gd")" </dev/null >/dev/null 2>&1 || true; rm -rf "$tmp"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  gd=$(lab_ssh mktemp -d /tmp/lowlat-ct.XXXXXX </dev/null) || die "cyclictest_run: cannot make a scratch directory in the guest"
+  status=0
+  # The clock is last among the options and the files are ours; ARGS are quoted for the guest shell.
+  lab_ssh "sudo timeout -k 10 $limit cyclictest $(printf '%q ' "${args[@]}")${clock:+$clock }--json=$gd/ct.json --histfile=$gd/ct.hist" </dev/null |
+    _scrub_ids || status=${PIPESTATUS[0]}
+  ((status != 124)) || die "cyclictest_run: cyclictest did not finish within ${limit} s and was stopped by timeout"
+  ((status == 0)) || die "cyclictest_run: cyclictest failed (status $status)"
+  guest_fetch "$gd/ct.json" "$tmp/ct.json"
+  guest_fetch "$gd/ct.hist" "$tmp/ct.hist"
+  [[ -s $tmp/ct.json && -s $tmp/ct.hist ]] || die "cyclictest_run: cyclictest wrote no --json/--histfile output (was -h given?)"
+  uvrun lowlat-report from-cyclictest "$tmp/ct.json" "$tmp/ct.hist" "$(realpath -m "$out")" \
+    --example "$example" --variant "$variant" ${GUEST_PROFILE:+--guest-profile "$GUEST_PROFILE"} "${allow[@]}" >/dev/null ||
+    die "cyclictest_run: lowlat-report from-cyclictest failed"
+)
+
+# The sampler behind thread_cpus, POSIX sh, run as  sh -c "$_THREAD_CPUS_SH" sh PID COUNT GAP
+# It prints "TID CPU" for every task of PID, COUNT times, GAP seconds apart. CPU is field 39 of
+# /proc/PID/task/TID/stat, counted after the last ")" (the comm may hold spaces and parentheses): the fields
+# there start at 3 (state), so field 39 is the 37th.
+_THREAD_CPUS_SH=$(
+  cat <<'SCRIPT'
+pid=$1 count=$2 gap=$3
+i=0
+while [ "$i" -lt "$count" ]; do
+  for f in /proc/"$pid"/task/*/stat; do
+    [ -r "$f" ] || continue
+    tid=${f%/stat}
+    tid=${tid##*/}
+    s=$(cat "$f" 2>/dev/null) || continue
+    s=${s##*) }
+    set -- $s
+    shift 36
+    echo "$tid $1"
+  done
+  i=$((i + 1))
+  sleep "$gap"
+done
+SCRIPT
+)
+
+# thread_cpus PID OUT: sample which CPU every task of PID last ran on, THREAD_CPUS_SECONDS long (default 5), every
+# THREAD_CPUS_INTERVAL s (default 0.1), and write OUT:
+#   {"pid": N, "samples": N, "interval_s": X, "threads": {"TID": {"cpus": {"CPU": times seen}}}}
+# PID is a process on this host, or in the guest when THREAD_CPUS_GUEST=1 (the VM lanes). It is a sample of the
+# last CPU, as assert_placement is: a thread pinned to one CPU can only show that CPU, a migrating one shows where it went.
+thread_cpus() {
+  local pid=${1:?thread_cpus PID OUT} out=${2:?thread_cpus PID OUT} secs=${THREAD_CPUS_SECONDS:-5} gap=${THREAD_CPUS_INTERVAL:-0.1} count rows
+  [[ $pid =~ ^[1-9][0-9]*$ ]] || die "thread_cpus: PID must be a process id, got '$pid'"
+  [[ $secs =~ ^[0-9]+([.][0-9]+)?$ && $gap =~ ^[0-9]+([.][0-9]+)?$ ]] || die "thread_cpus: THREAD_CPUS_SECONDS and THREAD_CPUS_INTERVAL must be numbers"
+  count=$(awk -v s="$secs" -v g="$gap" 'BEGIN { n = int(s / g + 0.5); print (n < 1 ? 1 : n) }') || die "thread_cpus: bad interval"
+  if [[ ${THREAD_CPUS_GUEST:-0} == 1 ]]; then
+    rows=$(lab_ssh "sh -c $(printf '%q' "$_THREAD_CPUS_SH") sh $pid $count $gap" </dev/null) || die "thread_cpus: sampling PID $pid in the guest failed"
+  else
+    rows=$(sh -c "$_THREAD_CPUS_SH" sh "$pid" "$count" "$gap") || die "thread_cpus: sampling PID $pid failed"
+  fi
+  [[ -n $rows ]] || die "thread_cpus: PID $pid has no tasks (did it exit?)"
+  jq -Rn --argjson pid "$pid" --argjson n "$count" --arg gap "$gap" '
+    [inputs | split(" ") | {t: .[0], c: .[1]}] as $s
+    | {pid: $pid, samples: $n, interval_s: ($gap | tonumber),
+       threads: ($s | group_by(.t)
+         | map({key: .[0].t, value: {cpus: (group_by(.c) | map({key: .[0].c, value: length}) | from_entries)}})
+         | from_entries)}' <<<"$rows" >"$out.tmp" || die "thread_cpus: jq failed"
+  mv "$out.tmp" "$out"
+}
+
+# vcpupin_record OUT: on the host, ask libvirt where the target domain's vCPUs are pinned
+# (`virsh vcpupin DOMAIN` against qemu:///system; the domain must start with LAB_GUARD_PREFIX) and write
+# OUT as [{"vcpu": 0, "cpus": "4"}, {"vcpu": 1, "cpus": "6"}, ...], cpus being virsh's host CPU list as printed.
+# A read only: it never changes a pin (scripts/lab/pin-vcpu.sh does that).
+vcpupin_record() {
+  local out=${1:?vcpupin_record OUT} target rows
+  target=$(_lab_target vcpupin_record) || return 1
+  command -v virsh >/dev/null 2>&1 || die "vcpupin_record: virsh is not installed"
+  rows=$(LIBVIRT_DEFAULT_URI=qemu:///system timeout 10 virsh vcpupin "$target") || die "vcpupin_record: virsh vcpupin $target failed"
+  awk '$1 ~ /^[0-9]+$/ && NF >= 2 { print $1 "\t" $2 }' <<<"$rows" |
+    jq -Rn '[inputs | split("\t") | {vcpu: (.[0] | tonumber), cpus: .[1]}]' >"$out.tmp" || die "vcpupin_record: jq failed"
+  [[ $(jq length "$out.tmp") -gt 0 ]] || { rm -f "$out.tmp"; die "vcpupin_record: virsh printed no vCPU pins for $target"; }
+  mv "$out.tmp" "$out"
 }

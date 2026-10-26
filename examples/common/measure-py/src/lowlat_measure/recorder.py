@@ -24,9 +24,9 @@ LANGUAGE = "python"
 PERCENTILES: dict[str, float] = {"p50": 50, "p90": 90, "p99": 99, "p99_9": 99.9}
 
 
-def new_histogram() -> HdrHistogram:
-    """An empty histogram with the parameters every kit shares."""
-    return HdrHistogram(LOWEST_DISCERNIBLE_NS, HIGHEST_TRACKABLE_NS, SIGNIFICANT_DIGITS)
+def new_histogram(significant_digits: int = SIGNIFICANT_DIGITS) -> HdrHistogram:
+    """An empty histogram with the parameters every kit shares (more digits only on request)."""
+    return HdrHistogram(LOWEST_DISCERNIBLE_NS, HIGHEST_TRACKABLE_NS, significant_digits)
 
 
 def decode(b64: str) -> HdrHistogram:
@@ -87,11 +87,13 @@ def require_profile(prog: str) -> bool:
 class Recorder:
     """Records latencies in nanoseconds and reports percentiles, never a mean."""
 
-    def __init__(self, example: str, variant: str) -> None:
+    def __init__(
+        self, example: str, variant: str, significant_digits: int = SIGNIFICANT_DIGITS
+    ) -> None:
         self.example = example
         self.variant = variant
         self.dropped = 0
-        self.histogram = new_histogram()
+        self.histogram = new_histogram(significant_digits)
 
     def record(self, latency_ns: int, count: int = 1) -> None:
         """Record ``latency_ns`` ``count`` times."""

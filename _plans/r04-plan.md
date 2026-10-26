@@ -263,7 +263,7 @@ Model: `sonnet` executes, `opus` plans and validates. MAIN means run in the main
 | S18 | Prose fact check + house-voice pass with stats | `_docs/1[1-3]-*.md`, READMEs 11–13, `_data/diagrams.yml`, `_plans/r04-*` | S17 | opus + sonnet | done (fact check f93ca2d; voice pass in the commit that carries this row) |
 | S19 | Re-measure gate | results, chapters, figures, reconciliation | S18 | opus (MAIN) | done (no re-measure needed; RECHECK sweep clean) |
 | S20 | Opus validation | – | S19 | opus (MAIN) | done (ready to merge; findings fixed) |
-| S21 | Ship: PR `release/r04` → main, `ci-ok` green, squash-merge (user OK), delete branch, tag `r04.x`, notes-only release | – | S20 | opus (MAIN) | todo |
+| S21 | Ship: PR `release/r04` → main, `ci-ok` green, squash-merge (user OK), delete branch, tag `r04.x`, notes-only release | – | S20 | opus (MAIN) | done (PR #7, tag `r04.x`, notes-only release; Pages 200 checks confirmed 2026-10-25) |
 
 ### Step contents and acceptance criteria
 
