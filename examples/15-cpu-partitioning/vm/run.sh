@@ -211,7 +211,7 @@ ct_window() {
   pid=$!
   bg_track "$pid"
   sleep 3
-  CYCLICTEST_TIMEOUT=$((secs + 90)) cyclictest_run "$d/cyclictest" -m -p95 --policy=fifo -a "$MEASURE_CPU" -t 1 \
+  CYCLICTEST_TIMEOUT=$((secs + 90)) cyclictest_run "$d/cyclictest" -q -m -p95 --policy=fifo -a "$MEASURE_CPU" -t 1 \
     -i "$CT_INTERVAL_US" -D "$secs" -h "$CT_HIST_US"
   x lab_ssh "touch $flag" </dev/null
   wait "$pid" || die "the interrupt bracket around cyclictest failed"

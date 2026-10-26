@@ -106,7 +106,7 @@ facts() {
   step "guest: facts"
   if ((DRY_RUN)); then
     printf '[dry-run] read /sys/devices/system/cpu/{isolated,nohz_full}, /proc/cmdline (latency options only), debugfs sched/preempt (sudo), tuned-adm active,\n'
-    printf '[dry-run]   systemd CPUAffinity, taskset -cp 1, /proc/irq/default_smp_affinity, findmnt /var/tmp, tool versions > %s/facts.json\n' "$VMOUT"
+    printf '[dry-run]   systemd CPUAffinity, taskset -cp 1, /proc/irq/default_smp_affinity, findmnt -T /var/tmp, tool versions > %s/facts.json\n' "$VMOUT"
     return 0
   fi
   local isolated nohz cmdline preempt tuned affinity pid1 default_smp tmp_fstype ct stress
@@ -120,7 +120,7 @@ facts() {
   affinity=$(grep -rhE '^[[:space:]]*CPUAffinity=' /etc/systemd/system.conf /etc/systemd/system.conf.d 2>/dev/null | tail -n1 | sed 's/^[[:space:]]*//' || true)
   pid1=$(taskset -cp 1 | sed 's/.*: //')
   default_smp=$(</proc/irq/default_smp_affinity)
-  tmp_fstype=$(findmnt -no FSTYPE /var/tmp || echo unknown)
+  tmp_fstype=$(findmnt -no FSTYPE -T /var/tmp || echo unknown)
   # awk 'NR == 1' reads all of the input, so the tool never gets SIGPIPE under pipefail (head exits after one line).
   ct=$(cyclictest -V 2>&1 | awk 'NR == 1' || true)
   stress=$(stress-ng --version 2>&1 | awk 'NR == 1' || true)
