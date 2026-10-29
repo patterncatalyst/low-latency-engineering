@@ -13,4 +13,15 @@ Status: Parts 0 to 3 (chapters 0 to 10) are written, and their examples are meas
 
 ## License
 
-MIT, prose and code. See [LICENSE](LICENSE).
+This project is dual-licensed to separate the code from the writing:
+
+- **Code** — everything under `examples/`, plus build and helper scripts and
+  inline code snippets — is licensed under the **Apache License 2.0**
+  ([`LICENSE`](LICENSE)).
+- **Content** — the tutorial and book prose (chapters under `_docs/`),
+  diagrams and images under `assets/`, and the slide decks under
+  `presentation/` — is licensed under **Creative Commons Attribution 4.0
+  International (CC BY 4.0)** ([`LICENSE-docs.md`](LICENSE-docs.md)).
+
+Copyright 2026 PatternCatalyst (Robert Sedor).
+
